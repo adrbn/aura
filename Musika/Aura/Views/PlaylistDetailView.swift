@@ -178,6 +178,8 @@ struct PlaylistDetailView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.themeBg)
                 .scrollIndicators(.hidden)
+            } else {
+                loadFailedView
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -315,8 +317,30 @@ struct PlaylistDetailView: View {
         await MainActor.run { pendingRemoval = nil }
     }
 
+    /// Shown when the playlist couldn't be loaded (e.g. the server is
+    /// unreachable) so navigating in never leaves a blank screen.
+    private var loadFailedView: some View {
+        ContentUnavailableView {
+            Label("Couldn't load playlist",
+                  systemImage: serverManager.hasNetwork ? "exclamationmark.icloud" : "wifi.slash")
+        } description: {
+            Text("Check your connection or server, then try again.")
+        } actions: {
+            Button("Retry") {
+                Task { await loadPlaylist() }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.themeBg)
+    }
+
     private func loadPlaylist() async {
-        guard let server = serverManager.currentServer else { return }
+        await MainActor.run { isLoading = true }
+        guard let server = serverManager.currentServer else {
+            await MainActor.run { isLoading = false }
+            return
+        }
         do {
             let result = try await SubsonicClient.shared.getPlaylist(server: server, id: playlistId)
             await MainActor.run {
@@ -329,7 +353,8 @@ struct PlaylistDetailView: View {
             let thumbIds = (result.entry ?? []).prefix(300).compactMap(\.displayCoverArt)
             ArtworkCache.shared.prefetch(coverArtIds: Array(thumbIds), pointSize: 50)
         } catch {
-            isLoading = false
+            AppLogger.shared.log("❌ Playlist load error: \(error.localizedDescription)")
+            await MainActor.run { isLoading = false }
         }
     }
 

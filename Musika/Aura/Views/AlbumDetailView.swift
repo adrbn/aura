@@ -183,14 +183,38 @@ struct AlbumDetailView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.themeBg)
                 .scrollIndicators(.hidden)
+            } else {
+                loadFailedView
             }
         }
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadAlbum() }
     }
 
+    /// Shown when the album couldn't be loaded (e.g. the server is unreachable)
+    /// so navigating in never leaves a blank screen.
+    private var loadFailedView: some View {
+        ContentUnavailableView {
+            Label("Couldn't load album",
+                  systemImage: serverManager.hasNetwork ? "exclamationmark.icloud" : "wifi.slash")
+        } description: {
+            Text("Check your connection or server, then try again.")
+        } actions: {
+            Button("Retry") {
+                Task { await loadAlbum() }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.themeBg)
+    }
+
     private func loadAlbum() async {
-        guard let server = serverManager.currentServer else { return }
+        await MainActor.run { isLoading = true }
+        guard let server = serverManager.currentServer else {
+            await MainActor.run { isLoading = false }
+            return
+        }
         do {
             let result = try await SubsonicClient.shared.getAlbum(server: server, id: albumId)
             // Check if album is starred
@@ -203,7 +227,7 @@ struct AlbumDetailView: View {
             }
         } catch {
             AppLogger.shared.log("❌ Album load error: \(error.localizedDescription)")
-            isLoading = false
+            await MainActor.run { isLoading = false }
         }
     }
 
