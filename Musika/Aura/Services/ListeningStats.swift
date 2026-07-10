@@ -1,0 +1,285 @@
+import Foundation
+
+/// A retrospective window — a whole year or a single month.
+enum WrappedPeriod: Hashable {
+    case year(Int)
+    case month(year: Int, month: Int)
+
+    static var currentYear: WrappedPeriod {
+        .year(Calendar.current.component(.year, from: Date()))
+    }
+
+    static var currentMonth: WrappedPeriod {
+        let c = Calendar.current
+        let now = Date()
+        return .month(year: c.component(.year, from: now), month: c.component(.month, from: now))
+    }
+
+    /// Long, human title — "2026" or "June 2026".
+    var title: String {
+        switch self {
+        case .year(let y):
+            return String(y)
+        case .month(let y, let m):
+            let f = DateFormatter()
+            f.dateFormat = "LLLL yyyy"
+            var comps = DateComponents()
+            comps.year = y; comps.month = m; comps.day = 1
+            if let date = Calendar.current.date(from: comps) { return f.string(from: date) }
+            return "\(y)"
+        }
+    }
+
+    /// Compact cover label — "2026" or "June".
+    var coverLabel: String {
+        switch self {
+        case .year(let y): return String(y)
+        case .month(let y, let m):
+            let f = DateFormatter()
+            f.dateFormat = "LLLL"
+            var comps = DateComponents()
+            comps.year = y; comps.month = m; comps.day = 1
+            if let date = Calendar.current.date(from: comps) { return f.string(from: date) }
+            return title
+        }
+    }
+
+    /// Short label for the segmented period switcher.
+    var pickerLabel: String {
+        switch self {
+        case .year: return "Year"
+        case .month: return "Month"
+        }
+    }
+
+    func contains(_ date: Date, calendar: Calendar = .current) -> Bool {
+        let comps = calendar.dateComponents([.year, .month], from: date)
+        switch self {
+        case .year(let y):
+            return comps.year == y
+        case .month(let y, let m):
+            return comps.year == y && comps.month == m
+        }
+    }
+}
+
+/// Controls which retrospectives ("Wrapped") are surfaced, and when.
+///
+/// Edit `offeredPeriods` to gate Wrapped behind specific windows later (e.g. the
+/// year recap only in December, a month recap at month-end). For now the
+/// `alwaysAvailable` override keeps both year and month visible year-round so the
+/// feature can be used/tested in June.
+enum WrappedAvailability {
+    /// While true, retrospectives are always offered regardless of the date.
+    /// Flip to false to enable the date-window logic below.
+    static let alwaysAvailable = true
+
+    static func offeredPeriods(now: Date = Date()) -> [WrappedPeriod] {
+        if alwaysAvailable { return [.currentYear, .currentMonth] }
+
+        var out: [WrappedPeriod] = []
+        let cal = Calendar.current
+        let month = cal.component(.month, from: now)
+        let day = cal.component(.day, from: now)
+        let year = cal.component(.year, from: now)
+        // Year in review: available in December, plus January for the year just ended.
+        if month == 12 { out.append(.year(year)) }
+        else if month == 1 { out.append(.year(year - 1)) }
+        // Month in review: first week of the following month → the month just ended.
+        if day <= 7, let prev = cal.date(byAdding: .month, value: -1, to: now) {
+            out.append(.month(year: cal.component(.year, from: prev),
+                              month: cal.component(.month, from: prev)))
+        }
+        return out
+    }
+}
+
+/// Aggregated listening statistics for a period — the data behind a Wrapped screen.
+struct ListeningStats {
+    /// Where the numbers came from. `.lastfm` is real long-term scrobble history;
+    /// `.device` is the app's local play log (accurate only since logging began).
+    enum Source { case device, lastfm }
+
+    struct RankedSong: Identifiable {
+        let id: String
+        let title: String
+        let artist: String
+        let coverArt: String?     // Subsonic cover id (device source)
+        let imageURL: String?     // remote image (Last.fm source)
+        let plays: Int
+    }
+    struct RankedArtist: Identifiable {
+        var id: String { name }
+        let name: String
+        let plays: Int
+        let minutes: Int
+        let imageURL: String?
+    }
+    struct RankedAlbum: Identifiable {
+        var id: String { "\(name)|\(artist)" }
+        let name: String
+        let artist: String
+        let coverArt: String?
+        let imageURL: String?
+        let plays: Int
+    }
+    struct RankedGenre: Identifiable {
+        var id: String { name }
+        let name: String
+        let plays: Int
+    }
+
+    let period: WrappedPeriod
+    let source: Source
+    let totalPlays: Int
+    let totalMinutes: Int
+    let uniqueSongs: Int
+    let uniqueArtists: Int
+    let topSongs: [RankedSong]
+    let topArtists: [RankedArtist]
+    let topAlbums: [RankedAlbum]
+    let topGenres: [RankedGenre]
+    /// Last.fm only — all-time scrobbles and the year the account started.
+    let allTimeScrobbles: Int?
+    let scrobblingSinceYear: Int?
+
+    var hasData: Bool { totalPlays > 0 || !topArtists.isEmpty }
+    var totalHours: Double { Double(totalMinutes) / 60.0 }
+
+    /// A light-hearted "listener type" derived from the dominant genre's energy.
+    var personality: String {
+        guard let top = topGenres.first else { return "The Explorer" }
+        let energy = Energy.score(genre: top.name)
+        switch energy {
+        case ..<0.3: return "The Calm Listener"
+        case ..<0.55: return "The Easy Rider"
+        case ..<0.75: return "The Groover"
+        default: return "The Energizer"
+        }
+    }
+
+    static func compute(from plays: [PlayHistory.PlayRecord], period: WrappedPeriod) -> ListeningStats {
+        let scoped = plays.filter { period.contains($0.playedAt) }
+
+        // Top songs by play count (representative metadata from the first occurrence).
+        var songOrder: [String] = []
+        var songCount: [String: Int] = [:]
+        var songMeta: [String: PlayHistory.PlayRecord] = [:]
+        for p in scoped {
+            if songCount[p.songId] == nil { songOrder.append(p.songId); songMeta[p.songId] = p }
+            songCount[p.songId, default: 0] += 1
+        }
+        let topSongs = songOrder
+            .sorted { (songCount[$0] ?? 0) > (songCount[$1] ?? 0) }
+            .prefix(50)
+            .compactMap { id -> RankedSong? in
+                guard let meta = songMeta[id] else { return nil }
+                return RankedSong(id: id, title: meta.title, artist: meta.artist,
+                                  coverArt: meta.coverArt, imageURL: nil, plays: songCount[id] ?? 0)
+            }
+
+        // Top artists by play count, tie-broken by minutes.
+        var artistOrder: [String] = []
+        var artistPlays: [String: Int] = [:]
+        var artistMinutes: [String: Int] = [:]
+        for p in scoped {
+            if artistPlays[p.artist] == nil { artistOrder.append(p.artist) }
+            artistPlays[p.artist, default: 0] += 1
+            artistMinutes[p.artist, default: 0] += p.durationSeconds
+        }
+        let topArtists = artistOrder
+            .sorted {
+                let a = artistPlays[$0] ?? 0, b = artistPlays[$1] ?? 0
+                return a != b ? a > b : (artistMinutes[$0] ?? 0) > (artistMinutes[$1] ?? 0)
+            }
+            .prefix(10)
+            .map { RankedArtist(name: $0, plays: artistPlays[$0] ?? 0,
+                                minutes: (artistMinutes[$0] ?? 0) / 60, imageURL: nil) }
+
+        // Top albums by play count (representative cover/artist from the first play).
+        var albumOrder: [String] = []
+        var albumCount: [String: Int] = [:]
+        var albumMeta: [String: PlayHistory.PlayRecord] = [:]
+        for p in scoped {
+            guard let album = p.album, !album.isEmpty else { continue }
+            let key = "\(album)|\(p.artist)"
+            if albumCount[key] == nil { albumOrder.append(key); albumMeta[key] = p }
+            albumCount[key, default: 0] += 1
+        }
+        let topAlbums = albumOrder
+            .sorted { (albumCount[$0] ?? 0) > (albumCount[$1] ?? 0) }
+            .prefix(10)
+            .compactMap { key -> RankedAlbum? in
+                guard let meta = albumMeta[key], let album = meta.album else { return nil }
+                return RankedAlbum(name: album, artist: meta.artist, coverArt: meta.coverArt,
+                                   imageURL: nil, plays: albumCount[key] ?? 0)
+            }
+
+        // Top genres by play count.
+        var genreOrder: [String] = []
+        var genreCount: [String: Int] = [:]
+        for p in scoped {
+            guard let g = p.genre, !g.isEmpty else { continue }
+            if genreCount[g] == nil { genreOrder.append(g) }
+            genreCount[g, default: 0] += 1
+        }
+        let topGenres = genreOrder
+            .sorted { (genreCount[$0] ?? 0) > (genreCount[$1] ?? 0) }
+            .prefix(6)
+            .map { RankedGenre(name: $0, plays: genreCount[$0] ?? 0) }
+
+        return ListeningStats(
+            period: period,
+            source: .device,
+            totalPlays: scoped.count,
+            totalMinutes: scoped.reduce(0) { $0 + $1.durationSeconds } / 60,
+            uniqueSongs: Set(scoped.map(\.songId)).count,
+            uniqueArtists: Set(scoped.map(\.artist)).count,
+            topSongs: Array(topSongs),
+            topArtists: Array(topArtists),
+            topAlbums: Array(topAlbums),
+            topGenres: Array(topGenres),
+            allTimeScrobbles: nil,
+            scrobblingSinceYear: nil
+        )
+    }
+
+    /// Build stats from real Last.fm scrobble history.
+    static func from(lastfm w: LastfmWrapped, period: WrappedPeriod) -> ListeningStats {
+        let topSongs = w.topTracks.prefix(50).enumerated().map { idx, t in
+            RankedSong(id: "\(t.artist)|\(t.name)|\(idx)", title: t.name, artist: t.artist,
+                       coverArt: nil, imageURL: t.imageURL, plays: t.playcount)
+        }
+        let topArtists = w.topArtists.prefix(10).map {
+            // Last.fm doesn't expose per-artist listening minutes; leave at 0.
+            RankedArtist(name: $0.name, plays: $0.playcount, minutes: 0, imageURL: $0.imageURL)
+        }
+        let topAlbums = w.topAlbums.prefix(10).map {
+            RankedAlbum(name: $0.name, artist: $0.artist, coverArt: nil,
+                        imageURL: $0.imageURL, plays: $0.playcount)
+        }
+        let topGenres = w.topTags.prefix(6).map { RankedGenre(name: $0.name, plays: $0.count) }
+
+        // Period total ≈ sum of the fetched top tracks' play counts (covers the bulk).
+        let periodPlays = w.topTracks.reduce(0) { $0 + $1.playcount }
+        // Listening-time estimate from tracks that report a duration.
+        let estMinutes = w.topTracks.reduce(0) { acc, t in
+            acc + (t.durationSeconds.map { $0 * t.playcount } ?? 0)
+        } / 60
+
+        return ListeningStats(
+            period: period,
+            source: .lastfm,
+            totalPlays: periodPlays,
+            totalMinutes: estMinutes,
+            uniqueSongs: w.topTracks.count,
+            uniqueArtists: w.topArtists.count,
+            topSongs: Array(topSongs),
+            topArtists: Array(topArtists),
+            topAlbums: Array(topAlbums),
+            topGenres: Array(topGenres),
+            allTimeScrobbles: w.allTimeScrobbles,
+            scrobblingSinceYear: w.scrobblingSinceYear
+        )
+    }
+}

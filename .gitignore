@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Old snapshots / backups — not versioned
+aura_backup_12mars26/
+aura_alpha_2026-06-24/
+
+# Build artifacts / distributables
+IPA_Output/
+*.ipa
+*.zip
+
+# Logs
+*.log

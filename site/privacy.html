@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura — Privacy Policy</title>
+<meta name="description" content="How Aura handles your data. Short version — it doesn't leave your device.">
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1c;
+    --muted: #5b5b63;
+    --line: #e6e6ea;
+    --accent: #6a5cff;
+    --card: #f7f7f9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f12;
+      --fg: #e9e9ee;
+      --muted: #a0a0aa;
+      --line: #26262c;
+      --accent: #9d92ff;
+      --card: #17171b;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 0 20px;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 56px 0 96px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 32px; }
+  h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-size: 1.3rem; margin: 40px 0 12px; letter-spacing: -0.01em; }
+  h3 { font-size: 1.05rem; margin: 24px 0 8px; color: var(--fg); }
+  p, li { color: var(--fg); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .muted { color: var(--muted); font-size: 0.95rem; }
+  code { background: var(--card); padding: 1px 6px; border-radius: 5px; font-size: 0.9em; }
+  .tldr {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4px 22px;
+    margin: 24px 0 8px;
+  }
+  ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Aura Privacy Policy</h1>
+    <p class="muted"><strong>Last updated:</strong> 2026-07-02 &nbsp;·&nbsp; <strong>Effective:</strong> same as above</p>
+  </header>
+
+  <p>Aura (“the app”) is a music playback client for Subsonic-API-compatible servers (Navidrome, Airsonic, Gonic, and others) that <strong>you</strong> host or have legitimate access to. This policy explains what information Aura handles and what it does not.</p>
+
+  <div class="tldr">
+    <h2 style="margin-top:20px;">TL;DR</h2>
+    <ul>
+      <li>Aura collects <strong>no</strong> personal data.</li>
+      <li>Aura sends <strong>nothing</strong> to any server owned by the developer.</li>
+      <li>All data (server URLs, credentials, playback state, cached audio) stays on your device.</li>
+      <li>The only network traffic Aura makes is to the servers you explicitly configure (your Subsonic/Navidrome server, and optionally LRCLIB for community lyrics).</li>
+    </ul>
+  </div>
+
+  <h2>Data Aura stores on your device</h2>
+
+  <h3>Stored in iOS Keychain (encrypted by iOS)</h3>
+  <ul>
+    <li>Your server password(s)</li>
+    <li>Your Soulseek / slskd password (sideload build only — not present in the App Store build)</li>
+  </ul>
+  <p>Keychain entries are scoped to Aura and can be cleared by deleting the app.</p>
+
+  <h3>Stored in UserDefaults (plaintext, sandboxed)</h3>
+  <ul>
+    <li>Server URL(s) and usernames</li>
+    <li>UI preferences (theme, accent color, home dashboard layout, etc.)</li>
+    <li>Playback preferences (EQ curve, crossfade, transcoding)</li>
+    <li>Last-played state (queue, current track, position)</li>
+    <li>Download quality settings</li>
+  </ul>
+
+  <h3>Stored in app container (sandboxed)</h3>
+  <ul>
+    <li>Cover art cache (thumbnails)</li>
+    <li>Streaming cache (partial audio files — automatically evicted by LRU policy)</li>
+    <li>Downloaded songs (when you explicitly download them for offline use)</li>
+    <li>Local database of your library metadata (for offline search)</li>
+  </ul>
+  <p>All of the above is removed when you delete the app.</p>
+
+  <h2>Data Aura sends over the network</h2>
+
+  <h3>To your configured Subsonic/Navidrome server</h3>
+  <ul>
+    <li>Standard Subsonic API requests (authentication, library fetches, stream/download)</li>
+    <li>Scrobble submissions (if enabled)</li>
+  </ul>
+  <p>These go <strong>only</strong> to the server URL(s) you explicitly configure in Settings. Aura does not bypass this or contact any other endpoint on your behalf.</p>
+
+  <h3>To LRCLIB (optional, on-demand)</h3>
+  <p>Song metadata (artist, title, album, duration) used solely to look up community-contributed time-synced lyrics. <a href="https://lrclib.net">LRCLIB</a> is a public free service. Aura queries it only when your own server does not provide lyrics. Can be disabled in Settings.</p>
+
+  <h3>To streaming-link services (for the song share sheet)</h3>
+  <p>So that the Share sheet can offer “open on Spotify / Apple Music / Deezer / YouTube Music” links, Aura looks up the currently playing track on other platforms. The track's <strong>artist and title</strong>, plus your device's <strong>country/region code</strong>, are sent to these public, free, keyless APIs:</p>
+  <ul>
+    <li><strong>Apple iTunes Search API</strong> — <code>itunes.apple.com</code></li>
+    <li><strong>Deezer API</strong> — <code>api.deezer.com</code></li>
+    <li><strong>Odesli / song.link</strong> — <code>song.link</code></li>
+  </ul>
+  <p>This lookup runs when a song starts playing (so the links are ready instantly) and the result is cached. No account, device identifier, or audio is sent — only the track name to find matching links — and none of it goes to a developer-owned server.</p>
+
+  <h3>To MusicBrainz (for song credits)</h3>
+  <p>When you open a song's credits/info, Aura queries the public <strong>MusicBrainz</strong> database (<code>musicbrainz.org</code>) with the artist and title to fetch writer/producer/label credits. No account or identifier is sent.</p>
+
+  <h3>To Last.fm (optional, opt-in)</h3>
+  <p>If you enable the Last.fm integration in Settings, you supply <strong>your own</strong> Last.fm username and API key. Aura then sends requests to the Last.fm API (<code>ws.audioscrobbler.com</code>) to fetch your listening statistics and artist/album images, used for features such as the year Wrapped summary. Your API key is stored in the iOS Keychain (never in UserDefaults); the username is stored locally with your other preferences. These requests go directly from your device to Last.fm — nothing is sent to the developer. The feature is off by default and can be disabled at any time in Settings.</p>
+
+  <h3>To Apple (standard iOS mechanisms)</h3>
+  <ul>
+    <li>Crash reports, if you have “Share with App Developers” enabled in iOS Settings → Privacy &amp; Security → Analytics &amp; Improvements. Apple aggregates and forwards these; Aura reads them via Xcode Organizer.</li>
+    <li>Apple Music / MediaPlayer / AVKit system integrations (Now Playing metadata for Control Center and the Lock Screen).</li>
+  </ul>
+  <p>Aura does not use any third-party analytics, telemetry, attribution, or advertising SDK.</p>
+
+  <h2>Data the developer receives</h2>
+  <p>None, with one exception: if you voluntarily open an issue on our GitHub repository or email us for support, we obviously see whatever you send. We do not aggregate, sell, or share that information.</p>
+
+  <h2>Third-party content</h2>
+  <p>Aura is a client for user-hosted music servers. The content displayed and played through Aura is hosted by you or a server you have access to. Aura does not provide, distribute, or host any music content. You are responsible for ensuring that the content on your configured servers is licensed or owned by you.</p>
+
+  <h2>Children's privacy</h2>
+  <p>Aura has no account system, no user-generated content surfaces, no ads, and no data collection. Usage by children under 13 is permitted under the app's 4+ age rating. We do not knowingly collect any information from any user.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>We may update this policy as Aura evolves. Material changes will be noted in the <code>Last updated</code> date at the top and, where relevant, in the app's release notes.</p>
+
+  <h2>Contact</h2>
+  <ul>
+    <li><strong>Issues / general questions:</strong> <a href="https://github.com/adrbn/aura/issues">GitHub issues</a></li>
+    <li><strong>Privacy-specific questions:</strong> <a href="https://github.com/adrbn/aura/issues">open a GitHub issue</a>.</li>
+  </ul>
+
+  <h2>Jurisdiction</h2>
+  <p>Aura is a free/open-source project published from France. EU/GDPR applies by default. Under GDPR Articles 15–22 you have rights to access, rectification, erasure, restriction, portability, and objection — however, because Aura holds no personal data about you on any server we control, there is generally nothing to exercise those rights against. If you believe otherwise, contact us via the links above.</p>
+
+  <footer>
+    <p class="muted">Aura is not affiliated with Navidrome, Subsonic, or Apple. Source: <a href="https://github.com/adrbn/aura">github.com/adrbn/aura</a></p>
+  </footer>
+</main>
+</body>
+</html>

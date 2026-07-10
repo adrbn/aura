@@ -1,0 +1,1169 @@
+import SwiftUI
+import AVKit
+import AVFoundation
+
+struct NowPlayingView: View {
+    @Environment(AudioPlayer.self) private var player
+    @Environment(\.dismiss) private var dismiss
+    @State private var appSettings = AppSettings.shared
+    @State private var serverManager = ServerManager.shared
+    @State private var showLyrics = false
+    @State private var backgroundImage: UIImage?
+    @State private var vibrantOverlayColor: Color?
+    @State private var showFileInfo = false
+    @State private var showClockMode = false
+    @State private var showAddToPlaylist = false
+    @State private var showEqualizer = false
+    @State private var navAlbumId: String?
+    @State private var trackedLyricId: UUID?
+    @State private var dragOffset: CGFloat = 0
+    @State private var isUserScrolling = false
+    @State private var scrollReturnTask: Task<Void, Never>?
+    @State private var previousSongId: String?
+    @State private var songChangeDirection: Int = 0 // -1 = prev, 1 = next
+    @State private var coverDragOffset: CGFloat = 0
+    @State private var showSleepTimerSheet = false
+    @State private var selectedSleepMinutes: Int = 15
+    @State private var coverDragAxis: CoverDragAxis = .undecided
+    @State private var showCredits = false
+    @State private var showShareSheet = false
+    @State private var showRadioExistsDialog = false
+    @State private var existingRadioPlaylistId: String?
+    @State private var existingRadioPlaylistName: String = ""
+    @State private var currentLineIndex: Int?
+    @State private var nearestLineIndex: Int?
+    @State private var dismissTask: Task<Void, Never>?
+
+    private enum CoverDragAxis { case undecided, horizontal, vertical }
+
+    private var accentColor: Color { appSettings.activeTheme.accentColor }
+
+    /// Radio needs the server — greyed out in offline mode or without any network.
+    private var isEffectivelyOffline: Bool {
+        appSettings.offlineMode || !serverManager.hasNetwork
+    }
+
+    private var safeTop: CGFloat {
+        (UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.top) ?? 59
+    }
+
+    private var safeBottom: CGFloat {
+        (UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.bottom) ?? 34
+    }
+
+    var body: some View {
+        NavigationStack {
+            GeometryReader { geo in
+                if let song = player.currentSong {
+                    ZStack {
+                        cachedBackground(for: song, in: geo)
+                        playerView(song: song, geo: geo)
+                    }
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
+                    .cornerRadius(dragOffset > 0 ? min(dragOffset / 3, 30) : 0)
+                    .offset(y: dragOffset)
+                }
+            }
+            .ignoresSafeArea()
+            .toolbar(.hidden, for: .navigationBar)
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .gesture(
+                DragGesture(minimumDistance: 30, coordinateSpace: .global)
+                    .onChanged { value in
+                        guard coverDragAxis == .undecided else { return }
+                        if value.translation.height > 0 {
+                            dragOffset = value.translation.height
+                        }
+                    }
+                    .onEnded { value in
+                        guard coverDragAxis == .undecided else { return }
+                        if value.translation.height > 150 || value.predictedEndTranslation.height > 300 {
+                            withAnimation(.easeOut(duration: 0.25)) { dragOffset = 1000 }
+                            scheduleDragDismiss()
+                        } else {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { dragOffset = 0 }
+                        }
+                    }
+            )
+            .navigationDestination(item: $navAlbumId) { albumId in
+                AlbumDetailView(albumId: albumId)
+            }
+            .onAppear {
+                AppDelegate.allowLandscape = AppSettings.shared.landscapeClockEnabled
+                // Start preloading playlist membership and song links for current song
+                if let song = player.currentSong {
+                    PlaylistMembershipCache.shared.preloadMembership(for: song.id)
+                    SongLinkService.shared.preloadLinks(title: song.title, artist: song.artist ?? "")
+                }
+            }
+            .onDisappear {
+                AppDelegate.allowLandscape = false
+                scrollReturnTask?.cancel()
+                dismissTask?.cancel()
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                    windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+                }
+            }
+        }
+        .presentationBackground(.clear)
+        .onChange(of: player.currentSong?.id) { oldId, newId in
+            previousSongId = oldId
+            if showLyrics {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    if player.lyrics.isEmpty {
+                        withAnimation(.easeInOut(duration: 0.35)) { showLyrics = false }
+                    }
+                }
+            }
+            // Pre-fetch playlist membership and song links for the new song in background
+            if let newId, let song = player.currentSong {
+                PlaylistMembershipCache.shared.preloadMembership(for: newId)
+                PlaylistMembershipCache.shared.trimCache(keeping: newId)
+                SongLinkService.shared.preloadLinks(title: song.title, artist: song.artist ?? "")
+                SongLinkService.shared.trimCache(keeping: song.title, artist: song.artist ?? "")
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { player.isShowingQueue },
+            set: { player.isShowingQueue = $0 }
+        )) {
+            QueueView()
+        }
+        .sheet(isPresented: $showFileInfo) {
+            if let song = player.currentSong {
+                SongInfoSheet(song: song)
+            }
+        }
+        .sheet(isPresented: $showAddToPlaylist) {
+            if let song = player.currentSong {
+                AddToPlaylistView(song: song)
+            }
+        }
+        .sheet(isPresented: $showCredits) {
+            if let song = player.currentSong {
+                SongCreditsSheet(song: song)
+            }
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let song = player.currentSong {
+                SongShareSheet(song: song)
+                    .presentationDetents([.height(580)])
+                    .presentationDragIndicator(.visible)
+                    .presentationBackground(.ultraThinMaterial)
+            }
+        }
+        .sheet(isPresented: $showEqualizer) {
+            EqualizerView()
+        }
+        .sheet(isPresented: $showSleepTimerSheet) {
+            sleepTimerPickerSheet
+                .presentationDetents([.height(320)])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(.ultraThinMaterial)
+        }
+        .confirmationDialog("A radio already exists", isPresented: $showRadioExistsDialog) {
+            if let savedId = existingRadioPlaylistId {
+                // Saved playlist on server
+                Button("View Saved Playlist") {
+                    player.pendingPlaylistId = savedId
+                    player.isShowingNowPlaying = false
+                }
+            } else {
+                // In-memory radio
+                Button("View Existing Radio") {
+                    player.pendingRadioOpen = true
+                    player.isShowingNowPlaying = false
+                }
+            }
+            Button("Generate New Radio") {
+                if let current = player.currentSong {
+                    player.startRadioFromSong(current)
+                    player.isShowingNowPlaying = false
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("\"\(existingRadioPlaylistName)\" already exists. View it or generate a new one?")
+        }
+        .fullScreenCover(isPresented: $showClockMode) {
+            LandscapeClockView(lyricsMode: showLyrics)
+                .environment(player)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            // Physical-rotation notifications fire even when the interface is locked
+            // to portrait, so honor the opt-in here too — not just the orientation mask.
+            guard AppSettings.shared.landscapeClockEnabled else { return }
+            let orientation = UIDevice.current.orientation
+            if orientation == .landscapeLeft || orientation == .landscapeRight {
+                showClockMode = true
+            } else if orientation == .faceDown || orientation == .portraitUpsideDown {
+                // Ignore upside-down orientations
+            }
+        }
+    }
+
+    // MARK: - Player View
+
+    @ViewBuilder
+    private func playerView(song: Song, geo: GeometryProxy) -> some View {
+        let w = geo.size.width
+        let horizontalPadding: CGFloat = 30
+        let artSize = w - (horizontalPadding * 2)
+
+        VStack(spacing: 0) {
+            Spacer().frame(height: max(safeTop, 20) + 24)
+
+            // Playing from source indicator (above cover art)
+            if player.playbackSource != .unknown {
+                Button {
+                    handlePlaybackSourceTap(player.playbackSource)
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: player.playbackSource.systemImage)
+                            .font(.caption2)
+                        Text(player.playbackSource.displayName)
+                            .font(.caption)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    .foregroundStyle(.white.opacity(0.5))
+                    .frame(maxWidth: w - 80)
+                }
+                .disabled(!player.playbackSource.isNavigable)
+                .padding(.bottom, 4)
+            }
+
+            Spacer(minLength: 4)
+
+            if showLyrics {
+                lyricsScrollView
+                    .frame(height: artSize)
+                    .mask(
+                        VStack(spacing: 0) {
+                            LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
+                                .frame(height: 16)
+                            Color.white
+                            LinearGradient(colors: [.white, .clear], startPoint: .top, endPoint: .bottom)
+                                .frame(height: 16)
+                        }
+                    )
+                    .padding(.horizontal, horizontalPadding)
+                    .transition(.opacity)
+            } else {
+                // Cover art with slide transition
+                ZStack {
+                    CoverArtAsyncImage(coverArt: song.coverArt ?? song.albumId, size: artSize,
+                                   fallbackCoverArt: song.albumId)
+                        .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
+                        .scaleEffect(player.isPlaying ? 1.0 : 0.85)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
+                        .id(song.id)
+                        .transition(.asymmetric(
+                            insertion: .offset(x: songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
+                            removal: .offset(x: songChangeDirection >= 0 ? -w : w).combined(with: .opacity)
+                        ))
+                }
+                .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
+                .padding(.horizontal, horizontalPadding)
+                .offset(x: coverDragOffset)
+                .gesture(
+                    DragGesture(minimumDistance: 20, coordinateSpace: .global)
+                        .onChanged { value in
+                            let dx = abs(value.translation.width)
+                            let dy = abs(value.translation.height)
+                            if coverDragAxis == .undecided && (dx + dy) > 15 {
+                                coverDragAxis = dx >= dy ? .horizontal : .vertical
+                            }
+                            switch coverDragAxis {
+                            case .horizontal:
+                                coverDragOffset = value.translation.width
+                            case .vertical:
+                                if value.translation.height > 0 {
+                                    dragOffset = value.translation.height
+                                }
+                            case .undecided:
+                                break
+                            }
+                        }
+                        .onEnded { value in
+                            switch coverDragAxis {
+                            case .horizontal:
+                                let threshold: CGFloat = 60
+                                if value.translation.width < -threshold || value.predictedEndTranslation.width < -threshold * 2 {
+                                    songChangeDirection = 1
+                                    player.next()
+                                } else if value.translation.width > threshold || value.predictedEndTranslation.width > threshold * 2 {
+                                    songChangeDirection = -1
+                                    player.previous()
+                                }
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { coverDragOffset = 0 }
+                            case .vertical:
+                                if value.translation.height > 150 || value.predictedEndTranslation.height > 300 {
+                                    withAnimation(.easeOut(duration: 0.25)) { dragOffset = 1000 }
+                                    scheduleDragDismiss()
+                                } else {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { dragOffset = 0 }
+                                }
+                            case .undecided:
+                                break
+                            }
+                            coverDragAxis = .undecided
+                        }
+                )
+            }
+
+            Spacer().frame(height: 20)
+
+            // Song info
+            VStack(spacing: 4) {
+                if let albumId = song.albumId {
+                    Button {
+                        player.pendingAlbumId = albumId
+                        player.isShowingNowPlaying = false
+                    } label: {
+                        Text(displayTitle(for: song))
+                            .font(.title2.bold())
+                            .lineLimit(1)
+                            .foregroundStyle(.white)
+                    }
+                } else {
+                    Text(displayTitle(for: song))
+                        .font(.title2.bold())
+                        .lineLimit(1)
+                        .foregroundStyle(.white)
+                }
+                TappableArtistText(
+                    artistString: song.artist ?? "Unknown Artist",
+                    primaryArtistId: song.artistId,
+                    font: .body,
+                    foregroundStyle: AnyShapeStyle(.white.opacity(0.7)),
+                    tappableStyle: AnyShapeStyle(.white.opacity(0.7)),
+                    onNavigate: { artistId in
+                        player.pendingArtistId = artistId
+                        player.isShowingNowPlaying = false
+                    }
+                )
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, horizontalPadding)
+            .id("songinfo-\(song.id)")
+            .transition(.asymmetric(
+                insertion: .offset(x: songChangeDirection >= 0 ? 80 : -80).combined(with: .opacity),
+                removal: .offset(x: songChangeDirection >= 0 ? -80 : 80).combined(with: .opacity)
+            ))
+            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
+            .offset(x: showLyrics ? 0 : coverDragOffset * 0.5)
+
+            // Year + genre + favourite + menu row
+            HStack {
+                if song.year != nil || song.genre != nil {
+                    HStack(spacing: 4) {
+                        if let year = song.year {
+                            Text(String(year)).font(.caption).foregroundStyle(.white.opacity(0.5))
+                        }
+                        if song.year != nil && song.genre != nil {
+                            Text("·").font(.caption).foregroundStyle(.white.opacity(0.5))
+                        }
+                        if let genre = song.genre {
+                            Button {
+                                player.pendingGenreName = genre
+                                player.isShowingNowPlaying = false
+                            } label: {
+                                Text(genre).font(.caption).foregroundStyle(.white.opacity(0.5)).lineLimit(1)
+                            }
+                        }
+                    }
+                }
+                Spacer()
+                SongActionsRow(
+                    song: song,
+                    showLyrics: showLyrics,
+                    accentColor: accentColor,
+                    showAddToPlaylist: $showAddToPlaylist,
+                    showFileInfo: $showFileInfo,
+                    showCredits: $showCredits,
+                    showEqualizer: $showEqualizer
+                )
+            }
+            .padding(.horizontal, horizontalPadding)
+            .padding(.top, 2)
+
+            progressAndControls
+                .padding(.horizontal, horizontalPadding)
+
+            Spacer()
+
+            // Bottom toolbar
+            HStack {
+                Spacer()
+                Button {
+                    withAnimation(.easeInOut(duration: 0.35)) { showLyrics.toggle() }
+                } label: {
+                    Image(systemName: showLyrics ? "quote.bubble.fill" : "quote.bubble")
+                        .font(.title2)
+                        .foregroundStyle(showLyrics ? accentColor : .white.opacity(0.6))
+                }
+                .accessibilityLabel(showLyrics ? "Hide lyrics" : "Show lyrics")
+                Spacer()
+                Button {
+                    if let current = player.currentSong {
+                        // Check if in-memory radio is specifically FOR this song
+                        let radioNameForSong = "Radio: \(current.title)"
+                        if player.radioPlaylistName == radioNameForSong && !player.radioPlaylistSongs.isEmpty {
+                            existingRadioPlaylistId = nil
+                            existingRadioPlaylistName = player.radioPlaylistName
+                            showRadioExistsDialog = true
+                        } else {
+                            // Check saved playlists on server for this song's radio
+                            Task { await checkForSavedRadio(song: current) }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.title2)
+                        .foregroundStyle(.white.opacity(isEffectivelyOffline ? 0.25 : 0.6))
+                }
+                .disabled(isEffectivelyOffline)
+                .accessibilityLabel("Start radio from this song")
+                Spacer()
+                Button { player.isShowingQueue = true } label: {
+                    Image(systemName: "list.bullet")
+                        .font(.title2)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .accessibilityLabel("Show queue")
+                Spacer()
+                Button {
+                    showSleepTimerSheet = true
+                } label: {
+                    Image(systemName: player.sleepTimerActive ? "moon.fill" : "moon.zzz")
+                        .font(.title2)
+                        .foregroundStyle(player.sleepTimerActive ? accentColor : .white.opacity(0.6))
+                }
+                .accessibilityLabel(player.sleepTimerActive ? "Sleep timer active" : "Sleep timer")
+                Spacer()
+                AudioOutputButtonWrapper(accentColor: accentColor)
+                Spacer()
+                Button { showShareSheet = true } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.title2)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .accessibilityLabel("Share song")
+                Spacer()
+            }
+            .padding(.horizontal, horizontalPadding)
+            .padding(.bottom, max(safeBottom, 20) + 40)
+        }
+        .frame(width: w)
+    }
+
+    // Patterns: "(feat. X)", "(ft. X)", "(featuring X)", or without parens at end
+    private static let featRegexes: [NSRegularExpression] = [
+        "\\s*\\(feat\\.?\\s+([^)]+)\\)",
+        "\\s*\\(ft\\.?\\s+([^)]+)\\)",
+        "\\s*\\(featuring\\s+([^)]+)\\)",
+        "\\s+feat\\.?\\s+(.+)$",
+        "\\s+ft\\.?\\s+(.+)$",
+        "\\s+featuring\\s+(.+)$"
+    ].compactMap { try? NSRegularExpression(pattern: $0, options: .caseInsensitive) }
+
+    /// Strips "(feat. X)", "(ft. X)", "feat. X" etc. from a title when X already appears in the artist line.
+    private func displayTitle(for song: Song) -> String {
+        let title = song.title
+        let artist = song.artist ?? ""
+        guard !artist.isEmpty else { return title }
+
+        for regex in Self.featRegexes {
+            guard let match = regex.firstMatch(in: title, range: NSRange(title.startIndex..., in: title)),
+                  let featRange = Range(match.range(at: 1), in: title) else { continue }
+
+            let featArtists = String(title[featRange])
+            // Split featured artists by , & and similar
+            let featNames = featArtists
+                .replacingOccurrences(of: " & ", with: ",")
+                .replacingOccurrences(of: " and ", with: ",", options: .caseInsensitive)
+                .components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+
+            let artistLower = artist.lowercased()
+            let allPresent = featNames.allSatisfy { artistLower.contains($0.lowercased()) }
+
+            if allPresent {
+                let cleaned = title.replacingCharacters(in: Range(match.range, in: title)!, with: "")
+                    .trimmingCharacters(in: .whitespaces)
+                return cleaned
+            }
+        }
+        return title
+    }
+
+    private func scheduleDragDismiss() {
+        dismissTask?.cancel()
+        dismissTask = Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled else { return }
+            dismiss()
+        }
+    }
+
+    private func handlePlaybackSourceTap(_ source: PlaybackSource) {
+        switch source {
+        case .album(let id, _):
+            navAlbumId = id
+        case .artist(let id, _):
+            player.pendingArtistId = id
+            player.isShowingNowPlaying = false
+        case .playlist(let id, _):
+            player.isShowingNowPlaying = false
+            player.pendingPlaylistId = id
+        case .mix(let id, _):
+            player.isShowingNowPlaying = false
+            player.pendingMixId = id
+        case .radio(let name):
+            // Dismiss NowPlaying first, THEN navigate after animation completes
+            player.isShowingNowPlaying = false
+            if player.radioPlaylistName == name {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(400))
+                    player.pendingRadioOpen = true
+                }
+            } else {
+                // In-memory radio was overwritten — search for saved playlist with this name
+                Task {
+                    try? await Task.sleep(for: .milliseconds(400))
+                    if let server = ServerManager.shared.currentServer,
+                       let playlists = try? await SubsonicClient.shared.getPlaylists(server: server),
+                       let saved = playlists.first(where: { $0.name == name }) {
+                        await MainActor.run {
+                            player.pendingPlaylistId = saved.id
+                        }
+                    } else {
+                        await MainActor.run {
+                            player.pendingRadioOpen = true
+                        }
+                    }
+                }
+            }
+        case .favorites:
+            player.isShowingNowPlaying = false
+            player.pendingFavoritesOpen = true
+        case .genre(let name):
+            player.isShowingNowPlaying = false
+            player.pendingGenreName = name
+        case .recentlyPlayed:
+            player.isShowingNowPlaying = false
+            player.pendingRecentlyPlayedOpen = true
+        case .frequentlyPlayed:
+            player.isShowingNowPlaying = false
+            player.pendingFrequentlyPlayedOpen = true
+        case .queue, .autoplay:
+            player.isShowingQueue = true
+        case .search, .songs, .unknown:
+            break
+        }
+    }
+
+    // MARK: - Radio Duplicate Check
+
+    /// Check server-side playlists for an existing saved radio matching this song
+    private func checkForSavedRadio(song: Song) async {
+        guard let server = ServerManager.shared.currentServer else {
+            player.startRadioFromSong(song)
+            player.isShowingNowPlaying = false
+            return
+        }
+        let radioName = "Radio: \(song.title)"
+        do {
+            let playlists = try await SubsonicClient.shared.getPlaylists(server: server)
+            if let existing = playlists.first(where: { $0.name == radioName }) {
+                // Found a saved radio playlist for this song
+                await MainActor.run {
+                    existingRadioPlaylistId = existing.id
+                    existingRadioPlaylistName = existing.name
+                    showRadioExistsDialog = true
+                }
+            } else {
+                // No saved radio — create a new one
+                await MainActor.run {
+                    player.startRadioFromSong(song)
+                    player.isShowingNowPlaying = false
+                }
+            }
+        } catch {
+            // Network error — just create the radio
+            await MainActor.run {
+                player.startRadioFromSong(song)
+                player.isShowingNowPlaying = false
+            }
+        }
+    }
+
+    // MARK: - Lyrics Scroll View
+
+    private var lyricsScrollView: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                if player.lyrics.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "text.quote").font(.system(size: 40))
+                            .foregroundStyle(.white.opacity(0.3))
+                        Text("No lyrics available")
+                            .font(.title3)
+                            .foregroundStyle(.white.opacity(0.5))
+                        if !player.lyricsStatus.isEmpty {
+                            Text(player.lyricsStatus)
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.35))
+                                .multilineTextAlignment(.center)
+                        }
+                        Button { player.refetchLyrics() } label: {
+                            Label("Try Again", systemImage: "arrow.clockwise")
+                                .font(.callout).foregroundStyle(accentColor)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .containerRelativeFrame(.vertical) { h, _ in h }
+                    .padding(.horizontal, 16)
+                    .task {
+                        // Auto-dismiss lyrics view after 2s if no lyrics found
+                        try? await Task.sleep(for: .seconds(2))
+                        guard !Task.isCancelled else { return }
+                        guard player.lyrics.isEmpty else { return }
+                        withAnimation(.easeInOut(duration: 0.35)) { showLyrics = false }
+                    }
+                } else {
+                    LazyVStack(alignment: .leading, spacing: 18) {
+                        Spacer().frame(height: 120)
+                            .id("lyrics-top-spacer")
+                        ForEach(Array(player.lyrics.enumerated()), id: \.element.id) { index, line in
+                            let isCurrent = index == currentLineIndex
+                            let distance = distanceFromCurrentLine(index: index)
+                            Text(line.text)
+                                .font(.title2.bold())
+                                .foregroundStyle(.white.opacity(isUserScrolling ? 0.8 : opacityForDistance(distance)))
+                                .blur(radius: isUserScrolling ? 0 : blurForDistance(distance))
+                                // Keep current line at natural size (1.0) — non-current slightly
+                                // smaller. Minimal scale delta so words don't visually jump.
+                                .scaleEffect(isCurrent && areLyricsSynced ? 1.0 : (areLyricsSynced ? 0.95 : 1.0), anchor: .leading)
+                                .id(line.id)
+                                .onTapGesture {
+                                    if let time = line.time {
+                                        player.seek(to: time)
+                                    }
+                                }
+                                .animation(.spring(duration: 0.5, bounce: 0.15), value: isCurrent)
+                                .animation(.easeOut(duration: 0.4), value: distance)
+                        }
+                        Spacer().frame(height: 120)
+                    }
+                    .padding(.horizontal, 10)
+                }
+            }
+            .scrollIndicators(.hidden)
+            .onScrollPhaseChange { _, newPhase in
+                if newPhase == .interacting || newPhase == .decelerating {
+                    isUserScrolling = true
+                    scrollReturnTask?.cancel()
+                } else if newPhase == .idle && isUserScrolling {
+                    scrollReturnTask?.cancel()
+                    scrollReturnTask = Task {
+                        try? await Task.sleep(for: .seconds(1))
+                        guard !Task.isCancelled else { return }
+                        await MainActor.run {
+                            isUserScrolling = false
+                            if let id = currentLyricId {
+                                withAnimation(.easeInOut(duration: 0.4)) {
+                                    proxy.scrollTo(id, anchor: .center)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .onAppear {
+                // Immediately scroll to current lyric when lyrics view appears
+                updateLyricIndices()
+                if let id = currentLyricId {
+                    proxy.scrollTo(id, anchor: .center)
+                }
+            }
+            .onChange(of: player.currentTime) { _, _ in
+                updateLyricIndices()
+            }
+            .onChange(of: player.lyrics.count) { _, _ in
+                updateLyricIndices()
+            }
+            .onChange(of: currentLyricId) { _, newId in
+                guard let newId, !isUserScrolling else { return }
+                withAnimation(.easeInOut(duration: 0.4)) {
+                    proxy.scrollTo(newId, anchor: .center)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    // MARK: - Progress + Controls
+
+    private var progressAndControls: some View {
+        VStack(spacing: 8) {
+            BufferedProgressBar(
+                progress: player.progress,
+                buffer: player.bufferProgress,
+                accentColor: .white,
+                onSeek: { player.seek(to: $0 * player.duration) }
+            )
+
+            HStack {
+                Text(formatTime(player.currentTime))
+                    .font(.caption2).foregroundStyle(.white.opacity(0.5))
+                Spacer()
+                Text("-\(formatTime(max(0, player.duration - player.currentTime)))")
+                    .font(.caption2).foregroundStyle(.white.opacity(0.5))
+            }
+
+            HStack(spacing: 36) {
+                Button { player.toggleShuffle() } label: {
+                    Image(systemName: "shuffle").font(.title3)
+                        .frame(minWidth: 32, minHeight: 32)
+                        .foregroundStyle(player.isShuffled ? accentColor : .white.opacity(0.7))
+                }
+                .accessibilityLabel("Shuffle \(player.isShuffled ? "on" : "off")")
+                Button {
+                    songChangeDirection = -1
+                    player.previous()
+                } label: {
+                    Image(systemName: "backward.fill").font(.title).foregroundStyle(.white)
+                }
+                .accessibilityLabel("Previous track")
+                Button { player.togglePlayPause() } label: {
+                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 50)).foregroundStyle(.white)
+                }
+                .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+                Button {
+                    songChangeDirection = 1
+                    player.next()
+                } label: {
+                    Image(systemName: "forward.fill").font(.title).foregroundStyle(.white)
+                }
+                .accessibilityLabel("Next track")
+                Button { player.cycleRepeat() } label: {
+                    Image(systemName: player.repeatMode.systemImage).font(.title3)
+                        .frame(minWidth: 32, minHeight: 32)
+                        .foregroundStyle(player.repeatMode == .off ? .white.opacity(0.7) : accentColor)
+                }
+                .accessibilityLabel("Repeat \(player.repeatMode == .off ? "off" : player.repeatMode == .all ? "all" : "one")")
+            }
+            .padding(.top, 8)
+        }
+    }
+
+    // MARK: - Sleep Timer Sheet
+
+    private var sleepTimerPickerSheet: some View {
+        VStack(spacing: 16) {
+            Text("Sleep Timer")
+                .font(.headline)
+                .padding(.top, 20)
+
+            if player.sleepTimerActive {
+                // Active timer: show remaining time and cancel button
+                VStack(spacing: 12) {
+                    if player.sleepTimerEndOfSong {
+                        Image(systemName: "moon.fill")
+                            .font(.system(size: 44))
+                            .foregroundStyle(accentColor)
+                            .padding(.top, 20)
+                        Text("End of current song")
+                            .font(.title3.weight(.medium))
+                            .foregroundStyle(.primary)
+                    } else {
+                        Text(player.sleepTimerFormatted)
+                            .font(.system(size: 56, weight: .light, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(.primary)
+                            .padding(.top, 20)
+                        Text("remaining")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(height: 150)
+
+                Button {
+                    player.cancelSleepTimer()
+                    showSleepTimerSheet = false
+                } label: {
+                    Text("Cancel Timer")
+                        .font(.callout.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(.red.opacity(0.8))
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
+            } else {
+                // No active timer: show picker
+                Picker("Minutes", selection: $selectedSleepMinutes) {
+                    ForEach([5, 10, 15, 20, 30, 45, 60, 90, 120], id: \.self) { min in
+                        Text(min < 60 ? "\(min) min" : "\(min / 60)h\(min % 60 > 0 ? " \(min % 60)m" : "")")
+                            .tag(min)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(height: 150)
+
+                HStack(spacing: 16) {
+                    Button {
+                        player.startSleepTimerEndOfSong()
+                        showSleepTimerSheet = false
+                    } label: {
+                        Text("End of Song")
+                            .font(.callout.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+
+                    Button {
+                        player.startSleepTimer(minutes: selectedSleepMinutes)
+                        showSleepTimerSheet = false
+                    } label: {
+                        Text("Start Timer")
+                            .font(.callout.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(accentColor)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// Recomputes the current and nearest lyric line indices once per time change,
+    /// so each row only does O(1) index arithmetic.
+    private func updateLyricIndices() {
+        guard !player.lyrics.isEmpty else {
+            currentLineIndex = nil
+            nearestLineIndex = nil
+            return
+        }
+        let time = player.currentTime
+        var last: Int?
+        for (i, line) in player.lyrics.enumerated() {
+            guard let t = line.time else { continue }
+            if t <= time {
+                last = i
+            } else {
+                break
+            }
+        }
+        nearestLineIndex = last
+        // Gap detection uses real time (no offset) so instrumental breaks still work
+        if let idx = last, let lineTime = player.lyrics[idx].time {
+            let nextTime = (idx + 1 < player.lyrics.count) ? player.lyrics[idx + 1].time : nil
+            let gap = (nextTime ?? player.duration) - lineTime
+            let estimatedDuration = min(max(Double(player.lyrics[idx].text.count) * 0.1, 4.0), 12.0)
+            if gap > estimatedDuration + 2.0 && time > lineTime + estimatedDuration {
+                currentLineIndex = nil
+                return
+            }
+        }
+        currentLineIndex = last
+    }
+
+    private var currentLyricId: UUID? {
+        guard let index = currentLineIndex, index < player.lyrics.count else { return nil }
+        return player.lyrics[index].id
+    }
+
+    private func lineProgress(for line: LyricsLine) -> Double {
+        guard let time = line.time else { return 0 }
+        let nextTime = player.lyrics.first(where: { ($0.time ?? 0) > time })?.time ?? player.duration
+        let lineDuration = nextTime - time
+        guard lineDuration > 0 else { return 1 }
+        let elapsed = player.currentTime - time
+        if elapsed < 0 { return 0 }
+        if elapsed >= lineDuration { return 1 }
+        return elapsed / lineDuration
+    }
+
+    private func distanceFromCurrentLine(index: Int) -> Int {
+        if let currentIndex = currentLineIndex {
+            return abs(index - currentIndex)
+        }
+        // During instrumental gaps, measure from the nearest (anchor) line
+        if let anchor = nearestLineIndex {
+            return abs(index - anchor)
+        }
+        return 0
+    }
+
+    /// True when at least one lyric line has a timestamp.
+    private var areLyricsSynced: Bool {
+        player.lyrics.contains { $0.time != nil }
+    }
+
+    private func blurForDistance(_ distance: Int) -> CGFloat {
+        guard areLyricsSynced else { return 0 }          // Unsynced → no blur
+        guard currentLineIndex != nil else {
+            // Instrumental gap: blur nearby lines, hide the rest
+            if distance == 0 { return 3 }
+            if distance == 1 { return 5 }
+            return 8
+        }
+        if distance == 0 { return 0 }
+        if distance == 1 { return 3.0 }
+        return 8
+    }
+
+    private func opacityForDistance(_ distance: Int) -> Double {
+        guard areLyricsSynced else { return 0.8 }        // Unsynced → all visible
+        guard currentLineIndex != nil else {
+            // Instrumental gap: only show 3 lines (anchor ± 1), all dimmed
+            if distance <= 1 { return 0.3 }
+            return 0.0
+        }
+        if distance == 0 { return 1.0 }
+        if distance == 1 { return 0.45 }
+        return 0.0
+    }
+
+    private func cachedBackground(for song: Song, in geo: GeometryProxy) -> some View {
+        Color.black
+            .overlay {
+                if let img = backgroundImage {
+                    Image(uiImage: img)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .blur(radius: 130)
+                        .scaleEffect(1.5)
+                        .overlay(Color.black.opacity(0.22))
+                    // If cover is too dark, blend in the most vibrant color
+                    if let vibrant = vibrantOverlayColor {
+                        vibrant.opacity(0.4)
+                            .blendMode(.screen)
+                    }
+                }
+            }
+            .drawingGroup() // Flatten to bitmap — prevents per-frame recomposite flicker
+            .ignoresSafeArea(.all)
+            .transaction { $0.animation = nil } // No stray animations on background
+            .task(id: song.coverArt) {
+                await loadBackgroundImage(for: song)
+            }
+    }
+
+    private func loadBackgroundImage(for song: Song) async {
+        guard let coverArt = song.coverArt,
+              let server = ServerManager.shared.currentServer,
+              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: 100) else {
+            backgroundImage = nil
+            vibrantOverlayColor = nil
+            return
+        }
+        let key = "\(coverArt)_bg"
+        if let cached = ArtworkCache.shared.image(for: key) {
+            let vibrant = await Self.vibrantColorIfDark(from: cached)
+            await MainActor.run {
+                backgroundImage = cached
+                vibrantOverlayColor = vibrant
+            }
+            return
+        }
+        // Show ANY already-cached size of this cover immediately (it's heavily blurred
+        // anyway) so the background never flashes empty while the dedicated bitmap loads —
+        // the same progressive trick the foreground cover uses.
+        if let anySize = ArtworkCache.shared.cachedImageAnySize(forCoverArt: coverArt)
+            ?? song.albumId.flatMap({ ArtworkCache.shared.cachedImageAnySize(forCoverArt: $0) }) {
+            let vibrant = await Self.vibrantColorIfDark(from: anySize)
+            await MainActor.run {
+                backgroundImage = anySize
+                vibrantOverlayColor = vibrant
+            }
+        }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let img = UIImage(data: data) {
+                ArtworkCache.shared.store(img, for: key)
+                let vibrant = await Self.vibrantColorIfDark(from: img)
+                await MainActor.run {
+                    backgroundImage = img
+                    vibrantOverlayColor = vibrant
+                }
+            }
+        } catch { AppLogger.shared.log("❌ Now playing background image load failed: \(error.localizedDescription)") }
+    }
+
+    /// Runs the pixel analysis off the main thread.
+    private static func vibrantColorIfDark(from image: UIImage) async -> Color? {
+        await Task.detached(priority: .userInitiated) {
+            extractVibrantColorIfDark(from: image)
+        }.value
+    }
+
+    /// Analyzes image brightness; if too dark, finds the most vibrant (saturated) non-dark color.
+    /// Returns nil for normal-brightness images (no correction needed).
+    private nonisolated static func extractVibrantColorIfDark(from image: UIImage) -> Color? {
+        guard let cgImage = image.cgImage else { return nil }
+        let width = min(cgImage.width, 50)
+        let height = min(cgImage.height, 50)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        var pixelData = [UInt8](repeating: 0, count: width * height * 4)
+        guard let context = CGContext(
+            data: &pixelData, width: width, height: height,
+            bitsPerComponent: 8, bytesPerRow: width * 4,
+            space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        var totalBrightness: Double = 0
+        var bestSaturation: Double = 0
+        var bestColor: (r: Double, g: Double, b: Double)?
+        let pixelCount = width * height
+
+        for i in 0..<pixelCount {
+            let offset = i * 4
+            let r = Double(pixelData[offset]) / 255.0
+            let g = Double(pixelData[offset + 1]) / 255.0
+            let b = Double(pixelData[offset + 2]) / 255.0
+
+            // Perceived brightness (ITU-R BT.601)
+            let brightness = 0.299 * r + 0.587 * g + 0.114 * b
+            totalBrightness += brightness
+
+            // HSB saturation
+            let maxC = max(r, g, b)
+            let minC = min(r, g, b)
+            let saturation = maxC > 0 ? (maxC - minC) / maxC : 0
+
+            // We want the most saturated, not-too-dark pixel
+            if saturation > bestSaturation && brightness > 0.1 {
+                bestSaturation = saturation
+                bestColor = (r, g, b)
+            }
+        }
+
+        let avgBrightness = totalBrightness / Double(pixelCount)
+
+        // Only apply vibrant color correction for dark covers (avg brightness < 0.2)
+        guard avgBrightness < 0.2, let color = bestColor, bestSaturation > 0.15 else { return nil }
+
+        // Boost the vibrant color's brightness for a more visible effect
+        let boostFactor = 1.5
+        return Color(
+            red: min(color.r * boostFactor, 1.0),
+            green: min(color.g * boostFactor, 1.0),
+            blue: min(color.b * boostFactor, 1.0)
+        )
+    }
+
+    private func formatTime(_ time: TimeInterval) -> String {
+        guard !time.isNaN && !time.isInfinite else { return "0:00" }
+        let t = max(0, time)
+        return String(format: "%d:%02d", Int(t) / 60, Int(t) % 60)
+    }
+}
+
+// MARK: - Song Actions Row (isolated from progress re-renders)
+
+/// Extracted view so the Menu doesn't re-render on every progress tick.
+/// Only reads `currentSong` and `lyricsSource` from AudioPlayer — NOT progress/currentTime.
+struct SongActionsRow: View {
+    let song: Song
+    let showLyrics: Bool
+    let accentColor: Color
+    @Binding var showAddToPlaylist: Bool
+    @Binding var showFileInfo: Bool
+    @Binding var showCredits: Bool
+    @Binding var showEqualizer: Bool
+
+    @Environment(AudioPlayer.self) private var player
+
+    var body: some View {
+        HStack(spacing: 2) {
+            Image(systemName: (player.currentSong?.isStarred ?? false) ? "heart.fill" : "heart")
+                .font(.title3)
+                .foregroundStyle((player.currentSong?.isStarred ?? false) ? accentColor : .white.opacity(0.7))
+                .frame(width: 36, height: 36)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    if player.currentSong?.isStarred ?? false {
+                        // Already favorited → open Add to Playlist
+                        showAddToPlaylist = true
+                    } else {
+                        // Not favorited → add to favorites
+                        player.toggleFavorite()
+                    }
+                }
+                .onLongPressGesture(minimumDuration: 0.5) {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    showAddToPlaylist = true
+                }
+            Menu {
+                if showLyrics {
+                    Button { player.refetchLyrics() } label: {
+                        Label("Refetch Lyrics", systemImage: "arrow.clockwise")
+                    }
+                    Button { player.switchLyricsSource() } label: {
+                        Label("Switch Source (\(player.lyricsSource == .structured ? "Legacy" : "Synced"))",
+                              systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    Divider()
+                }
+                Button { showFileInfo = true } label: {
+                    Label("File Info", systemImage: "info.circle")
+                }
+                Button { showEqualizer = true } label: {
+                    Label("Equalizer", systemImage: "slider.vertical.3")
+                }
+                Button { showCredits = true } label: {
+                    Label("Credits", systemImage: "person.text.rectangle")
+                }
+                Divider()
+                Button { player.playNext(song) } label: {
+                    Label("Play Next", systemImage: "text.insert")
+                }
+                Button { player.addToQueue(song) } label: {
+                    Label("Add to Queue", systemImage: "text.append")
+                }
+                Button { showAddToPlaylist = true } label: {
+                    Label("Add to Playlist", systemImage: "text.badge.plus")
+                }
+                Button {
+                    Task { await DownloadManager.shared.downloadSong(song) }
+                } label: {
+                    Label(DownloadManager.shared.isDownloaded(song.id) ? "Downloaded" : "Download",
+                          systemImage: DownloadManager.shared.isDownloaded(song.id) ? "checkmark.circle.fill" : "arrow.down.circle")
+                }
+                .disabled(DownloadManager.shared.isDownloaded(song.id))
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.title3)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
+            }
+        }
+    }
+}
+
