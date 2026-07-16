@@ -297,52 +297,57 @@ struct OnboardingView: View {
     // MARK: - Server Setup Page
 
     private var serverSetupPage: some View {
-        VStack(spacing: 0) {
-            Spacer()
-                .frame(height: 60)
+        ScrollView {
+            VStack(spacing: 0) {
+                Spacer().frame(height: 40)
 
-            Text("Connect")
-                .font(.custom("TuafTrial-Bold", size: 32, relativeTo: .title))
-                .foregroundStyle(.white)
-                .padding(.bottom, 6)
+                Text("Connect")
+                    .font(.custom("TuafTrial-Bold", size: 32, relativeTo: .title))
+                    .foregroundStyle(.white)
+                    .padding(.bottom, 6)
 
-            Text("Add your Navidrome server to get started.")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.55))
-                .padding(.bottom, 28)
+                Text("Add your Navidrome server to get started.")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.55))
+                    .multilineTextAlignment(.center)
+                    .padding(.bottom, 28)
 
-            VStack(spacing: 14) {
-                serverField(placeholder: "Server URL", text: $serverURL, icon: "link", keyboard: .URL)
-                serverField(placeholder: "Username", text: $username, icon: "person", keyboard: .default)
-                serverSecureField(placeholder: "Password", text: $password, icon: "lock")
-                serverField(placeholder: "Friendly Name", text: $friendlyName, icon: "tag", keyboard: .default)
-            }
-            .padding(.horizontal, 32)
-
-            if isTesting {
-                HStack(spacing: 10) {
-                    ProgressView().tint(.white)
-                    Text("Connecting...")
-                        .font(.callout)
-                        .foregroundStyle(.white.opacity(0.7))
-                }
-                .padding(.top, 20)
-            }
-
-            if let err = serverError {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                    Text(err)
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
+                VStack(spacing: 14) {
+                    serverField(placeholder: "Server URL", text: $serverURL, icon: "link", keyboard: .URL)
+                    serverField(placeholder: "Username", text: $username, icon: "person", keyboard: .default)
+                    serverSecureField(placeholder: "Password", text: $password, icon: "lock")
+                    serverField(placeholder: "Friendly Name", text: $friendlyName, icon: "tag", keyboard: .default)
                 }
                 .padding(.horizontal, 32)
-                .padding(.top, 16)
-            }
 
-            Spacer()
+                if isTesting {
+                    HStack(spacing: 10) {
+                        ProgressView().tint(.white)
+                        Text("Connecting...")
+                            .font(.callout)
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    .padding(.top, 20)
+                }
+
+                if let err = serverError {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                        Text(err)
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.top, 16)
+                }
+
+                Spacer().frame(height: 40)
+            }
+            .frame(maxWidth: .infinity)
         }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
     }
 
     private func serverField(placeholder: String, text: Binding<String>, icon: String, keyboard: UIKeyboardType) -> some View {
@@ -386,16 +391,19 @@ struct OnboardingView: View {
 
     private var bottomControls: some View {
         VStack(spacing: 12) {
-            // Page indicators
-            HStack(spacing: 8) {
-                ForEach(0..<totalPages, id: \.self) { index in
-                    Capsule()
-                        .fill(index == currentPage ? Color.white : Color.white.opacity(0.3))
-                        .frame(width: index == currentPage ? 24 : 8, height: 8)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
+            // Page indicators — hidden on the final (form) page so they can't
+            // collide with the fields when the keyboard pushes the controls up.
+            if currentPage < totalPages - 1 {
+                HStack(spacing: 8) {
+                    ForEach(0..<totalPages, id: \.self) { index in
+                        Capsule()
+                            .fill(index == currentPage ? Color.white : Color.white.opacity(0.3))
+                            .frame(width: index == currentPage ? 24 : 8, height: 8)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
+                    }
                 }
+                .padding(.bottom, 20)
             }
-            .padding(.bottom, 20)
 
             // Main button
             if currentPage == totalPages - 1 {
