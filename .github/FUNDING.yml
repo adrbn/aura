@@ -1,10 +1,3 @@
-# GitHub Sponsors + Ko-fi. Shown as a "Sponsor" button on the repo page.
-# Replace the TODO placeholders after creating each account.
-
-github: [TODO-github-username]
-ko_fi: TODO-kofi-handle
-
-# Optional — uncomment if/when you enable:
-# buy_me_a_coffee: TODO-bmc-handle
-# liberapay: TODO-liberapay-handle
-# custom: ['https://aura-music.app/donate']
+# GitHub Sponsors + Ko-fi — shown as a "Sponsor" button on the repo page.
+github: [adrbn]
+ko_fi: adrbn
