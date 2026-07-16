@@ -45,6 +45,9 @@ final class AudioPlayer {
     var sleepTimerActive: Bool = false
     var sleepTimerEndOfSong: Bool = false
     var bufferProgress: Double = 0
+    /// True while a freshly-selected track is loading and hasn't reached
+    /// `readyToPlay` yet — drives the shimmering progress bar in Now Playing.
+    var isBuffering = false
     var isBuildingQueue = false  // True while fetching similar songs for autoplay
 
     private var player: AVPlayer?
@@ -595,6 +598,7 @@ final class AudioPlayer {
     }
 
     private func observePlayerItem(_ playerItem: AVPlayerItem, song: Song) {
+        isBuffering = true
         playerItemStatusObservation = playerItem.observe(\.status, options: [.initial, .new]) { item, _ in
             switch item.status {
             case .unknown:
@@ -603,11 +607,13 @@ final class AudioPlayer {
                 AppLogger.shared.log("✅ PlayerItem readyToPlay for \(song.title)")
                 DispatchQueue.main.async { [weak self] in
                     self?.consecutiveFailures = 0
+                    self?.isBuffering = false
                 }
             case .failed:
                 AppLogger.shared.log("❌ PlayerItem failed for \(song.title): \(item.error?.localizedDescription ?? "unknown error")")
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self, self.currentSong?.id == song.id else { return }
+                    self.isBuffering = false
                     if self.isEffectivelyOffline {
                         self.handleOfflinePlaybackError()
                         return

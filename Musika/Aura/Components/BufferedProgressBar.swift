@@ -7,6 +7,8 @@ struct BufferedProgressBar: View {
     let buffer: Double
     var accentColor: Color = .white
     let onSeek: (Double) -> Void
+    /// While true (track loading, not started), the track pulses like a skeleton.
+    var loading: Bool = false
 
     @State private var isDragging = false
     @State private var dragValue: Double = 0
@@ -25,6 +27,14 @@ struct BufferedProgressBar: View {
                 Capsule()
                     .fill(.ultraThinMaterial)
                     .frame(height: barHeight)
+                    .overlay {
+                        if loading && !isDragging {
+                            Capsule()
+                                .fill(accentColor.opacity(0.35))
+                                .frame(height: barHeight)
+                                .shimmering()
+                        }
+                    }
                 // Buffer indicator
                 Capsule()
                     .fill(.white.opacity(0.2))

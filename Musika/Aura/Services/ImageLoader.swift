@@ -262,6 +262,18 @@ final class ArtworkCache: @unchecked Sendable {
         return sig
     }
 
+    /// Learn the server's placeholder signatures for the sizes we actually use, in
+    /// the background, right after connecting — so the per-fetch placeholder check in
+    /// `fetchImage` finds them cached and NEVER blocks a real cover on a probe download.
+    /// Call once per server. This is the single biggest cover-load latency win.
+    func primePlaceholderSignatures(server: ServerConfig) {
+        Task.detached(priority: .utility) {
+            for size in [100, 200, 400, 800] {
+                _ = await self.placeholderSignature(forSize: size, server: server)
+            }
+        }
+    }
+
     /// Warm the cache for a list of cover art ids at a given point size so list
     /// thumbnails are already on disk/memory before their rows scroll into view.
     /// Skips cached entries; shares in-flight requests with on-screen views.
@@ -409,9 +421,13 @@ struct CoverArtAsyncImage: View {
     /// Track the coverArt we loaded so we can detect changes without re-flashing
     @State private var loadedCoverArt: String?
 
-    /// Large display images — always request at least 1200px for consistent high quality
+    /// Hero images: cap the on-demand server resize at the 800 bucket. It's
+    /// imperceptible on a phone but far faster for Navidrome to generate and to
+    /// transfer than 1200, and — being a normalized bucket — it SHARES the cache
+    /// with album-grid thumbnails, so an already-seen album shows instantly with no
+    /// late "HD" swap. (Was `max(1200, …)`, which made every hero a slow full-res fetch.)
     private var requestSize: Int {
-        max(1200, Int(size * UIScreen.main.scale))
+        ArtworkCache.normalizedSize(min(800, Int(size * UIScreen.main.scale)))
     }
 
     private func cacheKey(for id: String) -> String {

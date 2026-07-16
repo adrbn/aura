@@ -719,7 +719,8 @@ struct NowPlayingView: View {
                 progress: player.progress,
                 buffer: player.bufferProgress,
                 accentColor: .white,
-                onSeek: { player.seek(to: $0 * player.duration) }
+                onSeek: { player.seek(to: $0 * player.duration) },
+                loading: player.isBuffering
             )
 
             HStack {
