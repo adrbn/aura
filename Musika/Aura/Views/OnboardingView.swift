@@ -297,57 +297,52 @@ struct OnboardingView: View {
     // MARK: - Server Setup Page
 
     private var serverSetupPage: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                Spacer().frame(height: 40)
+        VStack(spacing: 0) {
+            Spacer().frame(height: 60)
 
-                Text("Connect")
-                    .font(.custom("TuafTrial-Bold", size: 32, relativeTo: .title))
-                    .foregroundStyle(.white)
-                    .padding(.bottom, 6)
+            Text("Connect")
+                .font(.custom("TuafTrial-Bold", size: 32, relativeTo: .title))
+                .foregroundStyle(.white)
+                .padding(.bottom, 6)
 
-                Text("Add your Navidrome server to get started.")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.55))
-                    .multilineTextAlignment(.center)
-                    .padding(.bottom, 28)
+            Text("Add your Navidrome server to get started.")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+                .padding(.bottom, 28)
 
-                VStack(spacing: 14) {
-                    serverField(placeholder: "Server URL", text: $serverURL, icon: "link", keyboard: .URL)
-                    serverField(placeholder: "Username", text: $username, icon: "person", keyboard: .default)
-                    serverSecureField(placeholder: "Password", text: $password, icon: "lock")
-                    serverField(placeholder: "Friendly Name (optional)", text: $friendlyName, icon: "tag", keyboard: .default)
+            VStack(spacing: 14) {
+                serverField(placeholder: "Server URL", text: $serverURL, icon: "link", keyboard: .URL)
+                serverField(placeholder: "Username", text: $username, icon: "person", keyboard: .default)
+                serverSecureField(placeholder: "Password", text: $password, icon: "lock")
+                serverField(placeholder: "Friendly Name (optional)", text: $friendlyName, icon: "tag", keyboard: .default)
+            }
+            .padding(.horizontal, 32)
+
+            if isTesting {
+                HStack(spacing: 10) {
+                    ProgressView().tint(.white)
+                    Text("Connecting...")
+                        .font(.callout)
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+                .padding(.top, 20)
+            }
+
+            if let err = serverError {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                    Text(err)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.8))
                 }
                 .padding(.horizontal, 32)
-
-                if isTesting {
-                    HStack(spacing: 10) {
-                        ProgressView().tint(.white)
-                        Text("Connecting...")
-                            .font(.callout)
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
-                    .padding(.top, 20)
-                }
-
-                if let err = serverError {
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
-                        Text(err)
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
-                    .padding(.horizontal, 32)
-                    .padding(.top, 16)
-                }
-
-                Spacer().frame(height: 40)
+                .padding(.top, 16)
             }
-            .frame(maxWidth: .infinity)
+
+            Spacer()
         }
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.interactively)
     }
 
     private func serverField(placeholder: String, text: Binding<String>, icon: String, keyboard: UIKeyboardType) -> some View {
