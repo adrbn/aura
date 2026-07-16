@@ -51,9 +51,6 @@ struct QueueView: View {
                                         .lineLimit(1)
                                 }
                                 Spacer()
-                                Text(song.durationFormatted)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -99,9 +96,6 @@ struct QueueView: View {
                                         .lineLimit(1)
                                 }
                                 Spacer()
-                                Text(song.durationFormatted)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -170,7 +164,6 @@ struct QueueView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .environment(\.editMode, .constant(.active))
             .onDisappear { undoTimer?.invalidate() }
             .overlay(alignment: .bottom) {
                 if undoQueue != nil {
