@@ -201,6 +201,19 @@ struct HomeView: View {
             await loadData()
             await mixRefresh
         }
+        .onChange(of: serverManager.currentServer?.id) { _, _ in
+            // Server switched: drop the previous server's content and reload so the
+            // Home tab (favorites, recently added, counts…) reflects the new server
+            // without needing an app relaunch.
+            isLoading = true
+            recentSongs = []; frequentAlbums = []; newestAlbums = []; randomAlbums = []
+            starredSongs = []; starredArtists = []
+            songCount = 0; albumCount = 0; playlistCount = 0
+            Task {
+                await loadData(force: true)
+                await mixGenerator.generateIfNeeded()
+            }
+        }
     }
 
 
@@ -233,8 +246,11 @@ struct HomeView: View {
                     Image(systemName: "chevron.down")
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(.secondary)
-                    Spacer(minLength: 0)
                 }
+                // Explicit full-width leading frame so the label never briefly
+                // trailing/centre-aligns while the title text changes on a server switch.
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .animation(nil, value: homeTitle)
             }
             .buttonStyle(.plain)
         } else {

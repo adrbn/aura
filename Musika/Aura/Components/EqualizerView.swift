@@ -97,6 +97,19 @@ struct EqualizerView: View {
             }
             .padding(.horizontal, 16)
         }
+        // Soft edge fade so overflowing presets read as a scrollable row instead of
+        // being hard-cut at the screen edge.
+        .mask(
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: .black, location: 0.04),
+                    .init(color: .black, location: 0.96),
+                    .init(color: .clear, location: 1)
+                ],
+                startPoint: .leading, endPoint: .trailing
+            )
+        )
     }
 
     // MARK: - EQ Bands

@@ -318,7 +318,8 @@ struct ArtistDetailView: View {
             await MainActor.run {
                 isStarred = artistStarred
                 topSongs = allArtistSongs
-                albums = allAlbums
+                // Newest → oldest (albums without a year sink to the bottom).
+                albums = allAlbums.sorted { ($0.year ?? 0) > ($1.year ?? 0) }
                 artistImageURL = imageURL
                 isLoading = false
             }

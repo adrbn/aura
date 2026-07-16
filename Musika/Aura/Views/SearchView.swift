@@ -232,6 +232,17 @@ struct SearchResultsContainer: View {
 
     @ViewBuilder
     private var resultsRows: some View {
+        if isSearching || (isSearchingLyrics && lyricsSongs.isEmpty) {
+            HStack(spacing: 10) {
+                ProgressView().tint(.secondary)
+                Text(isSearching ? "Searching…" : "Searching lyrics…")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, 20)
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+        }
         if results.isOffline {
             HStack(spacing: 6) {
                 Image(systemName: "wifi.slash")
