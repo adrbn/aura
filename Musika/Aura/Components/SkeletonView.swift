@@ -15,7 +15,7 @@ struct ShimmerModifier: ViewModifier {
                     startPoint: .init(x: phase - 0.3, y: 0.5),
                     endPoint: .init(x: phase + 0.3, y: 0.5)
                 )
-                .blendMode(.sourceAtop)
+                .blendMode(BlendMode.sourceAtop)
             )
             .onAppear {
                 withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {

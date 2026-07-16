@@ -131,18 +131,6 @@ struct ContentView: View {
                 }
                 ToastOverlay()
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        serverManager.goBackOnline()
-                    } label: {
-                        Label("Go Online", systemImage: "wifi")
-                    }
-                }
-            }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                OfflineStatusBar()
-            }
         }
         .fullScreenCover(isPresented: Binding(
             get: { audioPlayer.isShowingNowPlaying },

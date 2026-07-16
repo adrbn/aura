@@ -41,6 +41,14 @@ struct TabRootGlass: ViewModifier {
 
 extension View {
     func tabRootGlass(scrollY: Binding<CGFloat>) -> some View { modifier(TabRootGlass(scrollY: scrollY)) }
+
+    /// A `List` row with no insets, no separator and a clear background — for custom
+    /// rows (titles, search fields, grids, footnotes) inside a tab-root `List`.
+    func clearRow() -> some View {
+        listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+    }
 }
 
 /// The big, left-aligned title to drop in as the FIRST row of a tab root's List/ScrollView.

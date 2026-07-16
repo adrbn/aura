@@ -69,13 +69,15 @@ struct OfflineLibraryView: View {
     @State private var downloadManager = DownloadManager.shared
     @State private var cachedSongs: [Song] = []
     @State private var searchText = ""
-    @State private var mode: BrowseMode = .albums
+    @State private var mode: BrowseMode = .songs
+    @State private var scrollY: CGFloat = 0
+    @Environment(ServerManager.self) private var serverManager
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
     @Environment(\.scenePhase) private var scenePhase
 
     enum BrowseMode: String, CaseIterable, Identifiable {
-        case albums = "Albums", songs = "Songs", artists = "Artists", playlists = "Playlists"
+        case songs = "Songs", playlists = "Playlists", artists = "Artists", albums = "Albums"
         var id: String { rawValue }
     }
 
@@ -116,45 +118,70 @@ struct OfflineLibraryView: View {
     }
 
     var body: some View {
-        Group {
+        List {
+            // Big left title as the first scrolling row — same chrome as the online tabs.
+            TabTitleRow("offline") {
+                Button { serverManager.goBackOnline() } label: {
+                    Image(systemName: "wifi").font(.headline).foregroundStyle(accentColor)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Go Online")
+            }
+            .clearRow()
+
+            // Why we're offline — now part of the flow (was a top safe-area inset).
+            OfflineStatusBar()
+                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+
             if allOfflineSongs.isEmpty {
                 ContentUnavailableView(
                     "No Offline Content",
                     systemImage: "arrow.down.circle",
                     description: Text("Download or stream songs to have them available offline")
                 )
+                .frame(maxWidth: .infinity)
+                .padding(.top, 40)
+                .clearRow()
             } else {
-                VStack(spacing: 0) {
-                    Picker("Browse", selection: $mode) {
-                        ForEach(BrowseMode.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    .padding(.bottom, 10)
+                SearchFieldBar(text: $searchText, prompt: "Search offline…")
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
 
-                    ScrollView {
-                        switch mode {
-                        case .albums: albumsGrid
-                        case .songs: songsList
-                        case .artists: artistsList
-                        case .playlists: playlistsList
-                        }
-                        Text("Streamed songs are cached automatically and may be cleared by iOS when storage is low. Downloads are permanent.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 24)
-                            .padding(.top, 20)
-                        Color.clear.frame(height: 100)
-                    }
-                    .scrollIndicators(.hidden)
+                Picker("Browse", selection: $mode) {
+                    ForEach(BrowseMode.allCases) { Text($0.rawValue).tag($0) }
                 }
-                .padding(.top, 8)
+                .pickerStyle(.segmented)
+                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 12, trailing: 16))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+
+                switch mode {
+                case .songs: songRows
+                case .playlists: playlistRows
+                case .artists: artistRows
+                case .albums: albumRows
+                }
+
+                Text("Streamed songs are cached automatically and may be cleared by iOS when storage is low. Downloads are permanent.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
+                    .clearRow()
+
+                Color.clear.frame(height: 100).clearRow()
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .background(Color.themeBg)
-        .navigationTitle("Offline")
-        .searchable(text: $searchText, prompt: "Search offline…")
+        .scrollIndicators(.hidden)
+        .tabRootGlass(scrollY: $scrollY)
         .onAppear { refreshCachedSongs() }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active { refreshCachedSongs() }
@@ -170,14 +197,15 @@ struct OfflineLibraryView: View {
 
     // MARK: Albums
 
-    private var albumsGrid: some View {
+    private var albumRows: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 16)], spacing: 20) {
             ForEach(albums) { album in
                 NavigationLink {
                     OfflineAlbumDetailView(album: album)
                 } label: {
                     VStack(alignment: .leading, spacing: 6) {
-                        CoverArtImage(coverArt: album.coverArt, size: 160, cornerRadius: 10)
+                        CoverArtImage(coverArt: album.coverArt, size: 160, cornerRadius: 10,
+                                      placeholderName: album.name, placeholderKind: .album)
                         Text(album.name)
                             .font(.caption.weight(.medium))
                             .lineLimit(1)
@@ -189,31 +217,52 @@ struct OfflineLibraryView: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .contextMenu {
+                    Button {
+                        if let first = album.songs.first {
+                            player.playSong(first, fromQueue: album.songs, startIndex: 0)
+                        }
+                    } label: { Label("Play", systemImage: "play.fill") }
+                    Button { player.playShuffled(album.songs) } label: {
+                        Label("Shuffle", systemImage: "shuffle")
+                    }
+                    Button { player.addToQueue(album.songs) } label: {
+                        Label("Add to Queue", systemImage: "text.append")
+                    }
+                }
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 16)
+        .clearRow()
     }
 
     // MARK: Songs
 
-    private var songsList: some View {
-        LazyVStack(spacing: 0) {
-            ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
-                SongRowView(song: song) {
-                    player.playSong(song, fromQueue: filteredSongs, startIndex: index)
+    @ViewBuilder private var songRows: some View {
+        ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
+            SongRowView(song: song) {
+                player.playSong(song, fromQueue: filteredSongs, startIndex: index)
+            }
+            .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding,
+                                      leading: 16,
+                                      bottom: AppSettings.shared.listDensity.verticalPadding,
+                                      trailing: 16))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .swipeActions(edge: .trailing) {
+                Button { player.addToQueue([song]) } label: {
+                    Image(systemName: "text.append")
                 }
-                .swipeActions(edge: .trailing) {
-                    if downloadManager.isDownloaded(song.id) {
-                        Button(role: .destructive) {
-                            downloadManager.deleteSong(song.id)
-                        } label: {
-                            Image(systemName: "trash")
-                        }
-                        .accessibilityLabel("Delete download")
+                .tint(.blue)
+                .accessibilityLabel("Add to Queue")
+                if downloadManager.isDownloaded(song.id) {
+                    Button(role: .destructive) {
+                        downloadManager.deleteSong(song.id)
+                    } label: {
+                        Image(systemName: "trash")
                     }
+                    .accessibilityLabel("Delete download")
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, AppSettings.shared.listDensity.verticalPadding)
             }
         }
     }
@@ -221,7 +270,7 @@ struct OfflineLibraryView: View {
     // MARK: Playlists
 
     @ViewBuilder
-    private var playlistsList: some View {
+    private var playlistRows: some View {
         let items = offlinePlaylists
         if items.isEmpty {
             ContentUnavailableView(
@@ -229,59 +278,53 @@ struct OfflineLibraryView: View {
                 systemImage: "music.note.list",
                 description: Text("Playlists appear here once some of their songs are downloaded or cached")
             )
+            .frame(maxWidth: .infinity)
             .padding(.top, 40)
+            .clearRow()
         } else {
-            LazyVStack(spacing: 0) {
-                ForEach(items, id: \.snapshot.id) { item in
-                    NavigationLink {
-                        OfflinePlaylistDetailView(snapshot: item.snapshot, availableSongs: item.available)
-                    } label: {
-                        HStack(spacing: 12) {
-                            CoverArtImage(coverArt: item.snapshot.coverArt, size: 50, cornerRadius: 8)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(item.snapshot.name).font(.subheadline.weight(.medium))
-                                    .foregroundStyle(.primary).lineLimit(1)
-                                Text("\(item.available.count) of \(item.snapshot.songCount) available")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+            ForEach(items, id: \.snapshot.id) { item in
+                NavigationLink {
+                    OfflinePlaylistDetailView(snapshot: item.snapshot, availableSongs: item.available)
+                } label: {
+                    HStack(spacing: 12) {
+                        CoverArtImage(coverArt: item.snapshot.coverArt, size: 50, cornerRadius: 8,
+                                      placeholderName: item.snapshot.name, placeholderKind: .playlist)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.snapshot.name).font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary).lineLimit(1)
+                            Text("\(item.available.count) of \(item.snapshot.songCount) available")
+                                .font(.caption).foregroundStyle(.secondary)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
                 }
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             }
         }
     }
 
     // MARK: Artists
 
-    private var artistsList: some View {
-        LazyVStack(spacing: 0) {
-            ForEach(artists) { artist in
-                NavigationLink {
-                    OfflineArtistDetailView(artist: artist)
-                } label: {
-                    HStack(spacing: 12) {
-                        CoverArtImage(coverArt: artist.coverArt, size: 50, cornerRadius: 25)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(artist.name).font(.subheadline.weight(.medium))
-                                .foregroundStyle(.primary).lineLimit(1)
-                            Text("\(artist.songs.count) song\(artist.songs.count == 1 ? "" : "s")")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+    private var artistRows: some View {
+        ForEach(artists) { artist in
+            NavigationLink {
+                OfflineArtistDetailView(artist: artist)
+            } label: {
+                HStack(spacing: 12) {
+                    CoverArtImage(coverArt: artist.coverArt, size: 50, cornerRadius: 25,
+                                  placeholderName: artist.name, placeholderKind: .artist)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(artist.name).font(.subheadline.weight(.medium))
+                            .foregroundStyle(.primary).lineLimit(1)
+                        Text("\(artist.songs.count) song\(artist.songs.count == 1 ? "" : "s")")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
             }
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
         }
     }
 }
