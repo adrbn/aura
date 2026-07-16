@@ -206,16 +206,52 @@ struct HomeView: View {
 
     // MARK: - Home Content
 
+    /// The big Home title. With more than one server configured it becomes a
+    /// tappable menu to switch between servers (checkmark = active); with a single
+    /// server it's the plain title, unchanged.
+    @ViewBuilder private var homeTitleLabel: some View {
+        if serverManager.servers.count > 1 {
+            Menu {
+                ForEach(serverManager.servers) { server in
+                    Button {
+                        guard server.id != serverManager.currentServer?.id else { return }
+                        serverManager.selectServer(server)
+                        Task { await serverManager.testConnection() }
+                    } label: {
+                        if server.id == serverManager.currentServer?.id {
+                            Label(server.friendlyName, systemImage: "checkmark")
+                        } else {
+                            Text(server.friendlyName)
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(homeTitle)
+                        .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
+                        .foregroundStyle(.primary)
+                    Image(systemName: "chevron.down")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                }
+            }
+            .buttonStyle(.plain)
+        } else {
+            Text(homeTitle)
+                .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     private var homeContent: some View {
         VStack(alignment: .leading, spacing: 24) {
             // Big, left-aligned title — scrolls away with the content and returns at the
             // top on bounce, so it doesn't keep a fixed black bar that breaks the top glass fade.
             if !homeTitle.isEmpty {
                 ZStack(alignment: .trailing) {
-                    Text(homeTitle)
-                        .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
-                        .foregroundStyle(.primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    homeTitleLabel
                     #if !APPSTORE_BUILD
                     if appSettings.betaFeaturesEnabled {
                         NavigationLink {
