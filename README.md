@@ -1,93 +1,95 @@
 <div align="center">
 
+<img src="./aura-iOS-Default-1024x1024@1x.png" width="118" alt="Aura app icon" />
+
 # Aura
 
 **A native SwiftUI music client for Navidrome, Subsonic & compatible servers.**
 
-Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full offline mode — with the polish of Apple Music, for the music *you* host.
+Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full offline mode — the polish of Apple Music, for the library *you* host.
 
-*Free. Open source (MIT). No ads. No subscriptions. No feature gates.*
+<p>
+<img alt="Platform: iOS 26+" src="https://img.shields.io/badge/iOS-26%2B-000000?style=flat-square&logo=apple&logoColor=white" />
+<img alt="Built with SwiftUI" src="https://img.shields.io/badge/SwiftUI-000000?style=flat-square&logo=swift&logoColor=F05138" />
+<img alt="Swift" src="https://img.shields.io/badge/Swift-F05138?style=flat-square&logo=swift&logoColor=white" />
+<img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-3DA639?style=flat-square" />
+<img alt="Price: Free" src="https://img.shields.io/badge/Price-Free-2ea44f?style=flat-square" />
+</p>
+
+<p>
+<a href="https://github.com/adrbn/aura/releases"><img alt="Download IPA" src="https://img.shields.io/badge/⬇_Download_IPA-Releases-0D1117?style=for-the-badge&logo=github&logoColor=white" /></a>
+<a href="https://ko-fi.com/adrbn"><img alt="Ko-fi" src="https://img.shields.io/badge/Ko--fi-Buy_me_a_coffee-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white" /></a>
+<a href="https://github.com/sponsors/adrbn"><img alt="Sponsor" src="https://img.shields.io/badge/Sponsor-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" /></a>
+</p>
 
 </div>
 
 ---
 
-> **Aura is a client, not a server.** You point it at a Navidrome / Subsonic-compatible server you own or have access to — it plays your library, it doesn't host or provide any music.
+> **Aura is a client, not a server.** Point it at a Navidrome / Subsonic-compatible server you own — it plays your library, it doesn't host or provide any music.
 
-## Why another client?
+## ✨ Highlights
 
-Every iOS Subsonic client felt dated, missed features that are table stakes in Apple Music, or wasn't *really* native. Aura is 100% SwiftUI, built for iOS 26, by one person who listens to a lot of music.
+- 🎧 **Playback** — gapless + crossfade, replay gain, lossless FLAC/ALAC or smart transcoding, **5-band parametric EQ** (15 presets + custom), sleep timer, full queue (play next / add / drag-reorder / autoplay), scrobbling.
+- 📝 **Lyrics** — time-synced scrolling lyrics (tap to jump), server-first with **LRCLIB** fallback, full-screen in landscape, and **search your whole library by lyric content**.
+- 📻 **Discovery** — **Instant Mix** from any song/artist, auto-generated genre / mood / time-of-day **"Made For You"** mixes, and a **Year Wrapped** retrospective.
+- ✈️ **Offline** — download songs / albums / playlists / whole library, automatic streaming cache, offline search, and a graceful offline mode when the server is unreachable.
+- 📚 **Library** — fuzzy unified search, smart ranking, custom playlist covers, content-based duplicate detection, multi-folder Navidrome, and **multiple server profiles** switchable from the Home title.
+- 🍎 **iOS integration** — Lock Screen & Control Center, system Now Playing in the **Dynamic Island**, **Siri Shortcuts** (play/pause · next · previous · shuffle), AirPlay, Share Sheet, and Keychain-only credentials.
+- 🎨 **Appearance** — 7 accent colors, pure-black OLED mode, adjustable density, reorderable tabs, a landscape nightstand clock, and generated cover art for missing artwork.
 
-- **Free everywhere** — App Store, build-from-source, or sideload IPA
-- **Open source (MIT)** — read it, audit it, build it yourself
-- **No ads, no subscriptions, no locked features**
-- Support development via **GitHub Sponsors / Ko-fi** (optional, never required)
+## 🛠️ Built with
 
-## Features
+`SwiftUI` · `Swift Concurrency` · `AVFoundation` (playback + EQ) · `MediaPlayer` (Now Playing / remote commands) · `App Intents` (Siri) · `WidgetKit` + `ActivityKit` · `CryptoKit` (cache) · `Security` / Keychain · `URLSession` — talking to the **Subsonic API** and **LRCLIB**. 100% native, no third-party UI frameworks.
 
-**Playback** — gapless + adjustable crossfade, replay gain, stream at 128/192/320 kbps or keep lossless FLAC/ALAC, smart transcoding, **5-band parametric EQ** with 15 presets + custom curves, sleep timer (incl. "stop after this song"), full queue management (play next / add to queue / drag-reorder / autoplay), shuffle + three repeat modes, scrobbling with a configurable threshold.
+## 📊 How it compares
 
-**Lyrics** — time-synced scrolling lyrics (tap a line to jump), pulled from your server with **LRCLIB** as a community fallback, full-screen in landscape, and **search your whole library by lyric content**.
-
-**Discovery** — **Instant Mix** radio from any song/artist, auto-generated **"Made For You"** genre / mood / time-of-day mixes, autoplay so the music never stops, and a **Year Wrapped** retrospective.
-
-**Offline** — download songs, albums, playlists, or your whole library; streamed songs cache automatically for later; full offline search; a graceful offline mode that keeps working when the server is unreachable.
-
-**Library** — unified fuzzy search (songs / albums / artists / playlists), smart result ranking, custom playlist cover art, smart duplicate detection (compares contents, not names), multi-folder Navidrome support, and **multiple server profiles** you can switch between right from the Home title.
-
-**iOS integration** — Lock Screen & Control Center, system Now Playing in the **Dynamic Island**, **Siri Shortcuts** (play/pause, next, previous, shuffle — hands-free), AirPlay & Bluetooth auto-detection, Share Sheet, and Keychain-only credential storage (never plaintext).
-
-**Appearance** — 7 accent colors, pure-black OLED mode, adjustable list density, reorderable tab bar, a landscape nightstand clock, and procedurally-generated cover art for anything missing artwork.
-
-## How does it compare?
-
-| Feature | Aura | Arpeggi | Amperfy | play:Sub | Substreamer |
+| | Aura | Arpeggi | Amperfy | play:Sub | Substreamer |
 |---|:-:|:-:|:-:|:-:|:-:|
-| Native SwiftUI | ✅ | ✅ | Partial | ❌ | ❌ |
+| Native SwiftUI | ✅ | ✅ | ~ | ❌ | ❌ |
 | Open source | ✅ MIT | ❌ | ✅ | ❌ | ❌ |
-| On the App Store | ✅ | ❌ TestFlight | ✅ | ✅ | ✅ |
-| Price | **Free** | Donation | Free | $4.99 + sub | Free + IAP |
+| Price | **Free** | Donation | Free | $4.99+sub | Free+IAP |
 | 5-band EQ + presets | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Time-synced lyrics | ✅ | Basic | ✅ | ❌ | ❌ |
+| Time-synced lyrics | ✅ | ~ | ✅ | ❌ | ❌ |
 | Search by lyric content | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Automatic streaming cache | ✅ | ❌ | ❌ | Partial | ❌ |
+| Auto streaming cache | ✅ | ❌ | ❌ | ~ | ❌ |
 | Instant Mix / radio | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Siri Shortcuts | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Gapless + crossfade | ✅ | ✅ | Partial | ✅ | ✅ |
-| Offline mode + downloads | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Multiple server profiles | ✅ | ✅ | ✅ | ❌ | ✅ |
-| Duplicate detection (playlists) | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Custom playlist cover art | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Dynamic Island / Now Playing | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Offline + downloads | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Multiple servers | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Dynamic Island | ✅ | ✅ | ❌ | ❌ | ❌ |
 
-*Corrections welcome — open an issue.*
+<sub>Corrections welcome — open an issue.</sub>
 
-## Compatibility
+## 📦 Install
 
-- **Navidrome** — primary target, tested daily
-- Any **Subsonic API v1.16.1**-compatible server (Airsonic, Gonic, …)
-- **LRCLIB** for community lyrics
-- Requires an existing server; Aura does not host content.
-
-## Build from source
+| | |
+|---|---|
+| **App Store** | _Coming soon_ |
+| **Free IPA** (AltStore / SideStore) | [**Releases →**](https://github.com/adrbn/aura/releases) |
+| **Build from source** | See below |
 
 ```bash
 git clone https://github.com/adrbn/aura
 cd aura
-open Musika/Aura.xcodeproj
+open Musika/Aura.xcodeproj   # Xcode 26+, iOS 26 target — run the "Aura" scheme
 ```
 
-Requires **Xcode 26+** and an **iOS 26** deployment target. Select the `Aura` scheme and run.
+> Two configurations ship: the App Store build, and a sideload build that additionally bundles an optional Soulseek/slskd integration (compiled out of the App Store version).
 
-> There are two build configurations: the App Store build, and a sideload build that additionally bundles an optional Soulseek/slskd integration (stripped from the App Store version via a compile flag).
+## 🔌 Compatibility
 
-## Support the project
+**Navidrome** (primary, tested daily) · any **Subsonic API v1.16.1**-compatible server (Airsonic, Gonic…) · **LRCLIB** for community lyrics. Requires an existing server — Aura hosts nothing.
 
-- **GitHub Sponsors** · **Ko-fi**
-- ⭐ **Star the repo** — it genuinely helps discovery
+## ❤️ Support
 
-## License
+Aura is free and open source. If it earns a place on your home screen, you can support development:
 
-MIT — Copyright (c) 2026 Adrien Robino. See [LICENSE](./LICENSE).
+<a href="https://ko-fi.com/adrbn"><img alt="Ko-fi" src="https://img.shields.io/badge/Ko--fi-Support-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white" /></a> &nbsp;
+<a href="https://github.com/sponsors/adrbn"><img alt="GitHub Sponsors" src="https://img.shields.io/badge/GitHub-Sponsors-EA4AAA?style=flat-square&logo=githubsponsors&logoColor=white" /></a> &nbsp; and ⭐ **star the repo** — it genuinely helps discovery.
 
-Aura is not affiliated with Navidrome, Subsonic, Apple, or any server project mentioned. All trademarks belong to their respective owners.
+## 📄 License
+
+MIT © 2026 Adrien Robino — see [LICENSE](./LICENSE).
+
+<sub>Aura is not affiliated with Navidrome, Subsonic, Apple, or any server project mentioned. All trademarks belong to their respective owners.</sub>
