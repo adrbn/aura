@@ -19,7 +19,7 @@ struct OnboardingView: View {
     private let totalPages = 5
 
     private var formValid: Bool {
-        !serverURL.isEmpty && !username.isEmpty && !password.isEmpty && !friendlyName.isEmpty
+        !serverURL.isEmpty && !username.isEmpty && !password.isEmpty
     }
 
     var body: some View {
@@ -316,7 +316,7 @@ struct OnboardingView: View {
                     serverField(placeholder: "Server URL", text: $serverURL, icon: "link", keyboard: .URL)
                     serverField(placeholder: "Username", text: $username, icon: "person", keyboard: .default)
                     serverSecureField(placeholder: "Password", text: $password, icon: "lock")
-                    serverField(placeholder: "Friendly Name", text: $friendlyName, icon: "tag", keyboard: .default)
+                    serverField(placeholder: "Friendly Name (optional)", text: $friendlyName, icon: "tag", keyboard: .default)
                 }
                 .padding(.horizontal, 32)
 
@@ -462,7 +462,8 @@ struct OnboardingView: View {
         if !url.hasPrefix("http://") && !url.hasPrefix("https://") {
             url = "https://\(url)"
         }
-        let name = friendlyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let typedName = friendlyName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = typedName.isEmpty ? (URL(string: url)?.host ?? "My Server") : typedName
         let server = ServerConfig(url: url, username: username, password: password, friendlyName: name)
 
         do {
