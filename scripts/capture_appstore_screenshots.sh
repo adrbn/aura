@@ -41,7 +41,7 @@ xcrun simctl bootstatus "$UDID" -b
 
 echo "==> Building (Debug) + installing…"
 xcrun xcodebuild build \
-  -project Musika/Aura.xcodeproj \
+  -project Aura/Aura.xcodeproj \
   -scheme "$SCHEME" -configuration Debug \
   -destination "id=$UDID" -derivedDataPath "$DD" \
   CODE_SIGNING_ALLOWED=NO >/dev/null

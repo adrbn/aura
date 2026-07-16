@@ -72,7 +72,7 @@ Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full off
 ```bash
 git clone https://github.com/adrbn/aura
 cd aura
-open Musika/Aura.xcodeproj   # Xcode 26+, iOS 26 target — run the "Aura" scheme
+open Aura/Aura.xcodeproj   # Xcode 26+, iOS 26 target — run the "Aura" scheme
 ```
 
 > Two configurations ship: the App Store build, and a sideload build that additionally bundles an optional Soulseek/slskd integration (compiled out of the App Store version).

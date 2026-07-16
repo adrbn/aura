@@ -40,3 +40,7 @@ TEASER_POST.md
 XCODE_BUILD_SPLIT.md
 reddit_post.md
 *.bak
+
+# Non-app assets / server-maintenance tooling — kept local, not in the app repo
+screenshots sources/
+tools/
