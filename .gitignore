@@ -24,3 +24,19 @@ IPA_Output/
 
 # Logs
 *.log
+
+# Internal planning / strategy / marketing docs — kept local, never published
+APPREVIEW_NOTES.md
+APPSTORE_CONNECT_FILL.md
+APPSTORE_LISTING.md
+ARCHIVE_UPLOAD.md
+CACHING & COMPETITION.md
+DEMO_SERVER_SETUP.md
+IPA_RELEASE_NOTES.md
+KNOWN_LIMITATIONS.md
+SPONSORS_SETUP.md
+TASKLIST.md
+TEASER_POST.md
+XCODE_BUILD_SPLIT.md
+reddit_post.md
+*.bak
