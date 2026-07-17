@@ -2,9 +2,15 @@
 #
 # Capture App Store screenshots for Aura at 6.9" (iPhone 16 Pro Max, 1320x2868).
 #
-# PREREQUISITE: a Subsonic/Navidrome server with content that the app can reach.
-# Run this AFTER the demo server is up — that way the screenshots show exactly
-# what the App Review reviewer will see with the demo credentials.
+# PREREQUISITE: point the app at the DEMO server, not your own library:
+#     URL https://demo.navidrome.org   user demo   password demo
+# Two reasons, both important:
+#  1. Legal — demo.navidrome.org hosts freely-licensed netlabel/CC music. Screenshotting
+#     your own library would put real copyrighted album art (major-label covers) into
+#     App Store marketing material, which is third-party IP you don't hold rights to.
+#  2. Consistency — the reviewer logs in with those same demo credentials, so the
+#     screenshots show exactly what they'll see.
+# Both 16 Pro Max and 17 Pro Max are the 6.9" class (1320x2868) Apple asks for.
 #
 # This script boots the simulator, builds+installs the Debug app, and launches it.
 # You then navigate manually to each screen and press RETURN to capture it.
@@ -15,8 +21,8 @@
 #
 set -euo pipefail
 
-DEVICE_NAME="iPhone 16 Pro Max"
-RUNTIME="iOS26.1"                      # adjust if your installed runtime differs
+DEVICE_NAME="iPhone 17 Pro Max"
+RUNTIME="iOS27.0"                      # adjust if your installed runtime differs
 BUNDLE_ID="com.aura.goldian"
 SCHEME="Aura"                          # Debug scheme is fine for screenshots
 OUT_DIR="$(cd "$(dirname "$0")/.." && pwd)/appstore_screenshots"
