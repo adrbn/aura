@@ -37,7 +37,7 @@ struct PlaylistDetailView: View {
                                     .frame(width: 200, height: 200)
                                 ProgressView()
                                     .scaleEffect(1.5)
-                                    .tint(.white)
+                                    .tint(.primary)
                             }
                         }
                         .frame(width: 200, height: 200)

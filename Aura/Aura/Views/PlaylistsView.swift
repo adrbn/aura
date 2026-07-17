@@ -196,7 +196,7 @@ struct PlaylistsView: View {
                                 Image(systemName: "pin.fill").font(.body)
                                 Text("Pin").font(.caption2)
                             }
-                            .foregroundStyle(selectedPlaylistIds.isEmpty ? .gray : accentColor)
+                            .foregroundStyle(selectedPlaylistIds.isEmpty ? AnyShapeStyle(.tertiary) : AnyShapeStyle(accentColor))
                         }
                         .disabled(selectedPlaylistIds.isEmpty)
                         Button {
@@ -207,7 +207,7 @@ struct PlaylistsView: View {
                                 Image(systemName: "trash.fill").font(.body)
                                 Text("Delete").font(.caption2)
                             }
-                            .foregroundStyle(selectedPlaylistIds.isEmpty ? .gray : .red)
+                            .foregroundStyle(selectedPlaylistIds.isEmpty ? AnyShapeStyle(.tertiary) : AnyShapeStyle(Color.red))
                         }
                         .disabled(selectedPlaylistIds.isEmpty)
                     }

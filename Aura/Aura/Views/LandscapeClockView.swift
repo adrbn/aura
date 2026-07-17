@@ -43,6 +43,7 @@ struct LandscapeClockView: View {
         .ignoresSafeArea()
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
+        .preferredColorScheme(.dark)   // nightstand clock: always dark
         .onReceive(timer) { currentTime = $0 }
         .task {
             for await _ in NotificationCenter.default.notifications(named: UIDevice.orientationDidChangeNotification) {

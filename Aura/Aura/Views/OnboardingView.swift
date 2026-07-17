@@ -68,6 +68,10 @@ struct OnboardingView: View {
         .onAppear {
             withAnimation(.easeOut(duration: 1.2)) { appeared = true }
         }
+        // Hand-authored aurora background is always dark. Pinned locally because this view is
+        // presented as a fullScreenCover sibling of ContentView, so it does NOT inherit the
+        // app-wide appearance setting — without this the keyboard/system chrome would go light.
+        .preferredColorScheme(.dark)
     }
 
     // MARK: - Aurora Background

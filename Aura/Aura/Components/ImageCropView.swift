@@ -52,6 +52,8 @@ struct ImageCropView: View {
             .toolbarBackground(.black, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
+        // Photos-style dark crop editor: pin so the status bar stays legible in light mode.
+        .preferredColorScheme(.dark)
     }
 
     private func performCrop() {

@@ -64,7 +64,7 @@ struct AuraApp: App {
                 ContentView()
                     .environment(serverManager)
                     .environment(audioPlayer)
-                    .preferredColorScheme(.dark)
+                    .preferredColorScheme(appSettings.appearanceMode.colorScheme)
                     .tint(appSettings.activeTheme.accentColor)
                     .environment(\.appAccentColor, appSettings.activeTheme.accentColor)
                     .environment(\.locale, Locale(identifier: appSettings.appLanguage.localeIdentifier))

@@ -187,7 +187,7 @@ struct QueueView: View {
                             Text("Undo shuffle")
                         }
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 10)
                         .background(.ultraThinMaterial, in: Capsule())

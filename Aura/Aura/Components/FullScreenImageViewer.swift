@@ -75,6 +75,7 @@ struct FullScreenImageViewer: View {
             .opacity(backgroundOpacity)
         }
         .statusBarHidden()
+        .preferredColorScheme(.dark)   // full-bleed black photo viewer
         .task { await loadHiRes() }
     }
 

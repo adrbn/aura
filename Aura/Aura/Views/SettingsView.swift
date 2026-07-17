@@ -593,6 +593,14 @@ struct SettingsView: View {
 
     private var customiseSection: some View {
         Section("Appearance") {
+            Picker(selection: $appSettings.appearanceMode) {
+                ForEach(AppearanceMode.allCases, id: \.self) { mode in
+                    Label(mode.rawValue, systemImage: mode.icon).tag(mode)
+                }
+            } label: {
+                Text("Theme")
+            }
+
             NavigationLink("Tab Bar Order") {
                 TabOrderView()
             }

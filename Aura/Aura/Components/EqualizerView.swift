@@ -204,12 +204,12 @@ private struct EQVerticalSlider: View {
         ZStack {
             // Track background
             RoundedRectangle(cornerRadius: trackWidth / 2)
-                .fill(Color.white.opacity(0.08))
+                .fill(Color.primary.opacity(0.08))
                 .frame(width: trackWidth, height: height)
 
             // Zero line
             Rectangle()
-                .fill(Color.white.opacity(0.2))
+                .fill(Color.primary.opacity(0.15))
                 .frame(width: 16, height: 1)
                 .offset(y: yPosition(for: 0) - height / 2)
 

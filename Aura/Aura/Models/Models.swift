@@ -98,6 +98,7 @@ final class AppSettings {
     var showUpNext: Bool = true
     var appAccentColor: AppAccentColor = .pink
     var activeTheme: AppTheme = .standard
+    var appearanceMode: AppearanceMode = .system
     var eqPreset: EQPreset = .flat
     var eqCustomBands: [Float] = [0, 0, 0, 0, 0]
     var forceMP3Transcoding: Bool = false
@@ -169,6 +170,7 @@ final class AppSettings {
             showUpNext = decoded.showUpNext ?? true
             appAccentColor = decoded.appAccentColor ?? .pink
             activeTheme = decoded.activeTheme ?? .standard
+            appearanceMode = decoded.appearanceMode ?? .system
             eqPreset = decoded.eqPreset ?? .flat
             eqCustomBands = decoded.eqCustomBands ?? [0, 0, 0, 0, 0]
             forceMP3Transcoding = decoded.forceMP3Transcoding ?? false
@@ -223,6 +225,7 @@ final class AppSettings {
             showUpNext: showUpNext,
             appAccentColor: appAccentColor,
             activeTheme: activeTheme,
+            appearanceMode: appearanceMode,
             eqPreset: eqPreset,
             eqCustomBands: eqCustomBands,
             forceMP3Transcoding: forceMP3Transcoding,
@@ -307,6 +310,7 @@ struct SettingsData: Codable {
     var showUpNext: Bool?
     var appAccentColor: AppAccentColor?
     var activeTheme: AppTheme?
+    var appearanceMode: AppearanceMode?
     var eqPreset: EQPreset?
     var eqCustomBands: [Float]?
     var forceMP3Transcoding: Bool?
@@ -342,6 +346,32 @@ enum AppAccentColor: String, Codable, CaseIterable {
         case .blue: return .blue
         case .indigo: return .indigo
         case .purple: return .purple
+        }
+    }
+}
+
+/// Light/dark preference. `.system` follows iOS; the other two pin the whole app.
+/// Surfaces that live on top of album artwork (Now Playing, the nightstand clock,
+/// the photo viewer) stay dark regardless — they pin their own subtree.
+enum AppearanceMode: String, Codable, CaseIterable {
+    case system = "System"
+    case light = "Light"
+    case dark = "Dark"
+
+    /// `nil` hands control back to iOS.
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max.fill"
+        case .dark: return "moon.fill"
         }
     }
 }

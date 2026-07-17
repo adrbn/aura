@@ -66,6 +66,10 @@ struct NowPlayingView: View {
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                     .cornerRadius(dragOffset > 0 ? min(dragOffset / 3, 30) : 0)
                     .offset(y: dragOffset)
+                    // Immersive artwork canvas: always dark, whatever the app appearance.
+                    // Pinned here (not on the NavigationStack) so the sheets presented from
+                    // this screen — queue, info, credits, EQ — still follow the user's setting.
+                    .preferredColorScheme(.dark)
                 }
             }
             .ignoresSafeArea()

@@ -54,6 +54,7 @@ private struct SettingsSaveModifier4: ViewModifier {
     @State private var s = AppSettings.shared
     func body(content: Content) -> some View {
         content
+            .onChange(of: s.appearanceMode) { _, _ in s.save() }
             .onChange(of: s.landscapeClockEnabled) { _, _ in s.save() }
             .onChange(of: s.lastfmUsername) { _, _ in s.save() }
             .onChange(of: s.lastfmApiKey) { _, _ in s.save() }

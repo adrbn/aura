@@ -7,7 +7,7 @@ struct CircularProgressView: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color.white.opacity(0.2), lineWidth: 2.5)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 2.5)
             Circle()
                 .trim(from: 0, to: CGFloat(progress))
                 .stroke(accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))

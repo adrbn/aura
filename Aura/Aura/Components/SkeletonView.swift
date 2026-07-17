@@ -10,8 +10,11 @@ struct ShimmerModifier: ViewModifier {
         content
             .opacity(pulse)
             .overlay(
+                // `.primary` (not white): the skeleton shapes are filled with systemGray5/6,
+                // which is near-white in light mode — a white sheen would be invisible there.
+                // .primary sweeps dark-on-pale in light, white-on-dark in dark.
                 LinearGradient(
-                    colors: [.clear, .white.opacity(0.25), .clear],
+                    colors: [.clear, Color.primary.opacity(0.2), .clear],
                     startPoint: .init(x: phase - 0.3, y: 0.5),
                     endPoint: .init(x: phase + 0.3, y: 0.5)
                 )
