@@ -1328,20 +1328,23 @@ final class AudioPlayer {
         lyricsStatus = "Loading lyrics..."
         AppLogger.shared.log("🎤 loadLyrics: \(song.title) by \(song.artist ?? "?")")
         Task {
-            // 1. Try LRCLIB online first
+            // 1. Prefer the user's OWN server. This matches the privacy policy ("Aura
+            //    queries LRCLIB only when your server does not provide lyrics") and avoids
+            //    reaching a third-party, largely-unlicensed lyrics DB whenever the server
+            //    already ships the .lrc. Gated on isConnected so an offline / unreachable
+            //    server does NOT stall up to 30s (its request timeout) before we try
+            //    LRCLIB — for that case we skip straight to step 2.
+            if let server = ServerManager.shared.currentServer, ServerManager.shared.isConnected {
+                if lyricsSource == .structured {
+                    if await tryStructuredLyrics(server: server, song: song) { return }
+                    if await tryLegacyLyrics(server: server, song: song) { return }
+                } else {
+                    if await tryLegacyLyrics(server: server, song: song) { return }
+                    if await tryStructuredLyrics(server: server, song: song) { return }
+                }
+            }
+            // 2. Fall back to LRCLIB community lyrics when the server has none / is offline.
             if await tryLRCLIB(song: song) { return }
-            // 2. Fall back to server lyrics
-            guard let server = ServerManager.shared.currentServer else {
-                await MainActor.run { self.lyricsStatus = "No lyrics found" }
-                return
-            }
-            if lyricsSource == .structured {
-                if await tryStructuredLyrics(server: server, song: song) { return }
-                if await tryLegacyLyrics(server: server, song: song) { return }
-            } else {
-                if await tryLegacyLyrics(server: server, song: song) { return }
-                if await tryStructuredLyrics(server: server, song: song) { return }
-            }
             await MainActor.run {
                 self.lyrics = []
                 self.lyricsStatus = "No lyrics found"
