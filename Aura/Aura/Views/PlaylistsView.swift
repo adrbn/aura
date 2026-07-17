@@ -71,8 +71,10 @@ struct PlaylistsView: View {
         HStack(spacing: 14) {
             if isSelecting {
                 Button("Cancel") {
-                    isSelecting = false
-                    selectedPlaylistIds.removeAll()
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        isSelecting = false
+                        selectedPlaylistIds.removeAll()
+                    }
                 }
                 Menu {
                     Button {
@@ -90,19 +92,8 @@ struct PlaylistsView: View {
                 } label: {
                     if isFindingDuplicates { ProgressView() } else { Image(systemName: "checklist") }
                 }
-                Button { pinSelectedPlaylists() } label: {
-                    Image(systemName: "pin")
-                        .foregroundStyle(selectedPlaylistIds.isEmpty ? .gray : accentColor)
-                }
-                .disabled(selectedPlaylistIds.isEmpty)
-                Button {
-                    if selectedPlaylistIds.isEmpty { return }
-                    showDeleteConfirmation = true
-                } label: {
-                    Image(systemName: "trash")
-                        .foregroundStyle(selectedPlaylistIds.isEmpty ? .gray : .red)
-                }
-                .disabled(selectedPlaylistIds.isEmpty)
+                // Pin/Delete now live in the floating bottom bar so they're reachable
+                // without scrolling back up to the title.
             } else {
                 Menu {
                     Button { showCreatePlaylist = true } label: {
@@ -113,7 +104,9 @@ struct PlaylistsView: View {
                             Label("Reorder Pinned", systemImage: "arrow.up.arrow.down")
                         }
                     }
-                    Button { isSelecting = true } label: {
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { isSelecting = true }
+                    } label: {
                         Label("Select", systemImage: "checkmark.circle")
                     }
                     Divider()
@@ -188,6 +181,43 @@ struct PlaylistsView: View {
                 }
                 .scrollIndicators(.hidden)
                 .background(Color.themeBg)
+
+                // Floating selection bar — Pin/Delete stay reachable no matter how far
+                // you've scrolled (mirrors the Photos multi-select toolbar).
+                if isSelecting {
+                    HStack(spacing: 24) {
+                        Text(selectedPlaylistIds.isEmpty ? "Select playlists"
+                                                         : "\(selectedPlaylistIds.count) selected")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(selectedPlaylistIds.isEmpty ? .secondary : .primary)
+                        Spacer()
+                        Button { pinSelectedPlaylists() } label: {
+                            VStack(spacing: 2) {
+                                Image(systemName: "pin.fill").font(.body)
+                                Text("Pin").font(.caption2)
+                            }
+                            .foregroundStyle(selectedPlaylistIds.isEmpty ? .gray : accentColor)
+                        }
+                        .disabled(selectedPlaylistIds.isEmpty)
+                        Button {
+                            if selectedPlaylistIds.isEmpty { return }
+                            showDeleteConfirmation = true
+                        } label: {
+                            VStack(spacing: 2) {
+                                Image(systemName: "trash.fill").font(.body)
+                                Text("Delete").font(.caption2)
+                            }
+                            .foregroundStyle(selectedPlaylistIds.isEmpty ? .gray : .red)
+                        }
+                        .disabled(selectedPlaylistIds.isEmpty)
+                    }
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 12)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
 
                 // Undo banner
                 if showUndoBanner {

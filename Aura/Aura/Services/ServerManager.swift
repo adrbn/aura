@@ -89,9 +89,14 @@ final class ServerManager {
     }
 
     func selectServer(_ server: ServerConfig) {
+        guard server.id != currentServer?.id else { return }
         AppLogger.shared.log("🖥 selectServer: \(server.friendlyName)")
+        // Save the outgoing server's playback + tear down the (now-unreachable) live track,
+        // switch, then resume the incoming server's own saved session (paused).
+        AudioPlayer.shared.prepareForServerSwitch()
         currentServer = server
         saveCurrentServer()
+        AudioPlayer.shared.restoreForCurrentServer()
     }
 
     func testConnection() async {

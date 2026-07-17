@@ -23,9 +23,10 @@ struct BufferedProgressBar: View {
             let w = geo.size.width
             let currentThumb = isDragging ? thumbSizeDragging : thumbSize
             ZStack(alignment: .leading) {
-                // Track background with glass effect
+                // Track background — a neutral light grey (matches the other translucent
+                // UI elements), not the near-black glass it used to be.
                 Capsule()
-                    .fill(.ultraThinMaterial)
+                    .fill(.white.opacity(0.22))
                     .frame(height: barHeight)
                     .overlay {
                         if loading && !isDragging {
@@ -35,9 +36,9 @@ struct BufferedProgressBar: View {
                                 .shimmering()
                         }
                     }
-                // Buffer indicator
+                // Buffer indicator — brighter than the track so it stays readable
                 Capsule()
-                    .fill(.white.opacity(0.2))
+                    .fill(.white.opacity(0.38))
                     .frame(width: max(0, w * min(buffer, 1.0)), height: barHeight)
                     .animation(.linear(duration: 0.3), value: buffer)
                 // Progress fill

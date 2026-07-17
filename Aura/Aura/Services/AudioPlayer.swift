@@ -55,7 +55,12 @@ final class AudioPlayer {
     private var originalQueue: [Song] = []
     private var currentActivity: Activity<MusicPlaybackAttributes>?
     private var backgroundImage: UIImage?
-    private let lastPlaybackKey = "musika_last_playback"
+    /// Per-server key so each server profile keeps (and resumes) its own queue/track.
+    /// A track from server A can't stream once you've switched to server B, so we never
+    /// share one playback session across servers.
+    private var lastPlaybackKey: String {
+        "musika_last_playback_\(ServerManager.shared.currentServer?.id.uuidString ?? "none")"
+    }
     private var sleepTimerTask: Task<Void, Never>?
     private var scrobbleTask: Task<Void, Never>?
     private var lastActivityUpdateTime = Date.distantPast
@@ -197,6 +202,34 @@ final class AudioPlayer {
         }
         // Prepare the player so pressing play works immediately
         preparePlayback(state.currentSong)
+    }
+
+    /// Called by `ServerManager` *before* switching to a different server. Persists the
+    /// current session under the outgoing server's key, then tears the live player down —
+    /// its tracks stop being reachable the moment we point the app at another server, so we
+    /// must not leave a dead item loaded (that's what used to make the queue unplayable).
+    func prepareForServerSwitch() {
+        saveLastPlayback()                 // capture outgoing server's queue/track under ITS key
+        scrobbleTask?.cancel()
+        player?.pause()
+        player?.replaceCurrentItem(with: nil)
+        isPlaying = false
+        isBuffering = false
+        currentSong = nil
+        queue = []
+        originalQueue = []
+        userQueue = []
+        queueIndex = 0
+        currentTime = 0
+        duration = 0
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
+
+    /// Called by `ServerManager` *after* `currentServer` is set to the new server. Restores
+    /// that server's saved session (prepared but paused, so a single tap resumes it). If the
+    /// server has no prior session, playback simply stays cleared.
+    func restoreForCurrentServer() {
+        restoreLastPlayback()
     }
 
     /// Load the stream URL and set up AVPlayer without starting playback

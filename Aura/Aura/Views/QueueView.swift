@@ -6,10 +6,6 @@ struct QueueView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var undoQueue: [Song]?
     @State private var undoTimer: Timer?
-    /// When on, the list enters edit mode for drag-to-reorder. Off by default so
-    /// rows stay clean with native swipe-to-delete (the two are mutually exclusive
-    /// in a SwiftUI List).
-    @State private var isReordering = false
 
     var body: some View {
         NavigationStack {
@@ -55,6 +51,10 @@ struct QueueView: View {
                                         .lineLimit(1)
                                 }
                                 Spacer()
+                                Image(systemName: "line.3.horizontal")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(.tertiary)
+                                    .accessibilityHidden(true)
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -100,6 +100,10 @@ struct QueueView: View {
                                         .lineLimit(1)
                                 }
                                 Spacer()
+                                Image(systemName: "line.3.horizontal")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(.tertiary)
+                                    .accessibilityHidden(true)
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -165,20 +169,9 @@ struct QueueView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    if !autoNextSongs.isEmpty || !player.userQueue.isEmpty {
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.2)) { isReordering.toggle() }
-                        } label: {
-                            Image(systemName: isReordering ? "checkmark" : "arrow.up.arrow.down")
-                        }
-                        .accessibilityLabel(isReordering ? "Done reordering" : "Reorder queue")
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
             }
-            .environment(\.editMode, .constant(isReordering ? .active : .inactive))
             .onDisappear { undoTimer?.invalidate() }
             .overlay(alignment: .bottom) {
                 if undoQueue != nil {
