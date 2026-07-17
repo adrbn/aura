@@ -59,16 +59,6 @@ struct ArtistDetailView: View {
                         .frame(height: 20)
                 }
 
-                Button {
-                    toggleArtistStar()
-                } label: {
-                    Image(systemName: isStarred ? "heart.fill" : "heart")
-                        .font(.title2)
-                        .foregroundStyle(accentColor)
-                }
-                .opacity(isLoading ? 0.4 : 1)
-                .disabled(isLoading)
-
                 HStack(spacing: 10) {
                     Button {
                         if let name = artist?.name {
@@ -94,13 +84,29 @@ struct ArtistDetailView: View {
                             .font(.subheadline.weight(.semibold))
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
-                            .background(.ultraThinMaterial)
+                            .background(Color.primary.opacity(0.08))
                             .foregroundStyle(accentColor)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.borderless)
                     .disabled(topSongs.isEmpty)
                     .opacity(topSongs.isEmpty ? 0.5 : 1)
+
+                    // Favourite sits inline with the actions — on its own row it ate a
+                    // full line and pushed Top Songs down the page.
+                    Button {
+                        toggleArtistStar()
+                    } label: {
+                        Image(systemName: isStarred ? "heart.fill" : "heart")
+                            .font(.title3)
+                            .foregroundStyle(accentColor)
+                            .frame(width: 38, height: 36)
+                            .background(Color.primary.opacity(0.08))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.borderless)
+                    .opacity(isLoading ? 0.4 : 1)
+                    .disabled(isLoading)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -317,7 +323,18 @@ struct ArtistDetailView: View {
 
             await MainActor.run {
                 isStarred = artistStarred
-                topSongs = allArtistSongs
+                // getTopSongs is Last.fm-backed and often returns only a handful (2 for
+                // some artists), so most of this list is filler appended from search3 in
+                // arbitrary order — under a "Top Songs" heading. Rank by play count so the
+                // heading is honest. Sorting on (playCount, original index) keeps it stable:
+                // Swift's sort isn't, and ties must preserve the server's own ranking,
+                // which getTopSongs already put at the front.
+                topSongs = allArtistSongs.enumerated()
+                    .sorted { a, b in
+                        let pa = a.element.playCount ?? 0, pb = b.element.playCount ?? 0
+                        return pa == pb ? a.offset < b.offset : pa > pb
+                    }
+                    .map(\.element)
                 // Newest → oldest (albums without a year sink to the bottom).
                 albums = allAlbums.sorted { ($0.year ?? 0) > ($1.year ?? 0) }
                 artistImageURL = imageURL

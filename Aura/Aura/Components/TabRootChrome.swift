@@ -8,19 +8,41 @@ import UIKit
 /// the status bar, and fades in a Liquid Glass strip at the very top on scroll — like Home.
 /// Because the title is part of the scroll content, content can never overlap it and any
 /// trailing control (e.g. a `Menu`) lives in the real hierarchy, so it works normally.
-struct TabRootGlass: ViewModifier {
-    @Binding var scrollY: CGFloat
-
-    private var safeTop: CGFloat {
+/// Shared top-inset metrics for tab roots.
+///
+/// Tab roots deliberately opt OUT of the top safe area (`.ignoresSafeArea(.container,
+/// edges: .top)`) so content dissolves under the glass strip, then re-add the space by
+/// hand via `contentMargins`. A consequence that cost us two wrong fixes: a
+/// `.safeAreaInset` for the ConnectionBanner — whether applied outside the TabView or
+/// inside a tab — is simply ignored by these views. The banner floats as an overlay, so
+/// tab roots must reserve its height HERE or it covers their big title.
+///
+/// Read these from a view body: they touch @Observable state, so the layout follows the
+/// banner appearing/disappearing.
+enum TabChrome {
+    /// The window's own top safe area (status bar / island).
+    static var windowSafeTop: CGFloat {
         (UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.top) ?? 59
     }
 
+    /// Height to reserve for the floating ConnectionBanner (0 when it's hidden).
+    static var bannerInset: CGFloat { ConnectionBanner.isVisible ? 44 : 0 }
+
+    /// What a tab root should pass to `contentMargins(.top:)`.
+    static var contentTop: CGFloat { windowSafeTop + bannerInset }
+}
+
+struct TabRootGlass: ViewModifier {
+    @Binding var scrollY: CGFloat
+
+    private var safeTop: CGFloat { TabChrome.windowSafeTop }
+
     func body(content: Content) -> some View {
         content
             .ignoresSafeArea(.container, edges: .top)
-            .contentMargins(.top, safeTop, for: .scrollContent)
+            .contentMargins(.top, TabChrome.contentTop, for: .scrollContent)
             .overlay(alignment: .top) {
                 Color.clear
                     .frame(height: safeTop + 26)

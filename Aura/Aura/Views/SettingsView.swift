@@ -140,7 +140,9 @@ struct SettingsView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 84)
-            .background(.ultraThinMaterial)
+            // Same card colour as the grouped sections below (white in light), not a
+            // material — a material over the grey page just reads as more grey.
+            .background(Color.themeGroupedBg)
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)

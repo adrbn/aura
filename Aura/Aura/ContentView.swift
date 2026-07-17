@@ -51,10 +51,9 @@ struct ContentView: View {
 
             ToastOverlay()
         }
-        // safeAreaInset, not overlay: an overlay floated the banner ON TOP of each tab's
-        // big title. This reserves the space instead, so nothing is ever covered. When the
-        // banner is hidden its body is empty, so the inset collapses to zero height.
-        .safeAreaInset(edge: .top, spacing: 0) {
+        // Floats, and tab roots reserve its height via TabChrome.contentTop — they ignore
+        // the top safe area, so an inset here would do nothing.
+        .overlay(alignment: .top) {
             ConnectionBanner()
         }
         .fullScreenCover(isPresented: Binding(
@@ -308,9 +307,15 @@ struct ConnectionBanner: View {
 
     /// Only meaningful once a connection attempt has actually failed —
     /// `connectionError` stays nil during the initial ping, avoiding a launch flash.
-    private var isVisible: Bool {
-        !appSettings.offlineMode && !serverManager.isConnected && serverManager.connectionError != nil
+    /// Static so `TabChrome.bannerInset` reserves space from the SAME rule the banner
+    /// renders from — two copies would drift and the title would get covered again.
+    static var isVisible: Bool {
+        !AppSettings.shared.offlineMode
+            && !ServerManager.shared.isConnected
+            && ServerManager.shared.connectionError != nil
     }
+
+    private var isVisible: Bool { Self.isVisible }
 
     var body: some View {
         if isVisible {

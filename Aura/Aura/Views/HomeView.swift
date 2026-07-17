@@ -120,7 +120,7 @@ struct HomeView: View {
                         // Content scrolls UNDER the status bar / island; the inset keeps it
                         // resting below them at the top.
                         .ignoresSafeArea(.container, edges: .top)
-                        .contentMargins(.top, safeTop, for: .scrollContent)
+                        .contentMargins(.top, TabChrome.contentTop, for: .scrollContent)
                         .overlay(alignment: .top) {
                             // Liquid Glass band pinned at the very top (covers the status bar
                             // area), so scrolled content dissolves under it — like the bottom
@@ -669,15 +669,21 @@ struct HomeView: View {
     /// screen or the previous server's content.
     private var homeSkeleton: some View {
         VStack(alignment: .leading, spacing: 24) {
-            HStack(spacing: 16) {
-                ForEach(0..<3, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.themeSecondaryBg)
-                        .frame(width: 176, height: 176)
+            // Inside a horizontal ScrollView like the real "Made For You" row. As a bare
+            // HStack its 3×176 + gaps = 560pt intrinsic width forced the whole VStack —
+            // page title included — wider than the screen, shifting everything left.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.themeSecondaryBg)
+                            .frame(width: 176, height: 176)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .shimmering()
             }
-            .padding(.horizontal, 16)
-            .shimmering()
+            .scrollDisabled(true)
 
             ForEach(0..<2, id: \.self) { _ in
                 VStack(alignment: .leading, spacing: 12) {

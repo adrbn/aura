@@ -31,7 +31,7 @@ struct SearchView: View {
             SearchResultsContainer(query: $query, navPath: $path)
                 // Results scroll UNDER the status bar; reserve room for title + search field.
                 .ignoresSafeArea(.container, edges: .top)
-                .contentMargins(.top, safeTop + titleHeight + 8 + searchBarHeight, for: .scrollContent)
+                .contentMargins(.top, TabChrome.contentTop + titleHeight + 8 + searchBarHeight, for: .scrollContent)
                 // Liquid Glass strip at the very top, fading in on scroll.
                 .overlay(alignment: .top) {
                     Color.clear
@@ -54,10 +54,10 @@ struct SearchView: View {
                             .frame(height: titleHeight)
                             .padding(.horizontal, 16)
                             .opacity(titleOpacity)
-                        SearchFieldBar(text: $query, prompt: "Search library or lyrics…")
+                        SearchFieldBar(text: $query, prompt: "Search your library…")
                             .frame(height: searchBarHeight)
                     }
-                    .padding(.top, safeTop)
+                    .padding(.top, TabChrome.contentTop)
                     .offset(y: headerOffset)
                     .ignoresSafeArea(.container, edges: .top)
                 }
@@ -156,7 +156,7 @@ struct SearchResultsContainer: View {
             ContentUnavailableView(
                 "Search Your Library",
                 systemImage: "magnifyingglass",
-                description: Text("Find artists, albums, songs, playlists — even by lyrics.")
+                description: Text("Find artists, albums, songs and playlists.")
             )
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
@@ -220,9 +220,6 @@ struct SearchResultsContainer: View {
 
     @ViewBuilder
     private var resultsRows: some View {
-        // Main search only. The lyrics search is slower and secondary — showing it up here
-        // pushed the already-loaded songs/albums down the page. Its spinner lives at the
-        // bottom instead, where the lyric matches actually land, so nothing jumps.
         if isSearching {
             HStack(spacing: 10) {
                 ProgressView().tint(.secondary)
