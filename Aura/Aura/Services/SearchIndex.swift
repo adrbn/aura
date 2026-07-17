@@ -220,41 +220,6 @@ final class SearchIndex {
     }
 
     /// Search lrclib.net for lyrics matches and resolve them to library songs.
-    func searchLyrics(query: String, excluding existingSongIds: Set<String>) async -> [Song] {
-        guard let server = ServerManager.shared.currentServer else { return [] }
-        do {
-            var components = URLComponents(string: "https://lrclib.net/api/search")
-            components?.queryItems = [URLQueryItem(name: "q", value: query)]
-            guard let url = components?.url else { return [] }
-            var request = URLRequest(url: url)
-            request.setValue("Aura/1.0.0 (https://github.com/adrbn)", forHTTPHeaderField: "User-Agent")
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
-
-            struct LrcLibResult: Decodable { let trackName: String?; let artistName: String?; let albumName: String? }
-            let results = try JSONDecoder().decode([LrcLibResult].self, from: data)
-
-            var matched: [Song] = []
-            for result in results.prefix(10) {
-                try Task.checkCancellation()
-                guard let trackName = result.trackName, !trackName.isEmpty else { continue }
-                if let searchResult = try? await SubsonicClient.shared.search3(
-                    server: server, query: trackName, artistCount: 0, albumCount: 0, songCount: 5
-                ) {
-                    for song in searchResult.song ?? [] {
-                        guard !existingSongIds.contains(song.id), !matched.contains(where: { $0.id == song.id }) else { continue }
-                        if let artist = result.artistName, let songArtist = song.artist,
-                           songArtist.localizedCaseInsensitiveContains(artist) || artist.localizedCaseInsensitiveContains(songArtist) {
-                            matched.append(song)
-                        }
-                    }
-                }
-            }
-            return matched
-        } catch {
-            return []
-        }
-    }
 }
 
 // MARK: - Fuzzy matching

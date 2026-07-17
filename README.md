@@ -31,7 +31,7 @@ Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full off
 ## ✨ Highlights
 
 - 🎧 **Playback** — gapless + crossfade, replay gain, lossless FLAC/ALAC or smart transcoding, **5-band parametric EQ** (15 presets + custom), sleep timer, full queue (play next / add / drag-reorder / autoplay), scrobbling.
-- 📝 **Lyrics** — time-synced scrolling lyrics (tap to jump), server-first with **LRCLIB** fallback, full-screen in landscape, and **search your whole library by lyric content**.
+- 📝 **Lyrics** — time-synced scrolling lyrics (tap to jump), server-first with **LRCLIB** fallback, and full-screen in landscape.
 - 📻 **Discovery** — **Instant Mix** from any song/artist, auto-generated genre / mood / time-of-day **"Made For You"** mixes, and a **Year Wrapped** retrospective.
 - ✈️ **Offline** — download songs / albums / playlists / whole library, automatic streaming cache, offline search, and a graceful offline mode when the server is unreachable.
 - 📚 **Library** — fuzzy unified search, smart ranking, custom playlist covers, content-based duplicate detection, multi-folder Navidrome, and **multiple server profiles** switchable from the Home title.
@@ -51,7 +51,6 @@ Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full off
 | Price | **Free** | Donation | Free | $4.99+sub | Free+IAP |
 | 5-band EQ + presets | ✅ | ❌ | ❌ | ✅ | ❌ |
 | Time-synced lyrics | ✅ | ~ | ✅ | ❌ | ❌ |
-| Search by lyric content | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Auto streaming cache | ✅ | ❌ | ❌ | ~ | ❌ |
 | Instant Mix / radio | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Siri Shortcuts | ✅ | ❌ | ❌ | ❌ | ❌ |

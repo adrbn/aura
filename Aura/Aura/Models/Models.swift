@@ -403,18 +403,22 @@ extension EnvironmentValues {
 
 extension Color {
     static var appAccent: Color { AppSettings.shared.activeTheme.accentColor }
-    // Grouped variants on purpose. The plain ones (systemBackground /
-    // secondarySystemBackground) give white-on-#F2F2F7 in light mode — cards become
-    // invisible. The grouped pair inverts correctly: page grey + cards WHITE in light,
-    // page black + cards #1C1C1E in dark. Dark mode renders identically to before.
+    /// Default page background: WHITE in light, black in dark. Content tabs (Home,
+    /// Library, Search, Playlists) use this — they are not grouped lists.
     static var themeBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? .black : Color(.systemGroupedBackground)
+        AppSettings.shared.activeTheme.usePureBlack ? .black : Color(.systemBackground)
     }
     static var themeSecondaryBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : Color(.secondarySystemGroupedBackground)
+        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : Color(.secondarySystemBackground)
     }
     static var themeGroupedBg: Color {
         AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : Color(.secondarySystemGroupedBackground)
+    }
+    /// Page background for GROUPED list screens ONLY (Settings). Grey in light, so the
+    /// white `themeGroupedBg` rows read as distinct cards — the iOS Settings convention.
+    /// Identical to `themeBg` in dark (both black), so dark mode is untouched.
+    static var themeGroupedPageBg: Color {
+        AppSettings.shared.activeTheme.usePureBlack ? .black : Color(.systemGroupedBackground)
     }
 }
 

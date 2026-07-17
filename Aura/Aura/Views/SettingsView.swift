@@ -192,7 +192,8 @@ struct SettingsView: View {
         .listSectionSpacing(.compact)
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
-        .background(Color.themeBg)
+        // Grouped-list page: grey in light so the white section cards stand out.
+        .background(Color.themeGroupedPageBg)
         .id("\(appSettings.appAccentColor.rawValue)-\(appSettings.activeTheme.rawValue)") // Force full re-render on accent/theme change
         .sheet(isPresented: $showEqualizer) {
             EqualizerView()

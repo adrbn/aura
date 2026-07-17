@@ -99,9 +99,7 @@ struct SearchResultsContainer: View {
 
     @State private var appSettings = AppSettings.shared
     @State private var results = SearchResults()
-    @State private var lyricsSongs: [Song] = []
     @State private var isSearching = false
-    @State private var isSearchingLyrics = false
     @State private var expandedSections: Set<String> = []
     @State private var history = SearchHistory.shared
 
@@ -134,8 +132,8 @@ struct SearchResultsContainer: View {
     private func runSearch() async {
         let q = trimmedQuery
         guard !q.isEmpty else {
-            results = SearchResults(); lyricsSongs = []
-            isSearching = false; isSearchingLyrics = false; expandedSections = []
+            results = SearchResults()
+            isSearching = false; expandedSections = []
             return
         }
         expandedSections = []
@@ -148,16 +146,6 @@ struct SearchResultsContainer: View {
         if Task.isCancelled { return }
         results = found
         isSearching = false
-
-        isSearchingLyrics = true
-        let lyrics = await SearchIndex.shared.searchLyrics(query: q, excluding: Set(found.songs.map { $0.id }))
-        if Task.isCancelled { return }
-        // LRCLIB's search matches track/artist/album metadata, not lyric content — so an
-        // artist/title query just returns more songs by that artist. Drop those, leaving
-        // only genuine phrase hits (e.g. searching a remembered lyric line).
-        let ql = q.lowercased()
-        lyricsSongs = lyrics.filter { !($0.artist ?? "").lowercased().contains(ql) }
-        isSearchingLyrics = false
     }
 
     // MARK: Recently searched (history with thumbnails)
@@ -278,18 +266,7 @@ struct SearchResultsContainer: View {
             sectionContent(section)
         }
 
-        if isSearchingLyrics {
-            HStack(spacing: 8) {
-                ProgressView().controlSize(.small).tint(.secondary)
-                Text("Searching lyrics…").font(.caption).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.vertical, 10)
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-        }
-
-        if results.isEmpty && lyricsSongs.isEmpty && !isSearching && !isSearchingLyrics {
+        if results.isEmpty && !isSearching {
             ContentUnavailableView.search(text: trimmedQuery)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -359,16 +336,6 @@ struct SearchResultsContainer: View {
                 }
                 if !isExpanded && results.playlists.count > collapsedLimit {
                     showMoreButton(section: "playlists", total: results.playlists.count)
-                }
-            }
-        case "lyrics":
-            if !lyricsSongs.isEmpty {
-                let isExpanded = expandedSections.contains("lyrics")
-                let visible = isExpanded ? lyricsSongs : Array(lyricsSongs.prefix(collapsedLimit))
-                sectionHeader("Lyrics Match", systemImage: "text.quote", tint: accentColor)
-                ForEach(visible) { song in songRow(song) }
-                if !isExpanded && lyricsSongs.count > collapsedLimit {
-                    showMoreButton(section: "lyrics", total: lyricsSongs.count)
                 }
             }
         default:
@@ -445,15 +412,12 @@ struct SearchResultsContainer: View {
     private func orderedSections() -> [String] {
         let q = trimmedQuery.lowercased()
         let hasArtistMatch = results.artists.contains { $0.name.lowercased() == q || $0.name.lowercased().contains(q) }
-        let hasAlbumMatch = results.albums.contains { $0.name.lowercased() == q || $0.name.lowercased().hasPrefix(q) }
 
         // Songs always come first; the most relevant secondary type follows.
         if hasArtistMatch {
-            return ["songs", "artists", "albums", "playlists", "lyrics"]
-        } else if hasAlbumMatch {
-            return ["songs", "albums", "artists", "playlists", "lyrics"]
+            return ["songs", "artists", "albums", "playlists"]
         } else {
-            return ["songs", "albums", "artists", "playlists", "lyrics"]
+            return ["songs", "albums", "artists", "playlists"]
         }
     }
 }
