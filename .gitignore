@@ -44,3 +44,9 @@ reddit_post.md
 # Non-app assets / server-maintenance tooling — kept local, not in the app repo
 screenshots sources/
 tools/
+
+# Tuaf is a commercial font. Its licence covers embedding it in the built app, NOT
+# redistributing the file — so it must never be committed to a public repo.
+# Drop your licensed copy in Aura/Aura/ and the build phase picks it up.
+*.otf
+*.ttf

@@ -74,6 +74,13 @@ cd aura
 open Aura/Aura.xcodeproj   # Xcode 26+, iOS 26 target — run the "Aura" scheme
 ```
 
+> **A note on the typeface.** Aura's display font is [**Tuaf**](https://www.futurefonts.xyz/), a
+> commercial font. Its licence covers embedding it in a built app — not redistributing the file —
+> so the `.otf` is **not** in this repository. The app builds and runs fine without it and falls
+> back to the system font; the headings just won't look like the screenshots. To get the intended
+> typography, buy a licence and drop `TuafTrial-Bold.otf` into `Aura/Aura/` — the build picks it
+> up automatically.
+
 > Two configurations ship: the App Store build, and a sideload build that additionally bundles an optional Soulseek/slskd integration (compiled out of the App Store version).
 
 ## 🔌 Compatibility

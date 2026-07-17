@@ -14,7 +14,6 @@
 		87906AC1B1CBE2493FEBE438 /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
 		A0EA5D295C3DFD151DE59C30 /* SlskdClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB587064D721AA775E21C53 /* SlskdClient.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
-		C3D9B6B6FEC0B0C8EDB45CE4 /* TuafTrial-Bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 442AB4DDD10269FB2BA21E79 /* TuafTrial-Bold.otf */; };
 		CCAA00010000000000000001 /* MusicBrainzService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAA00020000000000000001 /* MusicBrainzService.swift */; };
 		DD459BBB131DCB0C4D972CB5 /* ImageCropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40E8E704D9B72925B6B94399 /* ImageCropView.swift */; };
 		E10000010000000000000001 /* AuraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000001 /* AuraApp.swift */; };
@@ -120,7 +119,6 @@
 		196AB9045E589FCE18380A8A /* SearchRanking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchRanking.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE183A34FA /* PlayHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayHistory.swift; sourceTree = "<group>"; };
 		40E8E704D9B72925B6B94399 /* ImageCropView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
-		442AB4DDD10269FB2BA21E79 /* TuafTrial-Bold.otf */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file; path = "TuafTrial-Bold.otf"; sourceTree = "<group>"; };
 		6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
 		BEB587064D721AA775E21C53 /* SlskdClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlskdClient.swift; sourceTree = "<group>"; };
@@ -242,7 +240,6 @@
 				E10000050000000000000004 /* Services */,
 				E10000050000000000000005 /* Views */,
 				E10000050000000000000006 /* Components */,
-				442AB4DDD10269FB2BA21E79 /* TuafTrial-Bold.otf */,
 			);
 			path = Aura;
 			sourceTree = "<group>";
@@ -373,6 +370,7 @@
 				E10000070000000000000001 /* Sources */,
 				E10000040000000000000001 /* Frameworks */,
 				E10000070000000000000002 /* Resources */,
+				E100000700000000000000F0 /* Embed Tuaf font if present */,
 				E10000070000000000000005 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -439,6 +437,41 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		E100000700000000000000F0 /* Embed Tuaf font if present */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Aura/TuafTrial-Bold.otf",
+			);
+			name = "Embed Tuaf font if present";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/TuafTrial-Bold.otf",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Tuaf is a commercial font: the licence covers EMBEDDING it in a built app, not
+# redistributing the .otf, so it is gitignored and absent from this repository.
+# Drop your licensed TuafTrial-Bold.otf into Aura/ for the intended typography;
+# without it every call site already falls back to the system font.
+FONT=\"$SRCROOT/Aura/TuafTrial-Bold.otf\"
+DEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"
+if [ -f \"$FONT\" ]; then
+  mkdir -p \"$DEST\" || exit 1
+  # Hard-fail on a failed copy. A silent failure would ship a release that claims
+  # success while rendering in the system font.
+  cp \"$FONT\" \"$DEST/\" || { echo \"error: found $FONT but could not embed it\"; exit 1; }
+  echo \"note: embedded TuafTrial-Bold.otf\"
+else
+  echo \"warning: TuafTrial-Bold.otf absent - building with the system font fallback\"
+fi
+";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXResourcesBuildPhase section */
 		E10000070000000000000002 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
@@ -448,7 +481,6 @@
 				E100000100000000000000F2 /* AppIcon.icon in Resources */,
 				E10000010000000000000070 /* Localizable.xcstrings in Resources */,
 				E10000010000000000000090 /* PrivacyInfo.xcprivacy in Resources */,
-				C3D9B6B6FEC0B0C8EDB45CE4 /* TuafTrial-Bold.otf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
