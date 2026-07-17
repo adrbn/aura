@@ -14,17 +14,20 @@ private struct HomeDataCache: Codable {
     let playlistCount: Int
     let timestamp: Date
 
-    private static let cacheKey = "musika_home_data_cache"
+    /// Cache is keyed per server so switching never surfaces another server's data.
+    private static func cacheKey(for serverId: String?) -> String {
+        "musika_home_data_cache_\(serverId ?? "none")"
+    }
 
-    static func load() -> HomeDataCache? {
-        guard let data = UserDefaults.standard.data(forKey: cacheKey),
+    static func load(serverId: String?) -> HomeDataCache? {
+        guard let data = UserDefaults.standard.data(forKey: cacheKey(for: serverId)),
               let cache = try? JSONDecoder().decode(HomeDataCache.self, from: data) else { return nil }
         return cache
     }
 
-    func save() {
+    func save(serverId: String?) {
         if let data = try? JSONEncoder().encode(self) {
-            UserDefaults.standard.set(data, forKey: Self.cacheKey)
+            UserDefaults.standard.set(data, forKey: Self.cacheKey(for: serverId))
         }
     }
 }
@@ -181,19 +184,9 @@ struct HomeView: View {
             }
         }
         .task {
-            // Load from cache instantly (no animation — avoids zoom on launch)
-            if let cache = HomeDataCache.load() {
-                recentSongs = cache.recentSongs
-                frequentAlbums = cache.frequentAlbums
-                newestAlbums = cache.newestAlbums
-                randomAlbums = cache.randomAlbums
-                starredSongs = cache.starredSongs
-                starredArtists = cache.starredArtists
-                songCount = cache.songCount
-                albumCount = cache.albumCount
-                playlistCount = cache.playlistCount
-                isLoading = false
-                prefetchHomeCovers()
+            // Load THIS server's cache instantly (no animation — avoids zoom on launch)
+            if let cache = HomeDataCache.load(serverId: serverManager.currentServer?.id.uuidString) {
+                applyCache(cache)
             }
             // Generate / refresh "Made For You" mixes (cheap no-op when fresh)
             // concurrently with the main data load.
@@ -201,14 +194,19 @@ struct HomeView: View {
             await loadData()
             await mixRefresh
         }
-        .onChange(of: serverManager.currentServer?.id) { _, _ in
-            // Server switched: drop the previous server's content and reload so the
-            // Home tab (favorites, recently added, counts…) reflects the new server
-            // without needing an app relaunch.
-            isLoading = true
+        .onChange(of: serverManager.currentServer?.id) { _, newId in
+            // Server switched: clear the previous server's content immediately, then show
+            // the NEW server's own cached home if we have it, otherwise a loading skeleton
+            // — never the old server's data, never a black screen.
             recentSongs = []; frequentAlbums = []; newestAlbums = []; randomAlbums = []
             starredSongs = []; starredArtists = []
             songCount = 0; albumCount = 0; playlistCount = 0
+            loadError = nil
+            if let cache = HomeDataCache.load(serverId: newId?.uuidString) {
+                applyCache(cache)
+            } else {
+                isLoading = true
+            }
             Task {
                 await loadData(force: true)
                 await mixGenerator.generateIfNeeded()
@@ -224,35 +222,39 @@ struct HomeView: View {
     /// server it's the plain title, unchanged.
     @ViewBuilder private var homeTitleLabel: some View {
         if serverManager.servers.count > 1 {
-            Menu {
-                ForEach(serverManager.servers) { server in
-                    Button {
-                        guard server.id != serverManager.currentServer?.id else { return }
-                        serverManager.selectServer(server)
-                        Task { await serverManager.testConnection() }
-                    } label: {
-                        if server.id == serverManager.currentServer?.id {
-                            Label(server.friendlyName, systemImage: "checkmark")
-                        } else {
-                            Text(server.friendlyName)
+            // The Menu is left-anchored by the trailing Spacer (NOT a full-width label
+            // frame — that would make the popover open centred). The content-sized label
+            // keeps the dropdown anchored under the title, and `animation(nil)` stops the
+            // title from jumping while its text changes on a switch.
+            HStack(spacing: 0) {
+                Menu {
+                    ForEach(serverManager.servers) { server in
+                        Button {
+                            guard server.id != serverManager.currentServer?.id else { return }
+                            serverManager.selectServer(server)
+                            Task { await serverManager.testConnection() }
+                        } label: {
+                            if server.id == serverManager.currentServer?.id {
+                                Label(server.friendlyName, systemImage: "checkmark")
+                            } else {
+                                Text(server.friendlyName)
+                            }
                         }
                     }
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(homeTitle)
+                            .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
+                            .foregroundStyle(.primary)
+                        Image(systemName: "chevron.down")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .animation(nil, value: homeTitle)
                 }
-            } label: {
-                HStack(spacing: 8) {
-                    Text(homeTitle)
-                        .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
-                        .foregroundStyle(.primary)
-                    Image(systemName: "chevron.down")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-                // Explicit full-width leading frame so the label never briefly
-                // trailing/centre-aligns while the title text changes on a server switch.
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .animation(nil, value: homeTitle)
+                .buttonStyle(.plain)
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.plain)
         } else {
             Text(homeTitle)
                 .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
@@ -304,20 +306,26 @@ struct HomeView: View {
                 .animation(.easeInOut(duration: 0.3), value: songCount)
             }
 
-            // Retrospective entry — only when Last.fm is connected (it powers the
-            // Wrapped) and the date logic currently offers a retrospective.
-            if appSettings.lastfmConfigured,
-               let period = WrappedAvailability.offeredPeriods().first {
-                retrospectiveCard(period: period)
-            }
+            if isLoading && !hasHomeContent {
+                // First load / server switch with no cached content → show a skeleton,
+                // never a blank/black screen or the previous server's data.
+                homeSkeleton
+            } else {
+                // Retrospective entry — only when Last.fm is connected (it powers the
+                // Wrapped) and the date logic currently offers a retrospective.
+                if appSettings.lastfmConfigured,
+                   let period = WrappedAvailability.offeredPeriods().first {
+                    retrospectiveCard(period: period)
+                }
 
-            // Made For You — auto-generated mixes
-            if !mixGenerator.mixes.isEmpty {
-                madeForYouSection
-            }
+                // Made For You — auto-generated mixes
+                if !mixGenerator.mixes.isEmpty {
+                    madeForYouSection
+                }
 
-            ForEach(appSettings.homeSectionOrder) { section in
-                homeSection(for: section)
+                ForEach(appSettings.homeSectionOrder) { section in
+                    homeSection(for: section)
+                }
             }
 
             Color.clear.frame(height: 80)
@@ -638,6 +646,61 @@ struct HomeView: View {
     /// Warm artwork caches for the home sections as soon as their data lands, so
     /// covers are already in memory before their (lazy) rows scroll into view.
     /// `prefetch` dedupes and skips already-cached entries, so repeat calls are cheap.
+    /// Populate the home @State from a cached snapshot and mark loading done.
+    private func applyCache(_ cache: HomeDataCache) {
+        recentSongs = cache.recentSongs
+        frequentAlbums = cache.frequentAlbums
+        newestAlbums = cache.newestAlbums
+        randomAlbums = cache.randomAlbums
+        starredSongs = cache.starredSongs
+        starredArtists = cache.starredArtists
+        songCount = cache.songCount
+        albumCount = cache.albumCount
+        playlistCount = cache.playlistCount
+        isLoading = false
+        prefetchHomeCovers()
+    }
+
+    /// Shimmering placeholder shown on first load / server switch instead of a black
+    /// screen or the previous server's content.
+    private var homeSkeleton: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            HStack(spacing: 16) {
+                ForEach(0..<3, id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.themeSecondaryBg)
+                        .frame(width: 176, height: 176)
+                }
+            }
+            .padding(.horizontal, 16)
+            .shimmering()
+
+            ForEach(0..<2, id: \.self) { _ in
+                VStack(alignment: .leading, spacing: 12) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.themeSecondaryBg)
+                        .frame(width: 150, height: 22)
+                        .padding(.horizontal, 16)
+                    ForEach(0..<3, id: \.self) { _ in
+                        HStack(spacing: 12) {
+                            RoundedRectangle(cornerRadius: 8).fill(Color.themeSecondaryBg)
+                                .frame(width: 50, height: 50)
+                            VStack(alignment: .leading, spacing: 6) {
+                                RoundedRectangle(cornerRadius: 4).fill(Color.themeSecondaryBg)
+                                    .frame(width: 180, height: 13)
+                                RoundedRectangle(cornerRadius: 4).fill(Color.themeSecondaryBg)
+                                    .frame(width: 120, height: 11)
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                }
+                .shimmering()
+            }
+        }
+    }
+
     private func prefetchHomeCovers() {
         let cardSize = layoutWidth > 0 ? (layoutWidth - 16 - 12) / 2 : 180
         let albumArt = (newestAlbums + frequentAlbums + randomAlbums).compactMap(\.coverArt)
@@ -702,7 +765,7 @@ struct HomeView: View {
                 songCount: scan.count ?? 0, albumCount: totalAlbums,
                 playlistCount: pl.count, timestamp: Date()
             )
-            cache.save()
+            cache.save(serverId: serverManager.currentServer?.id.uuidString)
         } catch {
             AppLogger.shared.log("❌ Home load error: \(error.localizedDescription)")
             await MainActor.run {
