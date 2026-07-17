@@ -162,6 +162,7 @@ struct SettingsView: View {
             quickAccessGrid
             Group {
                 customiseSection
+                serversSection
                 homeCustomiseSection
                 playbackSection
                 equalizerSection
@@ -173,10 +174,8 @@ struct SettingsView: View {
                 storageCacheSection
             }
             Group {
-                serverSection
                 musicFolderSection
                 libraryScanSection
-                manageServersSection
             }
             Group {
                 #if !APPSTORE_BUILD
@@ -203,26 +202,63 @@ struct SettingsView: View {
 
     // MARK: - Sections
 
-    private var serverSection: some View {
-        Section("Subsonic Server") {
-            HStack {
-                Text("Status")
-                Spacer()
-                Text(serverManager.isConnected ? "Online" : "Offline")
-                    .foregroundStyle(serverManager.isConnected ? .green : .red)
-            }
-            if let server = serverManager.currentServer {
-                NavigationLink {
-                    ServerDetailView(server: server)
-                } label: {
-                    HStack {
-                        Text("Server")
-                        Spacer()
-                        Text(server.friendlyName).foregroundStyle(.secondary)
+    /// One consolidated section: every server, the active one clearly marked with
+    /// its live status (and tappable to open its details), the others tappable to
+    /// switch. Swipe to remove, and an "Add Server" button.
+    private var serversSection: some View {
+        Section {
+            ForEach(serverManager.servers) { server in
+                if server.id == serverManager.currentServer?.id {
+                    NavigationLink { ServerDetailView(server: server) } label: {
+                        serverRow(server, isActive: true)
                     }
+                } else {
+                    Button {
+                        serverManager.selectServer(server)
+                        Task { await serverManager.testConnection() }
+                    } label: {
+                        serverRow(server, isActive: false)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
+            .onDelete { idx in
+                for i in idx.sorted().reversed() {
+                    serverManager.removeServer(serverManager.servers[i])
+                }
+            }
+
+            Button { showAddServer = true } label: {
+                Label("Add Server", systemImage: "plus.circle.fill")
+                    .foregroundStyle(accentColor)
+            }
+        } header: {
+            Text("Servers")
+        } footer: {
+            Text(serverManager.servers.count > 1
+                 ? "Tap another server to switch to it. Swipe left to remove."
+                 : "Add another server to switch between libraries — you can also switch straight from the Home title.")
         }
+    }
+
+    private func serverRow(_ server: ServerConfig, isActive: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: isActive ? "checkmark.circle.fill" : "server.rack")
+                .font(.body)
+                .foregroundStyle(isActive ? accentColor : .secondary)
+                .frame(width: 26)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(server.friendlyName).font(.subheadline.weight(.medium))
+                Text(server.url).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer()
+            if isActive {
+                Text(serverManager.isConnected ? "Online" : "Offline")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(serverManager.isConnected ? .green : .red)
+            }
+        }
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder
@@ -316,33 +352,6 @@ struct SettingsView: View {
         }
     }
 
-    private var manageServersSection: some View {
-        Section("Manage Servers") {
-            ForEach(serverManager.servers) { server in
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(server.friendlyName).font(.subheadline)
-                        Text(server.url).font(.caption).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    if server.id == serverManager.currentServer?.id {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(accentColor)
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    serverManager.selectServer(server)
-                    Task { await serverManager.testConnection() }
-                }
-            }
-            .onDelete { idx in
-                for i in idx { serverManager.removeServer(serverManager.servers[i]) }
-            }
-            Button { showAddServer = true } label: {
-                Label("Add Server", systemImage: "plus").foregroundStyle(accentColor)
-            }
-        }
-    }
 
     private var playbackSection: some View {
         Section {
