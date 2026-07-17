@@ -165,20 +165,24 @@ struct SplashScreen: View {
 
     var body: some View {
         ZStack {
-            // Layered gold/black gradient background
-            Color.black.ignoresSafeArea()
+            // Adaptive base — the icon's Default appearance is white glass, so the splash
+            // is light by day; going white at night would be harsh, and the icon has its
+            // own Dark variant anyway.
+            Color(.systemBackground).ignoresSafeArea()
 
-            // Animated golden aurora blobs — continuously drifting
+            // Drifting aurora blobs in the icon's pink. Kept at low opacity on purpose:
+            // pink is the icon's ACCENT over white glass, never the field — a saturated
+            // pink background would read as a different brand.
             TimelineView(.animation) { timeline in
                 let t = timeline.date.timeIntervalSinceReferenceDate
                 ZStack {
-                    // Top-left golden glow
+                    // Top-left rose glow
                     Ellipse()
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(red: 0.85, green: 0.65, blue: 0.15).opacity(0.7),
-                                    Color(red: 0.7, green: 0.45, blue: 0.05).opacity(0.3),
+                                    Color(red: 1.0, green: 0.45, blue: 0.52).opacity(0.40),
+                                    Color(red: 1.0, green: 0.25, blue: 0.31).opacity(0.18),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -193,13 +197,13 @@ struct SplashScreen: View {
                         )
                         .scaleEffect(appeared ? 1.15 + CGFloat(sin(t * 0.5)) * 0.05 : 0.6)
 
-                    // Center-right amber glow
+                    // Center-right rose glow
                     Ellipse()
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(red: 0.95, green: 0.75, blue: 0.2).opacity(0.5),
-                                    Color(red: 0.6, green: 0.35, blue: 0.0).opacity(0.2),
+                                    Color(red: 1.0, green: 0.35, blue: 0.45).opacity(0.32),
+                                    Color(red: 0.95, green: 0.20, blue: 0.35).opacity(0.14),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -214,13 +218,13 @@ struct SplashScreen: View {
                         )
                         .scaleEffect(appeared ? 1.1 + CGFloat(cos(t * 0.4)) * 0.05 : 0.6)
 
-                    // Bottom warm glow
+                    // Bottom soft blush
                     Ellipse()
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(red: 0.75, green: 0.55, blue: 0.1).opacity(0.4),
-                                    Color(red: 0.4, green: 0.2, blue: 0.0).opacity(0.15),
+                                    Color(red: 1.0, green: 0.55, blue: 0.60).opacity(0.26),
+                                    Color(red: 0.90, green: 0.30, blue: 0.40).opacity(0.10),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -240,7 +244,7 @@ struct SplashScreen: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(red: 1.0, green: 0.9, blue: 0.5).opacity(0.25),
+                                    Color(red: 1.0, green: 0.78, blue: 0.82).opacity(0.22),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -269,11 +273,13 @@ struct SplashScreen: View {
             Text("aura")
                 .font(.custom("TuafTrial-Bold", size: 52, relativeTo: .largeTitle))
                 .foregroundStyle(
+                    // The icon's pink. The old gradient ended in white, which would be
+                    // invisible on the light base; this one reads on light AND dark.
                     LinearGradient(
                         colors: [
-                            Color(red: 1.0, green: 0.85, blue: 0.45),
-                            Color(red: 0.9, green: 0.7, blue: 0.3),
-                            Color.white.opacity(0.9)
+                            Color(red: 1.0, green: 0.42, blue: 0.48),
+                            Color(red: 1.0, green: 0.25, blue: 0.31),
+                            Color(red: 0.82, green: 0.16, blue: 0.28)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
