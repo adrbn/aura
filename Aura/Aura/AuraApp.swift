@@ -165,14 +165,12 @@ struct SplashScreen: View {
 
     var body: some View {
         ZStack {
-            // Adaptive base — the icon's Default appearance is white glass, so the splash
-            // is light by day; going white at night would be harsh, and the icon has its
-            // own Dark variant anyway.
-            Color(.systemBackground).ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
-            // Drifting aurora blobs in the icon's pink. Kept at low opacity on purpose:
-            // pink is the icon's ACCENT over white glass, never the field — a saturated
-            // pink background would read as a different brand.
+            // Drifting aurora blobs in the icon's pink, deliberately soft: pink is the
+            // icon's ACCENT, never the field. A saturated pink background reads as a
+            // different brand — and it is what the white wordmark would otherwise need.
+            // These sit below the gold originals' opacities for that reason.
             TimelineView(.animation) { timeline in
                 let t = timeline.date.timeIntervalSinceReferenceDate
                 ZStack {
@@ -181,8 +179,8 @@ struct SplashScreen: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(red: 1.0, green: 0.45, blue: 0.52).opacity(0.40),
-                                    Color(red: 1.0, green: 0.25, blue: 0.31).opacity(0.18),
+                                    Color(red: 1.0, green: 0.45, blue: 0.52).opacity(0.60),
+                                    Color(red: 1.0, green: 0.25, blue: 0.31).opacity(0.28),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -202,8 +200,8 @@ struct SplashScreen: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(red: 1.0, green: 0.35, blue: 0.45).opacity(0.32),
-                                    Color(red: 0.95, green: 0.20, blue: 0.35).opacity(0.14),
+                                    Color(red: 1.0, green: 0.35, blue: 0.45).opacity(0.46),
+                                    Color(red: 0.95, green: 0.20, blue: 0.35).opacity(0.20),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -223,8 +221,8 @@ struct SplashScreen: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(red: 1.0, green: 0.55, blue: 0.60).opacity(0.26),
-                                    Color(red: 0.90, green: 0.30, blue: 0.40).opacity(0.10),
+                                    Color(red: 1.0, green: 0.55, blue: 0.60).opacity(0.34),
+                                    Color(red: 0.90, green: 0.30, blue: 0.40).opacity(0.14),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -244,7 +242,7 @@ struct SplashScreen: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(red: 1.0, green: 0.78, blue: 0.82).opacity(0.22),
+                                    Color(red: 1.0, green: 0.78, blue: 0.82).opacity(0.20),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -272,19 +270,7 @@ struct SplashScreen: View {
             // "aura" text
             Text("aura")
                 .font(.custom("TuafTrial-Bold", size: 52, relativeTo: .largeTitle))
-                .foregroundStyle(
-                    // The icon's pink. The old gradient ended in white, which would be
-                    // invisible on the light base; this one reads on light AND dark.
-                    LinearGradient(
-                        colors: [
-                            Color(red: 1.0, green: 0.42, blue: 0.48),
-                            Color(red: 1.0, green: 0.25, blue: 0.31),
-                            Color(red: 0.82, green: 0.16, blue: 0.28)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .foregroundStyle(.white)
                 .opacity(appeared ? 1.0 : 0.0)
                 .scaleEffect(appeared ? 1.0 : 0.85)
                 .animation(.easeOut(duration: 1.2).delay(0.3), value: appeared)

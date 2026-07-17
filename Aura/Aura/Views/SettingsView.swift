@@ -172,7 +172,6 @@ struct SettingsView: View {
             }
             Group {
                 downloadsSection
-                offlineModeSection
                 storageCacheSection
             }
             Group {
@@ -246,9 +245,11 @@ struct SettingsView: View {
 
     private func serverRow(_ server: ServerConfig, isActive: Bool) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: isActive ? "checkmark.circle.fill" : "server.rack")
-                .font(.body)
-                .foregroundStyle(isActive ? accentColor : .secondary)
+            // Unselected rows read as an empty radio button, not a server glyph: these
+            // rows are a single-choice list, so the control should say "pick me".
+            Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
+                .font(.title3)
+                .foregroundStyle(isActive ? accentColor : .secondary.opacity(0.5))
                 .frame(width: 26)
             VStack(alignment: .leading, spacing: 2) {
                 Text(server.friendlyName).font(.subheadline.weight(.medium))
@@ -257,7 +258,7 @@ struct SettingsView: View {
             Spacer()
             if isActive {
                 Text(serverManager.isConnected ? "Online" : "Offline")
-                    .font(.caption.weight(.medium))
+                    .font(.subheadline)
                     .foregroundStyle(serverManager.isConnected ? .green : .red)
             }
         }
@@ -531,15 +532,6 @@ struct SettingsView: View {
                     Text("This will permanently remove all \(downloadManager.downloadedSongs.count) downloaded songs from your device.")
                 }
             }
-        }
-    }
-
-    private var offlineModeSection: some View {
-        Section("Offline Mode") {
-            Toggle("Offline Mode", isOn: $appSettings.offlineMode)
-            Text("When enabled, only downloaded content will be shown.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
         }
     }
 

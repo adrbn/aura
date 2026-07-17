@@ -87,11 +87,16 @@ class AudioOutputContainerView: UIView {
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.tag = 999
         addSubview(iconView)
+        // 40, not 28. An SF Symbol's UIImage is bigger than its ink, so a 28pt box made
+        // scaleAspectFit shrink the whole image to ~70% — airpodspro drew 51px of ink
+        // where the raw symbol draws 73px, i.e. visibly shorter than the .title2 icons
+        // around it. At 40 nothing is clamped and the glyph lands on the same optical
+        // line as its neighbours.
         NSLayoutConstraint.activate([
             iconView.centerXAnchor.constraint(equalTo: centerXAnchor),
             iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            iconView.widthAnchor.constraint(equalToConstant: 28),
-            iconView.heightAnchor.constraint(equalToConstant: 28),
+            iconView.widthAnchor.constraint(equalToConstant: 40),
+            iconView.heightAnchor.constraint(equalToConstant: 40),
         ])
 
         // Hidden route picker (off-screen but in view hierarchy so it works)
@@ -141,7 +146,9 @@ struct AudioOutputButton: UIViewRepresentable {
     }
 
     private func updateIcon(in container: AudioOutputContainerView) {
-        // Size per icon: AirPods is naturally smaller, phone is taller than others
+        // Sizes are per-symbol because each glyph fills its em box differently. These are
+        // the intended values; they only render true now that the icon box (40) no longer
+        // scales the image down.
         let pointSize: CGFloat = switch routeIcon {
         case "airpodspro": 28
         case "iphone": 19
@@ -163,6 +170,6 @@ struct AudioOutputButtonWrapper: View {
             routeIcon: routeMonitor.routeIcon,
             isExternalRoute: routeMonitor.isExternalRoute
         )
-        .frame(width: 32, height: 32)
+        .frame(width: 40, height: 40)
     }
 }
