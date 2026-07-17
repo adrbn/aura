@@ -154,11 +154,11 @@ struct OnboardingView: View {
     /// Returns three colours that shift based on the current page
     private func auroraColors(for page: Int) -> (Color, Color, Color) {
         switch page {
-        case 0: // Welcome — warm gold
+        case 0: // Welcome — the app icon's pink-red (AppIcon.icon uses p3 1.0/0.248/0.307)
             return (
-                Color(red: 0.85, green: 0.65, blue: 0.15),
-                Color(red: 0.95, green: 0.75, blue: 0.2),
-                Color(red: 0.75, green: 0.55, blue: 0.1)
+                Color(red: 1.0, green: 0.25, blue: 0.31),
+                Color(red: 0.82, green: 0.16, blue: 0.26),
+                Color(red: 1.0, green: 0.45, blue: 0.48)
             )
         case 1: // Streaming — deep purple/blue
             return (
@@ -178,11 +178,11 @@ struct OnboardingView: View {
                 Color(red: 0.15, green: 0.6, blue: 0.35),
                 Color(red: 0.3, green: 0.8, blue: 0.5)
             )
-        case 4: // Server setup — back to gold
+        case 4: // Server setup — back to the icon's pink-red, bookending the flow
             return (
-                Color(red: 0.85, green: 0.65, blue: 0.15),
-                Color(red: 0.95, green: 0.75, blue: 0.2),
-                Color(red: 0.75, green: 0.55, blue: 0.1)
+                Color(red: 1.0, green: 0.25, blue: 0.31),
+                Color(red: 0.82, green: 0.16, blue: 0.26),
+                Color(red: 1.0, green: 0.45, blue: 0.48)
             )
         default:
             return (.white, .white, .white)
@@ -196,8 +196,10 @@ struct OnboardingView: View {
             Spacer()
             Spacer()
 
-            // App icon
-            if let icon = UIImage(named: "AppIcon") ?? Bundle.main.icon {
+            // App icon. AppIconLarge is a 1024px copy of the icon's Default appearance:
+            // the CFBundleIcons fallback only exposes AppIcon60x60 (120px), which upscales
+            // to mush in this 100pt frame.
+            if let icon = UIImage(named: "AppIconLarge") ?? UIImage(named: "AppIcon") ?? Bundle.main.icon {
                 Image(uiImage: icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -209,11 +211,12 @@ struct OnboardingView: View {
             Text("aura")
                 .font(.custom("TuafTrial-Bold", size: 48, relativeTo: .largeTitle))
                 .foregroundStyle(
+                    // Echoes the icon itself: its pink triangle resolving into white glass.
                     LinearGradient(
                         colors: [
-                            Color(red: 1.0, green: 0.85, blue: 0.45),
-                            Color(red: 0.9, green: 0.7, blue: 0.3),
-                            .white.opacity(0.9)
+                            Color(red: 1.0, green: 0.38, blue: 0.44),
+                            Color(red: 1.0, green: 0.25, blue: 0.31),
+                            .white.opacity(0.92)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing

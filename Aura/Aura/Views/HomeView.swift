@@ -265,45 +265,49 @@ struct HomeView: View {
 
     private var homeContent: some View {
         VStack(alignment: .leading, spacing: 24) {
-            // Big, left-aligned title — scrolls away with the content and returns at the
-            // top on bounce, so it doesn't keep a fixed black bar that breaks the top glass fade.
-            if !homeTitle.isEmpty {
-                ZStack(alignment: .trailing) {
-                    homeTitleLabel
-                    #if !APPSTORE_BUILD
-                    if appSettings.betaFeaturesEnabled {
-                        NavigationLink {
-                            DevLogsView()
-                        } label: {
-                            Image(systemName: "doc.text.magnifyingglass")
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
+            // Title + stats are ONE tight block: the outer 24pt spacing is right between
+            // sections but far too airy between a title and its own subtitle line.
+            VStack(alignment: .leading, spacing: 6) {
+                // Big, left-aligned title — scrolls away with the content and returns at the
+                // top on bounce, so it doesn't keep a fixed black bar that breaks the top glass fade.
+                if !homeTitle.isEmpty {
+                    ZStack(alignment: .trailing) {
+                        homeTitleLabel
+                        #if !APPSTORE_BUILD
+                        if appSettings.betaFeaturesEnabled {
+                            NavigationLink {
+                                DevLogsView()
+                            } label: {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                    .font(.title3)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        #endif
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                }
+
+                // Server stats bar (configurable) — stays at the very top.
+                if appSettings.showStatsOnHome, songCount > 0 || albumCount > 0 || playlistCount > 0 {
+                    HStack(spacing: 16) {
+                        if songCount > 0 {
+                            Label("\(songCount) songs", systemImage: "music.note")
+                        }
+                        if albumCount > 0 {
+                            Label("\(albumCount) albums", systemImage: "square.stack")
+                        }
+                        if playlistCount > 0 {
+                            Label("\(playlistCount) playlists", systemImage: "music.note.list")
                         }
                     }
-                    #endif
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    .animation(.easeInOut(duration: 0.3), value: songCount)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-            }
-
-            // Server stats bar (configurable) — stays at the very top.
-            if appSettings.showStatsOnHome, songCount > 0 || albumCount > 0 || playlistCount > 0 {
-                HStack(spacing: 16) {
-                    if songCount > 0 {
-                        Label("\(songCount) songs", systemImage: "music.note")
-                    }
-                    if albumCount > 0 {
-                        Label("\(albumCount) albums", systemImage: "square.stack")
-                    }
-                    if playlistCount > 0 {
-                        Label("\(playlistCount) playlists", systemImage: "music.note.list")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .animation(.easeInOut(duration: 0.3), value: songCount)
             }
 
             if isLoading && !hasHomeContent {

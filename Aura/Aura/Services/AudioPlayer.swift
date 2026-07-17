@@ -235,6 +235,9 @@ final class AudioPlayer {
     /// Load the stream URL and set up AVPlayer without starting playback
     private func preparePlayback(_ song: Song) {
         AudioCacheManager.shared.saveMetadata(song)
+        // Restored session (launch / server switch): warm its art too, so opening Now
+        // Playing straight after launch is instant.
+        ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId)
         guard let server = ServerManager.shared.currentServer else { return }
         let bitRate = AppSettings.shared.streamingQuality.bitRate
 
@@ -448,6 +451,9 @@ final class AudioPlayer {
 
     private func startPlayback(_ song: Song) {
         AudioCacheManager.shared.saveMetadata(song)
+        // Warm the Now Playing artwork as soon as the track starts, not when the screen
+        // opens — by the time the user swipes up, it's already there.
+        ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId)
         guard let server = ServerManager.shared.currentServer else {
             AppLogger.shared.log("❌ startPlayback: no server configured")
             return

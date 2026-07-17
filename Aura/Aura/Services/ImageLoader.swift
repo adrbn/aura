@@ -131,6 +131,13 @@ final class ArtworkCache: @unchecked Sendable {
         return 1200
     }
 
+    /// THE bucket a `CoverArtAsyncImage` of `pointSize` will ask for. Single source of
+    /// truth: prefetching and displaying MUST derive the key the same way or the warm
+    /// entry lands in a different bucket and the prefetch silently does nothing.
+    static func displayRequestSize(pointSize: CGFloat) -> Int {
+        normalizedSize(min(800, Int(pointSize * UIScreen.main.scale)))
+    }
+
     func image(for key: String) -> UIImage? {
         let nsKey = key as NSString
         if let img = memoryCache.object(forKey: nsKey) { return img }
@@ -305,6 +312,24 @@ final class ArtworkCache: @unchecked Sendable {
         prefetch(coverArtIds.map { ($0, nil) }, pointSize: pointSize)
     }
 
+    /// Warm the full-size cover the Now Playing screen will ask for, at playback time —
+    /// so opening Now Playing mid-track shows the HD art immediately instead of starting
+    /// the fetch on appear. Uses `displayRequestSize` (same clamp as the view), so the
+    /// warmed entry lands in exactly the bucket the view reads. High priority: the user
+    /// can open Now Playing a second after pressing play.
+    func prefetchNowPlayingCover(coverArt: String?) {
+        guard let coverArt, !coverArt.isEmpty else { return }
+        // Any near-full-width hero clamps to the same bucket, so the screen width is a
+        // safe stand-in for the view's exact art size.
+        let requestSize = Self.displayRequestSize(pointSize: UIScreen.main.bounds.width)
+        let key = "\(coverArt)_\(requestSize)"
+        guard image(for: key) == nil else { return }   // already warm
+        Task.detached(priority: .userInitiated) {
+            guard !AppSettings.shared.offlineMode else { return }
+            _ = await self.fetchImage(coverArt: coverArt, requestSize: requestSize, key: key)
+        }
+    }
+
     /// Remove all cached images for a given cover art ID (all sizes)
     func removeImages(forCoverArt coverArt: String) {
         // Normalized thumbnail buckets + common exact retina sizes for large displays
@@ -427,7 +452,7 @@ struct CoverArtAsyncImage: View {
     /// with album-grid thumbnails, so an already-seen album shows instantly with no
     /// late "HD" swap. (Was `max(1200, …)`, which made every hero a slow full-res fetch.)
     private var requestSize: Int {
-        ArtworkCache.normalizedSize(min(800, Int(size * UIScreen.main.scale)))
+        ArtworkCache.displayRequestSize(pointSize: size)
     }
 
     private func cacheKey(for id: String) -> String {
