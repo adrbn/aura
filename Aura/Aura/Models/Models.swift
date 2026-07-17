@@ -403,11 +403,15 @@ extension EnvironmentValues {
 
 extension Color {
     static var appAccent: Color { AppSettings.shared.activeTheme.accentColor }
+    // Grouped variants on purpose. The plain ones (systemBackground /
+    // secondarySystemBackground) give white-on-#F2F2F7 in light mode — cards become
+    // invisible. The grouped pair inverts correctly: page grey + cards WHITE in light,
+    // page black + cards #1C1C1E in dark. Dark mode renders identically to before.
     static var themeBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? .black : Color(.systemBackground)
+        AppSettings.shared.activeTheme.usePureBlack ? .black : Color(.systemGroupedBackground)
     }
     static var themeSecondaryBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : Color(.secondarySystemBackground)
+        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : Color(.secondarySystemGroupedBackground)
     }
     static var themeGroupedBg: Color {
         AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : Color(.secondarySystemGroupedBackground)

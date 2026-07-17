@@ -594,8 +594,10 @@ struct SettingsView: View {
     private var customiseSection: some View {
         Section("Appearance") {
             Picker(selection: $appSettings.appearanceMode) {
+                // Text, not Label: a Label renders its icon in the collapsed row too,
+                // which crowds the value and squeezes the rows below.
                 ForEach(AppearanceMode.allCases, id: \.self) { mode in
-                    Label(mode.rawValue, systemImage: mode.icon).tag(mode)
+                    Text(mode.rawValue).tag(mode)
                 }
             } label: {
                 Text("Theme")

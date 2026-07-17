@@ -232,10 +232,13 @@ struct SearchResultsContainer: View {
 
     @ViewBuilder
     private var resultsRows: some View {
-        if isSearching || (isSearchingLyrics && lyricsSongs.isEmpty) {
+        // Main search only. The lyrics search is slower and secondary — showing it up here
+        // pushed the already-loaded songs/albums down the page. Its spinner lives at the
+        // bottom instead, where the lyric matches actually land, so nothing jumps.
+        if isSearching {
             HStack(spacing: 10) {
                 ProgressView().tint(.secondary)
-                Text(isSearching ? "Searching…" : "Searching lyrics…")
+                Text("Searching…")
                     .font(.subheadline).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .center)
@@ -277,10 +280,11 @@ struct SearchResultsContainer: View {
 
         if isSearchingLyrics {
             HStack(spacing: 8) {
-                ProgressView().tint(.secondary)
+                ProgressView().controlSize(.small).tint(.secondary)
                 Text("Searching lyrics…").font(.caption).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, 10)
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
         }

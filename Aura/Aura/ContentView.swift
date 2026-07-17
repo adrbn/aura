@@ -51,7 +51,10 @@ struct ContentView: View {
 
             ToastOverlay()
         }
-        .overlay(alignment: .top) {
+        // safeAreaInset, not overlay: an overlay floated the banner ON TOP of each tab's
+        // big title. This reserves the space instead, so nothing is ever covered. When the
+        // banner is hidden its body is empty, so the inset collapses to zero height.
+        .safeAreaInset(edge: .top, spacing: 0) {
             ConnectionBanner()
         }
         .fullScreenCover(isPresented: Binding(
