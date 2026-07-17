@@ -1,0 +1,39 @@
+{
+  "fill" : "system-light",
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill" : {
+            "solid" : "display-p3:1.00000,0.24836,0.30726,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "play_glyph.svg",
+          "name" : "play_glyph",
+          "opacity" : 1,
+          "position" : {
+            "scale" : 1.4,
+            "translation-in-points" : [
+              -24.966999999999985,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
