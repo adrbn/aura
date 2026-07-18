@@ -60,16 +60,6 @@ struct WrappedView: View {
                             }
                         }
                     }
-                    if let stats, stats.hasData {
-                        Divider()
-                        Button {
-                            Task { await saveAsPlaylist(stats) }
-                        } label: {
-                            Label(isSaved ? "Saved to Playlists" : "Save as Playlist",
-                                  systemImage: isSaved ? "checkmark.circle.fill" : "plus.circle")
-                        }
-                        .disabled(isSaving || isSaved)
-                    }
                 } label: {
                     Image(systemName: "slider.horizontal.3")
                 }
@@ -91,6 +81,7 @@ struct WrappedView: View {
         } else if let errorMessage {
             errorCard(errorMessage)
         } else if let stats, stats.hasData {
+            savePlaylistButton(stats)
             statTiles(stats)
             if !stats.topSongs.isEmpty { topSongsCard(stats) }
             if !stats.topArtists.isEmpty { topArtistsCard(stats) }
@@ -121,6 +112,94 @@ struct WrappedView: View {
         }
         // Reflect whether *this exact* retrospective was already solidified.
         isSaved = stats.map(isAlreadySaved) ?? false
+        // Enrich the shown rows with real server cover art + tap targets (Last.fm serves
+        // star placeholders and has no ids; even device rows lack server album/artist ids).
+        if let s = stats { await resolveArtwork(for: s) }
+    }
+
+    // MARK: - Server resolution (real cover art + tap targets)
+
+    /// Resolve the top rows shown in each card to server entities, then merge their ids
+    /// and cover art into `stats`. Best-effort and bounded to the visible top 5.
+    private func resolveArtwork(for s: ListeningStats) async {
+        guard let server = ServerManager.shared.currentServer, ServerManager.shared.isConnected else { return }
+        async let songs = resolveSongs(Array(s.topSongs.prefix(5)), server: server)
+        async let albums = resolveAlbums(Array(s.topAlbums.prefix(5)), server: server)
+        async let artists = resolveArtists(Array(s.topArtists.prefix(5)), server: server)
+        let (sMap, alMap, arMap) = await (songs, albums, artists)
+        // Only apply if the user hasn't switched period/source in the meantime.
+        guard stats?.period == s.period, stats?.source == s.source else { return }
+        stats = s.withResolved(songs: sMap, albums: alMap, artists: arMap)
+    }
+
+    private func resolveSongs(_ songs: [ListeningStats.RankedSong], server: ServerConfig) async -> [String: ListeningStats.Resolved] {
+        var out: [String: ListeningStats.Resolved] = [:]
+        await withTaskGroup(of: (String, ListeningStats.Resolved?).self) { group in
+            for song in songs {
+                // Device rows already carry a real id + cover → nothing to fetch.
+                if let sid = song.serverId, song.coverArt != nil {
+                    out[song.id] = ListeningStats.Resolved(serverId: sid, coverArt: song.coverArt)
+                    continue
+                }
+                group.addTask {
+                    let r = try? await SubsonicClient.shared.search3(
+                        server: server, query: "\(song.title) \(song.artist)", artistCount: 0, albumCount: 0, songCount: 5)
+                    let m = Self.bestMatch(in: r?.song ?? [], title: song.title, artist: song.artist)
+                    return (song.id, m.map { ListeningStats.Resolved(serverId: $0.id, coverArt: $0.coverArt) })
+                }
+            }
+            for await (id, res) in group { if let res { out[id] = res } }
+        }
+        return out
+    }
+
+    private func resolveAlbums(_ albums: [ListeningStats.RankedAlbum], server: ServerConfig) async -> [String: ListeningStats.Resolved] {
+        var out: [String: ListeningStats.Resolved] = [:]
+        await withTaskGroup(of: (String, ListeningStats.Resolved?).self) { group in
+            for album in albums {
+                group.addTask {
+                    let r = try? await SubsonicClient.shared.search3(
+                        server: server, query: "\(album.name) \(album.artist)", artistCount: 0, albumCount: 5, songCount: 0)
+                    let m = Self.bestAlbumMatch(in: r?.album ?? [], name: album.name, artist: album.artist)
+                    return (album.id, m.map { ListeningStats.Resolved(serverId: $0.id, coverArt: $0.coverArt) })
+                }
+            }
+            for await (id, res) in group { if let res { out[id] = res } }
+        }
+        return out
+    }
+
+    private func resolveArtists(_ artists: [ListeningStats.RankedArtist], server: ServerConfig) async -> [String: ListeningStats.Resolved] {
+        var out: [String: ListeningStats.Resolved] = [:]
+        await withTaskGroup(of: (String, ListeningStats.Resolved?).self) { group in
+            for artist in artists {
+                group.addTask {
+                    let r = try? await SubsonicClient.shared.search3(
+                        server: server, query: artist.name, artistCount: 5, albumCount: 0, songCount: 0)
+                    let m = Self.bestArtistMatch(in: r?.artist ?? [], name: artist.name)
+                    return (artist.id, m.map { ListeningStats.Resolved(serverId: $0.id, coverArt: $0.coverArt) })
+                }
+            }
+            for await (id, res) in group { if let res { out[id] = res } }
+        }
+        return out
+    }
+
+    private static func bestArtistMatch(in artists: [Artist], name: String) -> Artist? {
+        let n = name.lowercased()
+        return artists.first(where: { $0.name.lowercased() == n })
+            ?? artists.first(where: { let a = $0.name.lowercased(); return a.contains(n) || n.contains(a) })
+    }
+
+    private static func bestAlbumMatch(in albums: [Album], name: String, artist: String) -> Album? {
+        let n = name.lowercased(), a = artist.lowercased()
+        let nameMatches = albums.filter {
+            let an = $0.name.lowercased(); return an == n || an.contains(n) || n.contains(an)
+        }
+        guard !nameMatches.isEmpty else { return nil }
+        return nameMatches.first(where: {
+            let aa = $0.artist?.lowercased() ?? ""; return !a.isEmpty && (aa.contains(a) || a.contains(aa))
+        }) ?? nameMatches.first
     }
 
     // MARK: - Save as Playlist (solidify, like a mix)
@@ -242,6 +321,42 @@ struct WrappedView: View {
         return "Your year in music"
     }
 
+    // MARK: - Save as playlist (prominent)
+
+    private func savePlaylistButton(_ stats: ListeningStats) -> some View {
+        Button {
+            Task { await saveAsPlaylist(stats) }
+        } label: {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(isSaved ? AnyShapeStyle(accent) : AnyShapeStyle(accent.opacity(0.15)))
+                        .frame(width: 34, height: 34)
+                    if isSaving {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: isSaved ? "star.fill" : "plus")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(isSaved ? .white : accent)
+                    }
+                }
+                Text(isSaved ? "Saved to Playlists" : "Save as Playlist")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(isSaved ? .secondary : .primary)
+                Spacer()
+                if !isSaved && !isSaving {
+                    Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Color.themeSecondaryBg, in: RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+        .disabled(isSaving || isSaved)
+        .animation(.easeInOut(duration: 0.2), value: isSaved)
+    }
+
     // MARK: - Stat tiles
 
     @ViewBuilder
@@ -270,8 +385,10 @@ struct WrappedView: View {
             return [
                 ("Scrobbles", abbreviate(stats.totalPlays), "waveform.path.ecg"),
                 second,
-                ("Top Tracks", "\(stats.topSongs.count > 0 ? stats.uniqueSongs : 0)", "music.note"),
-                ("Top Artists", "\(stats.uniqueArtists)", "music.mic")
+                // Distinct tracks/artists across the whole period (Last.fm @attr total),
+                // abbreviated — not the fetch cap that used to read a flat "200".
+                ("Different Tracks", abbreviate(stats.uniqueSongs), "music.note"),
+                ("Different Artists", abbreviate(stats.uniqueArtists), "music.mic")
             ]
         }
     }
@@ -305,17 +422,33 @@ struct WrappedView: View {
         cardSection(title: "Top Songs", icon: "star.fill") {
             VStack(spacing: 12) {
                 ForEach(Array(stats.topSongs.prefix(5).enumerated()), id: \.element.id) { index, song in
-                    HStack(spacing: 12) {
-                        rankBadge(index + 1)
-                        WrappedArtwork(coverArt: song.coverArt, imageURL: song.imageURL, size: 44)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(song.title).font(.subheadline.weight(.medium)).lineLimit(1)
-                            Text(song.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Button {
+                        if let sid = song.serverId { playServerSong(id: sid) }
+                    } label: {
+                        HStack(spacing: 12) {
+                            rankBadge(index + 1)
+                            WrappedArtwork(coverArt: song.coverArt, imageURL: song.imageURL, size: 44)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(song.title).font(.subheadline.weight(.medium)).lineLimit(1)
+                                Text(song.artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            }
+                            Spacer()
+                            playsLabel(song.plays)
                         }
-                        Spacer()
-                        playsLabel(song.plays)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .disabled(song.serverId == nil)
                 }
+            }
+        }
+    }
+
+    private func playServerSong(id: String) {
+        guard let server = ServerManager.shared.currentServer else { return }
+        Task {
+            if let song = try? await SubsonicClient.shared.getSong(server: server, id: id) {
+                await MainActor.run { AudioPlayer.shared.playSong(song) }
             }
         }
     }
@@ -324,9 +457,10 @@ struct WrappedView: View {
         cardSection(title: "Top Artists", icon: "music.mic") {
             VStack(spacing: 12) {
                 ForEach(Array(stats.topArtists.prefix(5).enumerated()), id: \.element.id) { index, artist in
-                    HStack(spacing: 12) {
+                    let row = HStack(spacing: 12) {
                         rankBadge(index + 1)
-                        WrappedArtwork(coverArt: nil, imageURL: artist.imageURL, size: 44, circle: true)
+                        // serverCoverArt is the real library image; Last.fm dropped artist art.
+                        WrappedArtwork(coverArt: artist.serverCoverArt, imageURL: artist.imageURL, size: 44, circle: true)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(artist.name).font(.subheadline.weight(.medium)).lineLimit(1)
                             if artist.minutes > 0 {
@@ -335,6 +469,16 @@ struct WrappedView: View {
                         }
                         Spacer()
                         playsLabel(artist.plays)
+                    }
+                    .contentShape(Rectangle())
+
+                    if let sid = artist.serverId {
+                        NavigationLink {
+                            ArtistDetailView(artistId: sid, artistName: artist.name, coverArt: artist.serverCoverArt)
+                        } label: { row }
+                        .buttonStyle(.plain)
+                    } else {
+                        row
                     }
                 }
             }
@@ -345,7 +489,7 @@ struct WrappedView: View {
         cardSection(title: "Top Albums", icon: "square.stack.fill") {
             VStack(spacing: 12) {
                 ForEach(Array(stats.topAlbums.prefix(5).enumerated()), id: \.element.id) { index, album in
-                    HStack(spacing: 12) {
+                    let row = HStack(spacing: 12) {
                         rankBadge(index + 1)
                         WrappedArtwork(coverArt: album.coverArt, imageURL: album.imageURL, size: 44)
                         VStack(alignment: .leading, spacing: 2) {
@@ -354,6 +498,14 @@ struct WrappedView: View {
                         }
                         Spacer()
                         playsLabel(album.plays)
+                    }
+                    .contentShape(Rectangle())
+
+                    if let sid = album.serverId {
+                        NavigationLink { AlbumDetailView(albumId: sid) } label: { row }
+                            .buttonStyle(.plain)
+                    } else {
+                        row
                     }
                 }
             }

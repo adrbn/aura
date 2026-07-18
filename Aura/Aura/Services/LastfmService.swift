@@ -15,6 +15,10 @@ struct LastfmWrapped {
     let topTags: [LastfmTag]
     let allTimeScrobbles: Int?
     let scrobblingSinceYear: Int?
+    /// True period-wide distinct counts from Last.fm's `@attr total` (not capped by
+    /// the fetch limit), so the "Top Tracks/Artists" stat reflects reality.
+    let totalTrackCount: Int?
+    let totalArtistCount: Int?
 }
 
 enum LastfmError: LocalizedError {
@@ -58,6 +62,38 @@ final class LastfmService: @unchecked Sendable {
         }
     }
 
+    // MARK: - Public: validate credentials
+
+    struct ValidatedAccount { let username: String; let scrobbles: Int? }
+
+    /// Test a username + API key by making a real `user.getinfo` call with the GIVEN
+    /// credentials (not the stored ones). Used by the Settings Save button so the user
+    /// gets a concrete "Connected" / "rejected" answer instead of a silent field.
+    func validate(username rawUser: String, apiKey: String) async throws -> ValidatedAccount {
+        let user = rawUser.trimmingCharacters(in: .whitespaces)
+        guard !user.isEmpty, !apiKey.isEmpty else { throw LastfmError.notConfigured }
+        var comps = URLComponents(string: base)!
+        comps.queryItems = [
+            URLQueryItem(name: "method", value: "user.getinfo"),
+            URLQueryItem(name: "user", value: user),
+            URLQueryItem(name: "api_key", value: apiKey),
+            URLQueryItem(name: "format", value: "json"),
+        ]
+        guard let url = comps.url else { throw LastfmError.notConfigured }
+        let (data, response) = try await session.data(from: url)
+        guard let http = response as? HTTPURLResponse else { throw LastfmError.http(0) }
+        // Last.fm returns 200 for success and, for bad key/user, a 4xx with an error body.
+        if let apiErr = try? JSONDecoder().decode(APIErrorBody.self, from: data), let code = apiErr.error {
+            throw LastfmError.api(code, apiErr.message ?? "")
+        }
+        guard http.statusCode == 200 else { throw LastfmError.http(http.statusCode) }
+        guard let decoded = try? JSONDecoder().decode(UserInfoResponse.self, from: data),
+              let name = decoded.user?.name, !name.isEmpty else {
+            throw LastfmError.decode
+        }
+        return ValidatedAccount(username: name, scrobbles: decoded.user?.playcount?.value)
+    }
+
     // MARK: - Public: build a full Wrapped
 
     func fetchWrapped(period: WrappedPeriod, limit: Int = 200) async throws -> LastfmWrapped {
@@ -73,46 +109,51 @@ final class LastfmService: @unchecked Sendable {
         let artists = try await artistsT
         let albums = try await albumsT
         // Genre breakdown derived from the top artists' tags (best-effort).
-        let tags = await aggregateTags(from: Array(artists.prefix(6)))
+        let tags = await aggregateTags(from: Array(artists.items.prefix(6)))
 
         return LastfmWrapped(
-            topTracks: tracks,
-            topArtists: artists,
-            topAlbums: albums,
+            topTracks: tracks.items,
+            topArtists: artists.items,
+            topAlbums: albums.items,
             topTags: tags,
             allTimeScrobbles: info?.playcount,
-            scrobblingSinceYear: info?.sinceYear
+            scrobblingSinceYear: info?.sinceYear,
+            totalTrackCount: tracks.total,
+            totalArtistCount: artists.total
         )
     }
 
     // MARK: - Endpoints
 
-    func topTracks(period: String, limit: Int) async throws -> [LastfmTrack] {
+    func topTracks(period: String, limit: Int) async throws -> (items: [LastfmTrack], total: Int?) {
         let r: TopTracksResponse = try await get(method: "user.gettoptracks",
                                                  items: ["user": username, "period": period, "limit": "\(limit)"])
-        return (r.toptracks?.track ?? []).map {
+        let items = (r.toptracks?.track ?? []).map {
             LastfmTrack(name: $0.name, artist: $0.artist?.name ?? "Unknown Artist",
                         playcount: $0.playcount?.value ?? 0,
                         imageURL: bestImage($0.image),
                         durationSeconds: $0.duration?.value)
         }
+        return (items, r.toptracks?.attr?.total?.value)
     }
 
-    func topArtists(period: String, limit: Int) async throws -> [LastfmArtist] {
+    func topArtists(period: String, limit: Int) async throws -> (items: [LastfmArtist], total: Int?) {
         let r: TopArtistsResponse = try await get(method: "user.gettopartists",
                                                   items: ["user": username, "period": period, "limit": "\(limit)"])
-        return (r.topartists?.artist ?? []).map {
+        let items = (r.topartists?.artist ?? []).map {
             LastfmArtist(name: $0.name, playcount: $0.playcount?.value ?? 0, imageURL: bestImage($0.image))
         }
+        return (items, r.topartists?.attr?.total?.value)
     }
 
-    func topAlbums(period: String, limit: Int) async throws -> [LastfmAlbum] {
+    func topAlbums(period: String, limit: Int) async throws -> (items: [LastfmAlbum], total: Int?) {
         let r: TopAlbumsResponse = try await get(method: "user.gettopalbums",
                                                  items: ["user": username, "period": period, "limit": "\(limit)"])
-        return (r.topalbums?.album ?? []).map {
+        let items = (r.topalbums?.album ?? []).map {
             LastfmAlbum(name: $0.name, artist: $0.artist?.name ?? "Unknown Artist",
                         playcount: $0.playcount?.value ?? 0, imageURL: bestImage($0.image))
         }
+        return (items, r.topalbums?.attr?.total?.value)
     }
 
     struct UserInfo { let playcount: Int?; let sinceYear: Int? }
@@ -223,8 +264,16 @@ private struct NamedRef: Decodable { let name: String }
 
 private struct APIErrorBody: Decodable { let error: Int?; let message: String? }
 
+/// The `@attr` block Last.fm attaches to paged lists — `total` is the true count of
+/// distinct items in the period, independent of the page `limit` we requested.
+private struct LastfmListAttr: Decodable { let total: LFInt? }
+
 private struct TopTracksResponse: Decodable {
-    struct Container: Decodable { let track: [Track]? }
+    struct Container: Decodable {
+        let track: [Track]?
+        let attr: LastfmListAttr?
+        enum CodingKeys: String, CodingKey { case track; case attr = "@attr" }
+    }
     struct Track: Decodable {
         let name: String
         let playcount: LFInt?
@@ -236,7 +285,11 @@ private struct TopTracksResponse: Decodable {
 }
 
 private struct TopArtistsResponse: Decodable {
-    struct Container: Decodable { let artist: [Artist]? }
+    struct Container: Decodable {
+        let artist: [Artist]?
+        let attr: LastfmListAttr?
+        enum CodingKeys: String, CodingKey { case artist; case attr = "@attr" }
+    }
     struct Artist: Decodable {
         let name: String
         let playcount: LFInt?
@@ -246,7 +299,11 @@ private struct TopArtistsResponse: Decodable {
 }
 
 private struct TopAlbumsResponse: Decodable {
-    struct Container: Decodable { let album: [Album]? }
+    struct Container: Decodable {
+        let album: [Album]?
+        let attr: LastfmListAttr?
+        enum CodingKeys: String, CodingKey { case album; case attr = "@attr" }
+    }
     struct Album: Decodable {
         let name: String
         let playcount: LFInt?
@@ -258,6 +315,7 @@ private struct TopAlbumsResponse: Decodable {
 
 private struct UserInfoResponse: Decodable {
     struct User: Decodable {
+        let name: String?
         let playcount: LFInt?
         let registered: Registered?
     }

@@ -32,6 +32,18 @@ struct SettingsView: View {
     @State private var libraryDownloadProgress: String?
     @State private var showFolderPicker = false
 
+    // Last.fm config drafts — edits stay local until the Save button validates them.
+    @State private var lfUser = ""
+    @State private var lfKey = ""
+    @State private var lfDraftLoaded = false
+    @State private var lfValidating = false
+    @State private var lfResult: LastfmValidation?
+
+    enum LastfmValidation: Equatable {
+        case ok(username: String, scrobbles: Int?)
+        case failed(String)
+    }
+
     /// Accent color read through the tracked @State appSettings so SwiftUI
     /// observes changes and re-renders immediately (accentColor goes
     /// through AppSettings.shared which isn't tracked by this view).
@@ -169,6 +181,7 @@ struct SettingsView: View {
                 playbackSection
                 equalizerSection
                 lastfmSection
+                wrappedSection
             }
             Group {
                 downloadsSection
@@ -395,12 +408,22 @@ struct SettingsView: View {
         }
     }
 
+    // Both fields are needed: the API key identifies the app to Last.fm, the username
+    // says whose scrobbles to read. Neither substitutes for the other.
+    private var lastfmDirty: Bool {
+        lfUser.trimmingCharacters(in: .whitespaces) != appSettings.lastfmUsername.trimmingCharacters(in: .whitespaces)
+        || lfKey != appSettings.lastfmApiKey
+    }
+    private var lastfmCanSave: Bool {
+        !lfUser.trimmingCharacters(in: .whitespaces).isEmpty && !lfKey.isEmpty && lastfmDirty && !lfValidating
+    }
+
     private var lastfmSection: some View {
         Section {
             HStack {
                 Text("Username")
                 Spacer()
-                TextField("Last.fm username", text: $appSettings.lastfmUsername)
+                TextField("Last.fm username", text: $lfUser)
                     .multilineTextAlignment(.trailing)
                     .foregroundStyle(.secondary)
                     .autocorrectionDisabled()
@@ -412,21 +435,106 @@ struct SettingsView: View {
                 // Plain TextField (not SecureField) so an already-saved key stays visible
                 // — SecureField renders empty for a pre-filled value, which looked like the
                 // key had vanished. It's the user's own read-only key, safe to display.
-                TextField("API key", text: $appSettings.lastfmApiKey)
+                TextField("API key", text: $lfKey)
                     .multilineTextAlignment(.trailing)
                     .foregroundStyle(.secondary)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
             }
-            if appSettings.lastfmConfigured {
-                Label("Connected — powers your Wrapped", systemImage: "checkmark.seal.fill")
+
+            // Save = validate against Last.fm, then persist only on success.
+            Button {
+                Task { await saveLastfm() }
+            } label: {
+                HStack {
+                    if lfValidating {
+                        ProgressView().controlSize(.small)
+                        Text("Checking…")
+                    } else {
+                        Image(systemName: "checkmark.circle")
+                        Text(appSettings.lastfmConfigured && !lastfmDirty ? "Saved" : "Save & Connect")
+                    }
+                    Spacer()
+                }
+                .foregroundStyle(lastfmCanSave ? accentColor : .secondary)
+            }
+            .disabled(!lastfmCanSave)
+
+            // Result of the last Save attempt / current connection state.
+            switch lfResult {
+            case .ok(let name, let scrobbles):
+                Label {
+                    if let scrobbles {
+                        Text("Connected as \(name) · \(scrobbles) scrobbles")
+                    } else {
+                        Text("Connected as \(name)")
+                    }
+                } icon: {
+                    Image(systemName: "checkmark.seal.fill")
+                }
+                .font(.caption)
+                .foregroundStyle(.green)
+            case .failed(let message):
+                Label(message, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(.orange)
+            case nil:
+                if appSettings.lastfmConfigured {
+                    Label("Connected — powers your Wrapped", systemImage: "checkmark.seal.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                }
             }
         } header: {
             Text("Last.fm")
         } footer: {
-            Text("Builds your Wrapped retrospective from your real listening history. Create a free API key at last.fm/api/account/create.")
+            Text("Both fields are required: the API key identifies the app, the username says whose scrobbles to read. Create a free API key at last.fm/api/account/create, then tap Save & Connect.")
+        }
+        .onAppear {
+            // Seed the drafts from the saved values once, when the section first appears.
+            guard !lfDraftLoaded else { return }
+            lfUser = appSettings.lastfmUsername
+            lfKey = appSettings.lastfmApiKey
+            lfDraftLoaded = true
+        }
+    }
+
+    // Wrapped's permanent home: reachable any time from here, independent of the Home
+    // card. The card itself is opt-in (toggle) and, when on, only surfaces seasonally.
+    private var wrappedSection: some View {
+        Section {
+            NavigationLink {
+                WrappedView()
+            } label: {
+                Label("Open your Wrapped", systemImage: "sparkles")
+            }
+            Toggle(isOn: $appSettings.wrappedShowOnHome) {
+                Label("Show on Home", systemImage: "house")
+            }
+        } header: {
+            Text("Wrapped")
+        } footer: {
+            Text(appSettings.lastfmConfigured
+                 ? "Your year & month in music, from your Last.fm scrobbles. When shown on Home, it appears around the end of each period."
+                 : "Your year & month in music. Connect Last.fm above for full history, or it uses this device's play log. When shown on Home, it appears around the end of each period.")
+        }
+    }
+
+    private func saveLastfm() async {
+        lfValidating = true
+        lfResult = nil
+        defer { lfValidating = false }
+        do {
+            let account = try await LastfmService.shared.validate(username: lfUser, apiKey: lfKey)
+            // Persist only after Last.fm confirms the pair works.
+            appSettings.lastfmUsername = account.username
+            appSettings.lastfmApiKey = lfKey
+            appSettings.save()
+            lfUser = account.username
+            lfResult = .ok(username: account.username, scrobbles: account.scrobbles)
+        } catch {
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            lfResult = .failed(message)
         }
     }
 

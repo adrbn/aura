@@ -119,6 +119,10 @@ final class AppSettings {
     var lastfmConfigured: Bool {
         !lastfmUsername.trimmingCharacters(in: .whitespaces).isEmpty && !lastfmApiKey.isEmpty
     }
+    /// Whether the Wrapped retrospective surfaces on the Home tab. Off by default —
+    /// Wrapped is reached from its explicit entry in Settings, and (when this is on)
+    /// only during its seasonal windows. Configuring Last.fm no longer force-shows it.
+    var wrappedShowOnHome: Bool = false
 
     private let settingsKey = "musika_app_settings"
     private static let slskdKeychainAccount = "slskd-external-service"
@@ -196,6 +200,7 @@ final class AppSettings {
             landscapeClockEnabled = decoded.landscapeClockEnabled ?? false
             lastfmUsername = decoded.lastfmUsername ?? ""
             lastfmApiKey = KeychainHelper.loadPassword(for: Self.lastfmKeychainAccount) ?? ""
+            wrappedShowOnHome = decoded.wrappedShowOnHome ?? false
         }
     }
 
@@ -236,7 +241,8 @@ final class AppSettings {
             showPlayCounts: showPlayCounts,
             homeSectionOrder: homeSectionOrder,
             landscapeClockEnabled: landscapeClockEnabled,
-            lastfmUsername: lastfmUsername
+            lastfmUsername: lastfmUsername,
+            wrappedShowOnHome: wrappedShowOnHome
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: settingsKey)
@@ -322,6 +328,7 @@ struct SettingsData: Codable {
     var homeSectionOrder: [HomeSection]?
     var landscapeClockEnabled: Bool?
     var lastfmUsername: String?
+    var wrappedShowOnHome: Bool?
 }
 
 enum AppAccentColor: String, Codable, CaseIterable {

@@ -71,8 +71,10 @@ enum WrappedPeriod: Hashable {
 /// feature can be used/tested in June.
 enum WrappedAvailability {
     /// While true, retrospectives are always offered regardless of the date.
-    /// Flip to false to enable the date-window logic below.
-    static let alwaysAvailable = true
+    /// False → the date-window logic below (Wrapped surfaces only around the end of
+    /// each period). The Home card is additionally gated behind a user setting; the
+    /// explicit Settings entry point ignores this and is always reachable.
+    static let alwaysAvailable = false
 
     static func offeredPeriods(now: Date = Date()) -> [WrappedPeriod] {
         if alwaysAvailable { return [.currentYear, .currentMonth] }
@@ -101,12 +103,13 @@ struct ListeningStats {
     enum Source { case device, lastfm }
 
     struct RankedSong: Identifiable {
-        let id: String
+        let id: String            // stable list identity (device: server id; Last.fm: synthetic)
         let title: String
         let artist: String
-        let coverArt: String?     // Subsonic cover id (device source)
+        let coverArt: String?     // Subsonic cover id (device source / resolved)
         let imageURL: String?     // remote image (Last.fm source)
         let plays: Int
+        var serverId: String? = nil  // resolved server song id → tap plays it
     }
     struct RankedArtist: Identifiable {
         var id: String { name }
@@ -114,6 +117,8 @@ struct ListeningStats {
         let plays: Int
         let minutes: Int
         let imageURL: String?
+        var serverId: String? = nil       // resolved server artist id → tap opens it
+        var serverCoverArt: String? = nil // resolved server cover (Last.fm drops artist images)
     }
     struct RankedAlbum: Identifiable {
         var id: String { "\(name)|\(artist)" }
@@ -122,6 +127,7 @@ struct ListeningStats {
         let coverArt: String?
         let imageURL: String?
         let plays: Int
+        var serverId: String? = nil       // resolved server album id → tap opens it
     }
     struct RankedGenre: Identifiable {
         var id: String { name }
@@ -174,8 +180,10 @@ struct ListeningStats {
             .prefix(50)
             .compactMap { id -> RankedSong? in
                 guard let meta = songMeta[id] else { return nil }
+                // Device play records already carry a real Subsonic song id → playable.
                 return RankedSong(id: id, title: meta.title, artist: meta.artist,
-                                  coverArt: meta.coverArt, imageURL: nil, plays: songCount[id] ?? 0)
+                                  coverArt: meta.coverArt, imageURL: nil,
+                                  plays: songCount[id] ?? 0, serverId: id)
             }
 
         // Top artists by play count, tie-broken by minutes.
@@ -272,8 +280,9 @@ struct ListeningStats {
             source: .lastfm,
             totalPlays: periodPlays,
             totalMinutes: estMinutes,
-            uniqueSongs: w.topTracks.count,
-            uniqueArtists: w.topArtists.count,
+            // True period-wide distinct counts (from @attr total), not the fetch cap.
+            uniqueSongs: w.totalTrackCount ?? w.topTracks.count,
+            uniqueArtists: w.totalArtistCount ?? w.topArtists.count,
             topSongs: Array(topSongs),
             topArtists: Array(topArtists),
             topAlbums: Array(topAlbums),
@@ -281,5 +290,39 @@ struct ListeningStats {
             allTimeScrobbles: w.allTimeScrobbles,
             scrobblingSinceYear: w.scrobblingSinceYear
         )
+    }
+
+    /// A server entity resolved for one Wrapped row: its id, plus (optionally) a
+    /// Subsonic cover-art id to display instead of Last.fm's star placeholder.
+    struct Resolved { let serverId: String; let coverArt: String? }
+
+    /// Return a copy with server-resolved ids/cover art merged into the top rows.
+    /// Keyed by each ranked item's `id`. Unmatched rows keep their original values.
+    func withResolved(songs: [String: Resolved] = [:],
+                      albums: [String: Resolved] = [:],
+                      artists: [String: Resolved] = [:]) -> ListeningStats {
+        let newSongs = topSongs.map { s -> RankedSong in
+            guard let r = songs[s.id] else { return s }
+            return RankedSong(id: s.id, title: s.title, artist: s.artist,
+                              coverArt: r.coverArt ?? s.coverArt, imageURL: s.imageURL,
+                              plays: s.plays, serverId: r.serverId)
+        }
+        let newAlbums = topAlbums.map { a -> RankedAlbum in
+            guard let r = albums[a.id] else { return a }
+            return RankedAlbum(name: a.name, artist: a.artist,
+                               coverArt: r.coverArt ?? a.coverArt, imageURL: a.imageURL,
+                               plays: a.plays, serverId: r.serverId)
+        }
+        let newArtists = topArtists.map { ar -> RankedArtist in
+            guard let r = artists[ar.id] else { return ar }
+            return RankedArtist(name: ar.name, plays: ar.plays, minutes: ar.minutes,
+                                imageURL: ar.imageURL, serverId: r.serverId,
+                                serverCoverArt: r.coverArt)
+        }
+        return ListeningStats(period: period, source: source, totalPlays: totalPlays,
+                              totalMinutes: totalMinutes, uniqueSongs: uniqueSongs,
+                              uniqueArtists: uniqueArtists, topSongs: newSongs,
+                              topArtists: newArtists, topAlbums: newAlbums, topGenres: topGenres,
+                              allTimeScrobbles: allTimeScrobbles, scrobblingSinceYear: scrobblingSinceYear)
     }
 }

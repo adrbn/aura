@@ -315,9 +315,10 @@ struct HomeView: View {
                 // never a blank/black screen or the previous server's data.
                 homeSkeleton
             } else {
-                // Retrospective entry — only when Last.fm is connected (it powers the
-                // Wrapped) and the date logic currently offers a retrospective.
-                if appSettings.lastfmConfigured,
+                // Retrospective entry — opt-in (Settings ▸ Wrapped ▸ Show on Home) and,
+                // when on, only during a seasonal window. No longer force-shown just
+                // because Last.fm is configured. Always reachable from Settings regardless.
+                if appSettings.wrappedShowOnHome,
                    let period = WrappedAvailability.offeredPeriods().first {
                     retrospectiveCard(period: period)
                 }
