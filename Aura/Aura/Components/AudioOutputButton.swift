@@ -81,22 +81,20 @@ class AudioOutputContainerView: UIView {
         super.init(frame: frame)
         backgroundColor = .clear
 
-        // Custom icon (visible)
-        iconView.contentMode = .scaleAspectFit
+        // Custom icon (visible). contentMode = .center (NOT scaleAspectFit): the image is
+        // drawn at its natural symbol size and never rescaled by the box, so the per-symbol
+        // pointSize alone controls the rendered size — predictable, and it can't quietly
+        // shrink a wide glyph (airpods) or enlarge others the way a fitted box did.
+        iconView.contentMode = .center
         iconView.isUserInteractionEnabled = false
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.tag = 999
         addSubview(iconView)
-        // 40, not 28. An SF Symbol's UIImage is bigger than its ink, so a 28pt box made
-        // scaleAspectFit shrink the whole image to ~70% — airpodspro drew 51px of ink
-        // where the raw symbol draws 73px, i.e. visibly shorter than the .title2 icons
-        // around it. At 40 nothing is clamped and the glyph lands on the same optical
-        // line as its neighbours.
         NSLayoutConstraint.activate([
             iconView.centerXAnchor.constraint(equalTo: centerXAnchor),
             iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
-            iconView.widthAnchor.constraint(equalToConstant: 40),
-            iconView.heightAnchor.constraint(equalToConstant: 40),
+            iconView.widthAnchor.constraint(equalToConstant: 34),
+            iconView.heightAnchor.constraint(equalToConstant: 34),
         ])
 
         // Hidden route picker (off-screen but in view hierarchy so it works)
@@ -146,12 +144,13 @@ struct AudioOutputButton: UIViewRepresentable {
     }
 
     private func updateIcon(in container: AudioOutputContainerView) {
-        // Sizes are per-symbol because each glyph fills its em box differently. These are
-        // the intended values; they only render true now that the icon box (40) no longer
-        // scales the image down.
+        // With contentMode .center, pointSize IS the rendered size. The neighbouring row
+        // icons are .title2 (~22pt); these are tuned per-symbol to sit on the same optical
+        // line (airpods is wide, so a touch smaller; iphone is tall+narrow, a touch smaller).
         let pointSize: CGFloat = switch routeIcon {
-        case "airpodspro": 28
-        case "iphone": 19
+        case "airpodspro": 24   // wide+short glyph → needs a larger point size to match
+        case "iphone": 20       // tall+narrow → a touch smaller so it doesn't tower
+        case "headphones": 21
         default: 22
         }
         let config = UIImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
@@ -170,6 +169,6 @@ struct AudioOutputButtonWrapper: View {
             routeIcon: routeMonitor.routeIcon,
             isExternalRoute: routeMonitor.isExternalRoute
         )
-        .frame(width: 40, height: 40)
+        .frame(width: 34, height: 34)
     }
 }
