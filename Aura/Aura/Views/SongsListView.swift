@@ -6,6 +6,8 @@ enum SongFetchType {
     case random
     case recentSongs
     case frequentSongs
+    /// Songs from the most recently added albums — the list behind Home's "Recently Added".
+    case newestSongs
 }
 
 enum SongSortOrder: String, CaseIterable {
@@ -36,6 +38,7 @@ final class SongsCache {
         case .recentSongs: return 10 * 60
         case .frequentSongs: return 10 * 60
         case .random: return 0           // never reuse
+        case .newestSongs: return 10 * 60
         }
     }
 
@@ -46,6 +49,7 @@ final class SongsCache {
         case .recentSongs: return "recent"
         case .frequentSongs: return "frequent"
         case .random: return "random"
+        case .newestSongs: return "newest"
         }
     }
 
@@ -102,7 +106,7 @@ struct SongsListView: View {
         }
 
         switch fetchType {
-        case .random, .recentSongs, .frequentSongs:
+        case .random, .recentSongs, .frequentSongs, .newestSongs:
             _sortOrder = State(initialValue: .none)
         case .starred:
             _sortOrder = State(initialValue: .recentlyAdded)
@@ -491,6 +495,22 @@ struct SongsListView: View {
                     allSongs.append(contentsOf: detail.song ?? [])
                 }
                 SongsCache.shared.store(allSongs, for: .recentSongs)
+                await MainActor.run {
+                    songs = allSongs
+                    isLoading = false
+                }
+
+            case .newestSongs:
+                // Subsonic has no "recently added songs" endpoint, so expand the newest
+                // albums into their tracks — the same shape as .recentSongs, just a
+                // different album list and a wider window, since a song list wants depth.
+                let albums = try await SubsonicClient.shared.getAlbumList2(server: server, type: "newest", size: 25)
+                var allSongs: [Song] = []
+                for album in albums {
+                    let detail = try await SubsonicClient.shared.getAlbum(server: server, id: album.id)
+                    allSongs.append(contentsOf: detail.song ?? [])
+                }
+                SongsCache.shared.store(allSongs, for: .newestSongs)
                 await MainActor.run {
                     songs = allSongs
                     isLoading = false

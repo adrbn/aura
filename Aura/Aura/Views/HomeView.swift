@@ -39,6 +39,7 @@ enum HomeRoute: Hashable {
     case starredSongs
     case favouriteArtists
     case recentlyPlayedSongs
+    case recentlyAddedSongs
     case wrapped(WrappedPeriod)
 }
 
@@ -157,6 +158,8 @@ struct HomeView: View {
                     SongsListView(title: "Favorite Songs", fetchType: .starred)
                 case .recentlyPlayedSongs:
                     RecentlyPlayedSongsView()
+                case .recentlyAddedSongs:
+                    SongsListView(title: "Recently Added", fetchType: .newestSongs)
                 case .favouriteArtists:
                     ArtistsListView()
                 case .wrapped(let period):
@@ -536,7 +539,12 @@ struct HomeView: View {
 
     private func albumSection(_ title: String, albums: [Album], listType: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            NavigationLink(value: HomeRoute.albumList(title: title, listType: listType)) {
+            // "Recently Added" opens a song list rather than a wall of album covers: what
+            // you want from it is what arrived, track by track. The other album rows still
+            // open the album grid, where covers are the point.
+            NavigationLink(value: listType == "newest"
+                           ? HomeRoute.recentlyAddedSongs
+                           : HomeRoute.albumList(title: title, listType: listType)) {
                 sectionHeader(title)
             }
             .buttonStyle(.plain)
