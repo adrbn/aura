@@ -19,7 +19,6 @@
 		E10000010000000000000001 /* AuraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000001 /* AuraApp.swift */; };
 		E10000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000002 /* ContentView.swift */; };
 		E10000010000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000003 /* Assets.xcassets */; };
-		E100000100000000000000F2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F2 /* AppIcon.icon */; };
 		E10000010000000000000010 /* SubsonicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000010 /* SubsonicClient.swift */; };
 		E10000010000000000000011 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000011 /* Models.swift */; };
 		E10000010000000000000012 /* ServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000012 /* ServerManager.swift */; };
@@ -36,11 +35,8 @@
 		E10000010000000000000029 /* AddServerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000029 /* AddServerView.swift */; };
 		E10000010000000000000030 /* SongRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000030 /* SongRowView.swift */; };
 		E10000010000000000000031 /* AlbumCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000031 /* AlbumCardView.swift */; };
-		E10000010000000000000099 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000099 /* GeneratedCoverView.swift */; };
-		E1000001000000000000009A /* ListeningStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009A /* ListeningStats.swift */; };
-		E1000001000000000000009C /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
-		E1000001000000000000009B /* WrappedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009B /* WrappedView.swift */; };
 		E10000010000000000000032 /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000032 /* ImageLoader.swift */; };
+		E100000100000000000000F3 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
 		E10000010000000000000033 /* ArtistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000033 /* ArtistDetailView.swift */; };
 		E10000010000000000000034 /* SongsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000034 /* SongsListView.swift */; };
 		E10000010000000000000040 /* MusicPlaybackAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000040 /* MusicPlaybackAttributes.swift */; };
@@ -69,16 +65,21 @@
 		E10000010000000000000091 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000091 /* CarPlaySceneDelegate.swift */; };
 		E10000010000000000000092 /* RadioPlaylistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000092 /* RadioPlaylistView.swift */; };
 		E10000010000000000000093 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000093 /* OnboardingView.swift */; };
+		E10000010000000000000099 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000099 /* GeneratedCoverView.swift */; };
+		E1000001000000000000009A /* ListeningStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009A /* ListeningStats.swift */; };
+		E1000001000000000000009B /* WrappedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009B /* WrappedView.swift */; };
+		E1000001000000000000009C /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
 		E100000100000000000000A1 /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
 		E100000100000000000000A2 /* MixDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A2 /* MixDetailView.swift */; };
 		E100000100000000000000B1 /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000B1 /* SkeletonView.swift */; };
 		E100000100000000000000B2 /* SearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000B2 /* SearchIndex.swift */; };
 		E100000100000000000000C1 /* SearchHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C1 /* SearchHistory.swift */; };
-		E100000100000000000000DE /* OfflinePlaylistsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DE /* OfflinePlaylistsStore.swift */; };
-		E100000100000000000000F1 /* FullScreenImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F1 /* FullScreenImageViewer.swift */; };
 		E100000100000000000000D1 /* AudioOutputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D1 /* AudioOutputButton.swift */; };
 		E100000100000000000000D2 /* BufferedProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D2 /* BufferedProgressBar.swift */; };
 		E100000100000000000000D3 /* TabRootChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D3 /* TabRootChrome.swift */; };
+		E100000100000000000000F6 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
+		E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
+		E100000100000000000000F4 /* AlphabetIndexBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F4 /* AlphabetIndexBar.swift */; };
 		E100000100000000000000D4 /* FolderPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D4 /* FolderPicker.swift */; };
 		E100000100000000000000D5 /* SongInfoSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D5 /* SongInfoSheet.swift */; };
 		E100000100000000000000D6 /* SongCreditsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D6 /* SongCreditsSheet.swift */; };
@@ -89,6 +90,9 @@
 		E100000100000000000000DB /* SettingsSaveModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DB /* SettingsSaveModifiers.swift */; };
 		E100000100000000000000DC /* HomeFullLists.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DC /* HomeFullLists.swift */; };
 		E100000100000000000000DD /* RecentlyPlayedSongsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DD /* RecentlyPlayedSongsView.swift */; };
+		E100000100000000000000DE /* OfflinePlaylistsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DE /* OfflinePlaylistsStore.swift */; };
+		E100000100000000000000F1 /* FullScreenImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F1 /* FullScreenImageViewer.swift */; };
+		E100000100000000000000F2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F2 /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -127,7 +131,6 @@
 		E10000020000000000000001 /* AuraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuraApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E10000020000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		E100000200000000000000F2 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		E10000020000000000000010 /* SubsonicClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubsonicClient.swift; sourceTree = "<group>"; };
 		E10000020000000000000011 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		E10000020000000000000012 /* ServerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerManager.swift; sourceTree = "<group>"; };
@@ -144,11 +147,8 @@
 		E10000020000000000000029 /* AddServerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddServerView.swift; sourceTree = "<group>"; };
 		E10000020000000000000030 /* SongRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongRowView.swift; sourceTree = "<group>"; };
 		E10000020000000000000031 /* AlbumCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumCardView.swift; sourceTree = "<group>"; };
-		E10000020000000000000099 /* GeneratedCoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedCoverView.swift; sourceTree = "<group>"; };
-		E1000002000000000000009A /* ListeningStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningStats.swift; sourceTree = "<group>"; };
-		E1000002000000000000009C /* LastfmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastfmService.swift; sourceTree = "<group>"; };
-		E1000002000000000000009B /* WrappedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrappedView.swift; sourceTree = "<group>"; };
 		E10000020000000000000032 /* ImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoader.swift; sourceTree = "<group>"; };
+		E100000200000000000000F3 /* AppTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTypography.swift; sourceTree = "<group>"; };
 		E10000020000000000000033 /* ArtistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDetailView.swift; sourceTree = "<group>"; };
 		E10000020000000000000034 /* SongsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongsListView.swift; sourceTree = "<group>"; };
 		E10000020000000000000040 /* MusicPlaybackAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlaybackAttributes.swift; sourceTree = "<group>"; };
@@ -174,16 +174,21 @@
 		E10000020000000000000091 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
 		E10000020000000000000092 /* RadioPlaylistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioPlaylistView.swift; sourceTree = "<group>"; };
 		E10000020000000000000093 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		E10000020000000000000099 /* GeneratedCoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratedCoverView.swift; sourceTree = "<group>"; };
+		E1000002000000000000009A /* ListeningStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningStats.swift; sourceTree = "<group>"; };
+		E1000002000000000000009B /* WrappedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrappedView.swift; sourceTree = "<group>"; };
+		E1000002000000000000009C /* LastfmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastfmService.swift; sourceTree = "<group>"; };
 		E100000200000000000000A1 /* MixGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixGenerator.swift; sourceTree = "<group>"; };
 		E100000200000000000000A2 /* MixDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixDetailView.swift; sourceTree = "<group>"; };
 		E100000200000000000000B1 /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
 		E100000200000000000000B2 /* SearchIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchIndex.swift; sourceTree = "<group>"; };
 		E100000200000000000000C1 /* SearchHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHistory.swift; sourceTree = "<group>"; };
-		E100000200000000000000DE /* OfflinePlaylistsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflinePlaylistsStore.swift; sourceTree = "<group>"; };
-		E100000200000000000000F1 /* FullScreenImageViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenImageViewer.swift; sourceTree = "<group>"; };
 		E100000200000000000000D1 /* AudioOutputButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputButton.swift; sourceTree = "<group>"; };
 		E100000200000000000000D2 /* BufferedProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferedProgressBar.swift; sourceTree = "<group>"; };
 		E100000200000000000000D3 /* TabRootChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabRootChrome.swift; sourceTree = "<group>"; };
+		E100000200000000000000F6 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
+		E100000200000000000000F7 /* BouncingDotsLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BouncingDotsLoader.swift; sourceTree = "<group>"; };
+		E100000200000000000000F4 /* AlphabetIndexBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlphabetIndexBar.swift; sourceTree = "<group>"; };
 		E100000200000000000000D4 /* FolderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPicker.swift; sourceTree = "<group>"; };
 		E100000200000000000000D5 /* SongInfoSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongInfoSheet.swift; sourceTree = "<group>"; };
 		E100000200000000000000D6 /* SongCreditsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongCreditsSheet.swift; sourceTree = "<group>"; };
@@ -194,6 +199,9 @@
 		E100000200000000000000DB /* SettingsSaveModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSaveModifiers.swift; sourceTree = "<group>"; };
 		E100000200000000000000DC /* HomeFullLists.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeFullLists.swift; sourceTree = "<group>"; };
 		E100000200000000000000DD /* RecentlyPlayedSongsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentlyPlayedSongsView.swift; sourceTree = "<group>"; };
+		E100000200000000000000DE /* OfflinePlaylistsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflinePlaylistsStore.swift; sourceTree = "<group>"; };
+		E100000200000000000000F1 /* FullScreenImageViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenImageViewer.swift; sourceTree = "<group>"; };
+		E100000200000000000000F2 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		E10000030000000000000001 /* Aura.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aura.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E10000030000000000000002 /* AuraWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AuraWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistMembershipCache.swift; sourceTree = "<group>"; };
@@ -260,6 +268,7 @@
 				E10000020000000000000012 /* ServerManager.swift */,
 				E10000020000000000000013 /* AudioPlayer.swift */,
 				E10000020000000000000032 /* ImageLoader.swift */,
+				E100000200000000000000F3 /* AppTypography.swift */,
 				E10000020000000000000050 /* DownloadManager.swift */,
 				E10000020000000000000080 /* AppLogger.swift */,
 				E10000020000000000000085 /* EqualizerManager.swift */,
@@ -337,6 +346,9 @@
 				E100000200000000000000D1 /* AudioOutputButton.swift */,
 				E100000200000000000000D2 /* BufferedProgressBar.swift */,
 				E100000200000000000000D3 /* TabRootChrome.swift */,
+				E100000200000000000000F6 /* MarqueeText.swift */,
+				E100000200000000000000F7 /* BouncingDotsLoader.swift */,
+				E100000200000000000000F4 /* AlphabetIndexBar.swift */,
 				E100000200000000000000D4 /* FolderPicker.swift */,
 			);
 			path = Components;
@@ -370,7 +382,7 @@
 				E10000070000000000000001 /* Sources */,
 				E10000040000000000000001 /* Frameworks */,
 				E10000070000000000000002 /* Resources */,
-				E100000700000000000000F0 /* Embed Tuaf font if present */,
+				E100000700000000000000F0 /* Embed display fonts if present */,
 				E10000070000000000000005 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -437,41 +449,6 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		E100000700000000000000F0 /* Embed Tuaf font if present */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/Aura/TuafTrial-Bold.otf",
-			);
-			name = "Embed Tuaf font if present";
-			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/TuafTrial-Bold.otf",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Tuaf is a commercial font: the licence covers EMBEDDING it in a built app, not
-# redistributing the .otf, so it is gitignored and absent from this repository.
-# Drop your licensed TuafTrial-Bold.otf into Aura/ for the intended typography;
-# without it every call site already falls back to the system font.
-FONT=\"$SRCROOT/Aura/TuafTrial-Bold.otf\"
-DEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"
-if [ -f \"$FONT\" ]; then
-  mkdir -p \"$DEST\" || exit 1
-  # Hard-fail on a failed copy. A silent failure would ship a release that claims
-  # success while rendering in the system font.
-  cp \"$FONT\" \"$DEST/\" || { echo \"error: found $FONT but could not embed it\"; exit 1; }
-  echo \"note: embedded TuafTrial-Bold.otf\"
-else
-  echo \"warning: TuafTrial-Bold.otf absent - building with the system font fallback\"
-fi
-";
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXResourcesBuildPhase section */
 		E10000070000000000000002 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
@@ -492,6 +469,28 @@ fi
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		E100000700000000000000F0 /* Embed display fonts if present */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Aura/TuafTrial-Bold.otf",
+				"$(SRCROOT)/Aura/ITCGaramondStd-LtCond.otf",
+			);
+			name = "Embed display fonts if present";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/TuafTrial-Bold.otf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ITCGaramondStd-LtCond.otf",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Fonts are licensed files kept OUT of git (.gitignore covers *.otf), so they are copied\n# in here rather than being project resources — a checkout without them still builds.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\n\nembed() {\n  # Hard-fail on a failed copy: a silent failure would ship a release that claims\n  # success while rendering in the system font.\n  cp \"$1\" \"$DEST/\" || { echo \"error: found $1 but could not embed it\"; exit 1; }\n  echo \"note: embedded $(basename \"$1\")\"\n}\n\n# Tuaf: the app's own display face. Its licence covers embedding in a built app.\nTUAF=\"$SRCROOT/Aura/TuafTrial-Bold.otf\"\nif [ -f \"$TUAF\" ]; then embed \"$TUAF\"; else\n  echo \"warning: TuafTrial-Bold.otf absent - building with the system font fallback\"\nfi\n\n# ITC Garamond: LOCAL EVALUATION ONLY. Its fsType is 4 (Preview & Print), which does\n# NOT permit embedding in an application, so it must never reach a shippable build.\n# Excluded from the App Store configuration on purpose - do not relax this.\nGARAMOND=\"$SRCROOT/Aura/ITCGaramondStd-LtCond.otf\"\nif [ \"$CONFIGURATION\" = \"Release-AppStore\" ]; then\n  echo \"note: skipping ITC Garamond - not licensed for app embedding\"\nelif [ -f \"$GARAMOND\" ]; then\n  embed \"$GARAMOND\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		E10000070000000000000001 /* Sources */ = {
@@ -521,6 +520,7 @@ fi
 				E10000010000000000000099 /* GeneratedCoverView.swift in Sources */,
 				E100000100000000000000F1 /* FullScreenImageViewer.swift in Sources */,
 				E10000010000000000000032 /* ImageLoader.swift in Sources */,
+				E100000100000000000000F3 /* AppTypography.swift in Sources */,
 				E10000010000000000000033 /* ArtistDetailView.swift in Sources */,
 				E10000010000000000000034 /* SongsListView.swift in Sources */,
 				E10000010000000000000040 /* MusicPlaybackAttributes.swift in Sources */,
@@ -561,6 +561,9 @@ fi
 				E100000100000000000000D1 /* AudioOutputButton.swift in Sources */,
 				E100000100000000000000D2 /* BufferedProgressBar.swift in Sources */,
 				E100000100000000000000D3 /* TabRootChrome.swift in Sources */,
+				E100000100000000000000F6 /* MarqueeText.swift in Sources */,
+				E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */,
+				E100000100000000000000F4 /* AlphabetIndexBar.swift in Sources */,
 				E100000100000000000000D4 /* FolderPicker.swift in Sources */,
 				E100000100000000000000D5 /* SongInfoSheet.swift in Sources */,
 				E100000100000000000000D6 /* SongCreditsSheet.swift in Sources */,
@@ -634,6 +637,7 @@ fi
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Aura/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aura;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -642,7 +646,7 @@ fi
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) APPSTORE_BUILD";
@@ -783,6 +787,7 @@ fi
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Aura/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aura;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -791,7 +796,7 @@ fi
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -812,6 +817,7 @@ fi
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Aura/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aura;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -820,7 +826,7 @@ fi
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

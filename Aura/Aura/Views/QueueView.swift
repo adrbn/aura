@@ -38,7 +38,9 @@ struct QueueView: View {
                 // User queue — songs added via "Add to Queue" / "Play Next"
                 if !player.userQueue.isEmpty {
                     Section {
-                        ForEach(Array(player.userQueue.enumerated()), id: \.element.id) { index, song in
+                        // Key by position, not song.id: the same track can legitimately sit
+                        // in the queue more than once, and id-keyed rows collapse/misroute taps.
+                        ForEach(Array(player.userQueue.enumerated()), id: \.offset) { index, song in
                             HStack(spacing: 12) {
                                 CoverArtImage(coverArt: song.coverArt, size: 46, cornerRadius: 6)
                                 VStack(alignment: .leading, spacing: 2) {
@@ -87,7 +89,9 @@ struct QueueView: View {
                 let autoNext = autoNextSongs
                 if !autoNext.isEmpty {
                     Section {
-                        ForEach(Array(autoNext.enumerated()), id: \.element.id) { index, song in
+                        // Position-keyed (see userQueue note): guarantees a tap plays the row
+                        // you touched even if the queue holds two songs with the same id.
+                        ForEach(Array(autoNext.enumerated()), id: \.offset) { index, song in
                             HStack(spacing: 12) {
                                 CoverArtImage(coverArt: song.coverArt, size: 46, cornerRadius: 6)
                                 VStack(alignment: .leading, spacing: 2) {

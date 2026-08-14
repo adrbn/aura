@@ -13,7 +13,14 @@ final class ServerManager {
     /// True when the device has any network path available (WiFi/cellular/wired)
     var hasNetwork = true
     /// True when the app automatically switched to offline mode due to server being unreachable
-    var wasAutoOffline = false
+    /// True when offline mode was switched on automatically (server unreachable) rather
+    /// than chosen by the user. MUST persist: `offlineMode` itself survives relaunch, so a
+    /// memory-only flag reset to false on launch and the "return online by itself" rule
+    /// (`wasAutoOffline && offlineMode`) could never fire again — the app stayed stuck in
+    /// offline mode forever even with the server plainly reachable.
+    var wasAutoOffline = UserDefaults.standard.bool(forKey: "musika_was_auto_offline") {
+        didSet { UserDefaults.standard.set(wasAutoOffline, forKey: "musika_was_auto_offline") }
+    }
     /// Counts consecutive connection failures before auto-offline kicks in
     private var consecutiveFailures = 0
     /// Number of failures required before auto-switching to offline
@@ -120,11 +127,18 @@ final class ServerManager {
         do {
             let ok = try await SubsonicClient.shared.ping(server: server)
             await MainActor.run {
+                let wasConnected = self.isConnected
                 self.isConnected = ok
                 self.connectionError = ok ? nil : "Server returned error"
 
                 if ok {
                     self.consecutiveFailures = 0
+                    if !wasConnected {
+                        // Server reachable again — artwork that fell back to a placeholder
+                        // while offline is never retried on its own (the cover id, and so
+                        // the task id, never changes). Ask those views to try once more.
+                        ArtworkRetry.shared.requestRetry()
+                    }
                     if self.wasAutoOffline && AppSettings.shared.offlineMode {
                         // Offline mode was enabled automatically — leave it automatically
                         // too. Manual offline (user toggle) is never overridden.
@@ -221,6 +235,10 @@ final class ServerManager {
         wasAutoOffline = false
         consecutiveFailures = 0
         manualOnlineDate = Date()
+        // Offline mode short-circuits artwork fetches to the downloaded-only master, so
+        // anything not downloaded is showing a placeholder. Leaving offline mode has to
+        // let those retry — nothing else will.
+        ArtworkRetry.shared.requestRetry()
         AppLogger.shared.log("🟢 Back online")
         ScrobbleQueue.shared.flush()
     }

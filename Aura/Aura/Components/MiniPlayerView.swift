@@ -14,9 +14,10 @@ struct MiniPlayerView: View {
                         .id("mini-\(song.id)-\(song.coverArt ?? "")")
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(song.title)
-                            .font(.subheadline.weight(.semibold))
-                            .lineLimit(1)
+                        MarqueeText(text: song.title,
+                                    font: .subheadline.weight(.semibold),
+                                    color: .primary,
+                                    alignment: .leading)
                         Text(song.artist ?? "Unknown Artist")
                             .font(.caption)
                             .foregroundStyle(.secondary)

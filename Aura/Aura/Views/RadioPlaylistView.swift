@@ -86,13 +86,8 @@ struct RadioPlaylistView: View {
 
             // Loading indicator
             if player.isFetchingRadioSongs {
-                HStack(spacing: 12) {
-                    ProgressView()
-                    Text("Finding similar songs...")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
+                BouncingDotsLoader()
+                    .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)

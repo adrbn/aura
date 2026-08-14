@@ -12,6 +12,22 @@ final class AudioPlayer {
     var queue: [Song] = []
     var userQueue: [Song] = []
     var queueIndex: Int = 0
+    /// True while a favourite toggle is waiting on the server. The heart shows a pulse
+    /// and stops accepting taps, so a slow round-trip can't be fired twenty times.
+    var isTogglingFavorite = false
+    /// Bumped each time a song becomes a favourite — drives the one-shot sparkle burst.
+    var favoriteCelebration = 0
+
+    /// Which way the last song change went: +1 forward, -1 backward. Drives the Now
+    /// Playing slide transition.
+    ///
+    /// It lives here, not in the view, because the view only ever sees *some* of the
+    /// song changes. Autoplay, the lock screen, CarPlay and Siri all move the queue
+    /// without any on-screen gesture, and a view-owned flag would keep serving the
+    /// stale direction from the last thing the user touched. Worse, `previous()`
+    /// restarts the track instead of moving when past 3 s, so a view that set "-1"
+    /// on the gesture left it wrong even though nothing had changed.
+    var songChangeDirection: Int = 1
     var isPlaying = false
     var currentTime: TimeInterval = 0
     var duration: TimeInterval = 0
@@ -34,6 +50,9 @@ final class AudioPlayer {
     var lyrics: [LyricsLine] = []
     var lyricsSource: LyricsSource = .structured
     var lyricsStatus: String = ""
+    /// True while lyrics are being fetched. The empty-state ("No lyrics available") must
+    /// wait on this being false — otherwise it flashes before any source has been tried.
+    var isLoadingLyrics = false
     var isShowingQueue = false
     var radioPlaylistSongs: [Song] = []
     var radioPlaylistName: String = ""
@@ -71,6 +90,17 @@ final class AudioPlayer {
     private var savedPlaybackSource: PlaybackSource?
     private var autoplayFromIndex: Int?  // Index where autoplay/random-fill songs begin
     private var isSeeking = false
+    /// Id of the most recent seek request.
+    ///
+    /// AVPlayer reports `finished == false` when a seek is superseded by a newer one. The
+    /// old code treated that as a failure and RE-ISSUED the same target — dragging playback
+    /// back to a stale position, which is what made a scrub or a rewind visibly snap back
+    /// to where it had been. An interrupted seek must simply be abandoned: the newer
+    /// request already owns the outcome. Only the newest completion clears `isSeeking`, so
+    /// a late one can't unfreeze the clock mid-scrub either.
+    private var seekGeneration = 0
+    /// One-shot: a saved position to seek to as soon as the restored item is ready to play.
+    private var pendingSeekTime: TimeInterval?
     private var consecutiveFailures = 0
     /// One-shot per track: prevents repeated offline error toasts/skips from the
     /// multiple AVPlayerItem failure signals a single dead item can emit.
@@ -153,18 +183,22 @@ final class AudioPlayer {
         var userQueue: [Song] = []
         var playbackSource: PlaybackSource = .unknown
         var repeatMode: RepeatMode = .off
+        /// Playback position (seconds) within `currentSong` at the moment of saving, so a
+        /// cold relaunch resumes where the user left off — not just the same track at 0:00.
+        var position: TimeInterval = 0
 
         enum CodingKeys: String, CodingKey {
-            case currentSong, queue, queueIndex, userQueue, playbackSource, repeatMode
+            case currentSong, queue, queueIndex, userQueue, playbackSource, repeatMode, position
         }
 
-        init(currentSong: Song, queue: [Song], queueIndex: Int, userQueue: [Song] = [], playbackSource: PlaybackSource = .unknown, repeatMode: RepeatMode = .off) {
+        init(currentSong: Song, queue: [Song], queueIndex: Int, userQueue: [Song] = [], playbackSource: PlaybackSource = .unknown, repeatMode: RepeatMode = .off, position: TimeInterval = 0) {
             self.currentSong = currentSong
             self.queue = queue
             self.queueIndex = queueIndex
             self.userQueue = userQueue
             self.playbackSource = playbackSource
             self.repeatMode = repeatMode
+            self.position = position
         }
 
         init(from decoder: Decoder) throws {
@@ -175,16 +209,23 @@ final class AudioPlayer {
             userQueue = try c.decodeIfPresent([Song].self, forKey: .userQueue) ?? []
             playbackSource = try c.decodeIfPresent(PlaybackSource.self, forKey: .playbackSource) ?? .unknown
             repeatMode = try c.decodeIfPresent(RepeatMode.self, forKey: .repeatMode) ?? .off
+            position = try c.decodeIfPresent(TimeInterval.self, forKey: .position) ?? 0
         }
     }
 
     private func saveLastPlayback() {
         guard let song = currentSong else { return }
-        let state = LastPlayback(currentSong: song, queue: queue, queueIndex: queueIndex, userQueue: userQueue, playbackSource: playbackSource, repeatMode: repeatMode)
+        let state = LastPlayback(currentSong: song, queue: queue, queueIndex: queueIndex, userQueue: userQueue, playbackSource: playbackSource, repeatMode: repeatMode, position: currentTime)
         if let data = try? JSONEncoder().encode(state) {
             UserDefaults.standard.set(data, forKey: lastPlaybackKey)
         }
     }
+
+    /// Persist the current session — song, queue, AND live playback position — so a cold
+    /// relaunch resumes exactly where the user left off. Call when the app leaves the
+    /// foreground: iOS can terminate a backgrounded app with no further callback, and the
+    /// periodic saves elsewhere fire on track changes (position 0), not mid-song.
+    func persistPlaybackState() { saveLastPlayback() }
 
     private func restoreLastPlayback() {
         guard let data = UserDefaults.standard.data(forKey: lastPlaybackKey),
@@ -199,6 +240,12 @@ final class AudioPlayer {
         // Restore radioPlaylistName from persisted source
         if case .radio(let name) = state.playbackSource {
             radioPlaylistName = name
+        }
+        // Resume at the saved position: show it right away, and stash it so the seek fires
+        // once the player item is ready (see the readyToPlay handler in observePlayerItem).
+        if state.position > 1 {
+            currentTime = state.position
+            pendingSeekTime = state.position
         }
         // Prepare the player so pressing play works immediately
         preparePlayback(state.currentSong)
@@ -292,7 +339,7 @@ final class AudioPlayer {
 
         isPlaying = false
         if let coverArt = song.coverArt, let srv = ServerManager.shared.currentServer {
-            stableCoverArtURL = SubsonicClient.shared.coverArtURL(server: srv, id: coverArt, size: 300)?.absoluteString
+            stableCoverArtURL = SubsonicClient.shared.coverArtURL(server: srv, id: coverArt, size: ArtworkCache.thumbSize)?.absoluteString
         }
         updateNowPlayingInfo()
     }
@@ -309,6 +356,7 @@ final class AudioPlayer {
         userQueue = []
         originalQueue = songs
         isShuffled = true
+        songChangeDirection = 1
         var rest = songs.filter { $0.id != pick.id }
         rest.shuffle()
         queue = [pick] + rest
@@ -323,6 +371,8 @@ final class AudioPlayer {
         if case .radio = source {} else { isRadioMode = false }
         self.playbackSource = source
         self.autoplayFromIndex = nil  // Reset autoplay boundary
+        // A picked song isn't "back" from anywhere — always slide in forward.
+        self.songChangeDirection = 1
         userQueue = []
         if let songs = songs, songs.count > 1 {
             originalQueue = songs
@@ -351,7 +401,18 @@ final class AudioPlayer {
             var autoplaySongs: [Song] = []
             do {
                 let similar = try await SubsonicClient.shared.getSimilarSongs2(server: server, id: song.id, count: 50)
-                autoplaySongs = similar.filter { $0.id != song.id }
+                // De-duplicate by id. getSimilarSongs2 (Last.fm-backed) can repeat the
+                // same track — and sometimes the seed itself — inside one response. A queue
+                // holding duplicate ids breaks everything keyed on id: SwiftUI's queue list
+                // (a tap lands on the FIRST row sharing that id) and every firstIndex(where:id)
+                // that positions queueIndex. That's what made the queue appear to "loop back
+                // to the first song". Keep only the first occurrence of each id.
+                var seen: Set<String> = [song.id]
+                autoplaySongs = similar.filter { seen.insert($0.id).inserted }
+                let removed = similar.count - autoplaySongs.count
+                if removed > 0 {
+                    AppLogger.shared.log("🎵 Autoplay: dropped \(removed) duplicate similar song(s)", level: .warning)
+                }
                 AppLogger.shared.log("🎵 Autoplay: found \(autoplaySongs.count) similar songs")
             } catch {
                 AppLogger.shared.log("🎵 Autoplay: getSimilarSongs2 failed, falling back to random")
@@ -449,11 +510,33 @@ final class AudioPlayer {
         ToastManager.shared.show("No offline songs in queue", icon: "wifi.slash")
     }
 
+    /// Warm the hero artwork for the tracks on either side of the current one.
+    ///
+    /// Only the *current* song's art used to be prefetched, so skipping showed a
+    /// placeholder while the next cover downloaded — the wait landed exactly on the
+    /// interaction. Both directions are warmed because the Now Playing cover can be
+    /// swiped backwards as well as forwards.
+    private func prefetchNeighbourCovers() {
+        var neighbours: [Song] = []
+        if let upNext = userQueue.first { neighbours.append(upNext) }
+        if !queue.isEmpty {
+            let forward = (queueIndex + 1) % queue.count
+            if forward != queueIndex { neighbours.append(queue[forward]) }
+            if queueIndex > 0 { neighbours.append(queue[queueIndex - 1]) }
+        }
+        for song in neighbours {
+            ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId)
+        }
+    }
+
     private func startPlayback(_ song: Song) {
         AudioCacheManager.shared.saveMetadata(song)
         // Warm the Now Playing artwork as soon as the track starts, not when the screen
         // opens — by the time the user swipes up, it's already there.
         ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId)
+        // ...and the neighbours, so a skip swaps to art that is already in memory instead
+        // of starting its download at the moment the user asks for it.
+        prefetchNeighbourCovers()
         guard let server = ServerManager.shared.currentServer else {
             AppLogger.shared.log("❌ startPlayback: no server configured")
             return
@@ -555,7 +638,7 @@ final class AudioPlayer {
         cachedArtwork = nil
         cachedArtworkSongId = nil
         if let coverArt = song.coverArt, let srv = ServerManager.shared.currentServer {
-            stableCoverArtURL = SubsonicClient.shared.coverArtURL(server: srv, id: coverArt, size: 300)?.absoluteString
+            stableCoverArtURL = SubsonicClient.shared.coverArtURL(server: srv, id: coverArt, size: ArtworkCache.thumbSize)?.absoluteString
         } else {
             stableCoverArtURL = nil
         }
@@ -645,8 +728,16 @@ final class AudioPlayer {
             case .readyToPlay:
                 AppLogger.shared.log("✅ PlayerItem readyToPlay for \(song.title)")
                 DispatchQueue.main.async { [weak self] in
-                    self?.consecutiveFailures = 0
-                    self?.isBuffering = false
+                    guard let self else { return }
+                    self.consecutiveFailures = 0
+                    self.isBuffering = false
+                    // Resume from the position saved at last quit (one-shot). Applied here
+                    // because seeking before the item is ready is unreliable.
+                    if let resume = self.pendingSeekTime {
+                        self.pendingSeekTime = nil
+                        self.player?.seek(to: CMTime(seconds: resume, preferredTimescale: 600))
+                        self.currentTime = resume
+                    }
                 }
             case .failed:
                 AppLogger.shared.log("❌ PlayerItem failed for \(song.title): \(item.error?.localizedDescription ?? "unknown error")")
@@ -743,6 +834,7 @@ final class AudioPlayer {
         // Play from user queue first (songs added via "Add to Queue" / "Play Next")
         if !userQueue.isEmpty {
             let song = userQueue.removeFirst()
+            songChangeDirection = 1
             AppLogger.shared.log("⏭ next() → userQueue: \(song.title)")
             // Save original source before switching to queue display
             if savedPlaybackSource == nil {
@@ -772,6 +864,7 @@ final class AudioPlayer {
         }
 
         queueIndex = (queueIndex + 1) % queue.count
+        songChangeDirection = 1
 
         // Detect transition into autoplay (random-fill) songs
         if let autoIdx = autoplayFromIndex, queueIndex >= autoIdx, playbackSource != .autoplay {
@@ -807,6 +900,9 @@ final class AudioPlayer {
             }
         }
         queueIndex = targetIndex
+        // Set only here — past every early return that restarts instead of moving,
+        // so a no-op "previous" can't leave the next real change pointing backwards.
+        songChangeDirection = -1
         AppLogger.shared.log("⏮ previous() → idx \(queueIndex): \(queue[queueIndex].title)")
         currentSong = queue[queueIndex]
         startPlayback(queue[queueIndex])
@@ -815,24 +911,19 @@ final class AudioPlayer {
 
     func seek(to time: TimeInterval) {
         guard let player = player else { return }
+        // Every seek gets an id, so a completion belonging to a superseded one can be
+        // recognised and ignored.
+        seekGeneration &+= 1
+        let generation = seekGeneration
         isSeeking = true
         currentTime = time
         updateNowPlayingInfo()
         let target = CMTime(seconds: time, preferredTimescale: 600)
         let tolerance = CMTime(seconds: 0.1, preferredTimescale: 600)
-        player.seek(to: target, toleranceBefore: tolerance, toleranceAfter: tolerance) { [weak self] finished in
-            guard let self = self else { return }
-            if finished {
-                DispatchQueue.main.async {
-                    self.isSeeking = false
-                }
-            } else {
-                // Seek was interrupted (e.g. by another seek) — retry once
-                player.seek(to: target, toleranceBefore: tolerance, toleranceAfter: tolerance) { [weak self] _ in
-                    DispatchQueue.main.async {
-                        self?.isSeeking = false
-                    }
-                }
+        player.seek(to: target, toleranceBefore: tolerance, toleranceAfter: tolerance) { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self, generation == self.seekGeneration else { return }
+                self.isSeeking = false
             }
         }
     }
@@ -975,7 +1066,11 @@ final class AudioPlayer {
     func toggleFavorite() {
         guard var song = currentSong,
               let server = ServerManager.shared.currentServer else { return }
+        guard !isTogglingFavorite else { return }
+        isTogglingFavorite = true
+        let wasStarred = song.isStarred
         Task {
+            defer { Task { @MainActor in self.isTogglingFavorite = false } }
             do {
                 if song.isStarred {
                     try await SubsonicClient.shared.unstar(server: server, id: song.id)
@@ -986,6 +1081,8 @@ final class AudioPlayer {
                 }
                 await MainActor.run {
                     self.currentSong = song
+                    // Only celebrate the off → on direction.
+                    if !wasStarred { self.favoriteCelebration += 1 }
                     if let idx = self.queue.firstIndex(where: { $0.id == song.id }) {
                         self.queue[idx] = song
                     }
@@ -1326,30 +1423,47 @@ final class AudioPlayer {
     func loadLyrics(for song: Song) {
         lyrics = []
         lyricsStatus = "Loading lyrics..."
+        isLoadingLyrics = true
         AppLogger.shared.log("🎤 loadLyrics: \(song.title) by \(song.artist ?? "?")")
         Task {
-            // 1. Prefer the user's OWN server. This matches the privacy policy ("Aura
-            //    queries LRCLIB only when your server does not provide lyrics") and avoids
-            //    reaching a third-party, largely-unlicensed lyrics DB whenever the server
-            //    already ships the .lrc. Gated on isConnected so an offline / unreachable
-            //    server does NOT stall up to 30s (its request timeout) before we try
-            //    LRCLIB — for that case we skip straight to step 2.
-            if let server = ServerManager.shared.currentServer, ServerManager.shared.isConnected {
-                if lyricsSource == .structured {
-                    if await tryStructuredLyrics(server: server, song: song) { return }
-                    if await tryLegacyLyrics(server: server, song: song) { return }
-                } else {
-                    if await tryLegacyLyrics(server: server, song: song) { return }
-                    if await tryStructuredLyrics(server: server, song: song) { return }
-                }
-            }
-            // 2. Fall back to LRCLIB community lyrics when the server has none / is offline.
-            if await tryLRCLIB(song: song) { return }
+            let found = await resolveLyrics(for: song)
             await MainActor.run {
-                self.lyrics = []
-                self.lyricsStatus = "No lyrics found"
+                if !found {
+                    self.lyrics = []
+                    self.lyricsStatus = "No lyrics found"
+                }
+                self.isLoadingLyrics = false
             }
         }
+    }
+
+    /// Runs every lyrics source in order and reports whether ANY matched. Each `tryX`
+    /// publishes its lyrics on success, so this only exists to let `loadLyrics` settle
+    /// `isLoadingLyrics` on a single, well-defined completion point (the early `return`s
+    /// used to make that impossible).
+    private func resolveLyrics(for song: Song) async -> Bool {
+        // 1. Prefer the user's OWN server. This matches the privacy policy ("Aura
+        //    queries LRCLIB only when your server does not provide lyrics") and avoids
+        //    reaching a third-party, largely-unlicensed lyrics DB whenever the server
+        //    already ships the .lrc.
+        //    Gate on real reachability (network up & not offline), NOT `isConnected`:
+        //    that flag only flips true after a successful ping test and is routinely
+        //    still false at the instant a song starts — even though the server is plainly
+        //    reachable (its audio is streaming). Gating on it skipped the server on
+        //    auto-load, so lyrics only appeared after a manual "Try Again". `isEffectivelyOffline`
+        //    is the honest signal, and the loading spinner covers the rare unreachable-server wait.
+        if let server = ServerManager.shared.currentServer, !isEffectivelyOffline {
+            if lyricsSource == .structured {
+                if await tryStructuredLyrics(server: server, song: song) { return true }
+                if await tryLegacyLyrics(server: server, song: song) { return true }
+            } else {
+                if await tryLegacyLyrics(server: server, song: song) { return true }
+                if await tryStructuredLyrics(server: server, song: song) { return true }
+            }
+        }
+        // 2. Fall back to LRCLIB community lyrics when the server has none / is offline.
+        if await tryLRCLIB(song: song) { return true }
+        return false
     }
 
     private func tryLRCLIB(song: Song) async -> Bool {
@@ -1663,7 +1777,10 @@ final class AudioPlayer {
         updateLiveActivity()
 
         if let coverArt = song.coverArt {
-            let cacheKey = "\(coverArt)_600"
+            // Same bucket as the Now Playing hero, so the lock screen usually costs the
+            // server nothing — the image is already cached by the time it's needed.
+            let artSize = ArtworkCache.fullSize
+            let cacheKey = "\(coverArt)_\(artSize)"
             // Check ArtworkCache first (memory + disk)
             if let cached = ArtworkCache.shared.image(for: cacheKey) {
                 cachedArtwork = cached
@@ -1673,14 +1790,14 @@ final class AudioPlayer {
                 MPNowPlayingInfoCenter.default().nowPlayingInfo = info
                 return
             }
-            // Download in background — only once, result gets cached
-            if let server = ServerManager.shared.currentServer,
-               let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: 600) {
+            // Fetch through ArtworkCache, NOT URLSession.shared: this fires on every song
+            // change and used to bypass the artwork throttle entirely, adding an ungated
+            // request to an endpoint that was already being saturated.
+            if ServerManager.shared.currentServer != nil {
                 let songId = song.id
                 Task {
-                    if let (data, _) = try? await URLSession.shared.data(from: url),
-                       let image = UIImage(data: data) {
-                        ArtworkCache.shared.store(image, for: cacheKey)
+                    if let image = await ArtworkCache.shared.fetchImage(
+                        coverArt: coverArt, requestSize: artSize, key: cacheKey) {
                         await MainActor.run {
                             guard self.currentSong?.id == songId else { return }
                             self.cachedArtwork = image

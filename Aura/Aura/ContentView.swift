@@ -466,10 +466,27 @@ struct OfflineStatusBar: View {
                 .padding(.vertical, 6)
                 .background(.secondary.opacity(0.2))
                 .clipShape(Capsule())
+            } else if serverManager.isConnected {
+                // Server answers while we're offline — offer the way out right here.
+                // Previously this state had NO action at all: the bar said "go online
+                // anytime" but the only actual switch lived in Settings.
+                Button {
+                    serverManager.goBackOnline()
+                } label: {
+                    Text("Go Online")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(accentColor)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.secondary.opacity(0.2))
+                .clipShape(Capsule())
             }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        // Rounded card instead of a full-bleed grey slab flush against the screen edges.
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
     }
 }

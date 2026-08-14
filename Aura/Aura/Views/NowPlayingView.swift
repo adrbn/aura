@@ -20,7 +20,6 @@ struct NowPlayingView: View {
     @State private var isUserScrolling = false
     @State private var scrollReturnTask: Task<Void, Never>?
     @State private var previousSongId: String?
-    @State private var songChangeDirection: Int = 0 // -1 = prev, 1 = next
     @State private var coverDragOffset: CGFloat = 0
     @State private var showSleepTimerSheet = false
     @State private var selectedSleepMinutes: Int = 15
@@ -33,6 +32,14 @@ struct NowPlayingView: View {
     @State private var currentLineIndex: Int?
     @State private var nearestLineIndex: Int?
     @State private var dismissTask: Task<Void, Never>?
+    /// ALPHA auto-hide toolbar: whether the options bar is currently revealed, and the
+    /// timer that retracts it again.
+    @State private var toolbarRevealed = false
+    @State private var toolbarHideTask: Task<Void, Never>?
+
+    /// Side inset shared by the artwork, the title block, the transport row and the
+    /// options bar — they must stay on the same vertical guides.
+    private let horizontalPadding: CGFloat = 30
 
     private enum CoverDragAxis { case undecided, horizontal, vertical }
 
@@ -216,7 +223,6 @@ struct NowPlayingView: View {
     @ViewBuilder
     private func playerView(song: Song, geo: GeometryProxy) -> some View {
         let w = geo.size.width
-        let horizontalPadding: CGFloat = 30
         let artSize = w - (horizontalPadding * 2)
 
         VStack(spacing: 0) {
@@ -268,8 +274,8 @@ struct NowPlayingView: View {
                         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
                         .id(song.id)
                         .transition(.asymmetric(
-                            insertion: .offset(x: songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
-                            removal: .offset(x: songChangeDirection >= 0 ? -w : w).combined(with: .opacity)
+                            insertion: .offset(x: player.songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
+                            removal: .offset(x: player.songChangeDirection >= 0 ? -w : w).combined(with: .opacity)
                         ))
                 }
                 .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
@@ -299,10 +305,8 @@ struct NowPlayingView: View {
                             case .horizontal:
                                 let threshold: CGFloat = 60
                                 if value.translation.width < -threshold || value.predictedEndTranslation.width < -threshold * 2 {
-                                    songChangeDirection = 1
                                     player.next()
                                 } else if value.translation.width > threshold || value.predictedEndTranslation.width > threshold * 2 {
-                                    songChangeDirection = -1
                                     player.previous()
                                 }
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { coverDragOffset = 0 }
@@ -330,16 +334,14 @@ struct NowPlayingView: View {
                         player.pendingAlbumId = albumId
                         player.isShowingNowPlaying = false
                     } label: {
-                        Text(displayTitle(for: song))
-                            .font(.title2.bold())
-                            .lineLimit(1)
-                            .foregroundStyle(.white)
+                        MarqueeText(text: displayTitle(for: song),
+                                    font: .title2.bold(),
+                                    color: .white,)
                     }
                 } else {
-                    Text(displayTitle(for: song))
-                        .font(.title2.bold())
-                        .lineLimit(1)
-                        .foregroundStyle(.white)
+                    MarqueeText(text: displayTitle(for: song),
+                                font: .title2.bold(),
+                                color: .white,)
                 }
                 TappableArtistText(
                     artistString: song.artist ?? "Unknown Artist",
@@ -357,12 +359,15 @@ struct NowPlayingView: View {
             .multilineTextAlignment(.center)
             .padding(.horizontal, horizontalPadding)
             .id("songinfo-\(song.id)")
+            // Same travel and same drag rate as the artwork above: title and cover are
+            // one object as far as the eye is concerned, and the old 80 pt / half-speed
+            // parallax made them visibly drift apart mid-swipe.
             .transition(.asymmetric(
-                insertion: .offset(x: songChangeDirection >= 0 ? 80 : -80).combined(with: .opacity),
-                removal: .offset(x: songChangeDirection >= 0 ? -80 : 80).combined(with: .opacity)
+                insertion: .offset(x: player.songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
+                removal: .offset(x: player.songChangeDirection >= 0 ? -w : w).combined(with: .opacity)
             ))
             .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
-            .offset(x: showLyrics ? 0 : coverDragOffset * 0.5)
+            .offset(x: showLyrics ? 0 : coverDragOffset)
 
             // Year + genre + favourite + menu row
             HStack {
@@ -403,7 +408,63 @@ struct NowPlayingView: View {
 
             Spacer()
 
-            // Bottom toolbar
+            // Bottom toolbar. Under the alpha auto-hide setting it collapses to a small
+            // glass handle and expands from the centre on demand.
+            //
+            // The bar keeps its layout height either way, and the handle is stacked on top
+            // of it rather than replacing it — so the handle sits exactly where the icons
+            // are and nothing above it shifts when the bar comes and goes.
+            ZStack {
+                optionsBar
+                    .scaleEffect(x: optionsBarShown ? 1 : 0.02, anchor: .center)
+                    .opacity(optionsBarShown ? 1 : 0)
+                    .allowsHitTesting(optionsBarShown)
+                if appSettings.alphaAutoHideToolbar && !toolbarRevealed {
+                    optionsHandle
+                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
+                }
+            }
+            .padding(.bottom, max(safeBottom, 20) + 40)
+        }
+        .frame(width: w)
+    }
+
+    /// Shown when the bar is collapsed. Its width matches the span between the midpoint of
+    /// the previous/play gap and the midpoint of the play/next gap, so it reads as part of
+    /// the transport row rather than a stray pill.
+    private var optionsHandle: some View {
+        Capsule(style: .continuous)
+            .fill(.clear)
+            .glassEffect(.regular, in: Capsule(style: .continuous))
+            .frame(width: 80, height: 26)
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(.white.opacity(0.18), lineWidth: 0.5)
+            )
+            .contentShape(Capsule(style: .continuous))
+            .onTapGesture { revealOptionsBar() }
+            .accessibilityLabel("Show player options")
+            .accessibilityAddTraits(.isButton)
+    }
+
+    /// True when the bar should be on screen: always, unless the alpha setting is on and
+    /// the bar hasn't been revealed.
+    private var optionsBarShown: Bool {
+        !appSettings.alphaAutoHideToolbar || toolbarRevealed
+    }
+
+    private func revealOptionsBar() {
+        UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+        toolbarHideTask?.cancel()
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { toolbarRevealed = true }
+        toolbarHideTask = Task {
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.9)) { toolbarRevealed = false }
+        }
+    }
+
+    private var optionsBar: some View {
             HStack {
                 Spacer()
                 Button {
@@ -463,9 +524,6 @@ struct NowPlayingView: View {
                 Spacer()
             }
             .padding(.horizontal, horizontalPadding)
-            .padding(.bottom, max(safeBottom, 20) + 40)
-        }
-        .frame(width: w)
     }
 
     // Patterns: "(feat. X)", "(ft. X)", "(featuring X)", or without parens at end
@@ -615,7 +673,24 @@ struct NowPlayingView: View {
     private var lyricsScrollView: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                if player.lyrics.isEmpty {
+                if player.lyrics.isEmpty && player.isLoadingLyrics {
+                    // Still searching every source — don't claim "no lyrics" yet.
+                    VStack(spacing: 14) {
+                        BouncingDotsLoader(color: .white)
+                        // Only the live status survives — it names the source being tried,
+                        // which the dots can't convey. The generic "Searching…" placeholder
+                        // said nothing the animation doesn't already say.
+                        if !player.lyricsStatus.isEmpty {
+                            Text(player.lyricsStatus)
+                                .font(.callout)
+                                .foregroundStyle(.white.opacity(0.45))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .containerRelativeFrame(.vertical) { h, _ in h }
+                    .padding(.horizontal, 16)
+                } else if player.lyrics.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "text.quote").font(.system(size: 40))
                             .foregroundStyle(.white.opacity(0.3))
@@ -640,7 +715,7 @@ struct NowPlayingView: View {
                         // Auto-dismiss lyrics view after 2s if no lyrics found
                         try? await Task.sleep(for: .seconds(2))
                         guard !Task.isCancelled else { return }
-                        guard player.lyrics.isEmpty else { return }
+                        guard player.lyrics.isEmpty, !player.isLoadingLyrics else { return }
                         withAnimation(.easeInOut(duration: 0.35)) { showLyrics = false }
                     }
                 } else {
@@ -743,7 +818,6 @@ struct NowPlayingView: View {
                 }
                 .accessibilityLabel("Shuffle \(player.isShuffled ? "on" : "off")")
                 Button {
-                    songChangeDirection = -1
                     player.previous()
                 } label: {
                     Image(systemName: "backward.fill").font(.title).foregroundStyle(.white)
@@ -755,7 +829,6 @@ struct NowPlayingView: View {
                 }
                 .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
                 Button {
-                    songChangeDirection = 1
                     player.next()
                 } label: {
                     Image(systemName: "forward.fill").font(.title).foregroundStyle(.white)
@@ -980,7 +1053,7 @@ struct NowPlayingView: View {
     private func loadBackgroundImage(for song: Song) async {
         guard let coverArt = song.coverArt,
               let server = ServerManager.shared.currentServer,
-              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: 100) else {
+              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: ArtworkCache.thumbSize) else {
             backgroundImage = nil
             vibrantOverlayColor = nil
             return
@@ -1102,28 +1175,62 @@ struct SongActionsRow: View {
     @Binding var showEqualizer: Bool
 
     @Environment(AudioPlayer.self) private var player
+    @State private var heartPop = false
+
+    private var isStarred: Bool { player.currentSong?.isStarred ?? false }
+
+    /// The heart, with the two pieces of feedback the plain icon was missing.
+    ///
+    /// Starring is a server round-trip that can take seconds. With no visible state the
+    /// only signal was "nothing happened", so the natural reaction was to tap again and
+    /// again. It now pulses and refuses further taps while the call is in flight, and
+    /// answers a successful star with a short burst so the action reads as finished.
+    private var favoriteButton: some View {
+        ZStack {
+            if player.isTogglingFavorite {
+                Image(systemName: "heart.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white.opacity(0.75))
+                    .symbolEffect(.pulse, options: .repeating)
+            } else {
+                Image(systemName: isStarred ? "heart.fill" : "heart")
+                    .font(.title3)
+                    .foregroundStyle(isStarred ? accentColor : .white.opacity(0.7))
+                    .scaleEffect(heartPop ? 1.35 : 1)
+            }
+        }
+        .frame(width: 36, height: 36)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard !player.isTogglingFavorite else { return }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            if isStarred {
+                // Already favorited → open Add to Playlist
+                showAddToPlaylist = true
+            } else {
+                // Not favorited → add to favorites
+                player.toggleFavorite()
+            }
+        }
+        .onLongPressGesture(minimumDuration: 0.5) {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            showAddToPlaylist = true
+        }
+        .accessibilityLabel(player.isTogglingFavorite ? "Saving favourite"
+                            : (isStarred ? "Remove from favourites" : "Add to favourites"))
+        .onChange(of: player.favoriteCelebration) { _, _ in
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.45)) { heartPop = true }
+            Task {
+                try? await Task.sleep(for: .milliseconds(220))
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { heartPop = false }
+            }
+        }
+    }
 
     var body: some View {
         HStack(spacing: 2) {
-            Image(systemName: (player.currentSong?.isStarred ?? false) ? "heart.fill" : "heart")
-                .font(.title3)
-                .foregroundStyle((player.currentSong?.isStarred ?? false) ? accentColor : .white.opacity(0.7))
-                .frame(width: 36, height: 36)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    if player.currentSong?.isStarred ?? false {
-                        // Already favorited → open Add to Playlist
-                        showAddToPlaylist = true
-                    } else {
-                        // Not favorited → add to favorites
-                        player.toggleFavorite()
-                    }
-                }
-                .onLongPressGesture(minimumDuration: 0.5) {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    showAddToPlaylist = true
-                }
+            favoriteButton
             Menu {
                 if showLyrics {
                     Button { player.refetchLyrics() } label: {

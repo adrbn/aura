@@ -117,6 +117,7 @@ struct HomeView: View {
                             homeContent
                         }
                         .scrollIndicators(.hidden)
+                        .refreshable { await refreshTabContent { await loadData(force: true) } }
                         // Content scrolls UNDER the status bar / island; the inset keeps it
                         // resting below them at the top.
                         .ignoresSafeArea(.container, edges: .top)
@@ -244,7 +245,7 @@ struct HomeView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Text(homeTitle)
-                            .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
+                            .font(AppTypography.display(40, relativeTo: .largeTitle))
                             .foregroundStyle(.primary)
                         Image(systemName: "chevron.down")
                             .font(.title3.weight(.semibold))
@@ -257,7 +258,7 @@ struct HomeView: View {
             }
         } else {
             Text(homeTitle)
-                .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
+                .font(AppTypography.display(40, relativeTo: .largeTitle))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

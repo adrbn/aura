@@ -482,7 +482,7 @@ struct PlaylistDetailView: View {
     private func saveCoverArt(coverArtId: String?) {
         guard let coverArtId,
               let server = serverManager.currentServer,
-              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArtId, size: 1200) else { return }
+              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArtId, size: ArtworkCache.fullSize) else { return }
         Task {
             do {
                 let (data, _) = try await URLSession.shared.data(from: url)

@@ -127,8 +127,7 @@ struct SlskdSearchView: View {
                         .autocorrectionDisabled()
                         .onSubmit { startSearch() }
                     if isSearching {
-                        ProgressView()
-                            .scaleEffect(0.8)
+                        BouncingDotsLoader(dotSize: 5, spacing: 4)
                     } else if !searchQuery.isEmpty {
                         Button {
                             startSearch()

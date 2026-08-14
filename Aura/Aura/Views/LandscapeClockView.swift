@@ -335,7 +335,7 @@ struct LandscapeClockView: View {
     private func loadBackground() async {
         guard let coverArt = player.currentSong?.coverArt,
               let server = ServerManager.shared.currentServer,
-              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: 100) else {
+              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: ArtworkCache.thumbSize) else {
             backgroundImage = nil
             return
         }

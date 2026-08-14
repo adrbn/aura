@@ -81,6 +81,9 @@ struct FullScreenImageViewer: View {
 
     /// Fetch a larger version of the artwork for crisp pinch-zoom detail.
     private func loadHiRes() async {
+        // The deliberate exception to the two-bucket rule: pinch-zoom needs real detail,
+        // and this fires once, for a single image, on an explicit user action — not the
+        // hundreds-at-once pattern that saturated the server's artwork queue.
         let targetSize = 1500
         if let coverArt, !coverArt.isEmpty,
            let server = ServerManager.shared.currentServer,

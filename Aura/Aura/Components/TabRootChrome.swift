@@ -34,6 +34,23 @@ enum TabChrome {
     static var contentTop: CGFloat { windowSafeTop + bannerInset }
 }
 
+/// What every pull-to-refresh in the app does, so the gesture means the same thing on
+/// every screen: re-check the server, let stuck artwork try again, reload the content,
+/// then confirm with a haptic.
+///
+/// Order matters. Re-pinging comes first because it's what restores `isConnected` and
+/// leaves auto-offline mode; the artwork retry and the reload both depend on the app
+/// believing it's online. And the artwork retry has to be explicit — covers that failed
+/// on a bad link are never re-requested on their own, so this gesture is the user's way
+/// of saying "try again" without relaunching.
+@MainActor
+func refreshTabContent(_ reload: () async -> Void) async {
+    await ServerManager.shared.testConnection()
+    ArtworkRetry.shared.requestRetry()
+    await reload()
+    UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+}
+
 struct TabRootGlass: ViewModifier {
     @Binding var scrollY: CGFloat
 
@@ -88,7 +105,7 @@ struct TabTitleRow<Trailing: View>: View {
     var body: some View {
         ZStack(alignment: .trailing) {
             Text(title)
-                .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
+                .font(AppTypography.display(40, relativeTo: .largeTitle))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             trailing()

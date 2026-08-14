@@ -98,7 +98,11 @@ final class AppSettings {
     var showUpNext: Bool = true
     var appAccentColor: AppAccentColor = .pink
     var activeTheme: AppTheme = .standard
-    var appearanceMode: AppearanceMode = .system
+    /// Dark by default. Aura is a dark-first app — the artwork canvas, Now Playing and
+    /// the landscape clock are always dark — so following a light system appearance made
+    /// the app disagree with itself. Users who prefer Light or System still get their
+    /// stored choice back; this only changes what a fresh install starts on.
+    var appearanceMode: AppearanceMode = .dark
     var eqPreset: EQPreset = .flat
     var eqCustomBands: [Float] = [0, 0, 0, 0, 0]
     var forceMP3Transcoding: Bool = false
@@ -108,6 +112,14 @@ final class AppSettings {
     var enabledLibraryCategories: [LibraryCategory] = LibraryCategory.defaultEnabled
     var showPlayCounts: Bool = false
     var homeSectionOrder: [HomeSection] = HomeSection.defaultOrder
+    /// Display typeface for the wordmark and big titles. Defaults to Tuaf; `resolved`
+    /// degrades to it when a stored face isn't bundled in this build.
+    var displayFont: DisplayFont = .tuaf
+
+    /// ALPHA — Now Playing hides its options bar behind a small glass handle, so the
+    /// screen stays on the artwork. Tapping the handle reveals the bar for a few seconds.
+    var alphaAutoHideToolbar: Bool = false
+
     /// Opt-in: when off, rotating the device while Now Playing is open does nothing.
     /// When on, landscape reveals the full-screen clock/lyrics view.
     var landscapeClockEnabled: Bool = false
@@ -174,7 +186,7 @@ final class AppSettings {
             showUpNext = decoded.showUpNext ?? true
             appAccentColor = decoded.appAccentColor ?? .pink
             activeTheme = decoded.activeTheme ?? .standard
-            appearanceMode = decoded.appearanceMode ?? .system
+            appearanceMode = decoded.appearanceMode ?? .dark
             eqPreset = decoded.eqPreset ?? .flat
             eqCustomBands = decoded.eqCustomBands ?? [0, 0, 0, 0, 0]
             forceMP3Transcoding = decoded.forceMP3Transcoding ?? false
@@ -198,6 +210,8 @@ final class AppSettings {
                 homeSectionOrder = loadedOrder
             }
             landscapeClockEnabled = decoded.landscapeClockEnabled ?? false
+            displayFont = decoded.displayFont ?? .tuaf
+            alphaAutoHideToolbar = decoded.alphaAutoHideToolbar ?? false
             lastfmUsername = decoded.lastfmUsername ?? ""
             lastfmApiKey = KeychainHelper.loadPassword(for: Self.lastfmKeychainAccount) ?? ""
             wrappedShowOnHome = decoded.wrappedShowOnHome ?? false
@@ -241,6 +255,8 @@ final class AppSettings {
             showPlayCounts: showPlayCounts,
             homeSectionOrder: homeSectionOrder,
             landscapeClockEnabled: landscapeClockEnabled,
+            displayFont: displayFont,
+            alphaAutoHideToolbar: alphaAutoHideToolbar,
             lastfmUsername: lastfmUsername,
             wrappedShowOnHome: wrappedShowOnHome
         )
@@ -327,6 +343,8 @@ struct SettingsData: Codable {
     var showPlayCounts: Bool?
     var homeSectionOrder: [HomeSection]?
     var landscapeClockEnabled: Bool?
+    var displayFont: DisplayFont?
+    var alphaAutoHideToolbar: Bool?
     var lastfmUsername: String?
     var wrappedShowOnHome: Bool?
 }

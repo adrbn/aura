@@ -140,6 +140,81 @@ struct SongsListView: View {
         sortedSongs.prefix(displayLimit)
     }
 
+    private var playbackSource: PlaybackSource {
+        fetchType == .starred ? .favorites : .songs
+    }
+
+    // MARK: - Shuffle
+
+    private var shuffleAllRow: some View {
+        Button {
+            guard !sortedSongs.isEmpty else { return }
+            player.playShuffled(sortedSongs, source: playbackSource)
+        } label: {
+            Label("Shuffle All", systemImage: "shuffle")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(accentColor.opacity(0.15))
+                .foregroundStyle(accentColor)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(Color.clear)
+    }
+
+    // MARK: - Alphabet fast-scroll
+
+    /// The rail indexes the *sort key*, so it's only offered while that key is
+    /// alphabetical — over "Recently Added" or "Duration" the letters would point at
+    /// arbitrary rows. It also stays hidden while the library streams in, since the
+    /// list is still in server arrival order and every jump would be wrong.
+    private var supportsAlphabetIndex: Bool {
+        guard !isStreaming, sortedSongs.count > 50 else { return false }
+        switch sortOrder {
+        case .title, .artist, .album: return true
+        case .none, .year, .duration, .recentlyAdded: return false
+        }
+    }
+
+    private func indexValue(_ song: Song) -> String {
+        switch sortOrder {
+        case .artist: return song.artist ?? ""
+        case .album: return song.album ?? ""
+        default: return song.title
+        }
+    }
+
+    private var indexTitles: [String] {
+        guard supportsAlphabetIndex else { return [] }
+        let titles = AlphabetIndex.titles(for: sortedSongs.map(indexValue))
+        // Descending sort runs the list Z→A, so the rail has to run that way too or
+        // dragging down would walk the list backwards.
+        return sortAscending ? titles : titles.reversed()
+    }
+
+    private func jump(to letter: String, proxy: ScrollViewProxy) {
+        guard let target = sortedSongs.firstIndex(where: { AlphabetIndex.key(for: indexValue($0)) == letter })
+        else { return }
+
+        guard target >= displayLimit else {
+            proxy.scrollTo(target, anchor: .top)
+            return
+        }
+        // The row isn't in the ForEach data yet — widening the window has to be laid
+        // out before the scroll, or scrollTo silently no-ops on an unknown id.
+        displayLimit = target + 44
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(30))
+            proxy.scrollTo(target, anchor: .top)
+        }
+    }
+
     var body: some View {
         Group {
             if isLoading && songs.isEmpty {
@@ -178,7 +253,16 @@ struct SongsListView: View {
                     systemImage: "music.note",
                     description: Text("No songs found"))
             } else {
+                ScrollViewReader { proxy in
                 List {
+                    // Shuffle leads the content rather than hiding in the sort menu: on a
+                    // 20k-row library it's the most likely reason to open this screen at
+                    // all. It scrolls away, and the toolbar twin covers the scrolled-deep
+                    // case. Favourites already has its own Play/Shuffle pair below.
+                    if fetchType != .starred {
+                        shuffleAllRow
+                    }
+
                     // Favorite Songs header with heart cover art
                     if fetchType == .starred {
                         VStack(spacing: 12) {
@@ -241,10 +325,14 @@ struct SongsListView: View {
                         .listRowInsets(EdgeInsets())
                     }
 
-                    ForEach(Array(displayedSongs.enumerated()), id: \.element.id) { index, song in
+                    // Keyed by position, not by song id: a library can legitimately hold two
+                    // rows with the same server id, and duplicate ForEach identities make
+                    // SwiftUI reuse the wrong row (and break scrollTo targeting outright).
+                    ForEach(Array(displayedSongs.enumerated()), id: \.offset) { index, song in
                         SongRowView(song: song) {
-                            player.playSong(song, fromQueue: sortedSongs, startIndex: index, source: fetchType == .starred ? .favorites : .songs)
+                            player.playSong(song, fromQueue: sortedSongs, startIndex: index, source: playbackSource)
                         }
+                        .id(index)
                         .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding,
                                                   leading: 16,
                                                   bottom: AppSettings.shared.listDensity.verticalPadding,
@@ -273,10 +361,30 @@ struct SongsListView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.themeBg)
                 .scrollIndicators(.hidden)
+                .overlay(alignment: .trailing) {
+                    if !indexTitles.isEmpty {
+                        AlphabetIndexBar(titles: indexTitles, tint: accentColor) { letter in
+                            jump(to: letter, proxy: proxy)
+                        }
+                        .padding(.trailing, 2)
+                        // Clear the floating mini-player so the last letters stay grabbable.
+                        .padding(.bottom, 64)
+                    }
+                }
+                }
             }
         }
         .navigationTitle(title)
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    guard !sortedSongs.isEmpty else { return }
+                    player.playShuffled(sortedSongs, source: playbackSource)
+                } label: {
+                    Image(systemName: "shuffle")
+                }
+                .disabled(songs.isEmpty)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Picker("Sort By", selection: $sortOrder) {
@@ -300,7 +408,7 @@ struct SongsListView: View {
         .refreshable {
             SongsCache.shared.invalidate(fetchType)
             displayLimit = 44
-            await loadSongs()
+            await refreshTabContent { await loadSongs() }
         }
         .onChange(of: sortOrder) { _, _ in
             displayLimit = 44

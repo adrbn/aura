@@ -108,9 +108,10 @@ struct ArtistDetailView: View {
                     .opacity(isLoading ? 0.4 : 1)
                     .disabled(isLoading)
                 }
+                .padding(.top, 14) // air between the info block (image/name/count) and the actions
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, 20)
+            .padding(.top, 10) // was 20 — header sat low, crushed against the buttons
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets())

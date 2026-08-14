@@ -209,7 +209,7 @@ struct OnboardingView: View {
             }
 
             Text("aura")
-                .font(.custom("TuafTrial-Bold", size: 48, relativeTo: .largeTitle))
+                .font(AppTypography.display(48, relativeTo: .largeTitle))
                 .foregroundStyle(
                     // Echoes the icon itself: its pink triangle resolving into white glass.
                     LinearGradient(
@@ -280,7 +280,7 @@ struct OnboardingView: View {
             .padding(.bottom, 40)
 
             Text(title)
-                .font(.custom("TuafTrial-Bold", size: 32, relativeTo: .title))
+                .font(AppTypography.display(32, relativeTo: .title))
                 .foregroundStyle(.white)
                 .padding(.bottom, 12)
 
@@ -308,7 +308,7 @@ struct OnboardingView: View {
             Spacer().frame(height: 60)
 
             Text("Connect")
-                .font(.custom("TuafTrial-Bold", size: 32, relativeTo: .title))
+                .font(AppTypography.display(32, relativeTo: .title))
                 .foregroundStyle(.white)
                 .padding(.bottom, 6)
 
@@ -446,6 +446,18 @@ struct OnboardingView: View {
                     Text("Skip to setup")
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.4))
+                }
+                .padding(.bottom, 20)
+            } else if let existing = serverManager.currentServer {
+                // Replaying the onboarding with a server already set up: the form is empty,
+                // so "Connect" is disabled and there was no way forward. Offer to keep what
+                // is already configured instead of making the user retype it.
+                Button {
+                    onComplete()
+                } label: {
+                    Text("Keep \(existing.friendlyName)")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.6))
                 }
                 .padding(.bottom, 20)
             } else {

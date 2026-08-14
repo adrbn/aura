@@ -3,6 +3,64 @@ import CryptoKit
 
 // MARK: - Image Cache
 
+/// Counting semaphore for async callers.
+///
+/// Lock-based rather than an actor so `release()` is synchronous and safe to call from a
+/// `defer` — an actor would force `await` there, which `defer` can't express.
+final class DownloadGate: @unchecked Sendable {
+    private let limit: Int
+    private var active = 0
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    private let lock = NSLock()
+
+    init(limit: Int) { self.limit = limit }
+
+    func acquire() async {
+        lock.lock()
+        if active < limit {
+            active += 1
+            lock.unlock()
+            return
+        }
+        // The continuation body runs synchronously, so unlocking inside it is safe and
+        // closes the race where a release could land between append and unlock.
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            waiters.append(continuation)
+            lock.unlock()
+        }
+    }
+
+    func release() {
+        lock.lock()
+        guard !waiters.isEmpty else {
+            active -= 1
+            lock.unlock()
+            return
+        }
+        // Hand the slot straight to the next waiter — `active` stays put.
+        let next = waiters.removeFirst()
+        lock.unlock()
+        next.resume()
+    }
+}
+
+/// "Try the artwork again" signal.
+///
+/// A cover that fails to load is deliberately NOT cached as a failure, so a fresh fetch
+/// would succeed — but nothing ever asked for one. Both cover views key their
+/// `.task(id:)` on the cover id, which doesn't change when connectivity returns, and the
+/// view stays alive in the scroll hierarchy, so the task never re-runs.
+///
+/// Views watch this counter in their task id. Ones still showing a placeholder refetch;
+/// ones that already resolved return immediately, so a bump doesn't re-download the screen.
+@Observable
+final class ArtworkRetry {
+    static let shared = ArtworkRetry()
+    private(set) var generation = 0
+    /// Call on the main actor when the app regains a usable connection.
+    func requestRetry() { generation += 1 }
+}
+
 final class ArtworkCache: @unchecked Sendable {
     static let shared = ArtworkCache()
 
@@ -13,14 +71,33 @@ final class ArtworkCache: @unchecked Sendable {
     /// can be purged by iOS under storage pressure). One master image per coverArt id.
     private let offlineArtworkURL: URL
 
-    /// Dedicated URLSession for image fetches — higher concurrency than default
+    /// Dedicated URLSession for image fetches.
+    ///
+    /// Left at stock settings on purpose. The placeholder bug turned out to be the server
+    /// answering 429 to every artwork request, not a transport problem — `maxConcurrentDownloads`
+    /// below is the fix. Re-tuning timeouts here would only mask a saturated server again.
     let imageSession: URLSession = {
         let config = URLSessionConfiguration.default
         config.httpMaximumConnectionsPerHost = 12
         config.timeoutIntervalForRequest = 15
+        config.waitsForConnectivity = false
         config.urlCache = nil // We use our own cache
         return URLSession(configuration: config)
     }()
+
+    /// Matched to the server's own artwork concurrency rather than guessed. Navidrome
+    /// 0.61 sizes its artwork pool from CPU count; on this 4-CPU host that is ~2. Asking
+    /// for more only fills its queue and earns a 429.
+    static let maxConcurrentDownloads = 2
+    private let downloadGate = DownloadGate(limit: ArtworkCache.maxConcurrentDownloads)
+
+    /// True when artwork must come from local storage only: the user asked for offline
+    /// mode AND the server really is out of reach. Offline mode on its own is not enough —
+    /// see the note in `fetchImage`.
+    var isArtworkOffline: Bool {
+        AppSettings.shared.offlineMode
+            && (!ServerManager.shared.hasNetwork || !ServerManager.shared.isConnected)
+    }
 
     /// In-flight network fetches keyed by cache key — concurrent requests for the
     /// same artwork share a single download instead of hitting the server N times.
@@ -34,6 +111,13 @@ final class ArtworkCache: @unchecked Sendable {
     /// signature once per size by probing a cover id that cannot exist, then refuse
     /// to cache any response that matches it. See `fetchImage`.
     private var placeholderSignatures: [Int: String] = [:]
+    /// Sizes whose probe has already been attempted — success OR failure.
+    ///
+    /// Only successes used to be remembered. This server answers an unknown cover id with
+    /// a JSON error rather than a placeholder image, so the probe never succeeded, nothing
+    /// was ever memoized, and every single cover fetch fired its own fresh probe — inside
+    /// the download gate, doubling the load on the exact endpoint already under strain.
+    private var probedSizes: Set<Int> = []
     private let placeholderLock = NSLock()
     /// A cover art id guaranteed to have no artwork, used to learn the server's
     /// placeholder image. Unknown ids make Navidrome return its default cover.
@@ -61,11 +145,11 @@ final class ArtworkCache: @unchecked Sendable {
     /// masters live in a separate store (`offlineArtworkURL`) and are left untouched.
     private func migrateArtworkCacheIfNeeded() {
         let key = "artworkCacheVersion"
-        guard UserDefaults.standard.integer(forKey: key) < 1 else { return }
+        guard UserDefaults.standard.integer(forKey: key) < 2 else { return }
         if let files = try? FileManager.default.contentsOfDirectory(at: diskCacheURL, includingPropertiesForKeys: nil) {
             for file in files { try? FileManager.default.removeItem(at: file) }
         }
-        UserDefaults.standard.set(1, forKey: key)
+        UserDefaults.standard.set(2, forKey: key)
         AppLogger.shared.log("🔄 Artwork thumbnail cache flushed (purge placeholder-poisoned entries)")
     }
 
@@ -109,7 +193,7 @@ final class ArtworkCache: @unchecked Sendable {
     /// Download (if not already stored) and persist a permanent master artwork for offline use.
     func cacheOfflineArtwork(forCoverArt coverArt: String, server: ServerConfig) async {
         guard !hasOfflineArtwork(forCoverArt: coverArt) else { return }
-        guard let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: 1200) else { return }
+        guard let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: ArtworkCache.fullSize) else { return }
         do {
             let (data, _) = try await imageSession.data(from: url)
             if let img = UIImage(data: data) {
@@ -123,19 +207,31 @@ final class ArtworkCache: @unchecked Sendable {
 
     /// Normalize pixel size to standard buckets so thumbnails share cache entries.
     /// Small sizes get bucketed; large sizes (cover art in NowPlaying) get a high-res bucket.
+    /// Small bucket: list rows, artist circles, blurred backdrops.
+    static let thumbSize = 300
+    /// Large bucket: grid cards, heroes, Now Playing, lock screen, full-screen viewer.
+    static let fullSize = 800
+
+    /// TWO buckets, deliberately.
+    ///
+    /// Navidrome resizes on demand and caches per (id, size), so every extra bucket is a
+    /// separate server-side resize that shares nothing with the others. Aura used to ask
+    /// for the same cover at 100/200/300/400/600/800/1200 — up to five resizes for one
+    /// image. Against an artwork pool of ~2 workers that saturated the queue and the
+    /// server answered 429 to everything, including its own web UI.
+    ///
+    /// The 400 px split keeps list rows (≈180 px @3x) on the small bucket while album
+    /// cards (≈480 px @3x) land on the large one, so cards stay sharp and share their
+    /// resize with the heroes.
     static func normalizedSize(_ pixels: Int) -> Int {
-        if pixels <= 100 { return 100 }
-        if pixels <= 200 { return 200 }
-        if pixels <= 400 { return 400 }
-        if pixels <= 800 { return 800 }
-        return 1200
+        pixels <= 400 ? thumbSize : fullSize
     }
 
     /// THE bucket a `CoverArtAsyncImage` of `pointSize` will ask for. Single source of
     /// truth: prefetching and displaying MUST derive the key the same way or the warm
     /// entry lands in a different bucket and the prefetch silently does nothing.
     static func displayRequestSize(pointSize: CGFloat) -> Int {
-        normalizedSize(min(800, Int(pointSize * UIScreen.main.scale)))
+        normalizedSize(Int(pointSize * UIScreen.main.scale))
     }
 
     func image(for key: String) -> UIImage? {
@@ -203,8 +299,20 @@ final class ArtworkCache: @unchecked Sendable {
     /// Offline mode and missing-server cases fall back to the permanent offline master.
     func fetchImage(coverArt: String, requestSize: Int, key: String) async -> UIImage? {
         if let cached = image(for: key) { return cached }
-        if AppSettings.shared.offlineMode {
-            return offlineArtwork(forCoverArt: coverArt)
+        // Fall back to the downloaded-only master ONLY when the server is genuinely out
+        // of reach. Gating on `offlineMode` alone produced the worst possible state: every
+        // JSON call (albums, favourites, songs) still went to the server and succeeded, so
+        // Home filled with real content — while every single cover stayed a placeholder,
+        // because artwork alone refused a network the rest of the app was already using.
+        // Artwork now follows the same rule as the metadata beside it.
+        if isArtworkOffline {
+            let local = offlineArtwork(forCoverArt: coverArt)
+            if local == nil {
+                // Never let this path be silent again: its silence is exactly why a
+                // screenful of placeholders produced zero diagnostic output.
+                AppLogger.shared.log("🖼 Offline: no local artwork for \(coverArt)", level: .debug)
+            }
+            return local
         }
         inFlightLock.lock()
         if let existing = inFlight[key] {
@@ -216,8 +324,20 @@ final class ArtworkCache: @unchecked Sendable {
                   let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: requestSize) else {
                 return self.offlineArtwork(forCoverArt: coverArt)
             }
+            // Navidrome serves artwork from a worker pool sized off CPU count (2 on this
+            // 4-CPU box) behind a bounded queue. 147 parallel covers overran that queue and
+            // it answered 429 to EVERYTHING — including Navidrome's own web UI. Fewer
+            // requests in flight is strictly faster: the queue drains instead of overflowing.
+            await self.downloadGate.acquire()
+            defer { self.downloadGate.release() }
             do {
                 let (data, resp) = try await self.imageSession.data(from: url)
+                if let http = resp as? HTTPURLResponse, http.statusCode == 429 {
+                    // Throttled, not missing. Nothing is cached, so the next appearance or
+                    // an ArtworkRetry bump refetches instead of pinning a placeholder.
+                    AppLogger.shared.log("⏳ Cover art throttled 429 id=\(coverArt)", level: .debug)
+                    return nil
+                }
                 guard let img = UIImage(data: data) else {
                     // A 404 / error body decodes as no image — log the details so missing
                     // art is diagnosable (this path was previously silent).
@@ -231,7 +351,7 @@ final class ArtworkCache: @unchecked Sendable {
                 // is fetched first (carousel), so it gets stuck, while the larger detail
                 // size later fetches the real art. Detect the placeholder and skip caching
                 // so the entry re-fetches — showing the app's own placeholder meanwhile.
-                if let sig = await self.placeholderSignature(forSize: requestSize, server: server),
+                if let sig = self.knownPlaceholderSignature(forSize: requestSize),
                    Self.sha256Hex(data) == sig {
                     AppLogger.shared.log("🕳 Cover art id=\(coverArt) matched server placeholder (size \(requestSize)) — not caching")
                     return nil
@@ -257,9 +377,20 @@ final class ArtworkCache: @unchecked Sendable {
     /// size by probing a cover id that cannot exist. Returns nil if the server can't
     /// be probed (e.g. it 404s instead of serving a placeholder), in which case
     /// placeholder detection is simply skipped — no behavioral regression.
+    /// Already-learned signature, or nil. Never touches the network, so a cover fetch
+    /// can consult it without ever being held up by a probe.
+    private func knownPlaceholderSignature(forSize size: Int) -> String? {
+        placeholderLock.lock(); defer { placeholderLock.unlock() }
+        return placeholderSignatures[size]
+    }
+
     private func placeholderSignature(forSize size: Int, server: ServerConfig) async -> String? {
         placeholderLock.lock()
         if let sig = placeholderSignatures[size] { placeholderLock.unlock(); return sig }
+        // Attempted once per size and never again: a server that can't be probed must cost
+        // one wasted request in total, not one per cover.
+        if probedSizes.contains(size) { placeholderLock.unlock(); return nil }
+        probedSizes.insert(size)
         placeholderLock.unlock()
         guard let url = SubsonicClient.shared.coverArtURL(server: server, id: Self.placeholderProbeId, size: size),
               let (data, _) = try? await imageSession.data(from: url),
@@ -275,7 +406,7 @@ final class ArtworkCache: @unchecked Sendable {
     /// Call once per server. This is the single biggest cover-load latency win.
     func primePlaceholderSignatures(server: ServerConfig) {
         Task.detached(priority: .utility) {
-            for size in [100, 200, 400, 800] {
+            for size in [Self.thumbSize, Self.fullSize] {
                 _ = await self.placeholderSignature(forSize: size, server: server)
             }
         }
@@ -293,9 +424,12 @@ final class ArtworkCache: @unchecked Sendable {
         let unique = items.filter { seen.insert("\($0.coverArt)_\($0.cacheToken ?? "")").inserted }
         guard !unique.isEmpty else { return }
         Task.detached(priority: .utility) {
-            guard !AppSettings.shared.offlineMode else { return }
+            guard !self.isArtworkOffline else { return }
             await withTaskGroup(of: Void.self) { group in
                 for (i, item) in unique.enumerated() {
+                    // Window of 2, half the download gate: prefetch is speculative, so it
+                    // must never be able to hold every slot and starve the covers the user
+                    // is actually looking at.
                     if i >= 4 { await group.next() } // sliding window of 4 concurrent fetches
                     group.addTask {
                         let key = item.cacheToken.map { "\(item.coverArt)_\($0)_\(requestSize)" }
@@ -325,7 +459,7 @@ final class ArtworkCache: @unchecked Sendable {
         let key = "\(coverArt)_\(requestSize)"
         guard image(for: key) == nil else { return }   // already warm
         Task.detached(priority: .userInitiated) {
-            guard !AppSettings.shared.offlineMode else { return }
+            guard !self.isArtworkOffline else { return }
             _ = await self.fetchImage(coverArt: coverArt, requestSize: requestSize, key: key)
         }
     }
@@ -369,6 +503,9 @@ struct CoverArtImage: View {
     var placeholderKind: PlaceholderCoverView.Kind = .generic
 
     @State private var image: UIImage?
+    /// The cache key the current `image` was resolved for — lets a retry bump tell
+    /// "already loaded" apart from "still a placeholder".
+    @State private var loadedKey: String?
 
     private var requestSize: Int {
         ArtworkCache.normalizedSize(Int(size * UIScreen.main.scale))
@@ -408,20 +545,32 @@ struct CoverArtImage: View {
                 image = cached
             }
         }
-        .task(id: cacheKey) { await loadCached() }
+        .task(id: retryKey) { await loadCached() }
+    }
+
+    /// Re-runs the fetch both when the cover itself changes and when a reconnection
+    /// asks every stuck placeholder to try again.
+    private var retryKey: String? {
+        guard let cacheKey else { return nil }
+        return "\(cacheKey)#\(ArtworkRetry.shared.generation)"
     }
 
     private func loadCached() async {
-        guard let coverArt = coverArt, let key = cacheKey else { return }
-        // No early return on image != nil: the task id (cacheKey) changing means the
-        // cover or its token changed, and a cache hit is near-free anyway.
+        guard let coverArt = coverArt, let key = cacheKey else {
+            AppLogger.shared.log("🖼 CoverArtImage has no coverArt id", level: .debug)
+            return
+        }
+        // Skip covers that already resolved for this exact key, so a retry bump doesn't
+        // re-download the whole screen. A changed cover/token yields a different key and
+        // still refetches, as before.
+        if image != nil, loadedKey == key { return }
         if let result = await ArtworkCache.shared.fetchImage(coverArt: coverArt, requestSize: requestSize, key: key) {
-            await MainActor.run { self.image = result }
+            await MainActor.run { self.image = result; self.loadedKey = key }
         } else if let fb = fallbackCoverArt, fb != coverArt {
             // Primary id had no art — try the album cover.
             let fbKey = cacheToken.map { "\(fb)_\($0)_\(requestSize)" } ?? "\(fb)_\(requestSize)"
             if let result = await ArtworkCache.shared.fetchImage(coverArt: fb, requestSize: requestSize, key: fbKey) {
-                await MainActor.run { self.image = result }
+                await MainActor.run { self.image = result; self.loadedKey = key }
             }
         }
     }
@@ -485,7 +634,14 @@ struct CoverArtAsyncImage: View {
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear { loadFromCacheSync() }
-        .task(id: coverArt) { await loadImage() }
+        .task(id: retryKey) { await loadImage() }
+    }
+
+    /// Re-runs both when the cover changes and when a reconnection asks stuck
+    /// placeholders to retry. `loadImage()` already returns early for covers that
+    /// resolved, so the bump only costs a refetch where one is actually needed.
+    private var retryKey: String {
+        "\(coverArt ?? "")#\(ArtworkRetry.shared.generation)"
     }
 
     /// Load from memory/disk cache synchronously to avoid placeholder flash on re-appear
@@ -500,7 +656,10 @@ struct CoverArtAsyncImage: View {
     }
 
     private func loadImage() async {
-        guard let coverArt else { return }
+        guard let coverArt else {
+            AppLogger.shared.log("🖼 CoverArtAsyncImage has no coverArt id", level: .debug)
+            return
+        }
         let key = cacheKey(for: coverArt)
         // If coverArt changed, try cache first before clearing
         if loadedCoverArt != coverArt {

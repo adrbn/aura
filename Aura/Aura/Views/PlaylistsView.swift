@@ -124,9 +124,17 @@ struct PlaylistsView: View {
         .tint(accentColor)
     }
 
+    /// The rail indexes playlist names, so it only appears under the name sort — and
+    /// only once the grid is long enough that scrolling it by hand is actually a chore.
+    private var indexTitles: [String] {
+        guard sortOrder == .name, searchText.isEmpty, unpinnedPlaylists.count > 25 else { return [] }
+        return AlphabetIndex.titles(for: unpinnedPlaylists.map(\.name))
+    }
+
     var body: some View {
         NavigationStack(path: $navPath) {
             ZStack(alignment: .bottom) {
+                ScrollViewReader { proxy in
                 ScrollView {
                     TabTitleRow("playlists") { playlistsActions }
                     SearchFieldBar(text: $searchText, prompt: "Search in Playlists")
@@ -171,6 +179,7 @@ struct PlaylistsView: View {
                             LazyVGrid(columns: columns, spacing: 16) {
                                 ForEach(unpinnedPlaylists) { playlist in
                                     playlistCell(playlist, isPinned: false)
+                                        .id(playlist.id)
                                 }
                             }
                             .padding(.horizontal)
@@ -181,6 +190,19 @@ struct PlaylistsView: View {
                 }
                 .scrollIndicators(.hidden)
                 .background(Color.themeBg)
+                .overlay(alignment: .trailing) {
+                    if !indexTitles.isEmpty {
+                        AlphabetIndexBar(titles: indexTitles, tint: accentColor) { letter in
+                            guard let target = unpinnedPlaylists.first(where: {
+                                AlphabetIndex.key(for: $0.name) == letter
+                            }) else { return }
+                            proxy.scrollTo(target.id, anchor: .top)
+                        }
+                        .padding(.trailing, 2)
+                        .padding(.bottom, 64)
+                    }
+                }
+                }
 
                 // Floating selection bar — Pin/Delete stay reachable no matter how far
                 // you've scrolled (mirrors the Photos multi-select toolbar).
@@ -241,7 +263,7 @@ struct PlaylistsView: View {
             }
             .animation(.easeInOut, value: showUndoBanner)
             .tabRootGlass(scrollY: $scrollY)
-            .refreshable { await loadPlaylists() }
+            .refreshable { await refreshTabContent { await loadPlaylists() } }
             .navigationDestination(for: Playlist.self) { PlaylistDetailView(playlistId: $0.id) }
             .navigationDestination(for: PlaylistDeepLink.self) { link in
                 PlaylistDetailView(playlistId: link.id)

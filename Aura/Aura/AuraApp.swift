@@ -72,6 +72,13 @@ struct AuraApp: App {
                         // No auto-open of NowPlayingView on return from background.
                         // Dynamic Island / Control Center / Lock Screen taps already
                         // trigger isShowingNowPlaying via remote command handlers.
+
+                        // Persist the session (song + queue + live position) as soon as we
+                        // leave the foreground, so a cold relaunch resumes where we were —
+                        // iOS may terminate a backgrounded app with no further callback.
+                        if newPhase == .inactive || newPhase == .background {
+                            audioPlayer.persistPlaybackState()
+                        }
                     }
                     .onChange(of: appSettings.activeTheme) { _, _ in
                         applyThemeAppearance()
@@ -88,7 +95,9 @@ struct AuraApp: App {
                 }
             }
             .task {
-                try? await Task.sleep(for: .seconds(2.5))
+                // Wordmark finishes its entrance at ~1.5s (0.3s delay + 1.2s ease); hold a
+                // beat past that, then fade. 2.5s felt draggy.
+                try? await Task.sleep(for: .seconds(1.8))
                 if isFirstLaunchFlow {
                     // First launch: show onboarding immediately, keep splash behind it
                     showOnboarding = true
@@ -114,9 +123,9 @@ struct AuraApp: App {
     private func applyThemeAppearance() {
         let theme = AppSettings.shared.activeTheme
 
-        // Custom Tuaf font for navigation titles
-        let tuafLarge = UIFont(name: "TuafTrial-Bold", size: 34) ?? UIFont.boldSystemFont(ofSize: 34)
-        let tuafInline = UIFont(name: "TuafTrial-Bold", size: 17) ?? UIFont.boldSystemFont(ofSize: 17)
+        // Display face for navigation titles.
+        let tuafLarge = AppTypography.uiDisplay(34)
+        let tuafInline = AppTypography.uiDisplay(17)
 
         if theme.usePureBlack {
             let black = UIColor.black
@@ -269,7 +278,7 @@ struct SplashScreen: View {
 
             // "aura" text
             Text("aura")
-                .font(.custom("TuafTrial-Bold", size: 52, relativeTo: .largeTitle))
+                .font(AppTypography.display(52, relativeTo: .largeTitle))
                 .foregroundStyle(.white)
                 .opacity(appeared ? 1.0 : 0.0)
                 .scaleEffect(appeared ? 1.0 : 0.85)

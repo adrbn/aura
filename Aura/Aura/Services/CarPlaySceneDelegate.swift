@@ -70,7 +70,7 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
                         self?.showAlbum(album, completion: completion)
                     }
                     if let coverArt = album.coverArt {
-                        self.loadArtwork(coverArt: coverArt, size: 80) { image in
+                        self.loadArtwork(coverArt: coverArt, size: ArtworkCache.thumbSize) { image in
                             item.setImage(image)
                         }
                     }
@@ -105,7 +105,7 @@ class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
                         self?.showPlaylist(playlist, completion: completion)
                     }
                     if let coverArt = playlist.coverArt {
-                        self.loadArtwork(coverArt: coverArt, size: 80) { image in
+                        self.loadArtwork(coverArt: coverArt, size: ArtworkCache.thumbSize) { image in
                             item.setImage(image)
                         }
                     }

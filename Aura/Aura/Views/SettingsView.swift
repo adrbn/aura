@@ -165,7 +165,7 @@ struct SettingsView: View {
             // Title aligned to the grouped content inset (no extra padding) so it lines up
             // with the cards/tiles below and matches the other tabs' left edge.
             Text("settings")
-                .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
+                .font(AppTypography.display(40, relativeTo: .largeTitle))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 4)
@@ -201,11 +201,15 @@ struct SettingsView: View {
                 serverStatsSection
                 aboutSection
                 logOutSection
+                versionFooter
             }
         }
         .listSectionSpacing(.compact)
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
+        // Reserve room for the floating mini-player so the bottom version footer isn't
+        // hidden behind it (matches LibraryView's convention).
+        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
         // Grouped-list page: grey in light so the white section cards stand out.
         .background(Color.themeGroupedPageBg)
         .id("\(appSettings.appAccentColor.rawValue)-\(appSettings.activeTheme.rawValue)") // Force full re-render on accent/theme change
@@ -765,8 +769,23 @@ struct SettingsView: View {
                     Label("Replay Onboarding", systemImage: "arrow.counterclockwise")
                 }
                 .fullScreenCover(isPresented: $showOnboarding) {
-                    OnboardingView()
+                    // Must close the cover itself: the default `onComplete` is a no-op, so
+                    // replaying the onboarding used to trap the user inside it with no way
+                    // out — even after a successful connection.
+                    OnboardingView { showOnboarding = false }
                         .environment(serverManager)
+                }
+                // Hidden from the UI on purpose — the feature and its stored setting are
+                // intact, it just isn't offered yet. Uncomment to bring it back.
+                // Toggle("Hide Player Options", isOn: $appSettings.alphaAutoHideToolbar)
+                Picker("Display Font", selection: $appSettings.displayFont) {
+                    // Each row is drawn in the face it selects — a list of names would
+                    // make the choice blind.
+                    ForEach(DisplayFont.selectable) { face in
+                        Text(face.label)
+                            .font(face.postScriptName.map { .custom($0, size: 17) } ?? .body)
+                            .tag(face)
+                    }
                 }
             }
         } header: {
@@ -854,24 +873,31 @@ struct SettingsView: View {
 
     private var aboutSection: some View {
         Section("About") {
-            HStack {
-                Text("App Version")
-                Spacer()
-                Text(Self.appVersion).foregroundStyle(.secondary)
-            }
-
-            Link(destination: URL(string: "https://github.com/adrbn")!) {
-                HStack {
-                    Text("View on GitHub")
-                    Spacer()
-                    Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
-                }
-            }
-            .foregroundStyle(accentColor)
-
             NavigationLink("About Aura") {
                 AboutView()
             }
+        }
+    }
+
+    /// Bottom-of-page version footer — the app's "signature" line, replacing the old
+    /// App Version row and GitHub link (both moved into / removed from the About page).
+    private var versionFooter: some View {
+        Section {
+            VStack(spacing: 4) {
+                Text("aura")
+                    .font(AppTypography.display(20, relativeTo: .headline))
+                    .foregroundStyle(.secondary)
+                Text("Version \(Self.appVersion)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("© 2026 · Crafted with care in Italy")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
     }
 
@@ -885,10 +911,9 @@ struct SettingsView: View {
                     serverManager.saveCurrentServer()
                 }
             }
-            Section {
-                Color.clear.frame(height: 80)
-            }
-            .listRowBackground(Color.clear)
+            // (Removed the old 80pt clear spacer section — the List's bottom
+            // safeAreaInset now reserves the mini-player room, and that spacer was
+            // shoving the version footer far below Log Out.)
         }
     }
 

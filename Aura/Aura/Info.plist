@@ -18,6 +18,7 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>TuafTrial-Bold.otf</string>
+		<string>ITCGaramondStd-LtCond.otf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

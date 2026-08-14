@@ -48,7 +48,7 @@ struct SearchView: View {
                 .overlay(alignment: .top) {
                     VStack(spacing: 8) {
                         Text("search")
-                            .font(.custom("TuafTrial-Bold", size: 40, relativeTo: .largeTitle))
+                            .font(AppTypography.display(40, relativeTo: .largeTitle))
                             .foregroundStyle(.primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: titleHeight)
@@ -100,6 +100,10 @@ struct SearchResultsContainer: View {
     @State private var appSettings = AppSettings.shared
     @State private var results = SearchResults()
     @State private var isSearching = false
+    /// The query the current `results` actually belong to. The empty-state ("No results
+    /// for …") is gated on this matching the live query, so it can never render for a
+    /// query we haven't finished searching yet (debounce window / first keystroke frame).
+    @State private var searchedQuery = ""
     @State private var expandedSections: Set<String> = []
     @State private var history = SearchHistory.shared
 
@@ -134,17 +138,25 @@ struct SearchResultsContainer: View {
         guard !q.isEmpty else {
             results = SearchResults()
             isSearching = false; expandedSections = []
+            searchedQuery = ""
             return
         }
+        // Leaving and re-entering the tab re-fires `.task(id:)` with an unchanged query.
+        // Re-querying then threw the loader up and rebuilt every row for a result set we
+        // already had on screen — the whole page visibly jumped for nothing.
+        if q == searchedQuery, !results.isEmpty { return }
         expandedSections = []
+        // Raise the spinner BEFORE the debounce sleep — otherwise the empty query state
+        // sits with isSearching == false during those 350ms and the empty-state flashes.
+        isSearching = true
         // `.task(id:)` cancels the previous run on each keystroke → debounce + cancel.
         try? await Task.sleep(for: .milliseconds(350))
         if Task.isCancelled { return }
 
-        isSearching = true
         let found = await SearchIndex.shared.search(query: q)
         if Task.isCancelled { return }
         results = found
+        searchedQuery = q
         isSearching = false
     }
 
@@ -221,14 +233,9 @@ struct SearchResultsContainer: View {
     @ViewBuilder
     private var resultsRows: some View {
         if isSearching {
-            HStack(spacing: 10) {
-                ProgressView().tint(.secondary)
-                Text("Searching…")
-                    .font(.subheadline).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.vertical, 20)
-            .listRowSeparator(.hidden)
+            BouncingDotsLoader()
+                .searchLoadingRow()
+                .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
         }
         if results.isOffline {
@@ -263,7 +270,7 @@ struct SearchResultsContainer: View {
             sectionContent(section)
         }
 
-        if results.isEmpty && !isSearching {
+        if results.isEmpty && !isSearching && searchedQuery == trimmedQuery {
             ContentUnavailableView.search(text: trimmedQuery)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -408,13 +415,33 @@ struct SearchResultsContainer: View {
 
     private func orderedSections() -> [String] {
         let q = trimmedQuery.lowercased()
-        let hasArtistMatch = results.artists.contains { $0.name.lowercased() == q || $0.name.lowercased().contains(q) }
+        let base = ["songs", "albums", "artists", "playlists"]
+        guard !q.isEmpty else { return base }
 
-        // Songs always come first; the most relevant secondary type follows.
-        if hasArtistMatch {
-            return ["songs", "artists", "albums", "playlists"]
-        } else {
-            return ["songs", "albums", "artists", "playlists"]
+        /// Whether a section holds something the query is plainly *about*.
+        ///
+        /// Only a whole-name hit, or a prefix once the query is long enough to mean it,
+        /// counts. A bare substring deliberately does not: "avicii" appears in dozens of
+        /// song titles too, and promoting on that made the page reshuffle under the user
+        /// on nearly every keystroke. Songs still lead by default — what changed is that
+        /// typing an artist's actual name now puts the artist first, which is what asking
+        /// for "avicii" means.
+        func namesLead(_ names: [String]) -> Bool {
+            names.contains { name in
+                let n = name.lowercased()
+                return n == q || (q.count >= 3 && n.hasPrefix(q))
+            }
         }
+
+        if namesLead(results.artists.map(\.name)) {
+            return ["artists", "songs", "albums", "playlists"]
+        }
+        if namesLead(results.albums.map(\.name)) {
+            return ["albums", "songs", "artists", "playlists"]
+        }
+        if namesLead(results.playlists.map(\.name)) {
+            return ["playlists", "songs", "albums", "artists"]
+        }
+        return base
     }
 }

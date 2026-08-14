@@ -34,9 +34,9 @@ Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full off
 - 📝 **Lyrics** — time-synced scrolling lyrics (tap to jump), server-first with **LRCLIB** fallback, and full-screen in landscape.
 - 📻 **Discovery** — **Instant Mix** from any song/artist, auto-generated genre / mood / time-of-day **"Made For You"** mixes, and a **Year Wrapped** retrospective.
 - ✈️ **Offline** — download songs / albums / playlists / whole library, automatic streaming cache, offline search, and a graceful offline mode when the server is unreachable.
-- 📚 **Library** — fuzzy unified search, smart ranking, custom playlist covers, content-based duplicate detection, multi-folder Navidrome, and **multiple server profiles** switchable from the Home title.
+- 📚 **Library** — fuzzy unified search ranked by relevance, an A–Z fast-scroll rail on long lists, shuffle-all, custom playlist covers, content-based duplicate detection, multi-folder Navidrome, and **multiple server profiles** switchable from the Home title.
 - 🍎 **iOS integration** — Lock Screen & Control Center, system Now Playing in the **Dynamic Island**, **Siri Shortcuts** (play/pause · next · previous · shuffle), AirPlay, Share Sheet, and Keychain-only credentials.
-- 🎨 **Appearance** — 7 accent colors, pure-black OLED mode, adjustable density, reorderable tabs, a landscape nightstand clock, and generated cover art for missing artwork.
+- 🎨 **Appearance** — dark by default, 7 accent colors, pure-black OLED mode, adjustable density, reorderable tabs, a landscape nightstand clock, generated cover art for missing artwork, and titles too long to fit scroll so you can read them in full.
 
 ## 🛠️ Built with
 
@@ -74,12 +74,13 @@ cd aura
 open Aura/Aura.xcodeproj   # Xcode 26+, iOS 26 target — run the "Aura" scheme
 ```
 
-> **A note on the typeface.** Aura's display font is [**Tuaf**](https://www.futurefonts.xyz/), a
-> commercial font. Its licence covers embedding it in a built app — not redistributing the file —
-> so the `.otf` is **not** in this repository. The app builds and runs fine without it and falls
-> back to the system font; the headings just won't look like the screenshots. To get the intended
-> typography, buy a licence and drop `TuafTrial-Bold.otf` into `Aura/Aura/` — the build picks it
-> up automatically.
+> **A note on the typeface.** Aura's display font is [**Tuaf**](https://www.futurefonts.com/element-type/tuaf)
+> by Element Type. Its licence covers embedding the face in a built app — *not* redistributing the
+> file — so the `.otf` is **not** in this repository, and buying a licence doesn't change that.
+> The app builds and runs fine without it and falls back to the system font; only the headings
+> differ from the screenshots. To get the intended typography, drop your licensed `.otf` into
+> `Aura/Aura/` and set `postScriptName` in `Services/AppTypography.swift` to the face's real
+> PostScript name — every call site reads that one constant.
 
 > Two configurations ship: the App Store build, and a sideload build that additionally bundles an optional Soulseek/slskd integration (compiled out of the App Store version).
 
