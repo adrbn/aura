@@ -264,12 +264,18 @@ struct HomeView: View {
         }
     }
 
+    /// Gap above and below the stats line. Kept in one place because the value has to be
+    /// used twice — once as the stack's spacing, once to compensate the section spacing.
+    private static let statsGap: CGFloat = 15
+
     private var homeContent: some View {
         VStack(alignment: .leading, spacing: 24) {
-            // The stats line sits evenly between the title and whatever follows: 24pt above
-            // and 24pt below, matching the section spacing. It used to be 6pt above, which
-            // pinned it under the title and left it visibly crowded on one side.
-            VStack(alignment: .leading, spacing: 24) {
+            // The stats line gets the same gap above and below — 15pt — so it reads as its
+            // own line rather than as something clipped to the title. The negative bottom
+            // padding is what makes the gap BELOW match: the outer stack spaces sections at
+            // 24pt, and pulling 9pt back closes that to 15 for this block alone, leaving
+            // every other section's rhythm untouched.
+            VStack(alignment: .leading, spacing: Self.statsGap) {
                 // Big, left-aligned title — scrolls away with the content and returns at the
                 // top on bounce, so it doesn't keep a fixed black bar that breaks the top glass fade.
                 if !homeTitle.isEmpty {
@@ -311,6 +317,7 @@ struct HomeView: View {
                     .animation(.easeInOut(duration: 0.3), value: songCount)
                 }
             }
+            .padding(.bottom, Self.statsGap - 24)
 
             if isLoading && !hasHomeContent {
                 // First load / server switch with no cached content → show a skeleton,
