@@ -58,6 +58,7 @@ private struct SettingsSaveModifier4: ViewModifier {
             .onChange(of: s.landscapeClockEnabled) { _, _ in s.save() }
             .onChange(of: s.displayFont) { _, _ in s.save() }
             .onChange(of: s.betaKaraokeLyrics) { _, _ in s.save() }
+            .onChange(of: s.betaLiveLyrics) { _, _ in s.save() }
             .onChange(of: s.alphaAutoHideToolbar) { _, _ in s.save() }
             .onChange(of: s.wrappedShowOnHome) { _, _ in s.save() }
             // Last.fm username/key are NOT auto-saved here: the Last.fm section owns an

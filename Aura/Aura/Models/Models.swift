@@ -116,6 +116,10 @@ final class AppSettings {
     /// degrades to it when a stored face isn't bundled in this build.
     var displayFont: DisplayFont = .tuaf
 
+    /// BETA — a fuller lyrics mode: larger type, and the artwork shrinking into a compact
+    /// header instead of vanishing when lyrics open.
+    var betaLiveLyrics: Bool = false
+
     /// BETA — highlight lyrics word by word inside the current line, by interpolating
     /// the line's duration across its words. Opt-in because the timings are inferred,
     /// not measured. See `LyricWordTiming`.
@@ -217,6 +221,7 @@ final class AppSettings {
             landscapeClockEnabled = decoded.landscapeClockEnabled ?? false
             displayFont = decoded.displayFont ?? .tuaf
             betaKaraokeLyrics = decoded.betaKaraokeLyrics ?? false
+            betaLiveLyrics = decoded.betaLiveLyrics ?? false
             alphaAutoHideToolbar = decoded.alphaAutoHideToolbar ?? false
             lastfmUsername = decoded.lastfmUsername ?? ""
             lastfmApiKey = KeychainHelper.loadPassword(for: Self.lastfmKeychainAccount) ?? ""
@@ -263,6 +268,7 @@ final class AppSettings {
             landscapeClockEnabled: landscapeClockEnabled,
             displayFont: displayFont,
             betaKaraokeLyrics: betaKaraokeLyrics,
+            betaLiveLyrics: betaLiveLyrics,
             alphaAutoHideToolbar: alphaAutoHideToolbar,
             lastfmUsername: lastfmUsername,
             wrappedShowOnHome: wrappedShowOnHome
@@ -352,6 +358,7 @@ struct SettingsData: Codable {
     var landscapeClockEnabled: Bool?
     var displayFont: DisplayFont?
     var betaKaraokeLyrics: Bool?
+    var betaLiveLyrics: Bool?
     var alphaAutoHideToolbar: Bool?
     var lastfmUsername: String?
     var wrappedShowOnHome: Bool?
@@ -822,6 +829,33 @@ struct StructuredLyrics: Decodable {
     let offset: Int?
     let synced: Bool?
     let line: [StructuredLyricsLine]?
+    /// OpenSubsonic `songLyrics` **v2**: real word/syllable timings, present only when the
+    /// server has them and `enhanced=true` was requested. Servers below v2 simply omit it.
+    let cueLine: [StructuredCueLine]?
+    /// v2 classification of the track — `main`, a translation, a romanisation…
+    let kind: String?
+}
+
+/// One line's worth of v2 timing data. `index` points back at the matching entry in `line`.
+struct StructuredCueLine: Decodable {
+    let index: Int?
+    let start: Int?      // milliseconds
+    let end: Int?
+    let value: String?
+    let cue: [StructuredCue]?
+    let agentId: String?
+}
+
+/// A single timed word or syllable inside a `StructuredCueLine`.
+struct StructuredCue: Decodable {
+    let start: Int?      // milliseconds
+    let end: Int?
+    let value: String?
+    /// Byte offsets into the parent `cueLine.value`. They disambiguate a repeated token —
+    /// which "love" in "Oh love love me tonight" this cue means — and are the only reliable
+    /// way to rebuild the line when untimed text sits between timed cues.
+    let byteStart: Int?
+    let byteEnd: Int?
 }
 
 struct StructuredLyricsLine: Decodable {
@@ -835,6 +869,10 @@ struct LyricsLine: Identifiable {
     let id = UUID()
     let time: TimeInterval?
     let text: String
+    /// Real per-word timings from the server when it publishes them (OpenSubsonic
+    /// `songLyrics` v2). `nil` means only the line's start time is known, and the karaoke
+    /// display falls back to interpolating — see `LyricWordTiming`.
+    var words: [LyricWord]? = nil
 }
 
 enum LyricsSource: String, CaseIterable {

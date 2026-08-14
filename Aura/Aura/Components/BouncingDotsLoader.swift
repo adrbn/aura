@@ -19,12 +19,12 @@ struct BouncingDotsLoader: View {
     /// near-nothing on the black background — the same reason the old spinner was invisible.
     /// Primary resolves to solid white in dark mode and solid black in light.
     var color: Color = .primary
-    var dotSize: CGFloat = 12
-    var spacing: CGFloat = 10
+    var dotSize: CGFloat = 17
+    var spacing: CGFloat = 14
 
     /// How far a dot lifts, and how long one rise takes. The stagger is a third of the
     /// cycle so the three dots read as a travelling wave rather than a shared pulse.
-    private let rise: CGFloat = 9
+    private let rise: CGFloat = 13
     private let riseDuration: Double = 0.32
     private let stagger: Double = 0.15
 
@@ -57,9 +57,10 @@ extension View {
     /// Centres the dots on their own row, with breathing room above and below.
     func searchLoadingRow() -> some View {
         frame(maxWidth: .infinity, alignment: .center)
-            // Sits lower than centred-in-the-gap: right under the search field it read as
-            // cramped against the results that were about to appear.
-            .padding(.top, 56)
-            .padding(.bottom, 24)
+            // Claims most of the empty area below the search field and centres itself in it,
+            // rather than sitting just under the field with fixed padding — which read as
+            // cramped against results that hadn't arrived yet. Relative, not a fixed height,
+            // so it stays centred on every screen size.
+            .containerRelativeFrame(.vertical, alignment: .center) { height, _ in height * 0.62 }
     }
 }

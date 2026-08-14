@@ -1622,10 +1622,27 @@ final class AudioPlayer {
             let structured = try await SubsonicClient.shared.getLyricsBySongId(server: server, id: song.id)
             let synced = structured.first(where: { $0.synced == true }) ?? structured.first
             if let synced = synced, let lines = synced.line, !lines.isEmpty {
-                let parsed = lines.compactMap { line -> LyricsLine? in
+                // v2 gives real word cues keyed by line index; v1 servers send none and
+                // this map is simply empty, leaving `words` nil and the karaoke display to
+                // interpolate as before.
+                let cuesByIndex = Dictionary(
+                    (synced.cueLine ?? []).compactMap { cueLine -> (Int, [LyricWord])? in
+                        guard let index = cueLine.index, let cues = cueLine.cue else { return nil }
+                        let words = cues.compactMap { cue -> LyricWord? in
+                            guard let value = cue.value, let start = cue.start else { return nil }
+                            return LyricWord(id: start, text: value, start: Double(start) / 1000.0)
+                        }
+                        return words.isEmpty ? nil : (index, words)
+                    },
+                    uniquingKeysWith: { first, _ in first }
+                )
+                let parsed = lines.enumerated().compactMap { index, line -> LyricsLine? in
                     guard let value = line.value, !value.isEmpty else { return nil }
                     let time: TimeInterval? = line.start.map { Double($0) / 1000.0 }
-                    return LyricsLine(time: time, text: value)
+                    return LyricsLine(time: time, text: value, words: cuesByIndex[index])
+                }
+                if !cuesByIndex.isEmpty {
+                    AppLogger.shared.log("🎤 Lyrics: server supplied word-level timing for \(cuesByIndex.count) line(s)")
                 }
                 if !parsed.isEmpty {
                     await MainActor.run {

@@ -36,6 +36,9 @@ struct NowPlayingView: View {
     /// timer that retracts it again.
     @State private var toolbarRevealed = false
     @State private var toolbarHideTask: Task<Void, Never>?
+    /// Ties the hero artwork and the compact lyrics-header artwork together so one flies
+    /// into the other instead of one fading out while the other fades in.
+    @Namespace private var coverTransition
 
     /// Side inset shared by the artwork, the title block, the transport row and the
     /// options bar — they must stay on the same vertical guides.
@@ -251,8 +254,13 @@ struct NowPlayingView: View {
             Spacer(minLength: 4)
 
             if showLyrics {
+                if appSettings.betaLiveLyrics {
+                    liveLyricsHeader(song: song)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, 14)
+                }
                 lyricsScrollView
-                    .frame(height: artSize)
+                    .frame(height: appSettings.betaLiveLyrics ? artSize + 60 : artSize)
                     .mask(
                         VStack(spacing: 0) {
                             LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
@@ -269,6 +277,12 @@ struct NowPlayingView: View {
                 ZStack {
                     CoverArtAsyncImage(coverArt: song.coverArt ?? song.albumId, size: artSize,
                                    fallbackCoverArt: song.albumId)
+                        // Paired with the thumbnail in `liveLyricsHeader`: the hero shrinks
+                        // and flies into the header when lyrics open, instead of vanishing.
+                        // Applied only in Live Lyrics mode — with no counterpart on screen,
+                        // a matched-geometry id has nothing to travel to.
+                        .matchedGeometryEffect(id: appSettings.betaLiveLyrics ? "nowPlayingCover" : "heroCoverOnly",
+                                               in: coverTransition)
                         .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
                         .scaleEffect(player.isPlaying ? 1.0 : 0.85)
                         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
@@ -468,7 +482,7 @@ struct NowPlayingView: View {
             HStack {
                 Spacer()
                 Button {
-                    withAnimation(.easeInOut(duration: 0.35)) { showLyrics.toggle() }
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { showLyrics.toggle() }
                 } label: {
                     Image(systemName: showLyrics ? "quote.bubble.fill" : "quote.bubble")
                         .font(.title2)
@@ -537,20 +551,69 @@ struct NowPlayingView: View {
     // Not a @ViewBuilder: the builder would wrap the branches in _ConditionalContent, and
     // returning a concrete `Text` is the whole point — only `Text` concatenates.
     private func lyricLineText(line: LyricsLine, index: Int, isCurrent: Bool) -> Text {
-        guard appSettings.betaKaraokeLyrics,
-              isCurrent,
-              areLyricsSynced,
-              let start = line.time,
-              let end = LyricWordTiming.lineEnd(lines: player.lyrics, index: index)
-        else { return Text(line.text) }
+        guard appSettings.betaKaraokeLyrics, isCurrent, areLyricsSynced else {
+            return Text(line.text)
+        }
 
-        let words = LyricWordTiming.words(in: line.text, start: start, end: end)
+        // Prefer the server's own word timings (OpenSubsonic songLyrics v2) — they're
+        // measured, not guessed. Interpolation is only the fallback for lines that arrive
+        // with nothing but a start time.
+        let words: [LyricWord]
+        if let real = line.words, !real.isEmpty {
+            words = real
+        } else if let start = line.time,
+                  let end = LyricWordTiming.lineEnd(lines: player.lyrics, index: index) {
+            words = LyricWordTiming.words(in: line.text, start: start, end: end)
+        } else {
+            return Text(line.text)
+        }
+
         return words.reduce(Text("")) { partial, word in
             // Sung words stay solid; the rest are dimmed but still legible, so the eye can
             // read ahead — a karaoke line you can't read in advance is useless.
             partial + Text(word.text)
                 .foregroundColor(player.currentTime >= word.start ? .white : .white.opacity(0.35))
         }
+    }
+
+    /// Compact now-playing row shown above the lyrics in Live Lyrics mode.
+    ///
+    /// The artwork carries the same `matchedGeometryEffect` id as the hero cover, so opening
+    /// lyrics makes the big cover *travel* up and shrink into this row rather than the hero
+    /// fading out and a separate thumbnail fading in. It keeps the song visible while you
+    /// read, which is the whole point — the old behaviour left you looking at text with no
+    /// idea what was playing.
+    private func liveLyricsHeader(song: Song) -> some View {
+        HStack(spacing: 12) {
+            CoverArtImage(coverArt: song.coverArt ?? song.albumId,
+                          size: 44,
+                          cornerRadius: 8,
+                          fallbackCoverArt: song.albumId)
+                .matchedGeometryEffect(id: "nowPlayingCover", in: coverTransition)
+                .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
+            VStack(alignment: .leading, spacing: 2) {
+                MarqueeText(text: displayTitle(for: song),
+                            font: .subheadline.weight(.semibold),
+                            color: .white,
+                            alignment: .leading)
+                Text(song.artist ?? "Unknown Artist")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
+    /// Type scale for a lyric line.
+    ///
+    /// Live Lyrics leans much larger — a lyric sheet is read from across the room or at a
+    /// glance while doing something else, and `title2` was sized for a caption. The line
+    /// being sung is larger again, so the eye finds it without relying on colour alone.
+    private func lyricFont(isCurrent: Bool) -> Font {
+        guard appSettings.betaLiveLyrics else { return .title2.bold() }
+        return .system(size: isCurrent ? 32 : 27, weight: .bold, design: .default)
     }
 
     // Patterns: "(feat. X)", "(ft. X)", "(featuring X)", or without parens at end
@@ -753,7 +816,7 @@ struct NowPlayingView: View {
                             let isCurrent = index == currentLineIndex
                             let distance = distanceFromCurrentLine(index: index)
                             lyricLineText(line: line, index: index, isCurrent: isCurrent)
-                                .font(.title2.bold())
+                                .font(lyricFont(isCurrent: isCurrent))
                                 .foregroundStyle(.white.opacity(isUserScrolling ? 0.8 : opacityForDistance(distance)))
                                 .blur(radius: isUserScrolling ? 0 : blurForDistance(distance))
                                 // Keep current line at natural size (1.0) — non-current slightly

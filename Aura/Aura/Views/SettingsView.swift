@@ -779,6 +779,7 @@ struct SettingsView: View {
                 // intact, it just isn't offered yet. Uncomment to bring it back.
                 // Toggle("Hide Player Options", isOn: $appSettings.alphaAutoHideToolbar)
                 Toggle("Karaoke Lyrics", isOn: $appSettings.betaKaraokeLyrics)
+                Toggle("Live Lyrics Mode", isOn: $appSettings.betaLiveLyrics)
                 Picker("Display Font", selection: $appSettings.displayFont) {
                     // Each row is drawn in the face it selects — a list of names would
                     // make the choice blind.

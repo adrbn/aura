@@ -269,9 +269,13 @@ actor SubsonicClient {
         return value
     }
 
+    /// `enhanced=true` asks for OpenSubsonic `songLyrics` **v2**: word/syllable cues and
+    /// vocal agents alongside the plain lines. Servers that only implement v1 ignore the
+    /// parameter and answer exactly as before, so this is safe to send unconditionally.
     func getLyricsBySongId(server: ServerConfig, id: String) async throws -> [StructuredLyrics] {
         guard let url = buildURL(server: server, endpoint: "getLyricsBySongId", params: [
-            "id": id
+            "id": id,
+            "enhanced": "true"
         ]) else { throw SubsonicClientError.invalidURL }
         let data = try await fetchData(from: url)
         let wrapper = try decodeSubsonic(data: data, key: "lyricsList", as: LyricsListContainer.self)
