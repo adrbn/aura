@@ -277,12 +277,6 @@ struct NowPlayingView: View {
                 ZStack {
                     CoverArtAsyncImage(coverArt: song.coverArt ?? song.albumId, size: artSize,
                                    fallbackCoverArt: song.albumId)
-                        // Paired with the thumbnail in `liveLyricsHeader`: the hero shrinks
-                        // and flies into the header when lyrics open, instead of vanishing.
-                        // Applied only in Live Lyrics mode — with no counterpart on screen,
-                        // a matched-geometry id has nothing to travel to.
-                        .matchedGeometryEffect(id: appSettings.betaLiveLyrics ? "nowPlayingCover" : "heroCoverOnly",
-                                               in: coverTransition)
                         .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
                         .scaleEffect(player.isPlaying ? 1.0 : 0.85)
                         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
@@ -293,6 +287,14 @@ struct NowPlayingView: View {
                         ))
                 }
                 .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
+                // Matched geometry belongs on this STABLE container, never on the image
+                // inside it. The image carries `.id(song.id)` and the left/right slide
+                // transition; putting a geometry match on that same view made SwiftUI drive
+                // its position from the match and drop the transition altogether — the title
+                // still slid on a song change, the artwork stopped dead. The container's
+                // identity never changes, so it can travel into the lyrics header while the
+                // image keeps animating song changes on its own.
+                .matchedGeometryEffect(id: "nowPlayingCover", in: coverTransition)
                 .padding(.horizontal, horizontalPadding)
                 .offset(x: coverDragOffset)
                 .gesture(
