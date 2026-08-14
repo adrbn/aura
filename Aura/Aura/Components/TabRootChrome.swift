@@ -106,6 +106,8 @@ struct TabTitleRow<Trailing: View>: View {
         ZStack(alignment: .trailing) {
             Text(title)
                 .font(AppTypography.display(40, relativeTo: .largeTitle))
+                // Faces sit at different heights in the same line box; this lines them up.
+                .offset(y: AppTypography.displayBaselineOffset(40))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             trailing()

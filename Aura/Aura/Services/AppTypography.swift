@@ -39,6 +39,34 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
         return UIFont(name: name, size: 12) != nil
     }
 
+    /// Point-size multiplier so different faces read at the same visual size.
+    ///
+    /// Point size measures the em box, not the letters, so two faces at 40 pt can look
+    /// nothing alike. Measured from the files: cap height is 0.714 em for Tuaf against
+    /// 0.626 for ITC Garamond Light Condensed, and Garamond's 'n' is 444 units wide against
+    /// Tuaf's 809 — nearly half. Matching cap heights alone would need ~1.14x; the extra
+    /// allows for it being both condensed and Light, which reads lighter again.
+    var opticalScale: CGFloat {
+        switch self {
+        case .tuaf, .system: return 1.0
+        case .garamond: return 1.22
+        }
+    }
+
+    /// Downward nudge as a fraction of the point size, to line the faces up vertically.
+    ///
+    /// Layout positions text from the ascender, and the two differ enormously: Tuaf's is
+    /// 1.108 em with 0.394 of clear space above its capitals, Garamond's is 0.703 em with
+    /// only 0.077. Garamond therefore sits noticeably higher in the same line box. Damped
+    /// well below the raw 0.317 em difference — the goal is to look right, not to force
+    /// two very different faces onto one baseline.
+    var baselineNudge: CGFloat {
+        switch self {
+        case .tuaf, .system: return 0
+        case .garamond: return 0.09
+        }
+    }
+
     /// Falls back when the stored face isn't bundled — font pulled, licence swapped,
     /// or an App Store build where the evaluation face is deliberately absent.
     var resolved: DisplayFont { isAvailable ? self : .tuaf }
@@ -67,16 +95,26 @@ enum AppTypography {
     /// Display font for SwiftUI text. Named faces scale with Dynamic Type via
     /// `relativeTo:`; the system fallback is drawn at a fixed size, as a wordmark should be.
     static func display(_ size: CGFloat, relativeTo textStyle: Font.TextStyle = .largeTitle) -> Font {
-        guard let name = choice.postScriptName, UIFont(name: name, size: size) != nil else {
-            return .system(size: size, weight: .bold)
+        let face = choice
+        let scaled = size * face.opticalScale
+        guard let name = face.postScriptName, UIFont(name: name, size: scaled) != nil else {
+            return .system(size: scaled, weight: .bold)
         }
-        return .custom(name, size: size, relativeTo: textStyle)
+        return .custom(name, size: scaled, relativeTo: textStyle)
+    }
+
+    /// Vertical correction for the current face, in points, for a title drawn at `size`.
+    /// Apply as `.offset(y:)` where the face shares a row with other elements.
+    static func displayBaselineOffset(_ size: CGFloat) -> CGFloat {
+        size * choice.opticalScale * choice.baselineNudge
     }
 
     /// UIKit counterpart, for the navigation-bar appearance proxy.
     static func uiDisplay(_ size: CGFloat) -> UIFont {
-        guard let name = choice.postScriptName, let font = UIFont(name: name, size: size) else {
-            return .boldSystemFont(ofSize: size)
+        let face = choice
+        let scaled = size * face.opticalScale
+        guard let name = face.postScriptName, let font = UIFont(name: name, size: scaled) else {
+            return .boldSystemFont(ofSize: scaled)
         }
         return font
     }
