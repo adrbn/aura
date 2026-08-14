@@ -266,9 +266,10 @@ struct HomeView: View {
 
     private var homeContent: some View {
         VStack(alignment: .leading, spacing: 24) {
-            // Title + stats are ONE tight block: the outer 24pt spacing is right between
-            // sections but far too airy between a title and its own subtitle line.
-            VStack(alignment: .leading, spacing: 6) {
+            // The stats line sits evenly between the title and whatever follows: 24pt above
+            // and 24pt below, matching the section spacing. It used to be 6pt above, which
+            // pinned it under the title and left it visibly crowded on one side.
+            VStack(alignment: .leading, spacing: 24) {
                 // Big, left-aligned title — scrolls away with the content and returns at the
                 // top on bounce, so it doesn't keep a fixed black bar that breaks the top glass fade.
                 if !homeTitle.isEmpty {
