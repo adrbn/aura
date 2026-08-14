@@ -128,9 +128,14 @@ extension View {
     /// Library and Playlists — four call sites, one of which had the offset. One modifier
     /// means a new title can't be added half-corrected.
     func auraDisplay(_ size: CGFloat, relativeTo textStyle: Font.TextStyle = .largeTitle) -> some View {
-        // `offset` deliberately, not padding: it moves the glyphs without changing the
-        // layout height, so surrounding rows don't shift when the face changes.
-        font(AppTypography.display(size, relativeTo: textStyle))
-            .offset(y: AppTypography.displayBaselineOffset(size))
+        let nudge = AppTypography.displayBaselineOffset(size)
+        // Balanced padding, NOT `offset`. An offset is invisible to layout, so wherever the
+        // container sizes itself from the text — Home's HStack with its chevron — the glyphs
+        // moved but the box didn't, and each tab drifted by a different amount. Equal and
+        // opposite padding shifts the text inside a box of unchanged total height, so every
+        // title lands identically whatever it is nested in.
+        return font(AppTypography.display(size, relativeTo: textStyle))
+            .padding(.top, nudge)
+            .padding(.bottom, -nudge)
     }
 }
