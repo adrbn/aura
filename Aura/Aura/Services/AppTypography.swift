@@ -49,7 +49,7 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     var opticalScale: CGFloat {
         switch self {
         case .tuaf, .system: return 1.0
-        case .garamond: return 1.22
+        case .garamond: return 1.32
         }
     }
 
@@ -117,5 +117,20 @@ enum AppTypography {
             return .boldSystemFont(ofSize: scaled)
         }
         return font
+    }
+}
+
+extension View {
+    /// Applies the display face **and** its per-face vertical correction together.
+    ///
+    /// These must travel as a pair. Applying only the font, separately, at each of the five
+    /// tab titles is exactly how Home and Settings ended up sitting on a different line from
+    /// Library and Playlists — four call sites, one of which had the offset. One modifier
+    /// means a new title can't be added half-corrected.
+    func auraDisplay(_ size: CGFloat, relativeTo textStyle: Font.TextStyle = .largeTitle) -> some View {
+        // `offset` deliberately, not padding: it moves the glyphs without changing the
+        // layout height, so surrounding rows don't shift when the face changes.
+        font(AppTypography.display(size, relativeTo: textStyle))
+            .offset(y: AppTypography.displayBaselineOffset(size))
     }
 }

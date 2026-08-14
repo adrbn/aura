@@ -48,7 +48,7 @@ struct SearchView: View {
                 .overlay(alignment: .top) {
                     VStack(spacing: 8) {
                         Text("search")
-                            .font(AppTypography.display(40, relativeTo: .largeTitle))
+                            .auraDisplay(40)
                             .foregroundStyle(.primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: titleHeight)
