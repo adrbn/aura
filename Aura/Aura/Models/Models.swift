@@ -116,6 +116,11 @@ final class AppSettings {
     /// degrades to it when a stored face isn't bundled in this build.
     var displayFont: DisplayFont = .tuaf
 
+    /// BETA — highlight lyrics word by word inside the current line, by interpolating
+    /// the line's duration across its words. Opt-in because the timings are inferred,
+    /// not measured. See `LyricWordTiming`.
+    var betaKaraokeLyrics: Bool = false
+
     /// ALPHA — Now Playing hides its options bar behind a small glass handle, so the
     /// screen stays on the artwork. Tapping the handle reveals the bar for a few seconds.
     var alphaAutoHideToolbar: Bool = false
@@ -211,6 +216,7 @@ final class AppSettings {
             }
             landscapeClockEnabled = decoded.landscapeClockEnabled ?? false
             displayFont = decoded.displayFont ?? .tuaf
+            betaKaraokeLyrics = decoded.betaKaraokeLyrics ?? false
             alphaAutoHideToolbar = decoded.alphaAutoHideToolbar ?? false
             lastfmUsername = decoded.lastfmUsername ?? ""
             lastfmApiKey = KeychainHelper.loadPassword(for: Self.lastfmKeychainAccount) ?? ""
@@ -256,6 +262,7 @@ final class AppSettings {
             homeSectionOrder: homeSectionOrder,
             landscapeClockEnabled: landscapeClockEnabled,
             displayFont: displayFont,
+            betaKaraokeLyrics: betaKaraokeLyrics,
             alphaAutoHideToolbar: alphaAutoHideToolbar,
             lastfmUsername: lastfmUsername,
             wrappedShowOnHome: wrappedShowOnHome
@@ -344,6 +351,7 @@ struct SettingsData: Codable {
     var homeSectionOrder: [HomeSection]?
     var landscapeClockEnabled: Bool?
     var displayFont: DisplayFont?
+    var betaKaraokeLyrics: Bool?
     var alphaAutoHideToolbar: Bool?
     var lastfmUsername: String?
     var wrappedShowOnHome: Bool?

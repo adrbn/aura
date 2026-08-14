@@ -37,6 +37,7 @@
 		E10000010000000000000031 /* AlbumCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000031 /* AlbumCardView.swift */; };
 		E10000010000000000000032 /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000032 /* ImageLoader.swift */; };
 		E100000100000000000000F3 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
+		E100000100000000000000F8 /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
 		E10000010000000000000033 /* ArtistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000033 /* ArtistDetailView.swift */; };
 		E10000010000000000000034 /* SongsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000034 /* SongsListView.swift */; };
 		E10000010000000000000040 /* MusicPlaybackAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000040 /* MusicPlaybackAttributes.swift */; };
@@ -149,6 +150,7 @@
 		E10000020000000000000031 /* AlbumCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumCardView.swift; sourceTree = "<group>"; };
 		E10000020000000000000032 /* ImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoader.swift; sourceTree = "<group>"; };
 		E100000200000000000000F3 /* AppTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTypography.swift; sourceTree = "<group>"; };
+		E100000200000000000000F8 /* LyricWordTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricWordTiming.swift; sourceTree = "<group>"; };
 		E10000020000000000000033 /* ArtistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDetailView.swift; sourceTree = "<group>"; };
 		E10000020000000000000034 /* SongsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongsListView.swift; sourceTree = "<group>"; };
 		E10000020000000000000040 /* MusicPlaybackAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlaybackAttributes.swift; sourceTree = "<group>"; };
@@ -269,6 +271,7 @@
 				E10000020000000000000013 /* AudioPlayer.swift */,
 				E10000020000000000000032 /* ImageLoader.swift */,
 				E100000200000000000000F3 /* AppTypography.swift */,
+				E100000200000000000000F8 /* LyricWordTiming.swift */,
 				E10000020000000000000050 /* DownloadManager.swift */,
 				E10000020000000000000080 /* AppLogger.swift */,
 				E10000020000000000000085 /* EqualizerManager.swift */,
@@ -521,6 +524,7 @@
 				E100000100000000000000F1 /* FullScreenImageViewer.swift in Sources */,
 				E10000010000000000000032 /* ImageLoader.swift in Sources */,
 				E100000100000000000000F3 /* AppTypography.swift in Sources */,
+				E100000100000000000000F8 /* LyricWordTiming.swift in Sources */,
 				E10000010000000000000033 /* ArtistDetailView.swift in Sources */,
 				E10000010000000000000034 /* SongsListView.swift in Sources */,
 				E10000010000000000000040 /* MusicPlaybackAttributes.swift in Sources */,

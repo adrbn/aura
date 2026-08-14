@@ -526,6 +526,33 @@ struct NowPlayingView: View {
             .padding(.horizontal, horizontalPadding)
     }
 
+    /// A lyric line, word-highlighted when karaoke mode is on and this is the line being sung.
+    ///
+    /// Only the *current* line is broken into words — every other line stays a single `Text`,
+    /// so a 60-line lyric sheet costs no more to render than before.
+    ///
+    /// Built by concatenating `Text` values rather than laying out words in an `HStack`:
+    /// concatenation keeps SwiftUI's natural line wrapping, which a stack of words would
+    /// break on any line long enough to need it — i.e. exactly the lines that matter.
+    // Not a @ViewBuilder: the builder would wrap the branches in _ConditionalContent, and
+    // returning a concrete `Text` is the whole point — only `Text` concatenates.
+    private func lyricLineText(line: LyricsLine, index: Int, isCurrent: Bool) -> Text {
+        guard appSettings.betaKaraokeLyrics,
+              isCurrent,
+              areLyricsSynced,
+              let start = line.time,
+              let end = LyricWordTiming.lineEnd(lines: player.lyrics, index: index)
+        else { return Text(line.text) }
+
+        let words = LyricWordTiming.words(in: line.text, start: start, end: end)
+        return words.reduce(Text("")) { partial, word in
+            // Sung words stay solid; the rest are dimmed but still legible, so the eye can
+            // read ahead — a karaoke line you can't read in advance is useless.
+            partial + Text(word.text)
+                .foregroundColor(player.currentTime >= word.start ? .white : .white.opacity(0.35))
+        }
+    }
+
     // Patterns: "(feat. X)", "(ft. X)", "(featuring X)", or without parens at end
     private static let featRegexes: [NSRegularExpression] = [
         "\\s*\\(feat\\.?\\s+([^)]+)\\)",
@@ -725,7 +752,7 @@ struct NowPlayingView: View {
                         ForEach(Array(player.lyrics.enumerated()), id: \.element.id) { index, line in
                             let isCurrent = index == currentLineIndex
                             let distance = distanceFromCurrentLine(index: index)
-                            Text(line.text)
+                            lyricLineText(line: line, index: index, isCurrent: isCurrent)
                                 .font(.title2.bold())
                                 .foregroundStyle(.white.opacity(isUserScrolling ? 0.8 : opacityForDistance(distance)))
                                 .blur(radius: isUserScrolling ? 0 : blurForDistance(distance))
