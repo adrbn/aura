@@ -303,6 +303,12 @@ struct NowPlayingView: View {
             // Song info — hidden while lyrics are open, where the header already shows the
             // title and artist. Its height is what lets the lyrics breathe.
             if !showLyrics {
+            // An extra wrapper on purpose. The inner block owns the song-change transition —
+            // a directional slide keyed on `.id(songinfo-…)` — and stacking a second
+            // `.transition` on the same view for the lyrics toggle made them fight: closing
+            // lyrics replayed the slide, so the title flew back in from the right instead of
+            // fading. Each trigger now has its own view to act on.
+            Group {
             VStack(spacing: 4) {
                 if let albumId = song.albumId {
                     Button {
@@ -344,6 +350,8 @@ struct NowPlayingView: View {
             ))
             .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
             .offset(x: showLyrics ? 0 : coverDragOffset)
+            }
+            // Governs only appearing and disappearing with the lyrics.
             .transition(.opacity)
             }
             }
