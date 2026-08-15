@@ -78,7 +78,6 @@
 		E100000100000000000000D1 /* AudioOutputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D1 /* AudioOutputButton.swift */; };
 		E100000100000000000000D2 /* BufferedProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D2 /* BufferedProgressBar.swift */; };
 		E100000100000000000000D3 /* TabRootChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D3 /* TabRootChrome.swift */; };
-		E100000100000000000000F9 /* KaraokeTextRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F9 /* KaraokeTextRenderer.swift */; };
 		E100000100000000000000F6 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
 		E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
 		E100000100000000000000F4 /* AlphabetIndexBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F4 /* AlphabetIndexBar.swift */; };
@@ -189,7 +188,6 @@
 		E100000200000000000000D1 /* AudioOutputButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputButton.swift; sourceTree = "<group>"; };
 		E100000200000000000000D2 /* BufferedProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferedProgressBar.swift; sourceTree = "<group>"; };
 		E100000200000000000000D3 /* TabRootChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabRootChrome.swift; sourceTree = "<group>"; };
-		E100000200000000000000F9 /* KaraokeTextRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaraokeTextRenderer.swift; sourceTree = "<group>"; };
 		E100000200000000000000F6 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
 		E100000200000000000000F7 /* BouncingDotsLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BouncingDotsLoader.swift; sourceTree = "<group>"; };
 		E100000200000000000000F4 /* AlphabetIndexBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlphabetIndexBar.swift; sourceTree = "<group>"; };
@@ -351,7 +349,6 @@
 				E100000200000000000000D1 /* AudioOutputButton.swift */,
 				E100000200000000000000D2 /* BufferedProgressBar.swift */,
 				E100000200000000000000D3 /* TabRootChrome.swift */,
-				E100000200000000000000F9 /* KaraokeTextRenderer.swift */,
 				E100000200000000000000F6 /* MarqueeText.swift */,
 				E100000200000000000000F7 /* BouncingDotsLoader.swift */,
 				E100000200000000000000F4 /* AlphabetIndexBar.swift */,
@@ -574,7 +571,6 @@
 				E100000100000000000000D1 /* AudioOutputButton.swift in Sources */,
 				E100000100000000000000D2 /* BufferedProgressBar.swift in Sources */,
 				E100000100000000000000D3 /* TabRootChrome.swift in Sources */,
-				E100000100000000000000F9 /* KaraokeTextRenderer.swift in Sources */,
 				E100000100000000000000F6 /* MarqueeText.swift in Sources */,
 				E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */,
 				E100000100000000000000F4 /* AlphabetIndexBar.swift in Sources */,

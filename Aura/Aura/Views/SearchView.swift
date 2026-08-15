@@ -129,6 +129,15 @@ struct SearchResultsContainer: View {
         .background(Color.themeBg)
         .task { SearchIndex.shared.prefetchIfNeeded() }
         .task(id: query) { await runSearch() }
+        // What turns a look into a listen. An album or artist opened from search sits armed
+        // until something from it actually plays.
+        .onChange(of: player.playbackSource) { _, source in
+            history.commitIfPlaying(source: source)
+        }
+        // Back at the root without having played anything — the entry was just browsing.
+        .onChange(of: navPath.count) { _, depth in
+            if depth == 0 { history.disarm() }
+        }
     }
 
     // MARK: Search execution
@@ -204,11 +213,11 @@ struct SearchResultsContainer: View {
             } label: { recentEntryLabel(entry) }
             .buttonStyle(.plain)
         case .artist(let artist):
-            Button { history.record(entry); navPath.append(artist) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
+            Button { history.arm(entry); navPath.append(artist) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
         case .album(let album):
-            Button { history.record(entry); navPath.append(album) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
+            Button { history.arm(entry); navPath.append(album) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
         case .playlist(let playlist):
-            Button { history.record(entry); navPath.append(playlist) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
+            Button { history.arm(entry); navPath.append(playlist) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
         }
     }
 
@@ -307,7 +316,8 @@ struct SearchResultsContainer: View {
                     entityRow(value: artist, coverArt: artist.coverArt, circular: true,
                               title: artist.name, subtitle: nil) {
                         SearchRanking.shared.recordTap(query: trimmedQuery, resultId: artist.id)
-                        history.record(.artist(artist))
+                        // Armed, not recorded: opening an artist is not listening to one.
+                        history.arm(.artist(artist))
                     }
                 }
                 if !isExpanded && results.artists.count > collapsedLimit {
@@ -333,7 +343,7 @@ struct SearchResultsContainer: View {
                     entityRow(value: album, coverArt: album.coverArt, circular: false,
                               title: album.name, subtitle: album.artist ?? "Unknown") {
                         SearchRanking.shared.recordTap(query: trimmedQuery, resultId: album.id)
-                        history.record(.album(album))
+                        history.arm(.album(album))
                     }
                 }
                 if !isExpanded && results.albums.count > collapsedLimit {
@@ -349,7 +359,7 @@ struct SearchResultsContainer: View {
                     entityRow(value: playlist, coverArt: playlist.coverArt, circular: false,
                               title: playlist.name, subtitle: playlist.songCount.map { "\($0) songs" }) {
                         SearchRanking.shared.recordTap(query: trimmedQuery, resultId: playlist.id)
-                        history.record(.playlist(playlist))
+                        history.arm(.playlist(playlist))
                     }
                 }
                 if !isExpanded && results.playlists.count > collapsedLimit {
