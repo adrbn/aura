@@ -273,7 +273,12 @@ struct NowPlayingView: View {
 
             if showLyrics {
                 lyricsScrollView
-                    .frame(height: artSize + 60)
+                    // Sized so the whole lyrics block — 44pt artwork + 14pt gap + this —
+                    // comes to exactly the height the hero artwork occupied. Anything taller
+                    // is height the surrounding VStack has to find somewhere: it eats the
+                    // spacer above, dragging the playback source up, and pushes the transport
+                    // controls down. Matching the hero means nothing else moves at all.
+                    .frame(height: max(0, artSize - 58))
                     .mask(
                         VStack(spacing: 0) {
                             LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
