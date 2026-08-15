@@ -31,7 +31,7 @@ Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full off
 ## ✨ Highlights
 
 - 🎧 **Playback** — gapless + crossfade, replay gain, lossless FLAC/ALAC or smart transcoding, **5-band parametric EQ** (15 presets + custom), sleep timer, full queue (play next / add / drag-reorder / autoplay), scrobbling.
-- 📝 **Lyrics** — word-by-word karaoke via the OpenSubsonic v2 lyrics extension, falling back to line timings and then plain text. The fill *sweeps* through each word rather than switching it on; the surrounding lines fall away in size, blur and opacity so only the line being sung competes for attention; and the sheet can be set in any of six typefaces. Tap a line to jump, adjustable timing offset, full-screen in landscape.
+- 📝 **Lyrics** — word-by-word karaoke via the OpenSubsonic v2 lyrics extension, falling back to line timings and then plain text. The fill *sweeps* left to right through each word as it is sung, rather than switching it on; and the surrounding lines fall away in size, blur and opacity so only the line being sung competes for attention. Tap a line to jump, adjustable timing offset, full-screen in landscape.
 - 📻 **Discovery** — **Instant Mix** from any song/artist, auto-generated genre / mood / time-of-day **"Made For You"** mixes, and a **Year Wrapped** retrospective.
 - ✈️ **Offline** — download songs / albums / playlists / whole library, automatic streaming cache, offline search, and a graceful offline mode when the server is unreachable.
 - 📚 **Library** — fuzzy unified search ranked by relevance, an A–Z fast-scroll rail on long lists, shuffle-all, custom playlist covers, content-based duplicate detection, multi-folder Navidrome, and **multiple server profiles** switchable from the Home title.
