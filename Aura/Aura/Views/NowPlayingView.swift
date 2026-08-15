@@ -36,6 +36,9 @@ struct NowPlayingView: View {
     /// timer that retracts it again.
     @State private var toolbarRevealed = false
     @State private var toolbarHideTask: Task<Void, Never>?
+    /// Height of the artwork-plus-title region, captured from the normal state and then held
+    /// constant so switching to lyrics cannot move anything above or below it.
+    @State private var mediaRegionHeight: CGFloat?
 
     /// Side inset shared by the artwork, the title block, the transport row and the
     /// options bar — they must stay on the same vertical guides.
@@ -250,6 +253,12 @@ struct NowPlayingView: View {
 
             Spacer(minLength: 4)
 
+            // Everything from the artwork down to the title sits in a container of FIXED
+            // height, measured once from the normal state. Opening lyrics rearranges what is
+            // inside it — the artwork shrinks into a header, the title block fades out, the
+            // lyrics take the space both vacate — but the container's own height never moves,
+            // so the playback source above and the transport controls below stay put.
+            VStack(spacing: 0) {
             // ONE artwork view for both states. It stays at the same place in the tree and
             // only its SIZE changes, so SwiftUI animates the frame and the picture genuinely
             // contracts on its way to the corner.
@@ -273,12 +282,9 @@ struct NowPlayingView: View {
 
             if showLyrics {
                 lyricsScrollView
-                    // Sized so the whole lyrics block — 44pt artwork + 14pt gap + this —
-                    // comes to exactly the height the hero artwork occupied. Anything taller
-                    // is height the surrounding VStack has to find somewhere: it eats the
-                    // spacer above, dragging the playback source up, and pushes the transport
-                    // controls down. Matching the hero means nothing else moves at all.
-                    .frame(height: max(0, artSize - 58))
+                    // Takes whatever the artwork and the title block give up. The container
+                    // is height-locked, so this expands into exactly the space they vacate.
+                    .frame(maxHeight: .infinity)
                     .mask(
                         VStack(spacing: 0) {
                             LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
@@ -294,7 +300,9 @@ struct NowPlayingView: View {
 
             Spacer().frame(height: 20)
 
-            // Song info
+            // Song info — hidden while lyrics are open, where the header already shows the
+            // title and artist. Its height is what lets the lyrics breathe.
+            if !showLyrics {
             VStack(spacing: 4) {
                 if let albumId = song.albumId {
                     Button {
@@ -336,6 +344,17 @@ struct NowPlayingView: View {
             ))
             .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
             .offset(x: showLyrics ? 0 : coverDragOffset)
+            .transition(.opacity)
+            }
+            }
+            // `.frame(height:)` centres its content unless told otherwise, which pushed the
+            // header down the locked box instead of pinning it to the top.
+            .frame(height: mediaRegionHeight, alignment: .top)
+            // Measured only in the normal state — that layout is the reference the lyrics
+            // state has to match. Measuring while locked would just read back the lock.
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                if !showLyrics, height > 0 { mediaRegionHeight = height }
+            }
 
             // Year + genre + favourite + menu row
             HStack {
