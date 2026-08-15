@@ -100,6 +100,25 @@ final class AudioPlayer {
     ///
     /// What remains is one manual correction, because sources genuinely disagree by a
     /// tenth of a second either way. Positive shows the words earlier.
+    /// Playback position read straight from the player, rather than from its last periodic
+    /// report.
+    ///
+    /// The time observer fires every 100ms. That is ample for a progress bar and far too
+    /// coarse for anything drawn per frame: a word fade sampled at 10Hz visibly steps.
+    /// AVPlayer will state its exact position whenever asked, so anything redrawing on the
+    /// display link should ask rather than read `currentTime`.
+    ///
+    /// Falls back to the reported time while seeking, where the player's own answer is the
+    /// old position until the seek lands.
+    var liveTime: TimeInterval {
+        guard let player, !isSeeking else { return currentTime }
+        let seconds = player.currentTime().seconds
+        return seconds.isFinite ? seconds : currentTime
+    }
+
+    /// `lyricsTime`, at whatever resolution the caller asks for it.
+    var liveLyricsTime: TimeInterval { max(0, liveTime + AppSettings.shared.lyricsOffset) }
+
     var lyricsTime: TimeInterval {
         max(0, currentTime + AppSettings.shared.lyricsOffset)
     }

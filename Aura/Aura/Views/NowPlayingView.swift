@@ -603,16 +603,14 @@ struct NowPlayingView: View {
 
     /// How lit a word is, from `unsungWord` to full.
     ///
-    /// Long enough to be *sampled*, and no longer. Playback reports its position every
-    /// 100ms, so a fade shorter than that would land entirely between two readings and
-    /// never be drawn — the word would snap on exactly as before. At 140ms every word gets
-    /// at least one intermediate step, which is what takes the hard edge off the jump
-    /// without the word visibly brightening its way in.
-    private static let wordFade: TimeInterval = 0.14
+    /// Short, and smooth because it is drawn on the display link rather than sampled from
+    /// the playback observer. Tying it to that observer instead put the whole fade inside
+    /// two or three of its 100ms reports, which is why it stepped.
+    private static let wordFade: TimeInterval = 0.09
     private static let unsungWord: Double = 0.35
 
     private func wordBrightness(_ word: LyricWord) -> Double {
-        let elapsed = player.lyricsTime - word.start
+        let elapsed = player.liveLyricsTime - word.start
         guard elapsed > 0 else { return Self.unsungWord }
         let progress = min(1, elapsed / Self.wordFade)
         return Self.unsungWord + (1 - Self.unsungWord) * progress
@@ -923,8 +921,15 @@ struct NowPlayingView: View {
                             // cue, but with that turned off it would sit there in full
                             // white as though it had been sung.
                             let isAnticipated = isCurrent && (line.time ?? 0) > player.lyricsTime
-                            lyricLineText(line: line, index: index, isCurrent: isCurrent)
-                                .font(lyricFont(isCurrent: isCurrent))
+                            // Only the line being sung redraws on the display link, and
+                            // only while the song is actually moving. Every other line is
+                            // paused, so it draws once and costs nothing — which is what
+                            // makes a per-frame fade affordable inside a scrolling list.
+                            TimelineView(.animation(minimumInterval: 1.0 / 60.0,
+                                                    paused: !isCurrent || !player.isPlaying)) { _ in
+                                lyricLineText(line: line, index: index, isCurrent: isCurrent)
+                                    .font(lyricFont(isCurrent: isCurrent))
+                            }
                                 .foregroundStyle(.white.opacity(
                                     isUserScrolling ? 0.8
                                     : opacityForDistance(distance) * (isAnticipated ? 0.45 : 1)
