@@ -31,7 +31,7 @@ Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full off
 ## ✨ Highlights
 
 - 🎧 **Playback** — gapless + crossfade, replay gain, lossless FLAC/ALAC or smart transcoding, **5-band parametric EQ** (15 presets + custom), sleep timer, full queue (play next / add / drag-reorder / autoplay), scrobbling.
-- 📝 **Lyrics** — time-synced scrolling lyrics (tap to jump), server-first with **LRCLIB** fallback, and full-screen in landscape.
+- 📝 **Lyrics** — word-by-word karaoke highlighting via the OpenSubsonic v2 lyrics extension, falling back to line timings and then plain text; tap a line to jump, adjustable timing, and full-screen in landscape.
 - 📻 **Discovery** — **Instant Mix** from any song/artist, auto-generated genre / mood / time-of-day **"Made For You"** mixes, and a **Year Wrapped** retrospective.
 - ✈️ **Offline** — download songs / albums / playlists / whole library, automatic streaming cache, offline search, and a graceful offline mode when the server is unreachable.
 - 📚 **Library** — fuzzy unified search ranked by relevance, an A–Z fast-scroll rail on long lists, shuffle-all, custom playlist covers, content-based duplicate detection, multi-folder Navidrome, and **multiple server profiles** switchable from the Home title.
@@ -74,13 +74,10 @@ cd aura
 open Aura/Aura.xcodeproj   # Xcode 26+, iOS 26 target — run the "Aura" scheme
 ```
 
-> **A note on the typeface.** Aura's display font is [**Tuaf**](https://www.futurefonts.com/element-type/tuaf)
-> by Element Type. Its licence covers embedding the face in a built app — *not* redistributing the
-> file — so the `.otf` is **not** in this repository, and buying a licence doesn't change that.
-> The app builds and runs fine without it and falls back to the system font; only the headings
-> differ from the screenshots. To get the intended typography, drop your licensed `.otf` into
-> `Aura/Aura/` and set `postScriptName` in `Services/AppTypography.swift` to the face's real
-> PostScript name — every call site reads that one constant.
+> **A note on the typeface.** Aura is set in **Vavin Condensed**, a Garamond-inspired face
+> drawn for this app and released under the **SIL Open Font License 1.1**. It lives in this
+> repository and ships in the build — no licence to buy, nothing to drop in. `Vavin-OFL.txt`
+> travels in the app bundle as the licence requires, and About carries the acknowledgement.
 
 > Two configurations ship: the App Store build, and a sideload build that additionally bundles an optional Soulseek/slskd integration (compiled out of the App Store version).
 

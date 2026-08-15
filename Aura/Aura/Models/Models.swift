@@ -112,13 +112,10 @@ final class AppSettings {
     var enabledLibraryCategories: [LibraryCategory] = LibraryCategory.defaultEnabled
     var showPlayCounts: Bool = false
     var homeSectionOrder: [HomeSection] = HomeSection.defaultOrder
-    /// Display typeface for the wordmark and big titles. Defaults to Tuaf; `resolved`
-    /// degrades to it when a stored face isn't bundled in this build.
-    var displayFont: DisplayFont = .tuaf
-
-    /// BETA — a fuller lyrics mode: larger type, and the artwork shrinking into a compact
-    /// header instead of vanishing when lyrics open.
-    var betaLiveLyrics: Bool = false
+    /// Display typeface for the wordmark and big titles. Vavin Condensed is the app's
+    /// face; `resolved` falls back to it when a stored choice isn't bundled in this build —
+    /// which is what happens to the dev-only faces in a shipping one.
+    var displayFont: DisplayFont = .vavinCondensed
 
     /// Manual lyrics timing correction, in seconds. Negative shows words earlier.
     ///
@@ -127,10 +124,11 @@ final class AppSettings {
     /// themselves vary. One knob, set once.
     var lyricsOffset: Double = 0
 
-    /// BETA — highlight lyrics word by word inside the current line, by interpolating
-    /// the line's duration across its words. Opt-in because the timings are inferred,
-    /// not measured. See `LyricWordTiming`.
-    var betaKaraokeLyrics: Bool = false
+    /// Highlight lyrics word by word inside the current line. Uses the server's own cue
+    /// timings when it publishes them, and interpolates from the line duration otherwise —
+    /// see `LyricWordTiming`. On by default; the toggle exists because the interpolated
+    /// case is inferred rather than measured.
+    var betaKaraokeLyrics: Bool = true
 
     /// ALPHA — Now Playing hides its options bar behind a small glass handle, so the
     /// screen stays on the artwork. Tapping the handle reveals the bar for a few seconds.
@@ -226,10 +224,9 @@ final class AppSettings {
                 homeSectionOrder = loadedOrder
             }
             landscapeClockEnabled = decoded.landscapeClockEnabled ?? false
-            displayFont = decoded.displayFont ?? .tuaf
-            betaKaraokeLyrics = decoded.betaKaraokeLyrics ?? false
+            displayFont = decoded.displayFont ?? .vavinCondensed
+            betaKaraokeLyrics = decoded.betaKaraokeLyrics ?? true
             lyricsOffset = decoded.lyricsOffset ?? 0
-            betaLiveLyrics = decoded.betaLiveLyrics ?? false
             alphaAutoHideToolbar = decoded.alphaAutoHideToolbar ?? false
             lastfmUsername = decoded.lastfmUsername ?? ""
             lastfmApiKey = KeychainHelper.loadPassword(for: Self.lastfmKeychainAccount) ?? ""
@@ -277,7 +274,6 @@ final class AppSettings {
             displayFont: displayFont,
             betaKaraokeLyrics: betaKaraokeLyrics,
             lyricsOffset: lyricsOffset,
-            betaLiveLyrics: betaLiveLyrics,
             alphaAutoHideToolbar: alphaAutoHideToolbar,
             lastfmUsername: lastfmUsername,
             wrappedShowOnHome: wrappedShowOnHome
@@ -368,7 +364,6 @@ struct SettingsData: Codable {
     var displayFont: DisplayFont?
     var betaKaraokeLyrics: Bool?
     var lyricsOffset: Double?
-    var betaLiveLyrics: Bool?
     var alphaAutoHideToolbar: Bool?
     var lastfmUsername: String?
     var wrappedShowOnHome: Bool?

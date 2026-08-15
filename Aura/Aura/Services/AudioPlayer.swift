@@ -90,19 +90,18 @@ final class AudioPlayer {
     private var savedPlaybackSource: PlaybackSource?
     private var autoplayFromIndex: Int?  // Index where autoplay/random-fill songs begin
     private var isSeeking = false
-    /// Playback position as **heard**, for syncing lyrics.
+    /// Playback position used to sync lyrics.
     ///
-    /// `currentTime` is where the decoder is, not when the sound reaches the listener. The
-    /// output path adds real delay — a couple of milliseconds wired, but 150–300 ms over
-    /// Bluetooth — so highlighting against the raw clock runs visibly ahead on AirPods.
-    /// Subtracting the session's reported output latency puts the words back on the beat.
-    /// Plus a manual correction, because the automatic figure only gets close: AVPlayer
-    /// already absorbs part of the output delay, so subtracting the full reported latency
-    /// overshoots and the words arrive late. Negative offset = show them earlier.
+    /// No automatic output-latency compensation, deliberately. Subtracting
+    /// `AVAudioSession.outputLatency` seemed principled — Bluetooth really does add
+    /// 150–300 ms — but measuring on AirPods Pro 2 showed it needed cancelling out almost
+    /// exactly, which means `AVPlayer.currentTime` already reports presentation time with
+    /// that delay accounted for. Subtracting it again was double-counting.
+    ///
+    /// What remains is one manual correction, because sources genuinely disagree by a
+    /// tenth of a second either way. Positive shows the words earlier.
     var lyricsTime: TimeInterval {
-        max(0, currentTime
-               - AVAudioSession.sharedInstance().outputLatency
-               + AppSettings.shared.lyricsOffset)
+        max(0, currentTime + AppSettings.shared.lyricsOffset)
     }
 
     /// Id of the most recent seek request.

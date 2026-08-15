@@ -4,12 +4,14 @@ import UIKit
 /// The display typeface — the aura wordmark, tab-root big titles, onboarding headlines
 /// and section heads. Body copy always stays on the system font.
 enum DisplayFont: String, Codable, CaseIterable, Identifiable {
-    case tuaf
-    case system
-    /// Our own typeface, SIL OFL 1.1 — the only custom faces here that may ship.
+    /// The app's typeface. Ours, SIL OFL 1.1 — the only face here that may ship.
     case vavinCondensed
     case vavinCondensedBold
-    /// LOCAL EVALUATION ONLY — see the licensing note on `postScriptName`.
+    case system
+    /// DEV BUILDS ONLY. Tuaf is a *trial* font and ITC Garamond's own fsType forbids app
+    /// embedding; both are kept selectable so alternatives can still be compared on
+    /// device, and both are excluded from anything shippable.
+    case tuaf
     case garamond
 
     var id: String { rawValue }
@@ -85,7 +87,7 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
 
     /// Falls back when the stored face isn't bundled — font pulled, licence swapped,
     /// or an App Store build where the evaluation face is deliberately absent.
-    var resolved: DisplayFont { isAvailable ? self : .tuaf }
+    var resolved: DisplayFont { isAvailable ? self : .vavinCondensed }
 
     /// What the picker lists.
     ///
@@ -96,7 +98,9 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     static var selectable: [DisplayFont] {
         allCases.filter { face in
             #if APPSTORE_BUILD
-            if face == .garamond { return false }
+            // Neither may ship: Tuaf is an unlicensed trial, ITC Garamond's fsType is 4
+            // ("Preview & Print"), which does not permit embedding in an application.
+            if face == .tuaf || face == .garamond { return false }
             #endif
             return face.isAvailable
         }

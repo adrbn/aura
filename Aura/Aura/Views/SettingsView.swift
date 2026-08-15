@@ -178,6 +178,7 @@ struct SettingsView: View {
                 customiseSection
                 serversSection
                 homeCustomiseSection
+                lyricsSection
                 playbackSection
                 equalizerSection
                 lastfmSection
@@ -736,6 +737,29 @@ struct SettingsView: View {
         }
     }
 
+    /// Lyrics behaviour. Out of Dev/Beta: word highlighting and the fuller lyrics layout
+    /// both ship, so their controls belong where everyone can reach them.
+    private var lyricsSection: some View {
+        Section {
+            Toggle("Word-by-Word Highlight", isOn: $appSettings.betaKaraokeLyrics)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text("Timing")
+                    Spacer()
+                    Text(String(format: "%+.0f ms", appSettings.lyricsOffset * 1000))
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $appSettings.lyricsOffset, in: -0.6...0.6, step: 0.025)
+                Text("Positive shows the words earlier. Bluetooth headphones usually need a nudge.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Lyrics")
+        }
+    }
+
     private var homeCustomiseSection: some View {
         Section("Home Screen") {
             Picker("Title", selection: $appSettings.homeTitleStyle) {
@@ -778,21 +802,6 @@ struct SettingsView: View {
                 // Hidden from the UI on purpose — the feature and its stored setting are
                 // intact, it just isn't offered yet. Uncomment to bring it back.
                 // Toggle("Hide Player Options", isOn: $appSettings.alphaAutoHideToolbar)
-                Toggle("Karaoke Lyrics", isOn: $appSettings.betaKaraokeLyrics)
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack {
-                        Text("Lyrics Timing")
-                        Spacer()
-                        Text(String(format: "%+.0f ms", appSettings.lyricsOffset * 1000))
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                    }
-                    Slider(value: $appSettings.lyricsOffset, in: -0.6...0.6, step: 0.025)
-                    Text("Negative shows the words earlier.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Toggle("Live Lyrics Mode", isOn: $appSettings.betaLiveLyrics)
                 Picker("Display Font", selection: $appSettings.displayFont) {
                     // Each row is drawn in the face it selects — a list of names would
                     // make the choice blind.

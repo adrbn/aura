@@ -254,13 +254,11 @@ struct NowPlayingView: View {
             Spacer(minLength: 4)
 
             if showLyrics {
-                if appSettings.betaLiveLyrics {
-                    liveLyricsHeader(song: song)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 14)
-                }
+                liveLyricsHeader(song: song)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 14)
                 lyricsScrollView
-                    .frame(height: appSettings.betaLiveLyrics ? artSize + 60 : artSize)
+                    .frame(height: artSize + 60)
                     .mask(
                         VStack(spacing: 0) {
                             LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
@@ -622,8 +620,7 @@ struct NowPlayingView: View {
     /// glance while doing something else, and `title2` was sized for a caption. The line
     /// being sung is larger again, so the eye finds it without relying on colour alone.
     private func lyricFont(isCurrent: Bool) -> Font {
-        guard appSettings.betaLiveLyrics else { return .title2.bold() }
-        return .system(size: isCurrent ? 32 : 27, weight: .bold, design: .default)
+        .system(size: isCurrent ? 32 : 27, weight: .bold, design: .default)
     }
 
     // Patterns: "(feat. X)", "(ft. X)", "(featuring X)", or without parens at end
@@ -1057,16 +1054,10 @@ struct NowPlayingView: View {
             }
         }
         nearestLineIndex = last
-        // Gap detection uses real time (no offset) so instrumental breaks still work
-        if let idx = last, let lineTime = player.lyrics[idx].time {
-            let nextTime = (idx + 1 < player.lyrics.count) ? player.lyrics[idx + 1].time : nil
-            let gap = (nextTime ?? player.duration) - lineTime
-            let estimatedDuration = min(max(Double(player.lyrics[idx].text.count) * 0.1, 4.0), 12.0)
-            if gap > estimatedDuration + 2.0 && time > lineTime + estimatedDuration {
-                currentLineIndex = nil
-                return
-            }
-        }
+        // The line that just finished stays lit until the next one starts. This used to
+        // drop the focus during an instrumental gap, and with no current line every line
+        // rendered dimmed and blurred — the screen went vague precisely when there was
+        // nothing else to look at.
         currentLineIndex = last
     }
 
