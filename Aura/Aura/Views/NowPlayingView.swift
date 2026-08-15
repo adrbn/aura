@@ -591,37 +591,14 @@ struct NowPlayingView: View {
         guard let words = karaokeWords(line: line, index: index, isCurrent: isCurrent) else {
             return Text(line.text)
         }
-        // One `Text` per word, each tagged with its position. The tag is what the renderer
-        // looks up to place its fill front — and, just as importantly, what keeps the words
-        // in separate glyph runs: runs carrying identical attributes get coalesced, and a
-        // line merged into a single run is a line that fills all at once.
-        return words.enumerated().reduce(Text("")) { partial, pair in
-            partial + Text(pair.element.text).customAttribute(KaraokeWord(index: pair.offset))
+        // A switch per word, deliberately, and not a fill travelling through the glyphs.
+        // That was built — a TextRenderer sweeping a soft gradient front across each word —
+        // and it read as sluggish against the beat however fast it was tuned. Sung words go
+        // solid; the rest stay dimmed but legible, so the eye can still read ahead.
+        return words.reduce(Text("")) { partial, word in
+            partial + Text(word.text)
+                .foregroundColor(player.lyricsTime >= word.start ? .white : .white.opacity(0.35))
         }
-    }
-
-    /// Where the fill front sits, as a fractional word index.
-    ///
-    /// Lines nobody is singing report themselves as wholly filled, so they draw at the plain
-    /// line colour and the sheet doesn't dim around the one line that matters.
-    private func karaokeFront(line: LyricsLine, index: Int, isCurrent: Bool) -> Double {
-        guard let words = karaokeWords(line: line, index: index, isCurrent: isCurrent),
-              let lineEnd = LyricWordTiming.lineEnd(lines: player.lyrics, index: index),
-              let first = words.first
-        else { return KaraokeTextRenderer.filled }
-
-        let time = player.lyricsTime
-        guard time > first.start else { return 0 }
-        for i in words.indices {
-            let start = words[i].start
-            let end = i + 1 < words.count ? words[i + 1].start : lineEnd
-            guard time < end else { continue }
-            // Cross the word in 70% of its own time, so the fill lands on it and holds for a
-            // beat instead of still travelling as the next word starts.
-            let span = max(0.001, (end - start) * 0.7)
-            return Double(i) + min(1, (time - start) / span)
-        }
-        return Double(words.count)
     }
 
     /// The artwork, at whatever size the current state asks for.
@@ -929,14 +906,8 @@ struct NowPlayingView: View {
                             // cue, but with that turned off it would sit there in full
                             // white as though it had been sung.
                             let isAnticipated = isCurrent && (line.time ?? 0) > player.lyricsTime
-                            let front = karaokeFront(line: line, index: index, isCurrent: isCurrent)
                             lyricLineText(line: line, index: index, isCurrent: isCurrent)
                                 .font(lyricFont(isCurrent: isCurrent))
-                                .textRenderer(KaraokeTextRenderer(front: front))
-                                // Playback ticks every 100ms, which would cross a word in
-                                // three or four visible jumps. Animating the renderer hands
-                                // the frames in between back to the display link.
-                                .animation(.linear(duration: 0.1), value: front)
                                 .foregroundStyle(.white.opacity(
                                     isUserScrolling ? 0.8
                                     : opacityForDistance(distance) * (isAnticipated ? 0.45 : 1)
