@@ -50,3 +50,8 @@ tools/
 # Drop your licensed copy in Aura/Aura/ and the build phase picks it up.
 *.otf
 *.ttf
+
+# Vavin is our own font, SIL OFL 1.1 — redistribution is explicitly permitted, so it
+# ships in the repo unlike the commercially licensed faces the rules above cover.
+!Aura/Aura/Vavin*.ttf
+!Aura/Aura/Vavin-OFL.txt

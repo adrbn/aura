@@ -149,6 +149,11 @@ struct AboutView: View {
             Text("Crafted with care in Italy")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            // The OFL requires the licence to travel with the software. Vavin-OFL.txt ships
+            // in the bundle; this is the visible acknowledgement that goes with it.
+            Text("Typeset in Vavin — SIL Open Font License 1.1")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
             Text("© 2026 · Made for people who own their music")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)

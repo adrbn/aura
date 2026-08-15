@@ -19,6 +19,8 @@
 	<array>
 		<string>TuafTrial-Bold.otf</string>
 		<string>ITCGaramondStd-LtCond.otf</string>
+		<string>VavinDisplay-Black-Latin.ttf</string>
+		<string>VavinCondensed-Bold-Latin.ttf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

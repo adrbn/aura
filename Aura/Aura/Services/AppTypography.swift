@@ -6,6 +6,9 @@ import UIKit
 enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     case tuaf
     case system
+    /// Our own typeface, SIL OFL 1.1 — the only custom face here that may ship.
+    case vavinDisplay
+    case vavinCondensed
     /// LOCAL EVALUATION ONLY — see the licensing note on `postScriptName`.
     case garamond
 
@@ -20,6 +23,8 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .tuaf: return "TuafTrial-Bold"
         case .system: return nil
+        case .vavinDisplay: return "VavinDisplay-Black"
+        case .vavinCondensed: return "VavinCondensed-Bold"
         case .garamond: return "ITCGaramondStd-LtCond"
         }
     }
@@ -28,6 +33,8 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .tuaf: return "Tuaf"
         case .system: return "System"
+        case .vavinDisplay: return "Vavin Display"
+        case .vavinCondensed: return "Vavin Condensed"
         case .garamond: return "ITC Garamond"
         }
     }
@@ -49,6 +56,11 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     var opticalScale: CGFloat {
         switch self {
         case .tuaf, .system: return 1.0
+        // Measured cap heights: Tuaf 0.714 em, Vavin Display 0.648, Vavin Condensed 0.651.
+        // Those alone ask ~1.10; Display is also narrower than Tuaf (n 565 vs 809) and the
+        // Condensed far more so (449), hence the larger allowance on the latter.
+        case .vavinDisplay: return 1.14
+        case .vavinCondensed: return 1.26
         case .garamond: return 1.32
         }
     }
@@ -63,6 +75,9 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     var baselineNudge: CGFloat {
         switch self {
         case .tuaf, .system: return 0
+        // Vavin inherits EB Garamond's vertical metrics — a shorter ascender than Tuaf's
+        // 1.108 em — so it sits high in the same line box, like ITC Garamond but less so.
+        case .vavinDisplay, .vavinCondensed: return 0.06
         case .garamond: return 0.09
         }
     }
