@@ -779,6 +779,19 @@ struct SettingsView: View {
                 // intact, it just isn't offered yet. Uncomment to bring it back.
                 // Toggle("Hide Player Options", isOn: $appSettings.alphaAutoHideToolbar)
                 Toggle("Karaoke Lyrics", isOn: $appSettings.betaKaraokeLyrics)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("Lyrics Timing")
+                        Spacer()
+                        Text(String(format: "%+.0f ms", appSettings.lyricsOffset * 1000))
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                    Slider(value: $appSettings.lyricsOffset, in: -0.6...0.6, step: 0.025)
+                    Text("Negative shows the words earlier.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
                 Toggle("Live Lyrics Mode", isOn: $appSettings.betaLiveLyrics)
                 Picker("Display Font", selection: $appSettings.displayFont) {
                     // Each row is drawn in the face it selects — a list of names would

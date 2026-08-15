@@ -44,7 +44,7 @@ struct BufferedProgressBar: View {
                 // Progress fill
                 Capsule()
                     .fill(accentColor)
-                    .frame(width: max(0, w * min(displayProgress, 1.0)), height: barHeight)
+                    .frame(width: fillWidth(in: w), height: barHeight)
                 // Thumb — Liquid Glass. Hidden at rest; only appears while the user is
                 // actively scrubbing, so the bar reads as a clean line the rest of the time.
                 Circle()
@@ -76,5 +76,16 @@ struct BufferedProgressBar: View {
             )
         }
         .frame(height: thumbSizeDragging)
+    }
+
+    /// Width of the progress fill, never narrower than the bar is tall.
+    ///
+    /// A Capsule rounds by half its smallest side, so below that the rounding falls under a
+    /// pixel and the fill reads as a square nub for the first seconds of a track — only
+    /// looking properly capped once it grows past its own height.
+    private func fillWidth(in w: CGFloat) -> CGFloat {
+        let raw = w * min(max(displayProgress, 0), 1)
+        guard raw > 0 else { return 0 }
+        return max(raw, barHeight)
     }
 }

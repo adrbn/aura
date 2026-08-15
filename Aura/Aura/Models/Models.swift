@@ -120,6 +120,13 @@ final class AppSettings {
     /// header instead of vanishing when lyrics open.
     var betaLiveLyrics: Bool = false
 
+    /// Manual lyrics timing correction, in seconds. Negative shows words earlier.
+    ///
+    /// The automatic output-latency compensation gets the route right but not the last
+    /// tenth of a second: AVPlayer already absorbs part of that delay, and the sources
+    /// themselves vary. One knob, set once.
+    var lyricsOffset: Double = 0
+
     /// BETA — highlight lyrics word by word inside the current line, by interpolating
     /// the line's duration across its words. Opt-in because the timings are inferred,
     /// not measured. See `LyricWordTiming`.
@@ -221,6 +228,7 @@ final class AppSettings {
             landscapeClockEnabled = decoded.landscapeClockEnabled ?? false
             displayFont = decoded.displayFont ?? .tuaf
             betaKaraokeLyrics = decoded.betaKaraokeLyrics ?? false
+            lyricsOffset = decoded.lyricsOffset ?? 0
             betaLiveLyrics = decoded.betaLiveLyrics ?? false
             alphaAutoHideToolbar = decoded.alphaAutoHideToolbar ?? false
             lastfmUsername = decoded.lastfmUsername ?? ""
@@ -268,6 +276,7 @@ final class AppSettings {
             landscapeClockEnabled: landscapeClockEnabled,
             displayFont: displayFont,
             betaKaraokeLyrics: betaKaraokeLyrics,
+            lyricsOffset: lyricsOffset,
             betaLiveLyrics: betaLiveLyrics,
             alphaAutoHideToolbar: alphaAutoHideToolbar,
             lastfmUsername: lastfmUsername,
@@ -358,6 +367,7 @@ struct SettingsData: Codable {
     var landscapeClockEnabled: Bool?
     var displayFont: DisplayFont?
     var betaKaraokeLyrics: Bool?
+    var lyricsOffset: Double?
     var betaLiveLyrics: Bool?
     var alphaAutoHideToolbar: Bool?
     var lastfmUsername: String?

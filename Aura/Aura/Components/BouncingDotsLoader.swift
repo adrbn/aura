@@ -22,32 +22,33 @@ struct BouncingDotsLoader: View {
     var dotSize: CGFloat = 17
     var spacing: CGFloat = 14
 
-    /// How far a dot lifts, and how long one rise takes. The stagger is a third of the
-    /// cycle so the three dots read as a travelling wave rather than a shared pulse.
+    /// One full bounce, and how far apart the dots are within it.
+    ///
+    /// A third of a cycle each, so the three are evenly spread and no two can ever share a
+    /// position — which is the whole point of a travelling wave.
     private let rise: CGFloat = 13
-    private let riseDuration: Double = 0.32
-    private let stagger: Double = 0.15
-
-    @State private var lifted = false
+    private let period: Double = 0.9
+    private let phaseStep: Double = 1.0 / 3.0
 
     var body: some View {
-        HStack(spacing: spacing) {
-            ForEach(0..<3, id: \.self) { index in
-                Circle()
-                    .fill(color)
-                    .frame(width: dotSize, height: dotSize)
-                    .offset(y: lifted ? -rise : 0)
-                    .animation(
-                        .easeInOut(duration: riseDuration)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(index) * stagger),
-                        value: lifted
-                    )
+        // Driven from a clock, not from `.delay()` on a repeating animation. Delays attached
+        // to `.repeatForever` are unreliable: when all three dots animate off the same value
+        // change in one transaction SwiftUI can collapse them, and the first two ended up
+        // moving in lockstep. Here each dot's height is a pure function of time and index,
+        // so the offsets are correct by construction and cannot drift or merge.
+        TimelineView(.animation) { context in
+            let t = context.date.timeIntervalSinceReferenceDate / period
+            HStack(spacing: spacing) {
+                ForEach(0..<3, id: \.self) { index in
+                    Circle()
+                        .fill(color)
+                        .frame(width: dotSize, height: dotSize)
+                        .offset(y: -rise * lift(at: t - Double(index) * phaseStep))
+                }
             }
         }
         // Reserve the travel so the row doesn't reflow as the dots move.
         .frame(height: dotSize + rise)
-        .onAppear { lifted = true }
         .accessibilityElement()
         .accessibilityLabel("Searching")
     }
@@ -63,5 +64,15 @@ extension View {
             // between the search field and the keyboard.
             .padding(.top, 170)
             .padding(.bottom, 40)
+    }
+}
+
+private extension BouncingDotsLoader {
+    /// Height of one dot at phase `t`, in 0...1.
+    ///
+    /// Only the positive half of a sine is used, so a dot rises, falls, and then *rests* on
+    /// the line before its next hop — a bounce rather than a hover.
+    func lift(at t: Double) -> CGFloat {
+        CGFloat(max(0, sin(t * 2 * .pi)))
     }
 }

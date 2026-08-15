@@ -96,8 +96,13 @@ final class AudioPlayer {
     /// output path adds real delay — a couple of milliseconds wired, but 150–300 ms over
     /// Bluetooth — so highlighting against the raw clock runs visibly ahead on AirPods.
     /// Subtracting the session's reported output latency puts the words back on the beat.
+    /// Plus a manual correction, because the automatic figure only gets close: AVPlayer
+    /// already absorbs part of the output delay, so subtracting the full reported latency
+    /// overshoots and the words arrive late. Negative offset = show them earlier.
     var lyricsTime: TimeInterval {
-        max(0, currentTime - AVAudioSession.sharedInstance().outputLatency)
+        max(0, currentTime
+               - AVAudioSession.sharedInstance().outputLatency
+               + AppSettings.shared.lyricsOffset)
     }
 
     /// Id of the most recent seek request.
@@ -910,12 +915,10 @@ final class AudioPlayer {
     func previous() {
         if currentTime > 3 { AppLogger.shared.log("⏮ previous() → restart"); seek(to: 0); return }
         guard !queue.isEmpty else { return }
-        guard queueIndex > 0 else {
-            AppLogger.shared.log("⏮ previous() at first track → restart")
-            seek(to: 0)
-            return
-        }
-        var targetIndex = queueIndex - 1
+        // Wrap to the end, mirroring next(). Forward already loops via `% queue.count`;
+        // going back from the first track dead-ended on a restart instead, so an album that
+        // had just wrapped from its last track to its first could not be stepped back into.
+        var targetIndex = queueIndex > 0 ? queueIndex - 1 : queue.count - 1
         // Offline: walk further back past songs that can't play locally, so
         // "previous" never jumps forward via the startPlayback skip guard.
         if isEffectivelyOffline {

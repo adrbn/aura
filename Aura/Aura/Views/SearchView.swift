@@ -261,7 +261,12 @@ struct SearchResultsContainer: View {
                     Text("Did you mean:").font(.subheadline).foregroundStyle(.secondary)
                     Text(suggestion).font(.subheadline.bold()).foregroundStyle(accentColor)
                 }
+                // A List row is ~44pt tall whatever it contains, so zeroing the insets
+                // alone left this single line floating in a tall empty box. Pinning the
+                // height to the text collapses the row to what it actually shows.
+                .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
             }
+            .buttonStyle(.plain)
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
             // Every other row states its insets; this one inherited the List defaults —
@@ -409,10 +414,17 @@ struct SearchResultsContainer: View {
         } label: {
             Text("Show more (\(total - collapsedLimit) more)")
                 .font(.subheadline).foregroundStyle(accentColor)
-                .frame(maxWidth: .infinity, alignment: .center).padding(.vertical, 6)
+                // Left-aligned on the same 16pt guide as the rows above it: it belongs to
+                // the section it follows, and centring made it read as a divider between
+                // two sections instead.
+                .frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
         }
+        .buttonStyle(.plain)
         .listRowSeparator(.hidden)
         .listRowBackground(Color.clear)
+        // Was inheriting the List defaults — ~11pt above and below plus a 20pt leading
+        // edge — which pushed the next section well down the page.
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
     }
 
     // MARK: Section ordering
