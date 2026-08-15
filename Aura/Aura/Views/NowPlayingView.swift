@@ -285,13 +285,18 @@ struct NowPlayingView: View {
                     // Takes whatever the artwork and the title block give up. The container
                     // is height-locked, so this expands into exactly the space they vacate.
                     .frame(maxHeight: .infinity)
+                    // Long dissolves at both ends, not the old 16pt hairline. Lines don't
+                    // stop at an edge, they thin out into the background — which is what
+                    // keeps a dense lyric sheet from feeling like a wall of text.
                     .mask(
                         VStack(spacing: 0) {
-                            LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
-                                .frame(height: 16)
+                            LinearGradient(colors: [.clear, .white.opacity(0.35), .white],
+                                           startPoint: .top, endPoint: .bottom)
+                                .frame(height: 54)
                             Color.white
-                            LinearGradient(colors: [.white, .clear], startPoint: .top, endPoint: .bottom)
-                                .frame(height: 16)
+                            LinearGradient(colors: [.white, .white.opacity(0.35), .clear],
+                                           startPoint: .top, endPoint: .bottom)
+                                .frame(height: 54)
                         }
                     )
                     .padding(.horizontal, horizontalPadding)
@@ -1168,8 +1173,10 @@ struct NowPlayingView: View {
             return 8
         }
         if distance == 0 { return 0 }
-        if distance == 1 { return 3.0 }
-        return 8
+        // Harder falloff than before: the neighbours are context, not something to read, and
+        // a long lyric sheet reads as calmer when only the sung line is sharp.
+        if distance == 1 { return 5.0 }
+        return 11
     }
 
     private func opacityForDistance(_ distance: Int) -> Double {
