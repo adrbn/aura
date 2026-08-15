@@ -107,6 +107,91 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+/// The face the lyric sheet is set in.
+///
+/// Separate from `DisplayFont` on purpose: the wordmark wants character, a lyric sheet wants
+/// to be read at a glance, in motion, from arm's length. They rarely want the same answer.
+///
+/// Every option here is either already on iOS or already in the bundle, so none of them adds
+/// weight and none of them carries a licence question — the two things that made choosing a
+/// display face slow.
+enum LyricsFont: String, Codable, CaseIterable, Identifiable {
+    /// SF Pro Bold. Neutral, and what Apple Music itself sets lyrics in.
+    case system
+    /// SF Rounded. Softer terminals read faster at speed, and it stays warm at heavy weights.
+    case rounded
+    /// New York, Apple's serif. Reads as printed lyrics rather than as an interface.
+    case serif
+    /// Geometric humanist with wide apertures — the most legible of the bundled sans faces.
+    case avenirNext
+    /// A serif drawn for screens rather than adapted to them, so it stays sturdy small.
+    case charter
+    /// The app's own face. Condensed, so long lines wrap less — at some cost in legibility.
+    case vavinCondensed
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: return "System"
+        case .rounded: return "Rounded"
+        case .serif: return "Serif"
+        case .avenirNext: return "Avenir Next"
+        case .charter: return "Charter"
+        case .vavinCondensed: return "Vavin Condensed"
+        }
+    }
+
+    /// Named faces are looked up by PostScript name; `nil` means a system design instead.
+    var postScriptName: String? {
+        switch self {
+        case .system, .rounded, .serif: return nil
+        case .avenirNext: return "AvenirNext-Bold"
+        case .charter: return "Charter-Bold"
+        case .vavinCondensed: return "VavinCondensed-Bold"
+        }
+    }
+
+    private var design: Font.Design {
+        switch self {
+        case .rounded: return .rounded
+        case .serif: return .serif
+        default: return .default
+        }
+    }
+
+    /// Point size measures the em box, not the letters, so the faces need evening out to
+    /// read at one size. SF Pro Bold at 30pt is the reference the sheet was tuned against.
+    var opticalScale: CGFloat {
+        switch self {
+        case .system, .rounded: return 1.0
+        case .serif: return 1.02
+        case .avenirNext: return 1.04
+        case .charter: return 1.02
+        // Same measurement as the display face: condensed and half the width of a normal
+        // sans, so it needs a good deal more point size for the same presence.
+        case .vavinCondensed: return 1.22
+        }
+    }
+
+    /// Offered only once the face is genuinely registered, so the picker can't advertise a
+    /// choice that would silently fall back to the default.
+    var isAvailable: Bool {
+        guard let name = postScriptName else { return true }
+        return UIFont(name: name, size: 12) != nil
+    }
+
+    func font(size: CGFloat) -> Font {
+        let scaled = size * opticalScale
+        if let name = postScriptName, UIFont(name: name, size: scaled) != nil {
+            return .custom(name, size: scaled)
+        }
+        return .system(size: scaled, weight: .bold, design: design)
+    }
+
+    static var selectable: [LyricsFont] { allCases.filter(\.isAvailable) }
+}
+
 enum AppTypography {
     /// Read inside a `body` so SwiftUI's observation tracking re-renders every title
     /// when the face changes.

@@ -233,56 +233,61 @@ struct SearchResultsContainer: View {
     @ViewBuilder
     private var resultsRows: some View {
         if isSearching {
+            // The loader *replaces* the results instead of sitting above them. It used
+            // to be stacked on top, so a query still in flight kept the previous
+            // query's hits on screen — typing "misera" left "miser"'s albums showing,
+            // which reads as an answer rather than as something already thrown away.
             BouncingDotsLoader()
                 .searchLoadingRow()
                 .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-        }
-        if results.isOffline {
-            HStack(spacing: 6) {
-                Image(systemName: "wifi.slash")
-                    .font(.caption2.weight(.semibold))
-                Text("Offline results — downloaded and cached songs only")
-                    .font(.caption)
-            }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(.ultraThinMaterial, in: Capsule())
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-        }
-
-        if let suggestion = results.suggestedCorrection {
-            Button { query = suggestion } label: {
-                HStack(spacing: 4) {
-                    Text("Did you mean:").font(.subheadline).foregroundStyle(.secondary)
-                    Text(suggestion).font(.subheadline.bold()).foregroundStyle(accentColor)
+                .listRowBackground(Color.clear)
+        } else {
+            if results.isOffline {
+                HStack(spacing: 6) {
+                    Image(systemName: "wifi.slash")
+                        .font(.caption2.weight(.semibold))
+                    Text("Offline results — downloaded and cached songs only")
+                        .font(.caption)
                 }
-                // A List row is ~44pt tall whatever it contains, so zeroing the insets
-                // alone left this single line floating in a tall empty box. Pinning the
-                // height to the text collapses the row to what it actually shows.
-                .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-            // Every other row states its insets; this one inherited the List defaults —
-            // ~11pt top and bottom and a 20pt leading edge — so it sat in a pocket of dead
-            // space and didn't line up with the headers and rows at 16.
-            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
-        }
-
-        ForEach(orderedSections(), id: \.self) { section in
-            sectionContent(section)
-        }
-
-        if results.isEmpty && !isSearching && searchedQuery == trimmedQuery {
-            ContentUnavailableView.search(text: trimmedQuery)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: Capsule())
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+            }
+
+            if let suggestion = results.suggestedCorrection {
+                Button { query = suggestion } label: {
+                    HStack(spacing: 4) {
+                        Text("Did you mean:").font(.subheadline).foregroundStyle(.secondary)
+                        Text(suggestion).font(.subheadline.bold()).foregroundStyle(accentColor)
+                    }
+                    // A List row is ~44pt tall whatever it contains, so zeroing the insets
+                    // alone left this single line floating in a tall empty box. Pinning the
+                    // height to the text collapses the row to what it actually shows.
+                    .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                // Every other row states its insets; this one inherited the List defaults —
+                // ~11pt top and bottom and a 20pt leading edge — so it sat in a pocket of dead
+                // space and didn't line up with the headers and rows at 16.
+                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
+            }
+
+            ForEach(orderedSections(), id: \.self) { section in
+                sectionContent(section)
+            }
+
+            if results.isEmpty && !isSearching && searchedQuery == trimmedQuery {
+                ContentUnavailableView.search(text: trimmedQuery)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            }
         }
 
         Color.clear.frame(height: 140)

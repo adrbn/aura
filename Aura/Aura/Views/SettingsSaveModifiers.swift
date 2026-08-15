@@ -57,6 +57,7 @@ private struct SettingsSaveModifier4: ViewModifier {
             .onChange(of: s.appearanceMode) { _, _ in s.save() }
             .onChange(of: s.landscapeClockEnabled) { _, _ in s.save() }
             .onChange(of: s.displayFont) { _, _ in s.save() }
+            .onChange(of: s.lyricsFont) { _, _ in s.save() }
             .onChange(of: s.betaKaraokeLyrics) { _, _ in s.save() }
             .onChange(of: s.lyricsOffset) { _, _ in s.save() }
             .onChange(of: s.alphaAutoHideToolbar) { _, _ in s.save() }

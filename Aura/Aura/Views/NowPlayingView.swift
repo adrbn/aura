@@ -39,6 +39,8 @@ struct NowPlayingView: View {
     /// Height of the artwork-plus-title region, captured from the normal state and then held
     /// constant so switching to lyrics cannot move anything above or below it.
     @State private var mediaRegionHeight: CGFloat?
+    /// Natural height of the title block, so collapsing it for the lyrics can animate.
+    @State private var songInfoHeight: CGFloat?
 
     /// Side inset shared by the artwork, the title block, the transport row and the
     /// options bar — they must stay on the same vertical guides.
@@ -309,13 +311,15 @@ struct NowPlayingView: View {
 
             // Song info — hidden while lyrics are open, where the header already shows the
             // title and artist. Its height is what lets the lyrics breathe.
-            if !showLyrics {
-            // An extra wrapper on purpose. The inner block owns the song-change transition —
-            // a directional slide keyed on `.id(songinfo-…)` — and stacking a second
-            // `.transition` on the same view for the lyrics toggle made them fight: closing
-            // lyrics replayed the slide, so the title flew back in from the right instead of
-            // fading. Each trigger now has its own view to act on.
-            Group {
+            // Deliberately always in the tree, never behind `if !showLyrics`. Presence is
+            // what makes SwiftUI choose a transition, and this block already owns one for
+            // song changes; a second reason to appear made the two fight, and the
+            // directional slide won — so closing the lyrics replayed a track-change
+            // animation and the title flew in from the right for a song that never changed.
+            // Wrapping it in a `Group` did not help: `Group` is a passthrough that hands the
+            // modifier to its child, putting both transitions back on one view. Collapsing
+            // it keeps a single stable identity instead. The opacity is the fade; the height
+            // is what gives the lyrics their room.
             VStack(spacing: 4) {
                 if let albumId = song.albumId {
                     Button {
@@ -357,10 +361,16 @@ struct NowPlayingView: View {
             ))
             .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
             .offset(x: showLyrics ? 0 : coverDragOffset)
+            // Measured before the collapsing frame below, and only while open, so the frame
+            // has a real number to animate to and from rather than `nil`.
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                if !showLyrics, height > 0 { songInfoHeight = height }
             }
-            // Governs only appearing and disappearing with the lyrics.
-            .transition(.opacity)
-            }
+            .frame(height: showLyrics ? 0 : songInfoHeight, alignment: .top)
+            .opacity(showLyrics ? 0 : 1)
+            // It still owns a coordinate space once collapsed, it just has no height —
+            // so make sure nothing invisible can be tapped.
+            .allowsHitTesting(!showLyrics)
             }
             // `.frame(height:)` centres its content unless told otherwise, which pushed the
             // header down the locked box instead of pinning it to the top.
@@ -562,30 +572,53 @@ struct NowPlayingView: View {
 
     // Not a @ViewBuilder: the builder would wrap the branches in _ConditionalContent, and
     // returning a concrete `Text` is the whole point — only `Text` concatenates.
-    private func lyricLineText(line: LyricsLine, index: Int, isCurrent: Bool) -> Text {
-        guard appSettings.betaKaraokeLyrics, isCurrent, areLyricsSynced else {
-            return Text(line.text)
-        }
-
+    /// The words of `line` with their timings, or `nil` when it should be drawn as one
+    /// undivided run: highlighting off, unsynced lyrics, or nothing to time it against.
+    private func karaokeWords(line: LyricsLine, index: Int, isCurrent: Bool) -> [LyricWord]? {
+        guard appSettings.betaKaraokeLyrics, isCurrent, areLyricsSynced else { return nil }
         // Prefer the server's own word timings (OpenSubsonic songLyrics v2) — they're
         // measured, not guessed. Interpolation is only the fallback for lines that arrive
         // with nothing but a start time.
-        let words: [LyricWord]
-        if let real = line.words, !real.isEmpty {
-            words = real
-        } else if let start = line.time,
-                  let end = LyricWordTiming.lineEnd(lines: player.lyrics, index: index) {
-            words = LyricWordTiming.words(in: line.text, start: start, end: end)
-        } else {
+        if let real = line.words, !real.isEmpty { return real }
+        guard let start = line.time,
+              let end = LyricWordTiming.lineEnd(lines: player.lyrics, index: index)
+        else { return nil }
+        let words = LyricWordTiming.words(in: line.text, start: start, end: end)
+        return words.isEmpty ? nil : words
+    }
+
+    private func lyricLineText(line: LyricsLine, index: Int, isCurrent: Bool) -> Text {
+        guard let words = karaokeWords(line: line, index: index, isCurrent: isCurrent) else {
             return Text(line.text)
         }
+        // One `Text` per word, and deliberately no colour on any of them. The fill is
+        // painted by `KaraokeTextRenderer`, which reads one glyph run per word to place its
+        // front — colouring the runs here would leave it nothing to fill.
+        return words.reduce(Text("")) { $0 + Text($1.text) }
+    }
 
-        return words.reduce(Text("")) { partial, word in
-            // Sung words stay solid; the rest are dimmed but still legible, so the eye can
-            // read ahead — a karaoke line you can't read in advance is useless.
-            partial + Text(word.text)
-                .foregroundColor(player.lyricsTime >= word.start ? .white : .white.opacity(0.35))
+    /// Where the fill front sits, as a fractional word index.
+    ///
+    /// Lines that aren't being sung report themselves as wholly filled, so they draw at the
+    /// plain line colour and the sheet doesn't dim around the one line that matters.
+    private func karaokeFront(line: LyricsLine, index: Int, isCurrent: Bool) -> Double {
+        guard let words = karaokeWords(line: line, index: index, isCurrent: isCurrent),
+              let lineEnd = LyricWordTiming.lineEnd(lines: player.lyrics, index: index),
+              let first = words.first
+        else { return KaraokeTextRenderer.filled }
+
+        let time = player.lyricsTime
+        guard time > first.start else { return 0 }
+        for i in words.indices {
+            let start = words[i].start
+            let end = i + 1 < words.count ? words[i + 1].start : lineEnd
+            guard time < end else { continue }
+            // Full a little before the word is over, so the front lands on the word rather
+            // than still crawling across it as the next one starts.
+            let span = max(0.001, (end - start) * 0.85)
+            return Double(i) + min(1, (time - start) / span)
         }
+        return Double(words.count)
     }
 
     /// The artwork, at whatever size the current state asks for.
@@ -683,8 +716,10 @@ struct NowPlayingView: View {
     /// became current, so the words visibly redistributed themselves as the line arrived —
     /// the most distracting moment possible. Focus is carried by brightness and blur, which
     /// change nothing about layout.
+    /// One size for every line, always. The neighbours are made smaller with `scaleEffect`
+    /// instead — a smaller *font* would re-wrap them and reshuffle the words mid-phrase.
     private func lyricFont(isCurrent: Bool) -> Font {
-        .system(size: 30, weight: .bold, design: .default)
+        appSettings.lyricsFont.font(size: 30)
     }
 
     // Patterns: "(feat. X)", "(ft. X)", "(featuring X)", or without parens at end
@@ -891,8 +926,14 @@ struct NowPlayingView: View {
                             // cue, but with that turned off it would sit there in full
                             // white as though it had been sung.
                             let isAnticipated = isCurrent && (line.time ?? 0) > player.lyricsTime
+                            let front = karaokeFront(line: line, index: index, isCurrent: isCurrent)
                             lyricLineText(line: line, index: index, isCurrent: isCurrent)
                                 .font(lyricFont(isCurrent: isCurrent))
+                                .textRenderer(KaraokeTextRenderer(front: front))
+                                // Playback only ticks every 100ms, which would step the fill
+                                // three or four times across a word. Animating the renderer
+                                // hands the frames in between back to the display link.
+                                .animation(.linear(duration: 0.1), value: front)
                                 .foregroundStyle(.white.opacity(
                                     isUserScrolling ? 0.8
                                     : opacityForDistance(distance) * (isAnticipated ? 0.45 : 1)

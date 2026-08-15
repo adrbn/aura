@@ -742,6 +742,13 @@ struct SettingsView: View {
     private var lyricsSection: some View {
         Section {
             Toggle("Word-by-Word Highlight", isOn: $appSettings.betaKaraokeLyrics)
+            Picker("Font", selection: $appSettings.lyricsFont) {
+                // Each row set in the face it selects. A list of names would make the
+                // choice blind, and these differ in ways no name conveys.
+                ForEach(LyricsFont.selectable) { face in
+                    Text(face.label).font(face.font(size: 17)).tag(face)
+                }
+            }
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
                     Text("Timing")

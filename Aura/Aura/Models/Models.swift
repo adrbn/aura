@@ -117,6 +117,10 @@ final class AppSettings {
     /// which is what happens to the dev-only faces in a shipping one.
     var displayFont: DisplayFont = .vavinCondensed
 
+    /// Face for the lyric sheet, chosen independently of the display face: one is read
+    /// at a glance while a song plays, the other is a wordmark.
+    var lyricsFont: LyricsFont = .system
+
     /// Manual lyrics timing correction, in seconds. Negative shows words earlier.
     ///
     /// The automatic output-latency compensation gets the route right but not the last
@@ -225,6 +229,7 @@ final class AppSettings {
             }
             landscapeClockEnabled = decoded.landscapeClockEnabled ?? false
             displayFont = decoded.displayFont ?? .vavinCondensed
+            lyricsFont = decoded.lyricsFont ?? .system
             betaKaraokeLyrics = decoded.betaKaraokeLyrics ?? true
             lyricsOffset = decoded.lyricsOffset ?? 0
             alphaAutoHideToolbar = decoded.alphaAutoHideToolbar ?? false
@@ -272,6 +277,7 @@ final class AppSettings {
             homeSectionOrder: homeSectionOrder,
             landscapeClockEnabled: landscapeClockEnabled,
             displayFont: displayFont,
+            lyricsFont: lyricsFont,
             betaKaraokeLyrics: betaKaraokeLyrics,
             lyricsOffset: lyricsOffset,
             alphaAutoHideToolbar: alphaAutoHideToolbar,
@@ -362,6 +368,7 @@ struct SettingsData: Codable {
     var homeSectionOrder: [HomeSection]?
     var landscapeClockEnabled: Bool?
     var displayFont: DisplayFont?
+    var lyricsFont: LyricsFont?
     var betaKaraokeLyrics: Bool?
     var lyricsOffset: Double?
     var alphaAutoHideToolbar: Bool?
