@@ -898,9 +898,7 @@ struct NowPlayingView: View {
                                     : opacityForDistance(distance) * (isAnticipated ? 0.45 : 1)
                                 ))
                                 .blur(radius: isUserScrolling ? 0 : blurForDistance(distance))
-                                // Keep current line at natural size (1.0) — non-current slightly
-                                // smaller. Minimal scale delta so words don't visually jump.
-
+                                .scaleEffect(scaleForDistance(distance), anchor: .leading)
                                 .id(line.id)
                                 .onTapGesture {
                                     if let time = line.time {
@@ -1179,6 +1177,24 @@ struct NowPlayingView: View {
         // a long lyric sheet reads as calmer when only the sung line is sharp.
         if distance == 1 { return 5.0 }
         return 11
+    }
+
+    /// Size of a line relative to the one being sung.
+    ///
+    /// Applied as `scaleEffect`, never as a font size. The sheet draws every line at one
+    /// size precisely so that wrapping is decided once; handing the neighbours a smaller
+    /// font would re-wrap them, and the words would reshuffle inside the phrase on every
+    /// line change — the exact thing that was taken out in 0f56a16. Scaling the rendered
+    /// result moves the whole line as one block, however many rows it wraps onto, and it is
+    /// invisible to layout, so nothing above or below shifts as the song moves on.
+    ///
+    /// It animates for free: the value is keyed on `distance`, which already carries an
+    /// `.easeOut` on this view.
+    private func scaleForDistance(_ distance: Int) -> CGFloat {
+        // Full size while the sheet is being browsed by hand — every line is a candidate
+        // then, so none of them should be demoted.
+        guard areLyricsSynced, !isUserScrolling else { return 1 }
+        return distance == 0 ? 1 : 0.84
     }
 
     private func opacityForDistance(_ distance: Int) -> Double {
