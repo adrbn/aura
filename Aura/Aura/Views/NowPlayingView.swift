@@ -281,9 +281,16 @@ struct NowPlayingView: View {
                         .scaleEffect(player.isPlaying ? 1.0 : 0.85)
                         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
                         .id(song.id)
+                        // Only the INCOMING view is directional. `removal` belongs to the
+                        // outgoing view, which SwiftUI built during an earlier body pass —
+                        // so it carries the direction as it was THEN. Go back a track, then
+                        // let the next one end on its own, and the stale removal slid the old
+                        // cover the same way the new one arrived: both from the right, which
+                        // read as the wrong direction. A plain fade out can't contradict the
+                        // slide in.
                         .transition(.asymmetric(
                             insertion: .offset(x: player.songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
-                            removal: .offset(x: player.songChangeDirection >= 0 ? -w : w).combined(with: .opacity)
+                            removal: .opacity
                         ))
                 }
                 .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
@@ -378,9 +385,10 @@ struct NowPlayingView: View {
             // Same travel and same drag rate as the artwork above: title and cover are
             // one object as far as the eye is concerned, and the old 80 pt / half-speed
             // parallax made them visibly drift apart mid-swipe.
+            // Same reasoning as the artwork above: directional in, plain fade out.
             .transition(.asymmetric(
                 insertion: .offset(x: player.songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
-                removal: .offset(x: player.songChangeDirection >= 0 ? -w : w).combined(with: .opacity)
+                removal: .opacity
             ))
             .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
             .offset(x: showLyrics ? 0 : coverDragOffset)

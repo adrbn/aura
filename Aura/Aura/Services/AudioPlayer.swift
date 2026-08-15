@@ -480,6 +480,7 @@ final class AudioPlayer {
             if isPlayableOffline(song) {
                 if savedPlaybackSource == nil { savedPlaybackSource = playbackSource }
                 playbackSource = .queue
+                songChangeDirection = 1
                 currentSong = song
                 startPlayback(song)
                 saveLastPlayback()
@@ -496,6 +497,9 @@ final class AudioPlayer {
                         playbackSource = .autoplay
                     }
                     AppLogger.shared.log("⏭ Offline skip → idx \(idx): \(queue[idx].title)")
+                    // This walks the queue forward like next() does, so it has to say so —
+                    // otherwise the artwork slides using whatever the last manual action left.
+                    songChangeDirection = 1
                     currentSong = queue[idx]
                     startPlayback(queue[idx])
                     saveLastPlayback()
