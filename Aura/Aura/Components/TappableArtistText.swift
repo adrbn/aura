@@ -112,9 +112,13 @@ struct TappableArtistText: View {
         HStack(spacing: 0) {
             ForEach(Array(parts.enumerated()), id: \.offset) { index, part in
                 if !part.separator.isEmpty {
-                    Text(" · ")
+                    // Padding, not spaces inside the string. SwiftUI drops trailing
+                    // whitespace at the end of a Text run, so " · " kept its leading space
+                    // and lost the trailing one — the dot ended up glued to the next name.
+                    Text("·")
                         .font(font)
                         .foregroundStyle(foregroundStyle)
+                        .padding(.horizontal, 5)
                 }
                 ArtistNameButton(
                     name: part.name,

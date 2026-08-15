@@ -517,15 +517,31 @@ final class AudioPlayer {
     /// interaction. Both directions are warmed because the Now Playing cover can be
     /// swiped backwards as well as forwards.
     private func prefetchNeighbourCovers() {
-        var neighbours: [Song] = []
-        if let upNext = userQueue.first { neighbours.append(upNext) }
+        // Three ahead, two back. One each way was not enough: swiping quickly through the
+        // Now Playing artwork outruns a single-song buffer and you land on a cover that
+        // hasn't started loading.
+        //
+        // Widening costs almost nothing in steady state. Advancing one song shifts the
+        // window by one, so only the newly exposed track actually needs fetching — the
+        // rest were warmed on the previous change and are already cached.
+        let forward = 3, backward = 2
+        var neighbours: [Song] = Array(userQueue.prefix(forward))
         if !queue.isEmpty {
-            let forward = (queueIndex + 1) % queue.count
-            if forward != queueIndex { neighbours.append(queue[forward]) }
-            if queueIndex > 0 { neighbours.append(queue[queueIndex - 1]) }
+            for step in 1...forward {
+                let index = (queueIndex + step) % queue.count
+                if index != queueIndex { neighbours.append(queue[index]) }
+            }
+            for step in 1...backward where queueIndex - step >= 0 {
+                neighbours.append(queue[queueIndex - step])
+            }
         }
-        for song in neighbours {
-            ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId)
+        // A song can sit in both the user queue and the main queue; fetch it once.
+        var seen: Set<String> = []
+        for song in neighbours where seen.insert(song.id).inserted {
+            // Utility, not userInitiated: these must never compete for a download slot with
+            // the cover actually on screen.
+            ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId,
+                                                        priority: .utility)
         }
     }
 

@@ -456,14 +456,14 @@ final class ArtworkCache: @unchecked Sendable {
     /// the fetch on appear. Uses `displayRequestSize` (same clamp as the view), so the
     /// warmed entry lands in exactly the bucket the view reads. High priority: the user
     /// can open Now Playing a second after pressing play.
-    func prefetchNowPlayingCover(coverArt: String?) {
+    func prefetchNowPlayingCover(coverArt: String?, priority: TaskPriority = .userInitiated) {
         guard let coverArt, !coverArt.isEmpty else { return }
         // Any near-full-width hero clamps to the same bucket, so the screen width is a
         // safe stand-in for the view's exact art size.
         let requestSize = Self.displayRequestSize(pointSize: UIScreen.main.bounds.width)
         let key = "\(coverArt)_\(requestSize)"
         guard image(for: key) == nil else { return }   // already warm
-        Task.detached(priority: .userInitiated) {
+        Task.detached(priority: priority) {
             guard !self.isArtworkOffline else { return }
             _ = await self.fetchImage(coverArt: coverArt, requestSize: requestSize, key: key)
         }
