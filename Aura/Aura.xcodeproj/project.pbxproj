@@ -483,7 +483,7 @@
 			inputPaths = (
 				"$(SRCROOT)/Aura/TuafTrial-Bold.otf",
 				"$(SRCROOT)/Aura/ITCGaramondStd-LtCond.otf",
-				"$(SRCROOT)/Aura/VavinDisplay-Black-Latin.ttf",
+				"$(SRCROOT)/Aura/VavinCondensed-Regular-Latin.ttf",
 				"$(SRCROOT)/Aura/VavinCondensed-Bold-Latin.ttf",
 				"$(SRCROOT)/Aura/Vavin-OFL.txt",
 			);
@@ -491,13 +491,13 @@
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/TuafTrial-Bold.otf",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ITCGaramondStd-LtCond.otf",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinDisplay-Black-Latin.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Regular-Latin.ttf",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Bold-Latin.ttf",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Vavin-OFL.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Fonts are licensed files kept OUT of git (.gitignore covers *.otf), so they are copied\n# in here rather than being project resources — a checkout without them still builds.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\n\nembed() {\n  # Hard-fail on a failed copy: a silent failure would ship a release that claims\n  # success while rendering in the system font.\n  cp \"$1\" \"$DEST/\" || { echo \"error: found $1 but could not embed it\"; exit 1; }\n  echo \"note: embedded $(basename \"$1\")\"\n}\n\n# Tuaf: the app's own display face. Its licence covers embedding in a built app.\nTUAF=\"$SRCROOT/Aura/TuafTrial-Bold.otf\"\nif [ -f \"$TUAF\" ]; then embed \"$TUAF\"; else\n  echo \"warning: TuafTrial-Bold.otf absent - building with the system font fallback\"\nfi\n\n# ITC Garamond: LOCAL EVALUATION ONLY. Its fsType is 4 (Preview & Print), which does\n# NOT permit embedding in an application, so it must never reach a shippable build.\n# Excluded from the App Store configuration on purpose - do not relax this.\nGARAMOND=\"$SRCROOT/Aura/ITCGaramondStd-LtCond.otf\"\nif [ \"$CONFIGURATION\" = \"Release-AppStore\" ]; then\n  echo \"note: skipping ITC Garamond - not licensed for app embedding\"\nelif [ -f \"$GARAMOND\" ]; then\n  embed \"$GARAMOND\"\nfi\n\n# Vavin: our own typeface, SIL OFL 1.1. Unlike the two above it may be redistributed,\n# so it lives in the repo and ships in every configuration, App Store included. The\n# licence travels with it, as the OFL requires.\nfor VAVIN in \"$SRCROOT/Aura/VavinDisplay-Black-Latin.ttf\" \"$SRCROOT/Aura/VavinCondensed-Bold-Latin.ttf\" \"$SRCROOT/Aura/Vavin-OFL.txt\"; do\n  [ -f \"$VAVIN\" ] && embed \"$VAVIN\"\ndone\n";
+			shellScript = "# Fonts are licensed files kept OUT of git (.gitignore covers *.otf), so they are copied\n# in here rather than being project resources — a checkout without them still builds.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\n\nembed() {\n  # Hard-fail on a failed copy: a silent failure would ship a release that claims\n  # success while rendering in the system font.\n  cp \"$1\" \"$DEST/\" || { echo \"error: found $1 but could not embed it\"; exit 1; }\n  echo \"note: embedded $(basename \"$1\")\"\n}\n\n# Tuaf: the app's own display face. Its licence covers embedding in a built app.\nTUAF=\"$SRCROOT/Aura/TuafTrial-Bold.otf\"\nif [ -f \"$TUAF\" ]; then embed \"$TUAF\"; else\n  echo \"warning: TuafTrial-Bold.otf absent - building with the system font fallback\"\nfi\n\n# ITC Garamond: LOCAL EVALUATION ONLY. Its fsType is 4 (Preview & Print), which does\n# NOT permit embedding in an application, so it must never reach a shippable build.\n# Excluded from the App Store configuration on purpose - do not relax this.\nGARAMOND=\"$SRCROOT/Aura/ITCGaramondStd-LtCond.otf\"\nif [ \"$CONFIGURATION\" = \"Release-AppStore\" ]; then\n  echo \"note: skipping ITC Garamond - not licensed for app embedding\"\nelif [ -f \"$GARAMOND\" ]; then\n  embed \"$GARAMOND\"\nfi\n\n# Vavin: our own typeface, SIL OFL 1.1. Unlike the two above it may be redistributed,\n# so it lives in the repo and ships in every configuration, App Store included. The\n# licence travels with it, as the OFL requires.\nfor VAVIN in \"$SRCROOT/Aura/VavinCondensed-Regular-Latin.ttf\" \"$SRCROOT/Aura/VavinCondensed-Bold-Latin.ttf\" \"$SRCROOT/Aura/Vavin-OFL.txt\"; do\n  [ -f \"$VAVIN\" ] && embed \"$VAVIN\"\ndone\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -327,6 +327,10 @@ struct SongsListView: View {
                         .padding(.vertical, 16)
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets())
+                        // Every other row clears its background; this one never did. At rest
+                        // the default row fill is invisible against the page, but pulling the
+                        // list down exposes it as a grey slab behind the header.
+                        .listRowBackground(Color.clear)
                     }
 
                     // Keyed by position, not by song id: a library can legitimately hold two
