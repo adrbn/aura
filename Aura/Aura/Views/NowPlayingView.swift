@@ -582,7 +582,7 @@ struct NowPlayingView: View {
             // Sung words stay solid; the rest are dimmed but still legible, so the eye can
             // read ahead — a karaoke line you can't read in advance is useless.
             partial + Text(word.text)
-                .foregroundColor(player.currentTime >= word.start ? .white : .white.opacity(0.35))
+                .foregroundColor(player.lyricsTime >= word.start ? .white : .white.opacity(0.35))
         }
     }
 
@@ -874,7 +874,7 @@ struct NowPlayingView: View {
                     proxy.scrollTo(id, anchor: .center)
                 }
             }
-            .onChange(of: player.currentTime) { _, _ in
+            .onChange(of: player.lyricsTime) { _, _ in
                 updateLyricIndices()
             }
             .onChange(of: player.lyrics.count) { _, _ in
@@ -1044,7 +1044,9 @@ struct NowPlayingView: View {
             nearestLineIndex = nil
             return
         }
-        let time = player.currentTime
+        // The heard position, not the decoder's — see AudioPlayer.lyricsTime. The line and
+        // the word highlight must use the same clock or they'd drift apart from each other.
+        let time = player.lyricsTime
         var last: Int?
         for (i, line) in player.lyrics.enumerated() {
             guard let t = line.time else { continue }

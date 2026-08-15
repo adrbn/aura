@@ -90,6 +90,16 @@ final class AudioPlayer {
     private var savedPlaybackSource: PlaybackSource?
     private var autoplayFromIndex: Int?  // Index where autoplay/random-fill songs begin
     private var isSeeking = false
+    /// Playback position as **heard**, for syncing lyrics.
+    ///
+    /// `currentTime` is where the decoder is, not when the sound reaches the listener. The
+    /// output path adds real delay — a couple of milliseconds wired, but 150–300 ms over
+    /// Bluetooth — so highlighting against the raw clock runs visibly ahead on AirPods.
+    /// Subtracting the session's reported output latency puts the words back on the beat.
+    var lyricsTime: TimeInterval {
+        max(0, currentTime - AVAudioSession.sharedInstance().outputLatency)
+    }
+
     /// Id of the most recent seek request.
     ///
     /// AVPlayer reports `finished == false` when a seek is superseded by a newer one. The
@@ -1648,17 +1658,22 @@ final class AudioPlayer {
                 let cuesByIndex = Dictionary(
                     (synced.cueLine ?? []).compactMap { cueLine -> (Int, [LyricWord])? in
                         guard let index = cueLine.index, let cues = cueLine.cue else { return nil }
+                        let cueOffset = Double(synced.offset ?? 0) / 1000.0
                         let words = cues.compactMap { cue -> LyricWord? in
                             guard let value = cue.value, let start = cue.start else { return nil }
-                            return LyricWord(id: start, text: value, start: Double(start) / 1000.0)
+                            return LyricWord(id: start, text: value, start: Double(start) / 1000.0 + cueOffset)
                         }
                         return words.isEmpty ? nil : (index, words)
                     },
                     uniquingKeysWith: { first, _ in first }
                 )
+                // `offset` is the correction the source itself declares, in milliseconds.
+                // It was decoded and then ignored; a set of lyrics shipped with a non-zero
+                // offset played early or late by exactly that amount.
+                let offset = Double(synced.offset ?? 0) / 1000.0
                 let parsed = lines.enumerated().compactMap { index, line -> LyricsLine? in
                     guard let value = line.value, !value.isEmpty else { return nil }
-                    let time: TimeInterval? = line.start.map { Double($0) / 1000.0 }
+                    let time: TimeInterval? = line.start.map { Double($0) / 1000.0 + offset }
                     return LyricsLine(time: time, text: value, words: cuesByIndex[index])
                 }
                 if !cuesByIndex.isEmpty {

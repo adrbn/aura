@@ -57,10 +57,11 @@ extension View {
     /// Centres the dots on their own row, with breathing room above and below.
     func searchLoadingRow() -> some View {
         frame(maxWidth: .infinity, alignment: .center)
-            // Claims most of the empty area below the search field and centres itself in it,
-            // rather than sitting just under the field with fixed padding — which read as
-            // cramped against results that hadn't arrived yet. Relative, not a fixed height,
-            // so it stays centred on every screen size.
-            .containerRelativeFrame(.vertical, alignment: .center) { height, _ in height * 0.62 }
+            // A fixed inset, not `containerRelativeFrame`. The scroll container extends
+            // behind the keyboard, so centring within it put the dots well above the middle
+            // of the black area actually visible — which, while searching, is the strip
+            // between the search field and the keyboard.
+            .padding(.top, 170)
+            .padding(.bottom, 40)
     }
 }

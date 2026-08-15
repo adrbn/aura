@@ -264,6 +264,10 @@ struct SearchResultsContainer: View {
             }
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
+            // Every other row states its insets; this one inherited the List defaults —
+            // ~11pt top and bottom and a 20pt leading edge — so it sat in a pocket of dead
+            // space and didn't line up with the headers and rows at 16.
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
         }
 
         ForEach(orderedSections(), id: \.self) { section in
