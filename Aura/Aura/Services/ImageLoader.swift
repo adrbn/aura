@@ -85,10 +85,15 @@ final class ArtworkCache: @unchecked Sendable {
         return URLSession(configuration: config)
     }()
 
-    /// Matched to the server's own artwork concurrency rather than guessed. Navidrome
-    /// 0.61 sizes its artwork pool from CPU count; on this 4-CPU host that is ~2. Asking
-    /// for more only fills its queue and earns a 429.
-    static let maxConcurrentDownloads = 2
+    /// Ceiling on simultaneous artwork downloads.
+    ///
+    /// Set to 2 while the server was answering 429 to everything — its artwork workers were
+    /// wedged and any parallelism made it worse. That server is healthy again, and 2 is now
+    /// the bottleneck instead of the cure: a screen of 20 covers becomes 10 sequential
+    /// round-trips, and over a relayed connection each one costs real latency.
+    ///
+    /// If 429s ever come back in the server log, this is the first number to lower.
+    static let maxConcurrentDownloads = 5
     private let downloadGate = DownloadGate(limit: ArtworkCache.maxConcurrentDownloads)
 
     /// True when artwork must come from local storage only: the user asked for offline

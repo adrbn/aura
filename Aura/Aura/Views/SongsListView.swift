@@ -381,15 +381,6 @@ struct SongsListView: View {
         .navigationTitle(title)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    guard !sortedSongs.isEmpty else { return }
-                    player.playShuffled(sortedSongs, source: playbackSource)
-                } label: {
-                    Image(systemName: "shuffle")
-                }
-                .disabled(songs.isEmpty)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Picker("Sort By", selection: $sortOrder) {
                         ForEach(SongSortOrder.allCases, id: \.self) { order in

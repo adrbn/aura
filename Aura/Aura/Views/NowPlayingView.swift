@@ -1143,9 +1143,7 @@ struct NowPlayingView: View {
     }
 
     private func loadBackgroundImage(for song: Song) async {
-        guard let coverArt = song.coverArt,
-              let server = ServerManager.shared.currentServer,
-              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: ArtworkCache.thumbSize) else {
+        guard let coverArt = song.coverArt, ServerManager.shared.currentServer != nil else {
             backgroundImage = nil
             vibrantOverlayColor = nil
             return
@@ -1170,17 +1168,22 @@ struct NowPlayingView: View {
                 vibrantOverlayColor = vibrant
             }
         }
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            if let img = UIImage(data: data) {
-                ArtworkCache.shared.store(img, for: key)
-                let vibrant = await Self.vibrantColorIfDark(from: img)
-                await MainActor.run {
-                    backgroundImage = img
-                    vibrantOverlayColor = vibrant
-                }
-            }
-        } catch { AppLogger.shared.log("❌ Now playing background image load failed: \(error.localizedDescription)") }
+        // Reuse the ordinary thumbnail rather than downloading a second bitmap.
+        //
+        // This used to fetch its own copy at the same size, through URLSession.shared — so
+        // outside the artwork throttle — on every single song change. The image is blurred
+        // beyond recognition behind the artwork, so a dedicated download bought nothing and
+        // cost a round-trip each time. Going through ArtworkCache means it is usually
+        // already in memory (the row thumbnail and this share a bucket), and when it isn't,
+        // the fetch is throttled and cached like every other cover.
+        let thumbKey = "\(coverArt)_\(ArtworkCache.thumbSize)"
+        guard let img = await ArtworkCache.shared.fetchImage(
+            coverArt: coverArt, requestSize: ArtworkCache.thumbSize, key: thumbKey) else { return }
+        let vibrant = await Self.vibrantColorIfDark(from: img)
+        await MainActor.run {
+            backgroundImage = img
+            vibrantOverlayColor = vibrant
+        }
     }
 
     /// Runs the pixel analysis off the main thread.
