@@ -285,18 +285,20 @@ struct NowPlayingView: View {
                     // Takes whatever the artwork and the title block give up. The container
                     // is height-locked, so this expands into exactly the space they vacate.
                     .frame(maxHeight: .infinity)
-                    // Long dissolves at both ends, not the old 16pt hairline. Lines don't
-                    // stop at an edge, they thin out into the background — which is what
-                    // keeps a dense lyric sheet from feeling like a wall of text.
+                    // Long eased dissolves at both ends, not the old 16pt hairline. Lines
+                    // don't stop at an edge, they thin out into the background — which is
+                    // what keeps a dense lyric sheet from feeling like a wall of text.
                     .mask(
                         VStack(spacing: 0) {
-                            LinearGradient(colors: [.clear, .white.opacity(0.35), .white],
+                            LinearGradient(gradient: Self.lyricsEdgeFade,
                                            startPoint: .top, endPoint: .bottom)
-                                .frame(height: 54)
+                                .frame(height: Self.lyricsEdgeFadeHeight)
                             Color.white
-                            LinearGradient(colors: [.white, .white.opacity(0.35), .clear],
-                                           startPoint: .top, endPoint: .bottom)
-                                .frame(height: 54)
+                            // Same curve, read from the other end — so both edges fall off
+                            // identically and can't drift apart when the curve is retuned.
+                            LinearGradient(gradient: Self.lyricsEdgeFade,
+                                           startPoint: .bottom, endPoint: .top)
+                                .frame(height: Self.lyricsEdgeFadeHeight)
                         }
                     )
                     .padding(.horizontal, horizontalPadding)
@@ -1187,9 +1189,31 @@ struct NowPlayingView: View {
             return 0.0
         }
         if distance == 0 { return 1.0 }
-        if distance == 1 { return 0.45 }
+        // Deliberately faint. Blurring the neighbour alone wasn't enough — a blurred line
+        // at 0.45 still carries enough ink to pull the eye off the line being sung. It only
+        // has to say "there is more text here", so it sits at roughly a quarter, and the
+        // edge mask thins it further still the closer it is to the top or bottom.
+        if distance == 1 { return 0.28 }
         return 0.0
     }
+
+    /// How far the lyric sheet dissolves into the background at each end, in points.
+    ///
+    /// Sized against what has to stay legible in the middle: at ~355pt of lyric area on a
+    /// 16 Pro this leaves a ~170pt clear band, enough for a three-row line at the 30pt
+    /// lyric size. Growing this much further would start eating the line being sung.
+    private static let lyricsEdgeFadeHeight: CGFloat = 92
+
+    /// Eased, not linear. A straight ramp still hands the outermost line half its opacity;
+    /// front-loading the falloff means the outer half of the zone is all but gone, so the
+    /// sheet reads as fading out rather than as being cut off.
+    private static let lyricsEdgeFade = Gradient(stops: [
+        .init(color: .clear,               location: 0.00),
+        .init(color: .white.opacity(0.06), location: 0.25),
+        .init(color: .white.opacity(0.22), location: 0.50),
+        .init(color: .white.opacity(0.55), location: 0.75),
+        .init(color: .white,               location: 1.00),
+    ])
 
     private func cachedBackground(for song: Song, in geo: GeometryProxy) -> some View {
         Color.black
