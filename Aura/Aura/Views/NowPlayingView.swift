@@ -556,6 +556,30 @@ struct NowPlayingView: View {
     /// Built by concatenating `Text` values rather than laying out words in an `HStack`:
     /// concatenation keeps SwiftUI's natural line wrapping, which a stack of words would
     /// break on any line long enough to need it — i.e. exactly the lines that matter.
+    /// Which line to put the focus on: the one being sung, or — once that one is done and
+    /// the next hasn't begun — the one about to be.
+    ///
+    /// "Done" is known exactly when the server gave us word cues: the last cue's start. With
+    /// only a line timing to go on it has to be estimated from the text length, which is why
+    /// the estimate is deliberately generous — holding a finished line a beat too long reads
+    /// far better than jumping ahead of the music.
+    private func focusIndex(after index: Int?, at time: TimeInterval) -> Int? {
+        guard let index, index + 1 < player.lyrics.count else { return index }
+        let line = player.lyrics[index]
+        guard let start = line.time, let nextStart = player.lyrics[index + 1].time else { return index }
+
+        let finished: TimeInterval
+        if let words = line.words, let lastCue = words.last {
+            finished = lastCue.start + 0.6
+        } else {
+            finished = start + min(max(Double(line.text.count) * 0.09, 2.5), 10)
+        }
+        // Only worth moving early if there is a real pause to fill; on a normal line the
+        // next one arrives about when this one ends and the jump would just look twitchy.
+        guard nextStart - finished > 2.0, time > finished else { return index }
+        return index + 1
+    }
+
     // Not a @ViewBuilder: the builder would wrap the branches in _ConditionalContent, and
     // returning a concrete `Text` is the whole point — only `Text` concatenates.
     private func lyricLineText(line: LyricsLine, index: Int, isCurrent: Bool) -> Text {
@@ -822,9 +846,17 @@ struct NowPlayingView: View {
                         ForEach(Array(player.lyrics.enumerated()), id: \.element.id) { index, line in
                             let isCurrent = index == currentLineIndex
                             let distance = distanceFromCurrentLine(index: index)
+                            // Focused but not yet begun — the anticipated line during an
+                            // instrumental. Word highlighting already greys it out cue by
+                            // cue, but with that turned off it would sit there in full
+                            // white as though it had been sung.
+                            let isAnticipated = isCurrent && (line.time ?? 0) > player.lyricsTime
                             lyricLineText(line: line, index: index, isCurrent: isCurrent)
                                 .font(lyricFont(isCurrent: isCurrent))
-                                .foregroundStyle(.white.opacity(isUserScrolling ? 0.8 : opacityForDistance(distance)))
+                                .foregroundStyle(.white.opacity(
+                                    isUserScrolling ? 0.8
+                                    : opacityForDistance(distance) * (isAnticipated ? 0.45 : 1)
+                                ))
                                 .blur(radius: isUserScrolling ? 0 : blurForDistance(distance))
                                 // Keep current line at natural size (1.0) — non-current slightly
                                 // smaller. Minimal scale delta so words don't visually jump.
@@ -1054,11 +1086,12 @@ struct NowPlayingView: View {
             }
         }
         nearestLineIndex = last
-        // The line that just finished stays lit until the next one starts. This used to
-        // drop the focus during an instrumental gap, and with no current line every line
-        // rendered dimmed and blurred — the screen went vague precisely when there was
-        // nothing else to look at.
-        currentLineIndex = last
+        // Karaoke logic: once the sung line is spent, move the focus to the one COMING, not
+        // nowhere. It renders unlit — for a line whose cues are all in the future, no word
+        // passes the "already sung" test, so the whole line comes out grey — and lights up
+        // word by word when it starts. Clearing the focus instead, as this used to, left no
+        // current line at all, so every line went dim and blurred during the instrumental.
+        currentLineIndex = focusIndex(after: last, at: time)
     }
 
     private var currentLyricId: UUID? {
