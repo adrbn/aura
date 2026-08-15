@@ -593,12 +593,29 @@ struct NowPlayingView: View {
         }
         // A switch per word, deliberately, and not a fill travelling through the glyphs.
         // That was built — a TextRenderer sweeping a soft gradient front across each word —
-        // and it read as sluggish against the beat however fast it was tuned. Sung words go
-        // solid; the rest stay dimmed but legible, so the eye can still read ahead.
+        // and it read as sluggish against the beat however fast it was tuned. What survives
+        // of it is only the last moment: a word still *arrives* rather than snapping on.
+        // The rest stay dimmed but legible, so the eye can read ahead.
         return words.reduce(Text("")) { partial, word in
-            partial + Text(word.text)
-                .foregroundColor(player.lyricsTime >= word.start ? .white : .white.opacity(0.35))
+            partial + Text(word.text).foregroundColor(.white.opacity(wordBrightness(word)))
         }
+    }
+
+    /// How lit a word is, from `unsungWord` to full.
+    ///
+    /// Long enough to be *sampled*, and no longer. Playback reports its position every
+    /// 100ms, so a fade shorter than that would land entirely between two readings and
+    /// never be drawn — the word would snap on exactly as before. At 140ms every word gets
+    /// at least one intermediate step, which is what takes the hard edge off the jump
+    /// without the word visibly brightening its way in.
+    private static let wordFade: TimeInterval = 0.14
+    private static let unsungWord: Double = 0.35
+
+    private func wordBrightness(_ word: LyricWord) -> Double {
+        let elapsed = player.lyricsTime - word.start
+        guard elapsed > 0 else { return Self.unsungWord }
+        let progress = min(1, elapsed / Self.wordFade)
+        return Self.unsungWord + (1 - Self.unsungWord) * progress
     }
 
     /// The artwork, at whatever size the current state asks for.
