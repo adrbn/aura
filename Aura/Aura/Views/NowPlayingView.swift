@@ -36,9 +36,6 @@ struct NowPlayingView: View {
     /// timer that retracts it again.
     @State private var toolbarRevealed = false
     @State private var toolbarHideTask: Task<Void, Never>?
-    /// Ties the hero artwork and the compact lyrics-header artwork together so one flies
-    /// into the other instead of one fading out while the other fades in.
-    @Namespace private var coverTransition
 
     /// Side inset shared by the artwork, the title block, the transport row and the
     /// options bar — they must stay on the same vertical guides.
@@ -253,10 +250,28 @@ struct NowPlayingView: View {
 
             Spacer(minLength: 4)
 
+            // ONE artwork view for both states. It stays at the same place in the tree and
+            // only its SIZE changes, so SwiftUI animates the frame and the picture genuinely
+            // contracts on its way to the corner.
+            //
+            // This replaced a matchedGeometryEffect between two separate views. That only
+            // hands a view a new frame, and CoverArtAsyncImage fixes its own dimensions
+            // internally — so the frame travelled while the picture stayed hero-sized, and
+            // the already-small copy simply appeared at the destination. It read as a jump.
+            HStack(spacing: 12) {
+                artworkView(song: song, size: showLyrics ? 44 : artSize, slideWidth: w)
+                if showLyrics {
+                    lyricsHeaderText(song: song)
+                    Spacer(minLength: 0)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: showLyrics ? .leading : .center)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.bottom, showLyrics ? 14 : 0)
+            .offset(x: showLyrics ? 0 : coverDragOffset)
+            .gesture(showLyrics ? nil : coverDragGesture)
+
             if showLyrics {
-                liveLyricsHeader(song: song)
-                    .padding(.horizontal, horizontalPadding)
-                    .padding(.bottom, 14)
                 lyricsScrollView
                     .frame(height: artSize + 60)
                     .mask(
@@ -270,80 +285,6 @@ struct NowPlayingView: View {
                     )
                     .padding(.horizontal, horizontalPadding)
                     .transition(.opacity)
-            } else {
-                // Cover art with slide transition
-                ZStack {
-                    CoverArtAsyncImage(coverArt: song.coverArt ?? song.albumId, size: artSize,
-                                   fallbackCoverArt: song.albumId)
-                        .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
-                        .scaleEffect(player.isPlaying ? 1.0 : 0.85)
-                        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
-                        .id(song.id)
-                        // Only the INCOMING view is directional. `removal` belongs to the
-                        // outgoing view, which SwiftUI built during an earlier body pass —
-                        // so it carries the direction as it was THEN. Go back a track, then
-                        // let the next one end on its own, and the stale removal slid the old
-                        // cover the same way the new one arrived: both from the right, which
-                        // read as the wrong direction. A plain fade out can't contradict the
-                        // slide in.
-                        .transition(.asymmetric(
-                            insertion: .offset(x: player.songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
-                            removal: .opacity
-                        ))
-                }
-                .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
-                // Matched geometry belongs on this STABLE container, never on the image
-                // inside it. The image carries `.id(song.id)` and the left/right slide
-                // transition; putting a geometry match on that same view made SwiftUI drive
-                // its position from the match and drop the transition altogether — the title
-                // still slid on a song change, the artwork stopped dead. The container's
-                // identity never changes, so it can travel into the lyrics header while the
-                // image keeps animating song changes on its own.
-                .matchedGeometryEffect(id: "nowPlayingCover", in: coverTransition)
-                .padding(.horizontal, horizontalPadding)
-                .offset(x: coverDragOffset)
-                .gesture(
-                    DragGesture(minimumDistance: 20, coordinateSpace: .global)
-                        .onChanged { value in
-                            let dx = abs(value.translation.width)
-                            let dy = abs(value.translation.height)
-                            if coverDragAxis == .undecided && (dx + dy) > 15 {
-                                coverDragAxis = dx >= dy ? .horizontal : .vertical
-                            }
-                            switch coverDragAxis {
-                            case .horizontal:
-                                coverDragOffset = value.translation.width
-                            case .vertical:
-                                if value.translation.height > 0 {
-                                    dragOffset = value.translation.height
-                                }
-                            case .undecided:
-                                break
-                            }
-                        }
-                        .onEnded { value in
-                            switch coverDragAxis {
-                            case .horizontal:
-                                let threshold: CGFloat = 60
-                                if value.translation.width < -threshold || value.predictedEndTranslation.width < -threshold * 2 {
-                                    player.next()
-                                } else if value.translation.width > threshold || value.predictedEndTranslation.width > threshold * 2 {
-                                    player.previous()
-                                }
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { coverDragOffset = 0 }
-                            case .vertical:
-                                if value.translation.height > 150 || value.predictedEndTranslation.height > 300 {
-                                    withAnimation(.easeOut(duration: 0.25)) { dragOffset = 1000 }
-                                    scheduleDragDismiss()
-                                } else {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { dragOffset = 0 }
-                                }
-                            case .undecided:
-                                break
-                            }
-                            coverDragAxis = .undecided
-                        }
-                )
             }
 
             Spacer().frame(height: 20)
@@ -608,43 +549,103 @@ struct NowPlayingView: View {
         }
     }
 
-    /// Compact now-playing row shown above the lyrics in Live Lyrics mode.
+    /// The artwork, at whatever size the current state asks for.
     ///
-    /// The artwork carries the same `matchedGeometryEffect` id as the hero cover, so opening
-    /// lyrics makes the big cover *travel* up and shrink into this row rather than the hero
-    /// fading out and a separate thumbnail fading in. It keeps the song visible while you
-    /// read, which is the whole point — the old behaviour left you looking at text with no
-    /// idea what was playing.
-    private func liveLyricsHeader(song: Song) -> some View {
-        HStack(spacing: 12) {
-            CoverArtImage(coverArt: song.coverArt ?? song.albumId,
-                          size: 44,
-                          cornerRadius: 8,
-                          fallbackCoverArt: song.albumId)
-                .matchedGeometryEffect(id: "nowPlayingCover", in: coverTransition)
-                .shadow(color: .black.opacity(0.35), radius: 6, y: 3)
-            VStack(alignment: .leading, spacing: 2) {
-                MarqueeText(text: displayTitle(for: song),
-                            font: .subheadline.weight(.semibold),
-                            color: .white,
-                            alignment: .leading)
-                Text(song.artist ?? "Unknown Artist")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
+    /// Deliberately NOT two views swapped by a transition: keeping one identity is what lets
+    /// the frame animate between hero and header, and it also preserves the song-change
+    /// slide, which a geometry match would have suppressed.
+    private func artworkView(song: Song, size: CGFloat, slideWidth w: CGFloat) -> some View {
+        ZStack {
+            CoverArtAsyncImage(coverArt: song.coverArt ?? song.albumId, size: size,
+                               fallbackCoverArt: song.albumId)
+                .shadow(color: .black.opacity(showLyrics ? 0.35 : 0.4),
+                        radius: showLyrics ? 6 : 20,
+                        y: showLyrics ? 3 : 10)
+                // The paused-state shrink is a hero gesture; at 44pt it would just look like
+                // a glitch, so it only applies at full size.
+                .scaleEffect(showLyrics || player.isPlaying ? 1.0 : 0.85)
+                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
+                .id(song.id)
+                // Only the INCOMING view is directional. `removal` belongs to the outgoing
+                // view, which SwiftUI built during an earlier body pass — so it carries the
+                // direction as it was THEN. Go back a track, then let the next one end on
+                // its own, and the stale removal slid the old cover the same way the new one
+                // arrived: both from the right, which read as the wrong direction. A plain
+                // fade out cannot contradict the slide in.
+                .transition(.asymmetric(
+                    insertion: .offset(x: player.songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
+                    removal: .opacity
+                ))
         }
-        .transition(.move(edge: .top).combined(with: .opacity))
+        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
     }
 
-    /// Type scale for a lyric line.
+    /// Title and artist beside the shrunken artwork once lyrics are open, so the song stays
+    /// identifiable while reading.
+    private func lyricsHeaderText(song: Song) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            MarqueeText(text: displayTitle(for: song),
+                        font: .subheadline.weight(.semibold),
+                        color: .white,
+                        alignment: .leading)
+            Text(song.artist ?? "Unknown Artist")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.6))
+                .lineLimit(1)
+        }
+        .transition(.opacity)
+    }
+
+    /// Swipe the artwork to change track, or pull down to dismiss.
+    private var coverDragGesture: some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .global)
+            .onChanged { value in
+                let dx = abs(value.translation.width)
+                let dy = abs(value.translation.height)
+                if coverDragAxis == .undecided && (dx + dy) > 15 {
+                    coverDragAxis = dx >= dy ? .horizontal : .vertical
+                }
+                switch coverDragAxis {
+                case .horizontal:
+                    coverDragOffset = value.translation.width
+                case .vertical:
+                    if value.translation.height > 0 { dragOffset = value.translation.height }
+                case .undecided:
+                    break
+                }
+            }
+            .onEnded { value in
+                switch coverDragAxis {
+                case .horizontal:
+                    let threshold: CGFloat = 60
+                    if value.translation.width < -threshold || value.predictedEndTranslation.width < -threshold * 2 {
+                        player.next()
+                    } else if value.translation.width > threshold || value.predictedEndTranslation.width > threshold * 2 {
+                        player.previous()
+                    }
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { coverDragOffset = 0 }
+                case .vertical:
+                    if value.translation.height > 150 || value.predictedEndTranslation.height > 300 {
+                        withAnimation(.easeOut(duration: 0.25)) { dragOffset = 1000 }
+                        scheduleDragDismiss()
+                    } else {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { dragOffset = 0 }
+                    }
+                case .undecided:
+                    break
+                }
+                coverDragAxis = .undecided
+            }
+    }
+
+    /// One size for every line, deliberately.
     ///
-    /// Live Lyrics leans much larger — a lyric sheet is read from across the room or at a
-    /// glance while doing something else, and `title2` was sized for a caption. The line
-    /// being sung is larger again, so the eye finds it without relying on colour alone.
+    /// Sizing the current line larger meant its wrapping was recomputed the instant it
+    /// became current, so the words visibly redistributed themselves as the line arrived —
+    /// the most distracting moment possible. Focus is carried by brightness and blur, which
+    /// change nothing about layout.
     private func lyricFont(isCurrent: Bool) -> Font {
-        .system(size: isCurrent ? 32 : 27, weight: .bold, design: .default)
+        .system(size: 30, weight: .bold, design: .default)
     }
 
     // Patterns: "(feat. X)", "(ft. X)", "(featuring X)", or without parens at end
@@ -860,7 +861,7 @@ struct NowPlayingView: View {
                                 .blur(radius: isUserScrolling ? 0 : blurForDistance(distance))
                                 // Keep current line at natural size (1.0) — non-current slightly
                                 // smaller. Minimal scale delta so words don't visually jump.
-                                .scaleEffect(isCurrent && areLyricsSynced ? 1.0 : (areLyricsSynced ? 0.95 : 1.0), anchor: .leading)
+
                                 .id(line.id)
                                 .onTapGesture {
                                     if let time = line.time {
