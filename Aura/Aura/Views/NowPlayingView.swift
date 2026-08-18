@@ -372,11 +372,25 @@ struct NowPlayingView: View {
             // so make sure nothing invisible can be tapped.
             .allowsHitTesting(!showLyrics)
             }
-            // `.frame(height:)` centres its content unless told otherwise, which pushed the
-            // header down the locked box instead of pinning it to the top.
-            .frame(height: mediaRegionHeight, alignment: .top)
-            // Measured only in the normal state — that layout is the reference the lyrics
-            // state has to match. Measuring while locked would just read back the lock.
+            // Locked *only* while the lyrics are open. That is the only thing the lock is
+            // for — stopping the HUD below from moving when the artwork shrinks and the
+            // title block collapses. With the lyrics closed the region should simply be its
+            // natural size, and constraining it then bought nothing.
+            //
+            // It used to be locked at all times, with the measurement taken outside the
+            // lock, so the value could only ever confirm itself: a single transient
+            // under-measurement — the sheet mid-presentation, artwork not yet sized —
+            // latched permanently. `.frame(height:)` does not clip, so the region went on
+            // drawing content taller than the box it claimed, and the year row, scrubber and
+            // transport rode up over the artwork. Reopening the view or switching tabs only
+            // appeared to fix it: it discarded the state and re-measured from scratch.
+            //
+            // `.frame(height:)` also centres its content unless told otherwise, which pushed
+            // the header down the locked box instead of pinning it to the top.
+            .frame(height: showLyrics ? mediaRegionHeight : nil, alignment: .top)
+            // Recorded only in the normal state — that layout is the reference the lyrics
+            // state has to match — which is now also the only state where nothing is
+            // constraining it, so this reads the true natural height.
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
                 if !showLyrics, height > 0 { mediaRegionHeight = height }
             }
