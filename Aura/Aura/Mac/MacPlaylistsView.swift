@@ -7,7 +7,7 @@ struct MacPlaylistsView: View {
     @State private var settings = AppSettings.shared
 
     var body: some View {
-        MacGrid(items: MacPlaylistOrder.pinnedFirst(playlists), isLoading: isLoading,
+        MacGrid(title: "Playlists", items: MacPlaylistOrder.pinnedFirst(playlists), isLoading: isLoading,
                 emptyMessage: "No playlists") { playlist in
             NavigationLink(value: playlist) {
                 MacCoverTile(coverArt: playlist.coverArt, title: playlist.name,

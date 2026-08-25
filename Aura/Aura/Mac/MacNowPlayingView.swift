@@ -73,6 +73,20 @@ struct MacNowPlayingView: View {
         .frame(maxHeight: .infinity)
     }
 
+    private var refetchButton: some View {
+        Button { player.refetchLyrics() } label: {
+            Label("Reload", systemImage: "arrow.clockwise")
+                .font(.system(size: 11))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(.white.opacity(0.10)))
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.white.opacity(0.6))
+        .padding(24)
+        .help("Fetch these lyrics again")
+    }
+
     private var lyricsPane: some View {
         Group {
             if player.isLoadingLyrics {
@@ -85,12 +99,20 @@ struct MacNowPlayingView: View {
                     Text(player.lyricsStatus.isEmpty ? "No lyrics for this song" : player.lyricsStatus)
                         .font(.system(size: 13))
                         .foregroundStyle(.white.opacity(0.55))
+                    Button("Try again") { player.refetchLyrics() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Color.appAccent)
+                        .padding(.top, 4)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 MacLyricsSheet()
                     .frame(maxWidth: 860)
                     .frame(maxWidth: .infinity)
+                    // Matching is a guess when the server has no sheet of its own, and a
+                    // guess needs a way out. Discards what was found and asks again.
+                    .overlay(alignment: .bottomTrailing) { refetchButton }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -55,6 +55,7 @@
 		A966843C05E005A327BAAA64 /* OfflinePlaylistsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DE /* OfflinePlaylistsStore.swift */; };
 		AE1AEF37014E99B74EC9C0E0 /* MacAlbumsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29B621CC4AF2D3304AEB48D /* MacAlbumsView.swift */; };
 		B14BB8B8B6119F8BED515D05 /* AudioCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000087 /* AudioCacheManager.swift */; };
+		B225BE723A71BD7C8986CD35 /* MacWindowChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */; };
 		B308A21EB72F34D0B1A95848 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
 		B3E087CB664FFC52D5EBFC95 /* MacNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC64675BCED89523D6B47E4D /* MacNowPlayingView.swift */; };
 		B588F5C510ADD0E5A079AF5D /* MixCollageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */; };
@@ -189,6 +190,7 @@
 		192D83957C7F2C1E93977841 /* MacPlaylistOrder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlaylistOrder.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE18380A8A /* SearchRanking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchRanking.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE183A34FA /* PlayHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayHistory.swift; sourceTree = "<group>"; };
+		1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacWindowChrome.swift; sourceTree = "<group>"; };
 		2840376375D75F5F54A64277 /* MacServerPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerPicker.swift; sourceTree = "<group>"; };
 		2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistsView.swift; sourceTree = "<group>"; };
 		2DE0E8DD48DEACB25983419C /* MacCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacCommands.swift; sourceTree = "<group>"; };
@@ -378,6 +380,7 @@
 				D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */,
 				BC935E192C9737FFC79738ED /* MacSongRow.swift */,
 				4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */,
+				1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */,
 			);
 			name = Mac;
 			path = Mac;
@@ -777,6 +780,7 @@
 				DE538F275F2FE804D1678772 /* MacOptionsMenu.swift in Sources */,
 				FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */,
 				08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */,
+				B225BE723A71BD7C8986CD35 /* MacWindowChrome.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

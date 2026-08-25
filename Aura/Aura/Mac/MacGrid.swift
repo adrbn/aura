@@ -4,6 +4,11 @@ import SwiftUI
 /// section needs. Adaptive rather than a fixed column count: the window is resizable, and
 /// pinning the columns would either waste an ultrawide or crush a half-screen split.
 struct MacGrid<Item: Identifiable, Tile: View>: View {
+    /// Drawn in the content, because there is nowhere else for it to go: the window has no
+    /// toolbar, so `navigationTitle` renders nothing at all and every section but Home was
+    /// arriving with no heading whatsoever.
+    var title: String?
+    var trailing: AnyView?
     let items: [Item]
     var isLoading = false
     var emptyMessage = "Nothing here"
@@ -12,6 +17,23 @@ struct MacGrid<Item: Identifiable, Tile: View>: View {
     @State private var preferences = MacPreferences.shared
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let title {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(title).auraDisplay(52)
+                    Spacer()
+                    if let trailing { trailing }
+                }
+                .padding(.horizontal, 26)
+                .padding(.top, 26)
+                .padding(.bottom, 4)
+            }
+            grid
+        }
+    }
+
+    @ViewBuilder
+    private var grid: some View {
         if isLoading && items.isEmpty {
             MacLoadingState()
         } else if items.isEmpty {

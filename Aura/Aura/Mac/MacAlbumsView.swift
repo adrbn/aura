@@ -17,21 +17,25 @@ struct MacAlbumsView: View {
     ]
 
     var body: some View {
-        MacGrid(items: albums, isLoading: isLoading, emptyMessage: "No albums") { album in
+        MacGrid(title: "Albums",
+                trailing: AnyView(sortPicker),
+                items: albums, isLoading: isLoading, emptyMessage: "No albums") { album in
             NavigationLink(value: album) {
                 MacCoverTile(coverArt: album.coverArt, title: album.name,
                              subtitle: album.artist ?? "Unknown Artist", placeholderName: album.name)
             }
             .buttonStyle(.plain)
         }
-        .navigationTitle("Albums")
-        .toolbar {
-            Picker("Sort", selection: $order) {
-                ForEach(orders, id: \.0) { Text($0.1).tag($0.0) }
-            }
-            .pickerStyle(.menu)
-        }
         .task(id: order) { await load() }
+    }
+
+    private var sortPicker: some View {
+        Picker("", selection: $order) {
+            ForEach(orders, id: \.0) { Text($0.1).tag($0.0) }
+        }
+        .pickerStyle(.menu)
+        .labelsHidden()
+        .fixedSize()
     }
 
     private func load() async {

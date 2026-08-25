@@ -94,6 +94,7 @@ struct MacRootView: View {
         // Behind everything, including the sidebar. The lists and grids above are made
         // transparent so it shows through rather than being covered by their own material.
         .background(MacBackground())
+        .background(MacWindowChrome().frame(width: 0, height: 0))
         // Nothing draws a bar of its own. The search field and the options menu are in the
         // content (see MacTopBar) precisely so no toolbar exists to paint a strip.
         // Hidden outright, not emptied. Removing the title and then the sidebar button

@@ -37,6 +37,11 @@ struct MacMixesView: View {
 
     private var grid: some View {
         ScrollView {
+            Text("Made For You")
+                .auraDisplay(52)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 26)
+                .padding(.top, 26)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 168, maximum: 230), spacing: 20)],
                       spacing: 22) {
                 ForEach(generator.mixes) { mix in

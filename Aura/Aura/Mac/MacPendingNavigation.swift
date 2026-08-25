@@ -13,24 +13,48 @@ struct MacPendingNavigation: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .task(id: player.pendingArtistId) { await openArtist() }
-            .task(id: player.pendingAlbumId) { await openAlbum() }
-            .task(id: player.pendingPlaylistId) { await openPlaylist() }
+            // `onChange` and a detached `Task`, NOT `.task(id:)`. The id has to be cleared
+            // so the same one can be requested twice — but clearing it changes the task id,
+            // which cancels the very fetch that was reading it. Nothing ever arrived.
+            .onChange(of: player.pendingAlbumId) { _, id in
+                guard let id else { return }
+                player.pendingAlbumId = nil
+                Task { await openAlbum(id) }
+            }
+            .onChange(of: player.pendingArtistId) { _, id in
+                guard let id else { return }
+                player.pendingArtistId = nil
+                Task { await openArtist(id) }
+            }
+            .onChange(of: player.pendingPlaylistId) { _, id in
+                guard let id else { return }
+                player.pendingPlaylistId = nil
+                Task { await openPlaylist(id) }
+            }
     }
 
-    private func openArtist() async {
-        guard let id = player.pendingArtistId, let server = serverManager.currentServer else { return }
-        player.pendingArtistId = nil
-        guard let found = try? await SubsonicClient.shared.getArtist(server: server, id: id) else { return }
+    /// Anything pushed has to be visible, and the lyrics screen covers the whole window.
+    private func reveal() {
+        if player.isShowingNowPlaying {
+            withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying = false }
+        }
+    }
+
+    private func openArtist(_ id: String) async {
+        guard let server = serverManager.currentServer,
+              let found = try? await SubsonicClient.shared.getArtist(server: server, id: id)
+        else { return }
+        reveal()
         path.append(Artist(id: found.id, name: found.name, coverArt: found.coverArt,
                            albumCount: found.albumCount, starred: nil,
                            artistImageUrl: found.artistImageUrl, playCount: nil))
     }
 
-    private func openAlbum() async {
-        guard let id = player.pendingAlbumId, let server = serverManager.currentServer else { return }
-        player.pendingAlbumId = nil
-        guard let found = try? await SubsonicClient.shared.getAlbum(server: server, id: id) else { return }
+    private func openAlbum(_ id: String) async {
+        guard let server = serverManager.currentServer,
+              let found = try? await SubsonicClient.shared.getAlbum(server: server, id: id)
+        else { return }
+        reveal()
         path.append(Album(id: found.id, name: found.name, artist: found.artist,
                           artistId: found.artistId, coverArt: found.coverArt,
                           songCount: found.songCount, duration: found.duration,
@@ -38,10 +62,11 @@ struct MacPendingNavigation: ViewModifier {
                           created: nil, playCount: nil))
     }
 
-    private func openPlaylist() async {
-        guard let id = player.pendingPlaylistId, let server = serverManager.currentServer else { return }
-        player.pendingPlaylistId = nil
-        guard let found = try? await SubsonicClient.shared.getPlaylist(server: server, id: id) else { return }
+    private func openPlaylist(_ id: String) async {
+        guard let server = serverManager.currentServer,
+              let found = try? await SubsonicClient.shared.getPlaylist(server: server, id: id)
+        else { return }
+        reveal()
         path.append(Playlist(id: found.id, name: found.name, songCount: found.songCount,
                              duration: found.duration, coverArt: found.coverArt,
                              owner: found.owner, created: nil, changed: nil,

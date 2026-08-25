@@ -12,7 +12,7 @@ struct MacArtistsView: View {
     }
 
     var body: some View {
-        MacGrid(items: shown, isLoading: isLoading, emptyMessage: "No artists") { artist in
+        MacGrid(title: "Artists", items: shown, isLoading: isLoading, emptyMessage: "No artists") { artist in
             NavigationLink(value: artist) {
                 MacCoverTile(coverArt: artist.coverArt, title: artist.name,
                              subtitle: artist.albumCount.map { "\($0) albums" },

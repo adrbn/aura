@@ -88,29 +88,42 @@ struct MacSidebar: View {
     }
 
     private var searchField: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 7) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.secondary)
-            TextField("", text: $query, prompt: Text("Search").font(.system(size: 12)))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(searching ? Color.appAccent : .secondary)
+            TextField("", text: $query, prompt: Text("Search").font(.system(size: 13)))
                 .textFieldStyle(.plain)
-                .font(.system(size: 12))
+                .font(.system(size: 13))
                 .focused($searching)
             if !query.isEmpty {
                 Button { query = "" } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
+                .transition(.opacity)
+            } else {
+                // The shortcut, shown until it is needed — the Mac convention for a field
+                // you are expected to reach for by keyboard.
+                Text("⌘F")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.tertiary)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 6).fill(.white.opacity(searching ? 0.12 : 0.07)))
-        .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .strokeBorder(searching ? Color.appAccent.opacity(0.8) : .clear)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(.white.opacity(searching ? 0.13 : 0.07))
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(searching ? Color.appAccent.opacity(0.85) : .white.opacity(0.06),
+                              lineWidth: searching ? 1.5 : 1)
+        )
+        .animation(.easeOut(duration: 0.15), value: searching)
+        .animation(.easeOut(duration: 0.15), value: query.isEmpty)
     }
 }

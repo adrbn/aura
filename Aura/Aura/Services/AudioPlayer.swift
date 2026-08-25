@@ -1561,7 +1561,7 @@ final class AudioPlayer {
         }
 
         // 2. Fall back to search endpoint with original terms
-        if let result = await lrclibSearch(artist: artist, title: song.title) {
+        if let result = await lrclibSearch(artist: artist, title: song.title, duration: song.duration) {
             return await applyLRCLIBResult(result)
         }
 
@@ -1569,13 +1569,13 @@ final class AudioPlayer {
         let cleanedArtist = cleanSearchTerm(artist)
         let cleanedTitle = cleanSearchTerm(song.title)
         if cleanedArtist != artist || cleanedTitle != song.title {
-            if let result = await lrclibSearch(artist: cleanedArtist, title: cleanedTitle) {
+            if let result = await lrclibSearch(artist: cleanedArtist, title: cleanedTitle, duration: song.duration) {
                 return await applyLRCLIBResult(result)
             }
         }
 
         // 4. Free-text search as final fallback
-        if let result = await lrclibFreeTextSearch(query: "\(cleanedArtist) \(cleanedTitle)") {
+        if let result = await lrclibFreeTextSearch(query: "\(cleanedArtist) \(cleanedTitle)", duration: song.duration) {
             return await applyLRCLIBResult(result)
         }
 
@@ -1617,7 +1617,53 @@ final class AudioPlayer {
         }
     }
 
-    private func lrclibSearch(artist: String, title: String) async -> [String: Any]? {
+    /// Picks the candidate that is actually the same *recording*.
+    ///
+    /// Both search endpoints were taking `results.first`, which is LRCLIB's own ordering and
+    /// has nothing to do with which version you are playing. A title that exists as a single,
+    /// a remix, a live cut and a cover returns all four, and the first one won — which is
+    /// exactly how a song ends up showing somebody else's words.
+    ///
+    /// Duration is the one field that separates them reliably: two recordings of the same
+    /// song rarely agree to within a few seconds unless they are the same recording. Where
+    /// the track's length is known, anything more than 8s out is rejected outright rather
+    /// than ranked, because a wrong lyric sheet is worse than none.
+    private func bestLRCLIBMatch(_ results: [[String: Any]], duration: Int?) -> [String: Any]? {
+        func hasLyrics(_ entry: [String: Any]) -> Bool {
+            ((entry["syncedLyrics"] as? String)?.isEmpty == false)
+                || ((entry["plainLyrics"] as? String)?.isEmpty == false)
+        }
+        func isSynced(_ entry: [String: Any]) -> Bool {
+            (entry["syncedLyrics"] as? String)?.isEmpty == false
+        }
+
+        var candidates = results.filter(hasLyrics)
+        guard !candidates.isEmpty else { return nil }
+
+        if let duration, duration > 0 {
+            let target = Double(duration)
+            candidates = candidates.filter { entry in
+                guard let length = entry["duration"] as? Double else { return false }
+                return abs(length - target) <= 8
+            }
+            guard !candidates.isEmpty else {
+                AppLogger.shared.log("🎵 LRCLIB: \(results.count) results, none within 8s of \(duration)s — rejected")
+                return nil
+            }
+            // Closest length first, and among equally close ones prefer the synced sheet.
+            candidates.sort { a, b in
+                let da = abs((a["duration"] as? Double ?? .infinity) - target)
+                let db = abs((b["duration"] as? Double ?? .infinity) - target)
+                if abs(da - db) > 0.5 { return da < db }
+                return isSynced(a) && !isSynced(b)
+            }
+            return candidates.first
+        }
+
+        return candidates.first(where: isSynced) ?? candidates.first
+    }
+
+    private func lrclibSearch(artist: String, title: String, duration: Int?) async -> [String: Any]? {
         await MainActor.run { self.lyricsStatus = "Searching LRCLIB..." }
         var components = URLComponents(string: "https://lrclib.net/api/search")
         components?.queryItems = [
@@ -1631,11 +1677,8 @@ final class AudioPlayer {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
             guard let results = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return nil }
-            // Prefer result with synced lyrics
-            let withSynced = results.first { ($0["syncedLyrics"] as? String)?.isEmpty == false }
-            let withPlain = results.first { ($0["plainLyrics"] as? String)?.isEmpty == false }
-            if let best = withSynced ?? withPlain {
-                AppLogger.shared.log("🎵 LRCLIB search: found match from \(results.count) results")
+            if let best = bestLRCLIBMatch(results, duration: duration) {
+                AppLogger.shared.log("🎵 LRCLIB search: matched 1 of \(results.count) results")
                 return best
             }
         } catch {
@@ -1644,7 +1687,7 @@ final class AudioPlayer {
         return nil
     }
 
-    private func lrclibFreeTextSearch(query: String) async -> [String: Any]? {
+    private func lrclibFreeTextSearch(query: String, duration: Int?) async -> [String: Any]? {
         await MainActor.run { self.lyricsStatus = "Searching LRCLIB (broad)..." }
         var components = URLComponents(string: "https://lrclib.net/api/search")
         components?.queryItems = [
@@ -1657,10 +1700,8 @@ final class AudioPlayer {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
             guard let results = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return nil }
-            let withSynced = results.first { ($0["syncedLyrics"] as? String)?.isEmpty == false }
-            let withPlain = results.first { ($0["plainLyrics"] as? String)?.isEmpty == false }
-            if let best = withSynced ?? withPlain {
-                AppLogger.shared.log("🎵 LRCLIB free-text: found match from \(results.count) results")
+            if let best = bestLRCLIBMatch(results, duration: duration) {
+                AppLogger.shared.log("🎵 LRCLIB free-text: matched 1 of \(results.count) results")
                 return best
             }
         } catch {
