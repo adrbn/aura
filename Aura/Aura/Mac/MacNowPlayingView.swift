@@ -83,7 +83,7 @@ struct MacNowPlayingView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 MacLyricsSheet()
-                    .frame(maxWidth: 760)
+                    .frame(maxWidth: 860)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -99,14 +99,16 @@ struct MacNowPlayingView: View {
 struct MacLyricsSheet: View {
     @State private var player = AudioPlayer.shared
     @State private var currentIndex: Int?
+    /// Half the pane, so line one can sit in the middle like every other line.
+    @State private var paneHeight: CGFloat = 600
 
     private var synced: Bool { player.lyrics.contains { $0.time != nil } }
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
-                LazyVStack(alignment: .leading, spacing: 26) {
-                    Spacer().frame(height: 140)
+                LazyVStack(alignment: .leading, spacing: 30) {
+                    Spacer().frame(height: paneHeight * 0.42)
                     ForEach(Array(player.lyrics.enumerated()), id: \.element.id) { index, line in
                         // Only the line being sung redraws on the display link, and only
                         // while playback is moving. Every other line is paused, so it draws
@@ -117,7 +119,7 @@ struct MacLyricsSheet: View {
                         }
                         .id(index)
                     }
-                    Spacer().frame(height: 200)
+                    Spacer().frame(height: paneHeight * 0.55)
                 }
                 .padding(.horizontal, 52)
             }
@@ -132,6 +134,9 @@ struct MacLyricsSheet: View {
                         .frame(height: 110)
                 }
             )
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                if height > 0 { paneHeight = height }
+            }
             .onChange(of: player.currentTime) { _, _ in track(proxy: proxy) }
             .onChange(of: player.currentSong?.id) { _, _ in currentIndex = nil }
         }
@@ -141,7 +146,7 @@ struct MacLyricsSheet: View {
         let distance = currentIndex.map { abs(index - $0) } ?? 0
         let isCurrent = index == currentIndex
         return text(for: line, isCurrent: isCurrent)
-            .font(.system(size: 34, weight: .bold))
+            .font(.system(size: 42, weight: .bold))
             .foregroundStyle(.white.opacity(synced ? opacity(distance) : 0.8))
             .blur(radius: synced ? blur(distance) : 0)
             .scaleEffect(isCurrent || !synced ? 1 : 0.86, anchor: .leading)
