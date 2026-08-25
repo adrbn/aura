@@ -95,12 +95,9 @@ struct MacRootView: View {
         // transparent so it shows through rather than being covered by their own material.
         .background(MacBackground())
         .background(MacWindowChrome().frame(width: 0, height: 0))
-        // Nothing draws a bar of its own. The search field and the options menu are in the
-        // content (see MacTopBar) precisely so no toolbar exists to paint a strip.
-        // Hidden outright, not emptied. Removing the title and then the sidebar button
-        // still left a toolbar in place, and an empty toolbar draws its grey strip exactly
-        // like a full one. The window has no toolbar at all now; the sidebar still toggles
-        // from the View menu and its shortcut.
+        // Safe to hide now: the buttons no longer depend on it. With the title bar itself
+        // made transparent rather than removed, there is nothing left for a toolbar to do
+        // but paint a strip. The sidebar toggles from the View menu.
         .toolbar(.hidden, for: .windowToolbar)
         // Changing section starts a fresh trail. Keeping the old one would leave you on an
         // album you reached from Search after clicking Artists.

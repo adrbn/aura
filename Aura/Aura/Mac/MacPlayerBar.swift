@@ -65,10 +65,9 @@ struct MacPlayerBar: View {
                     guard let albumId = song?.albumId else { return }
                     player.pendingAlbumId = albumId
                 }
-                linkedText(song?.artist ?? "", size: 11, weight: .regular, colour: .secondary) {
-                    guard let artistId = song?.artistId else { return }
-                    player.pendingArtistId = artistId
-                }
+                // Each credited artist separately: a collaboration has more than one name
+                // worth going to, and one link across all of them only ever reached the first.
+                MacArtistLinks(song: song)
             }
 
             if song != nil {

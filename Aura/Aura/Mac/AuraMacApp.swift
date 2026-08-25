@@ -20,9 +20,10 @@ struct AuraMacApp: App {
                 .task { PinSync.shared.start() }
         }
         .defaultSize(width: 1180, height: 760)
-        // The sidebar is the app's own navigation; the system title bar would only
-        // duplicate it.
-        .windowStyle(.hiddenTitleBar)
+        // NOT .hiddenTitleBar. That removes the title bar, and close / minimise / zoom live
+        // inside it — they disappear with it and cannot be asked back. MacWindowChrome
+        // instead makes an ordinary title bar transparent and lets the content run under it,
+        // which looks identical and keeps the buttons.
         .commands { MacCommands(player: player) }
     }
 }

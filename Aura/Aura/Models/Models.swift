@@ -651,6 +651,12 @@ struct SubsonicError: Decodable {
 
 // MARK: - Music Models
 
+/// One credited artist, with the id needed to actually go there.
+struct ArtistRef: Codable, Hashable, Identifiable {
+    let id: String
+    let name: String
+}
+
 struct Song: Identifiable, Codable, Hashable {
     let id: String
     let title: String
@@ -658,6 +664,11 @@ struct Song: Identifiable, Codable, Hashable {
     let artist: String?
     let albumId: String?
     let artistId: String?
+    /// OpenSubsonic's per-artist credits. `artist` is one string with every name run
+    /// together and `artistId` points at only the first of them, so a collaboration cannot
+    /// be navigated from those two alone. Servers below the extension omit this, hence the
+    /// default — see `creditedArtists` for the fallback.
+    var artists: [ArtistRef]?
     let track: Int?
     let year: Int?
     let genre: String?

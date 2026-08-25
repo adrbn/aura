@@ -1,32 +1,82 @@
 import SwiftUI
 import AppKit
 
-/// Puts the close / minimise / zoom buttons back.
+/// Gives the window a full-bleed content area that still has its three buttons.
 ///
-/// Hiding the toolbar outright is the only thing that removes the grey strip — but it takes
-/// the three window buttons with it, because they live in the same titlebar view. They are
-/// the system's, so they can be asked back individually without the strip coming with them.
+/// Two things had to be established by measurement rather than guessed at, because every
+/// plausible SwiftUI modifier produced one of them at the cost of the other:
+///
+/// 1. The grey strip is an `NSToolbar`. SwiftUI keeps attaching one to this window whatever
+///    `.toolbar(.hidden, for: .windowToolbar)` claims, so it is removed from the window
+///    directly — the one instruction nothing downstream overrides.
+/// 2. The buttons were never hidden. They sit at full alpha the whole time; it is their
+///    container, `NSTitlebarView`, that SwiftUI drops to alpha 0, which takes them down
+///    along with the strip. Restoring the container is what brings them back, and with the
+///    bar transparent and no toolbar there is nothing else in it left to see.
+///
+/// Full screen is left alone: the system fades that same view on purpose there, and the
+/// buttons are meant to be absent until the pointer reaches the top of the screen.
 struct MacWindowChrome: NSViewRepresentable {
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSView(context: Context) -> NSView {
         let probe = NSView()
-        // The view has no window until it is in the hierarchy, so this waits a turn.
-        DispatchQueue.main.async { configure(probe.window) }
+        // No window until the view is in a hierarchy, so this waits a turn.
+        DispatchQueue.main.async { context.coordinator.attach(to: probe.window) }
         return probe
     }
 
     func updateNSView(_ view: NSView, context: Context) {
-        DispatchQueue.main.async { configure(view.window) }
+        DispatchQueue.main.async { context.coordinator.attach(to: view.window) }
     }
 
-    private func configure(_ window: NSWindow?) {
-        guard let window else { return }
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        // Dragging the window by its background, since there is no title bar left to grab.
-        window.isMovableByWindowBackground = true
-        for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
-            window.standardWindowButton(button)?.isHidden = false
-            window.standardWindowButton(button)?.alphaValue = 1
+    final class Coordinator {
+        private weak var window: NSWindow?
+
+        /// Re-applied on the window's own events, not only on SwiftUI updates.
+        ///
+        /// Leaving full screen rebuilds the title bar and puts the container back to alpha 0,
+        /// and there is no guarantee SwiftUI runs an update at that moment — which is exactly
+        /// the case where the buttons stayed missing after coming out of full screen.
+        func attach(to window: NSWindow?) {
+            guard let window else { return }
+            if self.window !== window {
+                self.window = window
+                for name: NSNotification.Name in [
+                    NSWindow.didExitFullScreenNotification,
+                    NSWindow.didEnterFullScreenNotification,
+                    NSWindow.didBecomeKeyNotification,
+                    NSWindow.didResizeNotification,
+                ] {
+                    NotificationCenter.default.addObserver(
+                        forName: name, object: window, queue: .main
+                    ) { [weak self] _ in
+                        MainActor.assumeIsolated { self?.apply() }
+                    }
+                }
+            }
+            apply()
+        }
+
+        private func apply() {
+            guard let window else { return }
+
+            // Content runs the full height, under where the title bar would be.
+            window.styleMask.insert(.fullSizeContentView)
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            // No visible bar left to grab, so the background does that job.
+            window.isMovableByWindowBackground = true
+            window.toolbar = nil
+
+            guard !window.styleMask.contains(.fullScreen) else { return }
+            for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+                let view = window.standardWindowButton(button)
+                view?.isHidden = false
+                view?.alphaValue = 1
+                view?.superview?.isHidden = false
+                view?.superview?.alphaValue = 1
+            }
         }
     }
 }
