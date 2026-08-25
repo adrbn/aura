@@ -17,15 +17,21 @@ struct MacNowPlayingView: View {
                 lyricsPane
             }
         }
-        .overlay(alignment: .topLeading) {
+        .overlay(alignment: .topTrailing) {
             Button(action: close) {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 13, weight: .semibold))
                     .frame(width: 30, height: 30)
-                    .background(Circle().fill(.black.opacity(0.35)))
+                    .background(Circle().fill(.white.opacity(0.10)))
+                    .contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .padding(18)
+            .help("Close (esc)")
+            // Clear of the window's drag region. With the title bar hidden, the top ~28pt
+            // still belongs to the window: it swallows mouse-down, which is why this button
+            // did nothing while the escape shortcut worked perfectly.
+            .padding(.top, 46)
+            .padding(.trailing, 22)
             .keyboardShortcut(.escape, modifiers: [])
         }
         .ignoresSafeArea()
