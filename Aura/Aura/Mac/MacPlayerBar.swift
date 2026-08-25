@@ -26,6 +26,10 @@ struct MacPlayerBar: View {
             secondary
         }
         .padding(.horizontal, 20)
+        // Fills the window. Without this the fixed flanks bounded the whole bar to about
+        // 1300pt, so on a wider window it floated in the middle with the library visible
+        // beside it and running on underneath — it has to be the floor, not a panel.
+        .frame(maxWidth: .infinity)
         .frame(height: 92)
         // A wash rather than a bar. It has to separate itself from the artwork scrolling
         // behind it without becoming a second, opaque surface.
@@ -107,7 +111,11 @@ struct MacPlayerBar: View {
 
             scrubber
         }
+        // Capped so the scrubber doesn't stretch across an ultrawide, then handed the rest
+        // of the slack so the transport stays centred in the window rather than in whatever
+        // the flanks happen to leave.
         .frame(maxWidth: 620)
+        .frame(maxWidth: .infinity)
     }
 
     private var scrubber: some View {
