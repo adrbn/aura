@@ -60,6 +60,10 @@ enum SetupDiagnosis: Equatable {
 struct MacServerSetupView: View {
     private enum Field: Hashable { case url, username, password }
 
+    /// Set when presented as a sheet to add another server; `nil` on first run, where
+    /// the root view swaps itself out instead.
+    var onConnected: (() -> Void)?
+
     @State private var serverManager = ServerManager.shared
     @State private var url = ""
     @State private var username = ""
@@ -272,7 +276,11 @@ struct MacServerSetupView: View {
         }
 
         serverManager.addServer(candidate)
+        // Adding never switches to it on its own — a second server should not interrupt
+        // whatever is playing from the first.
+        if serverManager.servers.count > 1 { serverManager.selectServer(candidate) }
         await serverManager.testConnection()
+        onConnected?()
     }
 
     private static func classify(_ error: Error, host: String) -> SetupDiagnosis {

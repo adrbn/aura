@@ -4,37 +4,40 @@ import SwiftUI
 /// has room to show a section and its detail at once, so several of the phone's screens
 /// become columns here rather than destinations of their own.
 enum MacSection: String, Hashable, CaseIterable, Identifiable {
-    case mixes, albums, artists, songs, playlists, search
+    case home, mixes, songs, playlists, albums, artists
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
+        case .home: return "Home"
         case .mixes: return "Made For You"
         case .albums: return "Albums"
         case .artists: return "Artists"
         case .songs: return "Songs"
         case .playlists: return "Playlists"
-        case .search: return "Search"
         }
     }
 
     var symbol: String {
         switch self {
+        case .home: return "house"
         case .mixes: return "sparkles"
         case .albums: return "square.stack"
         case .artists: return "music.mic"
         case .songs: return "music.note"
         case .playlists: return "music.note.list"
-        case .search: return "magnifyingglass"
         }
     }
 }
 
 struct MacRootView: View {
     @State private var serverManager = ServerManager.shared
-    @State private var section: MacSection? = .mixes
+    @State private var player = AudioPlayer.shared
+    @State private var section: MacSection? = .home
     @State private var path = NavigationPath()
+    /// One search field for the whole window, rather than a section you have to go to.
+    @State private var query = ""
 
     var body: some View {
         Group {
@@ -52,7 +55,16 @@ struct MacRootView: View {
             MacSidebar(section: $section)
         } detail: {
             NavigationStack(path: $path) {
-                detail
+                // Typing anywhere takes over the detail area, and clearing it hands the
+                // section back — search is a lens over the library, not a place in it.
+                Group {
+                    if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                        detail
+                    } else {
+                        MacSearchView(query: $query)
+                    }
+                }
+                .searchable(text: $query, placement: .toolbar, prompt: "Search your library")
                     .navigationDestination(for: Album.self) { MacAlbumDetailView(album: $0) }
                     .navigationDestination(for: Artist.self) { MacArtistDetailView(artist: $0) }
                     .navigationDestination(for: Playlist.self) { MacPlaylistDetailView(playlist: $0) }
@@ -62,6 +74,15 @@ struct MacRootView: View {
         // Spans the full width, under the sidebar as well — the transport belongs to the
         // window, not to whichever section happens to be showing.
         .safeAreaInset(edge: .bottom, spacing: 0) { MacPlayerBar() }
+        // Behind everything, including the sidebar. The lists and grids above are made
+        // transparent so it shows through rather than being covered by their own material.
+        .background(MacBackground())
+        .overlay {
+            if player.isShowingNowPlaying {
+                MacNowPlayingView { withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying = false } }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         // Changing section starts a fresh trail. Keeping the old one would leave you on an
         // album you reached from Search after clicking Artists.
         .onChange(of: section) { _, _ in path = NavigationPath() }
@@ -72,13 +93,13 @@ struct MacRootView: View {
 
     @ViewBuilder
     private var detail: some View {
-        switch section ?? .mixes {
+        switch section ?? .home {
+        case .home: MacHomeView()
         case .mixes: MacMixesView()
         case .albums: MacAlbumsView()
         case .artists: MacArtistsView()
         case .songs: MacSongsView()
         case .playlists: MacPlaylistsView()
-        case .search: MacSearchView()
         }
     }
 }

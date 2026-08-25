@@ -3,7 +3,7 @@ import SwiftUI
 /// Search, over the same ranked index the phone uses — including its offline fallback and
 /// its "did you mean" correction.
 struct MacSearchView: View {
-    @State private var query = ""
+    @Binding var query: String
     @State private var results = SearchResults()
     @State private var isSearching = false
 
@@ -13,9 +13,6 @@ struct MacSearchView: View {
                 // Replaces the results rather than sitting above them: a query in flight
                 // should not leave the previous query's hits on screen looking like answers.
                 MacLoadingState()
-            } else if query.trimmingCharacters(in: .whitespaces).isEmpty {
-                ContentUnavailableView("Search", systemImage: "magnifyingglass",
-                                       description: Text("Artists, albums, songs and playlists."))
             } else if results.isEmpty {
                 ContentUnavailableView.search(text: query)
             } else {
@@ -23,7 +20,6 @@ struct MacSearchView: View {
             }
         }
         .navigationTitle("Search")
-        .searchable(text: $query, placement: .toolbar, prompt: "Search the library")
         .task(id: query) { await run() }
     }
 

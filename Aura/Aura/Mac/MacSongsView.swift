@@ -17,24 +17,30 @@ struct MacSongsView: View {
     private let ceiling = 20_000
 
     var body: some View {
-        Group {
+        VStack(alignment: .leading, spacing: 0) {
             if songs.isEmpty && isLoading {
                 MacLoadingState()
             } else if songs.isEmpty {
                 ContentUnavailableView("No songs", systemImage: "music.note")
             } else {
+                HStack(spacing: 10) {
+                    Text("^[\(songs.count) song](inflect: true)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                    if isLoading { ProgressView().controlSize(.small) }
+                    Spacer()
+                    Button { player.playShuffled(songs, source: .songs) } label: {
+                        Label("Shuffle", systemImage: "shuffle")
+                    }
+                    .controlSize(.small)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
                 MacSongTable(songs: songs, source: .songs)
             }
         }
         .navigationTitle("Songs")
-        .toolbar {
-            if !songs.isEmpty {
-                Text("\(songs.count) songs").foregroundStyle(.secondary)
-                Button { player.playShuffled(songs, source: .songs) } label: {
-                    Label("Shuffle", systemImage: "shuffle")
-                }
-            }
-        }
         .task { await load() }
     }
 
@@ -43,14 +49,21 @@ struct MacSongsView: View {
         isLoading = true
         defer { isLoading = false }
         var collected: [Song] = []
+        var seen = Set<String>()
         while collected.count < ceiling {
             guard let batch = try? await SubsonicClient.shared.search3(
                 server: server, query: "", artistCount: 0, albumCount: 0,
                 songCount: pageSize, songOffset: collected.count
-            ).song else { break }
-            collected.append(contentsOf: batch)
-            // Show the first page immediately; the rest fills in behind it.
-            if collected.count == batch.count { songs = collected }
+            ).song, !batch.isEmpty else { break }
+
+            // Deduplicated, and stopped as soon as a page adds nothing new. Not every
+            // server honours songOffset on an empty query — some hand back the same page
+            // every time, which used to run this straight into the ceiling and report a
+            // library of exactly 20,000 songs that didn't exist.
+            let fresh = batch.filter { seen.insert($0.id).inserted }
+            guard !fresh.isEmpty else { break }
+            collected += fresh
+            songs = collected
             if batch.count < pageSize { break }
         }
         songs = collected

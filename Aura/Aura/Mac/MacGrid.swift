@@ -24,6 +24,7 @@ struct MacGrid<Item: Identifiable, Tile: View>: View {
                 }
                 .padding(24)
             }
+            .scrollContentBackground(.hidden)
         }
     }
 }

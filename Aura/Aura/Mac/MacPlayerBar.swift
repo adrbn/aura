@@ -41,7 +41,16 @@ struct MacPlayerBar: View {
 
     private var nowPlaying: some View {
         HStack(spacing: 11) {
-            CoverArtImage(coverArt: player.currentSong?.coverArt, size: 52, cornerRadius: 6)
+            // Opens the full Now Playing screen — artwork and lyrics side by side. The
+            // artwork is the affordance everyone tries first.
+            Button {
+                guard player.currentSong != nil else { return }
+                withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying = true }
+            } label: {
+                CoverArtImage(coverArt: player.currentSong?.coverArt, size: 52, cornerRadius: 6)
+            }
+            .buttonStyle(.plain)
+            .help("Now Playing")
             VStack(alignment: .leading, spacing: 2) {
                 Text(player.currentSong?.title ?? "Nothing playing")
                     .font(.system(size: 13, weight: .semibold))
@@ -124,6 +133,12 @@ struct MacPlayerBar: View {
 
     private var secondaryControls: some View {
         HStack(spacing: 16) {
+            Button {
+                guard player.currentSong != nil else { return }
+                withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying.toggle() }
+            } label: { Image(systemName: "quote.bubble") }
+                .foregroundStyle(player.isShowingNowPlaying ? Color.appAccent : .secondary)
+                .help("Lyrics")
             Button { showEqualizer.toggle() } label: { Image(systemName: "slider.horizontal.3") }
                 .foregroundStyle(EqualizerManager.shared.isEnabled ? Color.appAccent : .secondary)
                 .help("Equaliser")

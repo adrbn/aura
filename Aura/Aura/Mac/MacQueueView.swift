@@ -52,6 +52,7 @@ struct MacQueueView: View {
                     }
                 }
                 .listStyle(.inset)
+                .scrollContentBackground(.hidden)
             }
         }
         .frame(width: 340, height: 420)

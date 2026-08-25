@@ -7,18 +7,19 @@ struct MacSidebar: View {
 
     var body: some View {
         List(selection: $section) {
-            Section {
-                ForEach(MacSection.allCases) { item in
+            ForEach([MacSection.home, .mixes]) { item in
+                Label(item.label, systemImage: item.symbol).tag(item)
+            }
+            Section("Library") {
+                ForEach([MacSection.songs, .playlists, .albums, .artists]) { item in
                     Label(item.label, systemImage: item.symbol).tag(item)
                 }
-            } header: {
-                Text("Library")
             }
         }
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 280)
         .safeAreaInset(edge: .top, spacing: 0) { wordmark }
-        .safeAreaInset(edge: .bottom, spacing: 0) { serverStatus }
+        .safeAreaInset(edge: .bottom, spacing: 0) { MacServerPicker() }
     }
 
     /// Sits in the space the hidden title bar frees up, so the window opens on the app's
@@ -33,20 +34,5 @@ struct MacSidebar: View {
         .padding(.horizontal, 18)
         .padding(.top, 28)
         .padding(.bottom, 6)
-    }
-
-    private var serverStatus: some View {
-        HStack(spacing: 7) {
-            Circle()
-                .fill(serverManager.isConnected ? Color.green : .orange)
-                .frame(width: 7, height: 7)
-            Text(serverManager.currentServer?.friendlyName ?? "No server")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 10)
     }
 }

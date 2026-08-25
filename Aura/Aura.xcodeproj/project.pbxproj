@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7507C823E9A1C89305C77937 /* MacHomeView.swift */; };
 		04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
 		0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
 		125F7988574B0686E951FB7C /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
@@ -17,6 +18,7 @@
 		260922167542C20F9CDAD108 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000080 /* AppLogger.swift */; };
 		30809170EF314ADF20C2CFE9 /* MacPlayerBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A7A8D3269A4534007744BF /* MacPlayerBar.swift */; };
 		32A49759C5A3CF32AEA00A68 /* MacPlaylistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */; };
+		38937ABA4C1C046DBB0779CD /* MacBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67D53CBB8991E7A47AB055E /* MacBackground.swift */; };
 		3AB1165B891D0FE586E05EFC /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
 		3BC4FC997E17751EBE645FCB /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
 		3BC675569020D96765BDB993 /* MacEqualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */; };
@@ -30,6 +32,7 @@
 		5DACC2F94E2FBAC2FA1E5506 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
 		5EBDFB2C27EFFEF20CA718EE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 599B6E59E456CCD14BAC1A6B /* Cocoa.framework */; };
 		64A2EAE251FFBA441E86F6C8 /* MacArtistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */; };
+		66C5C84F0E93A4DE920CCF29 /* MacShelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6163600181237025007A32C2 /* MacShelf.swift */; };
 		67044D538D8B66F71256F498 /* SearchHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C1 /* SearchHistory.swift */; };
 		69CB76644A67D845CC364E92 /* MacSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECC9389652F34E463A5C765C /* MacSearchView.swift */; };
 		6F5440002B59F82648E55409 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000099 /* GeneratedCoverView.swift */; };
@@ -48,6 +51,7 @@
 		AE1AEF37014E99B74EC9C0E0 /* MacAlbumsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29B621CC4AF2D3304AEB48D /* MacAlbumsView.swift */; };
 		B14BB8B8B6119F8BED515D05 /* AudioCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000087 /* AudioCacheManager.swift */; };
 		B308A21EB72F34D0B1A95848 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
+		B3E087CB664FFC52D5EBFC95 /* MacNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC64675BCED89523D6B47E4D /* MacNowPlayingView.swift */; };
 		B588F5C510ADD0E5A079AF5D /* MixCollageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */; };
 		BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000070 /* Localizable.xcstrings */; };
 		C4A06B22916E4B2EEB2E9205 /* ListeningStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009A /* ListeningStats.swift */; };
@@ -138,6 +142,7 @@
 		E100000100000000000000F6 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
 		E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
 		E100000100000000000000F8 /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
+		EAD18EB0F47BC2E6F77CB899 /* MacServerPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2840376375D75F5F54A64277 /* MacServerPicker.swift */; };
 		EBA1389D873C96B20ECBC2AD /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
 		EBEB7A689B00639BFDCF12E6 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000050 /* DownloadManager.swift */; };
 		EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
@@ -174,6 +179,7 @@
 		184924427443C74B467EA233 /* MacSongTable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongTable.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE18380A8A /* SearchRanking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchRanking.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE183A34FA /* PlayHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayHistory.swift; sourceTree = "<group>"; };
+		2840376375D75F5F54A64277 /* MacServerPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerPicker.swift; sourceTree = "<group>"; };
 		2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistsView.swift; sourceTree = "<group>"; };
 		2DE0E8DD48DEACB25983419C /* MacCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacCommands.swift; sourceTree = "<group>"; };
 		40E8E704D9B72925B6B94399 /* ImageCropView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
@@ -183,8 +189,10 @@
 		50A7A8D3269A4534007744BF /* MacPlayerBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlayerBar.swift; sourceTree = "<group>"; };
 		52EF92C7DDB19233A3394D28 /* MacSongsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongsView.swift; sourceTree = "<group>"; };
 		599B6E59E456CCD14BAC1A6B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		6163600181237025007A32C2 /* MacShelf.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacShelf.swift; sourceTree = "<group>"; };
 		61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlaylistsView.swift; sourceTree = "<group>"; };
 		6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
+		7507C823E9A1C89305C77937 /* MacHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacHomeView.swift; sourceTree = "<group>"; };
 		7B7AA32B23D8B48D503402F9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		88855F68FD1F326A2B289FF3 /* MacGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacGrid.swift; sourceTree = "<group>"; };
 		972B2D4634806C3FA589AE66 /* MacMixesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacMixesView.swift; sourceTree = "<group>"; };
@@ -192,6 +200,7 @@
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
 		A31E6A5950E5B49121F1EDCD /* MacSidebar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSidebar.swift; sourceTree = "<group>"; };
 		A747572DB3C445E463CCE4D8 /* Platform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
+		AC64675BCED89523D6B47E4D /* MacNowPlayingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacNowPlayingView.swift; sourceTree = "<group>"; };
 		BEB587064D721AA775E21C53 /* SlskdClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlskdClient.swift; sourceTree = "<group>"; };
 		C29B621CC4AF2D3304AEB48D /* MacAlbumsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacAlbumsView.swift; sourceTree = "<group>"; };
 		CCAA00020000000000000001 /* MusicBrainzService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicBrainzService.swift; sourceTree = "<group>"; };
@@ -275,6 +284,7 @@
 		E10000030000000000000001 /* Aura.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aura.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E10000030000000000000002 /* AuraWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AuraWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MixCollageView.swift; sourceTree = "<group>"; };
+		E67D53CBB8991E7A47AB055E /* MacBackground.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacBackground.swift; sourceTree = "<group>"; };
 		ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Aura-mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ECC9389652F34E463A5C765C /* MacSearchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSearchView.swift; sourceTree = "<group>"; };
 		FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistMembershipCache.swift; sourceTree = "<group>"; };
@@ -342,6 +352,11 @@
 				52EF92C7DDB19233A3394D28 /* MacSongsView.swift */,
 				2DE0E8DD48DEACB25983419C /* MacCommands.swift */,
 				7B7AA32B23D8B48D503402F9 /* Info.plist */,
+				7507C823E9A1C89305C77937 /* MacHomeView.swift */,
+				AC64675BCED89523D6B47E4D /* MacNowPlayingView.swift */,
+				6163600181237025007A32C2 /* MacShelf.swift */,
+				E67D53CBB8991E7A47AB055E /* MacBackground.swift */,
+				2840376375D75F5F54A64277 /* MacServerPicker.swift */,
 			);
 			name = Mac;
 			path = Mac;
@@ -728,6 +743,11 @@
 				D445B4900263E009D2334A45 /* MacSongsView.swift in Sources */,
 				EBA1389D873C96B20ECBC2AD /* BouncingDotsLoader.swift in Sources */,
 				C4C2E0968A314AF534FA406D /* MacCommands.swift in Sources */,
+				00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */,
+				B3E087CB664FFC52D5EBFC95 /* MacNowPlayingView.swift in Sources */,
+				66C5C84F0E93A4DE920CCF29 /* MacShelf.swift in Sources */,
+				38937ABA4C1C046DBB0779CD /* MacBackground.swift in Sources */,
+				EAD18EB0F47BC2E6F77CB899 /* MacServerPicker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

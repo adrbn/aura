@@ -42,6 +42,7 @@ struct MacSongTable: View {
             }
             .width(52)
         }
+        .scrollContentBackground(.hidden)
         .contextMenu(forSelectionType: Song.ID.self) { ids in
             Button("Play") { play(ids) }
             Button("Play Next") { chosen(ids).reversed().forEach { player.playNext($0) } }
