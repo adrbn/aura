@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Self-hosted servers are reached over plain HTTP far more often than not: a box on
+	     the LAN, or an IP on a tailnet, neither of which has a certificate anyone would
+	     issue. Without this, App Transport Security refuses the connection outright and the
+	     app can never talk to the one server it exists to talk to. Matches the iOS target. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Aura connects to the music server on your local network that you configure.</string>
+	<!-- The fonts are copied into the bundle root by a build phase, as on iOS. -->
+	<key>ATSApplicationFontsPath</key>
+	<string>.</string>
+</dict>
+</plist>
