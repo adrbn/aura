@@ -16,6 +16,7 @@
 		1DE6DF3B70B4F115C8E5194A /* ServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000012 /* ServerManager.swift */; };
 		223777C02AEF4304FF9CB3D0 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
 		260922167542C20F9CDAD108 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000080 /* AppLogger.swift */; };
+		2654DD345C3C590F7D60DA5B /* MacPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */; };
 		30809170EF314ADF20C2CFE9 /* MacPlayerBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A7A8D3269A4534007744BF /* MacPlayerBar.swift */; };
 		32A49759C5A3CF32AEA00A68 /* MacPlaylistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */; };
 		38937ABA4C1C046DBB0779CD /* MacBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67D53CBB8991E7A47AB055E /* MacBackground.swift */; };
@@ -35,6 +36,7 @@
 		66C5C84F0E93A4DE920CCF29 /* MacShelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6163600181237025007A32C2 /* MacShelf.swift */; };
 		67044D538D8B66F71256F498 /* SearchHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C1 /* SearchHistory.swift */; };
 		69CB76644A67D845CC364E92 /* MacSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECC9389652F34E463A5C765C /* MacSearchView.swift */; };
+		69F2D8A569CD130DF5E0FE74 /* MacPlaylistOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 192D83957C7F2C1E93977841 /* MacPlaylistOrder.swift */; };
 		6F5440002B59F82648E55409 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000099 /* GeneratedCoverView.swift */; };
 		7232B8C3D331010529C1A904 /* MacSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31E6A5950E5B49121F1EDCD /* MacSidebar.swift */; };
 		79226C21CD16E88AF9BA7E57 /* MacServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */; };
@@ -176,7 +178,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPreferences.swift; sourceTree = "<group>"; };
 		184924427443C74B467EA233 /* MacSongTable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongTable.swift; sourceTree = "<group>"; };
+		192D83957C7F2C1E93977841 /* MacPlaylistOrder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlaylistOrder.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE18380A8A /* SearchRanking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchRanking.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE183A34FA /* PlayHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayHistory.swift; sourceTree = "<group>"; };
 		2840376375D75F5F54A64277 /* MacServerPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerPicker.swift; sourceTree = "<group>"; };
@@ -357,6 +361,8 @@
 				6163600181237025007A32C2 /* MacShelf.swift */,
 				E67D53CBB8991E7A47AB055E /* MacBackground.swift */,
 				2840376375D75F5F54A64277 /* MacServerPicker.swift */,
+				192D83957C7F2C1E93977841 /* MacPlaylistOrder.swift */,
+				06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */,
 			);
 			name = Mac;
 			path = Mac;
@@ -748,6 +754,8 @@
 				66C5C84F0E93A4DE920CCF29 /* MacShelf.swift in Sources */,
 				38937ABA4C1C046DBB0779CD /* MacBackground.swift in Sources */,
 				EAD18EB0F47BC2E6F77CB899 /* MacServerPicker.swift in Sources */,
+				69F2D8A569CD130DF5E0FE74 /* MacPlaylistOrder.swift in Sources */,
+				2654DD345C3C590F7D60DA5B /* MacPreferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

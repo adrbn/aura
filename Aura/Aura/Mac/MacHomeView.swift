@@ -9,6 +9,7 @@ struct MacHomeView: View {
     @State private var serverManager = ServerManager.shared
     @State private var generator = MixGenerator.shared
     @State private var player = AudioPlayer.shared
+    @State private var preferences = MacPreferences.shared
 
     @State private var recent: [Album] = []
     @State private var newest: [Album] = []
@@ -123,9 +124,9 @@ struct MacHomeView: View {
     @ViewBuilder
     private func mixArtwork(_ mix: Mix) -> some View {
         if let nature = mix.generatedCover {
-            GeneratedCoverView(nature: nature, size: 164, cornerRadius: 8)
+            GeneratedCoverView(nature: nature, size: preferences.coverSize.shelfWidth, cornerRadius: 8)
         } else {
-            MixCollageView(coverArts: mix.collageCoverArts, size: 164, cornerRadius: 8)
+            MixCollageView(coverArts: mix.collageCoverArts, size: preferences.coverSize.shelfWidth, cornerRadius: 8)
         }
     }
 
@@ -145,7 +146,7 @@ struct MacHomeView: View {
     }
 
     private var playlistShelf: some View {
-        MacShelf(title: "Your Playlists", items: playlists) { playlist in
+        MacShelf(title: "Your Playlists", items: MacPlaylistOrder.pinnedFirst(playlists)) { playlist in
             NavigationLink(value: playlist) {
                 MacPlayableCard(
                     coverArt: playlist.coverArt,

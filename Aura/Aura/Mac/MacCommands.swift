@@ -14,6 +14,15 @@ struct MacCommands: Commands {
         // second one.
         CommandGroup(replacing: .newItem) { }
 
+        CommandGroup(after: .toolbar) {
+            Menu("Cover Size") {
+                ForEach(MacCoverSize.allCases) { size in
+                    Button(size.label) { MacPreferences.shared.coverSize = size }
+                        .keyboardShortcut(size.shortcut, modifiers: .command)
+                }
+            }
+        }
+
         CommandMenu("Playback") {
             Button(player.isPlaying ? "Pause" : "Play") { player.togglePlayPause() }
                 .keyboardShortcut(.space, modifiers: [])

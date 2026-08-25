@@ -31,8 +31,13 @@ struct MacPlayerBar: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 10)
         .frame(height: 78)
-        .background(.bar)
-        .overlay(alignment: .top) { Divider() }
+        // A wash rather than a bar. It has to separate itself from the artwork scrolling
+        // behind it without becoming a second, opaque surface.
+        .background(.black.opacity(0.35))
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) {
+            Rectangle().fill(.white.opacity(0.07)).frame(height: 1)
+        }
         .popover(isPresented: $showQueue, arrowEdge: .top) { MacQueueView() }
         .popover(isPresented: $showEqualizer, arrowEdge: .top) { MacEqualizerView() }
     }

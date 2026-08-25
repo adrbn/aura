@@ -77,6 +77,9 @@ struct MacRootView: View {
         // Behind everything, including the sidebar. The lists and grids above are made
         // transparent so it shows through rather than being covered by their own material.
         .background(MacBackground())
+        // Nothing draws a bar of its own: the toolbar strip was the last opaque grey band
+        // separating the window's top from its content.
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .overlay {
             if player.isShowingNowPlaying {
                 MacNowPlayingView { withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying = false } }

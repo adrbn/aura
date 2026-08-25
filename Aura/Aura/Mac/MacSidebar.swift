@@ -17,6 +17,10 @@ struct MacSidebar: View {
             }
         }
         .listStyle(.sidebar)
+        // The window's gradient runs *through* the sidebar. Left to itself a sidebar draws
+        // its own vibrant material, which is exactly the seam that made the three regions
+        // read as three panels bolted together.
+        .scrollContentBackground(.hidden)
         .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 280)
         .safeAreaInset(edge: .top, spacing: 0) { wordmark }
         .safeAreaInset(edge: .bottom, spacing: 0) { MacServerPicker() }

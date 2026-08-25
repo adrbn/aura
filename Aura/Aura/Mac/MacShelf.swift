@@ -47,7 +47,7 @@ struct MacPlayableCard: View {
     var subtitle: String?
     var placeholderName: String?
     var circular = false
-    var width: CGFloat = 164
+    var width: CGFloat = MacPreferences.shared.coverSize.shelfWidth
     /// Drawn instead of the cover — for mixes, which have templated art rather than a file.
     var artwork: AnyView?
     var play: (() -> Void)?

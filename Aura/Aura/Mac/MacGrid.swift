@@ -9,6 +9,8 @@ struct MacGrid<Item: Identifiable, Tile: View>: View {
     var emptyMessage = "Nothing here"
     @ViewBuilder var tile: (Item) -> Tile
 
+    @State private var preferences = MacPreferences.shared
+
     var body: some View {
         if isLoading && items.isEmpty {
             MacLoadingState()
@@ -17,7 +19,9 @@ struct MacGrid<Item: Identifiable, Tile: View>: View {
         } else {
             ScrollView {
                 LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 148, maximum: 210), spacing: 20)],
+                    columns: [GridItem(.adaptive(minimum: preferences.coverSize.gridMinimum,
+                                                 maximum: preferences.coverSize.gridMaximum),
+                                       spacing: 20)],
                     spacing: 22
                 ) {
                     ForEach(items) { tile($0) }

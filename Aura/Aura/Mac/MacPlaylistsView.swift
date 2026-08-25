@@ -4,15 +4,27 @@ struct MacPlaylistsView: View {
     @State private var serverManager = ServerManager.shared
     @State private var playlists: [Playlist] = []
     @State private var isLoading = false
+    @State private var settings = AppSettings.shared
 
     var body: some View {
-        MacGrid(items: playlists, isLoading: isLoading, emptyMessage: "No playlists") { playlist in
+        MacGrid(items: MacPlaylistOrder.pinnedFirst(playlists), isLoading: isLoading,
+                emptyMessage: "No playlists") { playlist in
             NavigationLink(value: playlist) {
                 MacCoverTile(coverArt: playlist.coverArt, title: playlist.name,
                              subtitle: playlist.songCount.map { "\($0) songs" },
                              placeholderName: playlist.name)
+                    .overlay(alignment: .topTrailing) {
+                        if settings.isPinned(playlist.id) {
+                            Image(systemName: "pin.fill")
+                                .font(.system(size: 9))
+                                .padding(5)
+                                .background(Circle().fill(.black.opacity(0.55)))
+                                .padding(6)
+                        }
+                    }
             }
             .buttonStyle(.plain)
+            .contextMenu { MacPinButton(playlistId: playlist.id, asLabel: true) }
         }
         .navigationTitle("Playlists")
         .task { await load() }
@@ -44,6 +56,7 @@ struct MacPlaylistDetailView: View {
             ) {
                 Button { play(shuffled: false) } label: { Label("Play", systemImage: "play.fill") }
                 Button { play(shuffled: true) } label: { Label("Shuffle", systemImage: "shuffle") }
+                MacPinButton(playlistId: playlist.id, asLabel: true)
             }
             Divider()
             MacSongTable(songs: songs, source: .playlist(id: playlist.id, name: playlist.name))
