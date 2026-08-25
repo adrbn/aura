@@ -49,7 +49,7 @@ struct MacNowPlayingView: View {
     private var artworkPane: some View {
         VStack(spacing: 22) {
             Spacer()
-            CoverArtImage(coverArt: player.currentSong?.coverArt, size: 340, cornerRadius: 14)
+            CoverArtImage(coverArt: player.currentSong?.coverArt, size: 380, cornerRadius: 16)
                 .shadow(color: .black.opacity(0.5), radius: 30, y: 14)
             VStack(spacing: 6) {
                 Text(player.currentSong?.title ?? "Nothing playing")
@@ -60,10 +60,10 @@ struct MacNowPlayingView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(.white.opacity(0.7))
             }
-            .frame(width: 340)
+            .frame(width: 380)
             Spacer()
         }
-        .frame(width: 460)
+        .frame(width: 500)
         .frame(maxHeight: .infinity)
     }
 
@@ -83,6 +83,8 @@ struct MacNowPlayingView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 MacLyricsSheet()
+                    .frame(maxWidth: 760)
+                    .frame(maxWidth: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -103,7 +105,7 @@ struct MacLyricsSheet: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
-                LazyVStack(alignment: .leading, spacing: 20) {
+                LazyVStack(alignment: .leading, spacing: 26) {
                     Spacer().frame(height: 140)
                     ForEach(Array(player.lyrics.enumerated()), id: \.element.id) { index, line in
                         // Only the line being sung redraws on the display link, and only
@@ -117,7 +119,7 @@ struct MacLyricsSheet: View {
                     }
                     Spacer().frame(height: 200)
                 }
-                .padding(.horizontal, 44)
+                .padding(.horizontal, 52)
             }
             // Long eased dissolves at both ends, so the sheet thins out into the background
             // rather than being cut off by the edge of the pane.
@@ -139,7 +141,7 @@ struct MacLyricsSheet: View {
         let distance = currentIndex.map { abs(index - $0) } ?? 0
         let isCurrent = index == currentIndex
         return text(for: line, isCurrent: isCurrent)
-            .font(.system(size: 26, weight: .bold))
+            .font(.system(size: 34, weight: .bold))
             .foregroundStyle(.white.opacity(synced ? opacity(distance) : 0.8))
             .blur(radius: synced ? blur(distance) : 0)
             .scaleEffect(isCurrent || !synced ? 1 : 0.86, anchor: .leading)

@@ -866,8 +866,20 @@ final class AudioPlayer {
         skipToNextPlayableOffline()
     }
 
-    func play() { AppLogger.shared.log("▶️ play()"); player?.play(); isPlaying = true; updateLiveActivity() }
-    func pause() { AppLogger.shared.log("⏸ pause()"); player?.pause(); isPlaying = false; updateLiveActivity() }
+    func play() { AppLogger.shared.log("▶️ play()"); player?.play(); isPlaying = true; publishPlaybackState(); updateLiveActivity() }
+    func pause() { AppLogger.shared.log("⏸ pause()"); player?.pause(); isPlaying = false; publishPlaybackState(); updateLiveActivity() }
+
+    /// Tells the system whether we are playing.
+    ///
+    /// iOS infers this from the audio session, so it never needed saying. macOS does not:
+    /// until an app publishes a playback state it is not treated as the Now Playing app at
+    /// all, and the media keys, the Touch Bar and Control Centre go on addressing whatever
+    /// was there before it.
+    private func publishPlaybackState() {
+        #if os(macOS)
+        MPNowPlayingInfoCenter.default().playbackState = isPlaying ? .playing : .paused
+        #endif
+    }
     func togglePlayPause() { if isPlaying { pause() } else { play() } }
 
     /// Begin caching the next track in queue when the current song is near completion

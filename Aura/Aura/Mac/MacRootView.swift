@@ -65,6 +65,7 @@ struct MacRootView: View {
                     }
                 }
                 .searchable(text: $query, placement: .toolbar, prompt: "Search your library")
+                .toolbar { MacOptionsMenu() }
                     .navigationDestination(for: Album.self) { MacAlbumDetailView(album: $0) }
                     .navigationDestination(for: Artist.self) { MacArtistDetailView(artist: $0) }
                     .navigationDestination(for: Playlist.self) { MacPlaylistDetailView(playlist: $0) }
@@ -73,6 +74,12 @@ struct MacRootView: View {
         }
         // Spans the full width, under the sidebar as well — the transport belongs to the
         // window, not to whichever section happens to be showing.
+        .overlay {
+            if player.isShowingNowPlaying {
+                MacNowPlayingView { withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying = false } }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) { MacPlayerBar() }
         // Behind everything, including the sidebar. The lists and grids above are made
         // transparent so it shows through rather than being covered by their own material.
@@ -80,12 +87,6 @@ struct MacRootView: View {
         // Nothing draws a bar of its own: the toolbar strip was the last opaque grey band
         // separating the window's top from its content.
         .toolbarBackground(.hidden, for: .windowToolbar)
-        .overlay {
-            if player.isShowingNowPlaying {
-                MacNowPlayingView { withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying = false } }
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
         // Changing section starts a fresh trail. Keeping the old one would leave you on an
         // album you reached from Search after clicking Artists.
         .onChange(of: section) { _, _ in path = NavigationPath() }

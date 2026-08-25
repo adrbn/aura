@@ -17,6 +17,7 @@ struct AuraMacApp: App {
                 .environment(serverManager)
                 .environment(player)
                 .frame(minWidth: 900, minHeight: 560)
+                .task { PinSync.shared.start() }
         }
         .defaultSize(width: 1180, height: 760)
         // The sidebar is the app's own navigation; the system title bar would only

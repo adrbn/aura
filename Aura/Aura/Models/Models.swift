@@ -304,11 +304,15 @@ final class AppSettings {
             pinnedPlaylistOrder.append(playlistId)
         }
         save()
+        // Pins travel between devices; everything else in here is per-device. Hopped onto
+        // the main actor because AppSettings itself is not isolated to one.
+        Task { @MainActor in PinSync.shared.push() }
     }
 
     func movePinnedPlaylist(from source: IndexSet, to destination: Int) {
         pinnedPlaylistOrder.move(fromOffsets: source, toOffset: destination)
         save()
+        Task { @MainActor in PinSync.shared.push() }
     }
 
     func isPinned(_ playlistId: String) -> Bool {
