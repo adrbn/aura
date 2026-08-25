@@ -85,7 +85,7 @@ struct MacArtistDetailView: View {
     }
 
     private func sectionTitle(_ text: String) -> some View {
-        Text(text).auraDisplay(24).padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 8)
+        Text(text).auraDisplay(34).padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 8)
     }
 
     private func load() async {

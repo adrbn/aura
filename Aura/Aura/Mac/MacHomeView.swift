@@ -43,7 +43,7 @@ struct MacHomeView: View {
 
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(salutation).auraDisplay(42)
+            Text(salutation).auraDisplay(58)
             Text(serverManager.currentServer?.friendlyName ?? "")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)

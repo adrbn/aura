@@ -92,7 +92,7 @@ struct MacSearchView: View {
     }
 
     private func header(_ text: String) -> some View {
-        Text(text).auraDisplay(24)
+        Text(text).auraDisplay(34)
             .padding(.horizontal, 24).padding(.top, 18).padding(.bottom, 8)
     }
 

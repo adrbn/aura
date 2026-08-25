@@ -92,10 +92,10 @@ struct MacDetailHeader<Actions: View>: View {
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 22) {
-            CoverArtImage(coverArt: coverArt, size: 172, cornerRadius: 10,
+            CoverArtImage(coverArt: coverArt, size: 210, cornerRadius: 12,
                           placeholderName: placeholderName)
             VStack(alignment: .leading, spacing: 8) {
-                Text(title).auraDisplay(40).lineLimit(2)
+                Text(title).auraDisplay(52).lineLimit(2)
                 Text(subtitle).font(.callout).foregroundStyle(.secondary)
                 HStack(spacing: 10) { actions }.padding(.top, 4)
             }

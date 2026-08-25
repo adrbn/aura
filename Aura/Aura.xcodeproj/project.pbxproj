@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7507C823E9A1C89305C77937 /* MacHomeView.swift */; };
 		04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
+		08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */; };
 		0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
 		125F7988574B0686E951FB7C /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
 		169403C7846F4989E4392CEF /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
@@ -61,7 +62,6 @@
 		BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E789F4384A074A1B5C0CC509 /* PinSync.swift */; };
 		C4A06B22916E4B2EEB2E9205 /* ListeningStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009A /* ListeningStats.swift */; };
 		C4C2E0968A314AF534FA406D /* MacCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE0E8DD48DEACB25983419C /* MacCommands.swift */; };
-		C79FBAB693B0838F9C12F067 /* MacTopBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD091B607D4ED935751EF22D /* MacTopBar.swift */; };
 		CB0915AA49DFE0752C781019 /* MusicBrainzService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAA00020000000000000001 /* MusicBrainzService.swift */; };
 		CCAA00010000000000000001 /* MusicBrainzService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAA00020000000000000001 /* MusicBrainzService.swift */; };
 		D0A5EB9898BCC71E22E56B92 /* MixCollageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */; };
@@ -196,6 +196,7 @@
 		485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerSetupView.swift; sourceTree = "<group>"; };
 		48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacEqualizerView.swift; sourceTree = "<group>"; };
 		4BE00E8954AF9B98264A367E /* MacQueueView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacQueueView.swift; sourceTree = "<group>"; };
+		4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPendingNavigation.swift; sourceTree = "<group>"; };
 		50A7A8D3269A4534007744BF /* MacPlayerBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlayerBar.swift; sourceTree = "<group>"; };
 		52EF92C7DDB19233A3394D28 /* MacSongsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongsView.swift; sourceTree = "<group>"; };
 		599B6E59E456CCD14BAC1A6B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
@@ -219,7 +220,6 @@
 		D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacOptionsMenu.swift; sourceTree = "<group>"; };
 		D7A1E179BB18A52978EC7635 /* SongLinkService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongLinkService.swift; sourceTree = "<group>"; };
 		DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraMacApp.swift; sourceTree = "<group>"; };
-		DD091B607D4ED935751EF22D /* MacTopBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacTopBar.swift; sourceTree = "<group>"; };
 		E10000020000000000000001 /* AuraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuraApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E10000020000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -376,8 +376,8 @@
 				06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */,
 				8BF55BE55F578254EC9F3FB0 /* AuraMac.entitlements */,
 				D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */,
-				DD091B607D4ED935751EF22D /* MacTopBar.swift */,
 				BC935E192C9737FFC79738ED /* MacSongRow.swift */,
+				4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */,
 			);
 			name = Mac;
 			path = Mac;
@@ -775,8 +775,8 @@
 				2654DD345C3C590F7D60DA5B /* MacPreferences.swift in Sources */,
 				BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */,
 				DE538F275F2FE804D1678772 /* MacOptionsMenu.swift in Sources */,
-				C79FBAB693B0838F9C12F067 /* MacTopBar.swift in Sources */,
 				FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */,
+				08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

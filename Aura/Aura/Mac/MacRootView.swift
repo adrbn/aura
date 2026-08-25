@@ -38,6 +38,9 @@ struct MacRootView: View {
     @State private var path = NavigationPath()
     /// One search field for the whole window, rather than a section you have to go to.
     @State private var query = ""
+    /// Owned here rather than left to the split view. With the toolbar gone there is no
+    /// system button to restore a collapsed sidebar, so its state has to be ours to set.
+    @State private var preferences = MacPreferences.shared
 
     var body: some View {
         Group {
@@ -51,8 +54,8 @@ struct MacRootView: View {
     }
 
     private var browser: some View {
-        NavigationSplitView {
-            MacSidebar(section: $section)
+        NavigationSplitView(columnVisibility: columnVisibility) {
+            MacSidebar(section: $section, query: $query)
         } detail: {
             // A plain VStack, not a safe-area inset. As an inset the bar was handed the
             // whole height and centred itself in it, landing halfway down the window. Here
@@ -60,8 +63,7 @@ struct MacRootView: View {
             //
             // Outside the NavigationStack on purpose, so it stays put while album and
             // artist screens push and pop beneath it.
-            VStack(spacing: 0) {
-                MacTopBar(query: $query)
+            Group {
                 NavigationStack(path: $path) {
                     // Typing anywhere takes over the detail area, and clearing it hands the
                     // section back — search is a lens over the library, not a place in it.
@@ -76,6 +78,7 @@ struct MacRootView: View {
                     .navigationDestination(for: Artist.self) { MacArtistDetailView(artist: $0) }
                     .navigationDestination(for: Playlist.self) { MacPlaylistDetailView(playlist: $0) }
                     .navigationDestination(for: Mix.self) { MacMixDetailView(mix: $0) }
+                    .macPendingNavigation(path: $path)
                 }
             }
         }
@@ -93,18 +96,26 @@ struct MacRootView: View {
         .background(MacBackground())
         // Nothing draws a bar of its own. The search field and the options menu are in the
         // content (see MacTopBar) precisely so no toolbar exists to paint a strip.
-        .toolbar(removing: .title)
-        // The split view adds its own sidebar button, and one toolbar item is enough to
-        // make macOS draw the whole grey strip. The sidebar still toggles from the View
-        // menu and its shortcut; the band is what had to go.
-        .toolbar(removing: .sidebarToggle)
-        .toolbarBackground(.hidden, for: .windowToolbar)
+        // Hidden outright, not emptied. Removing the title and then the sidebar button
+        // still left a toolbar in place, and an empty toolbar draws its grey strip exactly
+        // like a full one. The window has no toolbar at all now; the sidebar still toggles
+        // from the View menu and its shortcut.
+        .toolbar(.hidden, for: .windowToolbar)
         // Changing section starts a fresh trail. Keeping the old one would leave you on an
         // album you reached from Search after clicking Artists.
         .onChange(of: section) { _, _ in path = NavigationPath() }
         .task {
             if !serverManager.isConnected { await serverManager.testConnection() }
         }
+    }
+
+    /// Kept in a preference so the View menu can reach it: with no toolbar there is no
+    /// system button left to bring a collapsed sidebar back.
+    private var columnVisibility: Binding<NavigationSplitViewVisibility> {
+        Binding(
+            get: { preferences.sidebarVisible ? .all : .detailOnly },
+            set: { preferences.sidebarVisible = $0 != .detailOnly }
+        )
     }
 
     @ViewBuilder

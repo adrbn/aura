@@ -66,10 +66,16 @@ final class MacPreferences {
         didSet { UserDefaults.standard.set(coverSize.rawValue, forKey: Self.coverSizeKey) }
     }
 
+    var sidebarVisible: Bool {
+        didSet { UserDefaults.standard.set(sidebarVisible, forKey: Self.sidebarKey) }
+    }
+
     private static let coverSizeKey = "aura_mac_cover_size"
+    private static let sidebarKey = "aura_mac_sidebar_visible"
 
     private init() {
         let stored = UserDefaults.standard.string(forKey: Self.coverSizeKey)
         coverSize = stored.flatMap(MacCoverSize.init(rawValue:)) ?? .large
+        sidebarVisible = UserDefaults.standard.object(forKey: Self.sidebarKey) as? Bool ?? true
     }
 }

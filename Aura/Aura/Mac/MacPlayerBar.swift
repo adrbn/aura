@@ -57,13 +57,18 @@ struct MacPlayerBar: View {
             .help("Now Playing")
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(song?.title ?? "Nothing playing")
-                    .font(.system(size: 13, weight: .semibold))
-                    .lineLimit(1)
-                Text(song?.artist ?? "")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                // Both lead somewhere, as they do on the phone. The bar sits outside the
+                // navigation stack, so they set the player's pending id and let
+                // MacPendingNavigation resolve and push it.
+                linkedText(song?.title ?? "Nothing playing",
+                           size: 13, weight: .semibold, colour: .primary) {
+                    guard let albumId = song?.albumId else { return }
+                    player.pendingAlbumId = albumId
+                }
+                linkedText(song?.artist ?? "", size: 11, weight: .regular, colour: .secondary) {
+                    guard let artistId = song?.artistId else { return }
+                    player.pendingArtistId = artistId
+                }
             }
 
             if song != nil {
@@ -181,6 +186,18 @@ struct MacPlayerBar: View {
         }
     }
 
+    /// Reads as plain text until the pointer is over it, then underlines — a link that
+    /// doesn't shout, which is what a transport bar wants.
+    @ViewBuilder
+    private func linkedText(_ text: String, size: CGFloat, weight: Font.Weight,
+                            colour: HierarchicalShapeStyle, action: @escaping () -> Void) -> some View {
+        if text.isEmpty {
+            EmptyView()
+        } else {
+            HoverLink(text: text, size: size, weight: weight, colour: colour, action: action)
+        }
+    }
+
     private func iconButton(_ symbol: String, size: CGFloat = 13, active: Bool = false,
                             help: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -200,5 +217,26 @@ struct MacPlayerBar: View {
         case .all: .one
         case .one: .off
         }
+    }
+}
+
+private struct HoverLink: View {
+    let text: String
+    let size: CGFloat
+    let weight: Font.Weight
+    let colour: HierarchicalShapeStyle
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(text)
+                .font(.system(size: size, weight: weight))
+                .foregroundStyle(colour)
+                .underline(hovering)
+                .lineLimit(1)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
     }
 }

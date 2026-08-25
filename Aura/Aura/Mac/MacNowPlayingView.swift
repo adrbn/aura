@@ -169,8 +169,13 @@ struct MacLyricsSheet: View {
         // zero then made *every* line distance 0 — full white, unblurred, all at once — so
         // the sheet opened as a wall of text and only sorted itself out once singing began.
         // Measuring from the top instead shows the first line waiting, and nothing else.
-        let distance = currentIndex.map { abs(index - $0) } ?? index
-        let isCurrent = index == currentIndex
+        // Before the song reaches its first line there is no current index. The first line
+        // is the one you are waiting on, so it takes the focus: full size, but unfilled,
+        // because none of its words has been sung. Treating it as "not current" made it
+        // small and solid white — the opposite of both.
+        let focus = currentIndex ?? 0
+        let distance = abs(index - focus)
+        let isCurrent = index == focus
         return text(for: line, isCurrent: isCurrent)
             .font(.system(size: 44, weight: .bold))
             .foregroundStyle(.white.opacity(synced ? opacity(distance) : 0.8))

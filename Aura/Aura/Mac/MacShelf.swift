@@ -13,7 +13,7 @@ struct MacShelf<Item: Identifiable, Card: View>: View {
         if !items.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(title).auraDisplay(26)
+                    Text(title).auraDisplay(34)
                     if let subtitle {
                         Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary)
                     }

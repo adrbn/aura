@@ -15,6 +15,17 @@ struct MacCommands: Commands {
         CommandGroup(replacing: .newItem) { }
 
         CommandGroup(after: .toolbar) {
+            // The window buttons hide themselves in full screen, which is the only way to
+            // be rid of them — they are the system's, not the app's.
+            Button("Enter Full Screen") {
+                NSApp.keyWindow?.toggleFullScreen(nil)
+            }
+            .keyboardShortcut("f", modifiers: [.command, .control])
+            Divider()
+            Button("Toggle Sidebar") {
+                MacPreferences.shared.sidebarVisible.toggle()
+            }
+            .keyboardShortcut("s", modifiers: [.command, .control])
             Menu("Cover Size") {
                 ForEach(MacCoverSize.allCases) { size in
                     Button(size.label) { MacPreferences.shared.coverSize = size }
