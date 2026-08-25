@@ -43,6 +43,7 @@
 		79226C21CD16E88AF9BA7E57 /* MacServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */; };
 		7E8ABA46083A765581C69A5E /* MacGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88855F68FD1F326A2B289FF3 /* MacGrid.swift */; };
 		7E8BB5A780EBB03A7F6F7786 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000013 /* AudioPlayer.swift */; };
+		80FBFEA4B8D74CC894B51E42 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F2 /* AppIcon.icon */; };
 		87906AC1B1CBE2493FEBE438 /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
 		8BB5962C91AED0B33C182D53 /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
 		8C4E3E5E24DD37272F4E615D /* MacQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE00E8954AF9B98264A367E /* MacQueueView.swift */; };
@@ -154,6 +155,7 @@
 		EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
 		F4367F560164A20E2291171A /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000089 /* KeychainHelper.swift */; };
 		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
+		FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC935E192C9737FFC79738ED /* MacSongRow.swift */; };
 		FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
 /* End PBXBuildFile section */
 
@@ -210,6 +212,7 @@
 		A31E6A5950E5B49121F1EDCD /* MacSidebar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSidebar.swift; sourceTree = "<group>"; };
 		A747572DB3C445E463CCE4D8 /* Platform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
 		AC64675BCED89523D6B47E4D /* MacNowPlayingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacNowPlayingView.swift; sourceTree = "<group>"; };
+		BC935E192C9737FFC79738ED /* MacSongRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongRow.swift; sourceTree = "<group>"; };
 		BEB587064D721AA775E21C53 /* SlskdClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlskdClient.swift; sourceTree = "<group>"; };
 		C29B621CC4AF2D3304AEB48D /* MacAlbumsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacAlbumsView.swift; sourceTree = "<group>"; };
 		CCAA00020000000000000001 /* MusicBrainzService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicBrainzService.swift; sourceTree = "<group>"; };
@@ -374,6 +377,7 @@
 				8BF55BE55F578254EC9F3FB0 /* AuraMac.entitlements */,
 				D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */,
 				DD091B607D4ED935751EF22D /* MacTopBar.swift */,
+				BC935E192C9737FFC79738ED /* MacSongRow.swift */,
 			);
 			name = Mac;
 			path = Mac;
@@ -636,6 +640,7 @@
 			files = (
 				D5BE2989193E4B96C7AA1B99 /* Assets.xcassets in Resources */,
 				BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */,
+				80FBFEA4B8D74CC894B51E42 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -771,6 +776,7 @@
 				BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */,
 				DE538F275F2FE804D1678772 /* MacOptionsMenu.swift in Sources */,
 				C79FBAB693B0838F9C12F067 /* MacTopBar.swift in Sources */,
+				FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -915,6 +921,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Aura/Mac/AuraMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -945,6 +952,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Aura/Aura.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
@@ -976,6 +984,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Aura/Mac/AuraMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -1124,6 +1133,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Aura/Aura.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
@@ -1154,6 +1164,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Aura/Aura.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
@@ -1293,6 +1304,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Aura/Mac/AuraMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;

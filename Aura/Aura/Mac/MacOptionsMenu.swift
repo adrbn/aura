@@ -41,10 +41,14 @@ struct MacOptionsMenu: View {
             }
             Toggle("Gapless Playback", isOn: $settings.gaplessPlayback)
         } label: {
-            Image(systemName: "ellipsis.circle")
+            Image(systemName: "gearshape")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
         }
         .menuIndicator(.hidden)
-        .help("Options")
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .help("Settings")
         // Every control above writes straight into the shared settings object, which is not
         // persisted until asked. One place to do it, rather than nine.
         .onChange(of: settingsFingerprint) { _, _ in settings.save() }

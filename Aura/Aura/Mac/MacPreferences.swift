@@ -70,6 +70,6 @@ final class MacPreferences {
 
     private init() {
         let stored = UserDefaults.standard.string(forKey: Self.coverSizeKey)
-        coverSize = stored.flatMap(MacCoverSize.init(rawValue:)) ?? .medium
+        coverSize = stored.flatMap(MacCoverSize.init(rawValue:)) ?? .large
     }
 }

@@ -107,6 +107,9 @@ struct MacLyricsSheet: View {
     @State private var currentIndex: Int?
     /// Half the pane, so line one can sit in the middle like every other line.
     @State private var paneHeight: CGFloat = 600
+    /// Set while the sheet is being scrolled by hand, and for a moment afterwards.
+    @State private var browsing = false
+    @State private var browsingTimeout: Task<Void, Never>?
 
     private var synced: Bool { player.lyrics.contains { $0.time != nil } }
 
@@ -140,6 +143,19 @@ struct MacLyricsSheet: View {
                         .frame(height: 110)
                 }
             )
+            // Scrolling by hand suspends the follow. Without this the next playback tick
+            // would yank the sheet straight back to the sung line, making it impossible to
+            // read ahead or look back.
+            .onScrollPhaseChange { _, phase in
+                guard phase == .interacting || phase == .decelerating else { return }
+                browsing = true
+                browsingTimeout?.cancel()
+                browsingTimeout = Task {
+                    try? await Task.sleep(for: .seconds(5))
+                    guard !Task.isCancelled else { return }
+                    browsing = false
+                }
+            }
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
                 if height > 0 { paneHeight = height }
             }
@@ -149,17 +165,23 @@ struct MacLyricsSheet: View {
     }
 
     private func lineView(line: LyricsLine, index: Int) -> some View {
-        let distance = currentIndex.map { abs(index - $0) } ?? 0
+        // Before the song reaches its first line there is no current index. Measuring from
+        // zero then made *every* line distance 0 — full white, unblurred, all at once — so
+        // the sheet opened as a wall of text and only sorted itself out once singing began.
+        // Measuring from the top instead shows the first line waiting, and nothing else.
+        let distance = currentIndex.map { abs(index - $0) } ?? index
         let isCurrent = index == currentIndex
         return text(for: line, isCurrent: isCurrent)
-            .font(.system(size: 42, weight: .bold))
+            .font(.system(size: 44, weight: .bold))
             .foregroundStyle(.white.opacity(synced ? opacity(distance) : 0.8))
             .blur(radius: synced ? blur(distance) : 0)
-            .scaleEffect(isCurrent || !synced ? 1 : 0.86, anchor: .leading)
+            // The sung line at full size and the rest at two thirds. A big delta on purpose:
+            // it is what lets you find your place across a room without reading anything.
+            .scaleEffect(isCurrent || !synced ? 1 : 0.66, anchor: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
             .onTapGesture { if let time = line.time { player.seek(to: time) } }
-            .animation(.easeOut(duration: 0.35), value: distance)
+            .animation(Self.lineChange, value: distance)
     }
 
     /// Sung words go solid, the rest stay dim but legible so the eye can read ahead. The
@@ -201,7 +223,9 @@ struct MacLyricsSheet: View {
         switch distance {
         case 0: return 0
         case 1: return 5
-        default: return 11
+        // Anything further is drawn at zero opacity, and blurring an invisible view still
+        // costs a full filter pass — on every line, on every change.
+        default: return 0
         }
     }
 
@@ -213,11 +237,17 @@ struct MacLyricsSheet: View {
         let index = player.lyrics.lastIndex { ($0.time ?? .infinity) <= time }
         guard index != currentIndex else { return }
         currentIndex = index
-        guard let index else { return }
-        withAnimation(.easeInOut(duration: 0.45)) {
+        guard let index, !browsing else { return }
+        withAnimation(Self.lineChange) {
             proxy.scrollTo(index, anchor: .center)
         }
     }
+
+    /// Shared by the scroll and by every line's own styling, so the sheet moves as one
+    /// object. A spring rather than an ease: the distance travelled varies with how long the
+    /// previous line was, and a fixed-duration ease has to cover a short hop and a long one
+    /// in the same time, which is exactly when it reads as a jerk.
+    private static let lineChange = Animation.spring(response: 0.42, dampingFraction: 0.92)
 
     private static let edgeFade = Gradient(stops: [
         .init(color: .clear, location: 0.00),

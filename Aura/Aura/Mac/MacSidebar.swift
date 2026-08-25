@@ -23,7 +23,17 @@ struct MacSidebar: View {
         .scrollContentBackground(.hidden)
         .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 280)
         .safeAreaInset(edge: .top, spacing: 0) { wordmark }
-        .safeAreaInset(edge: .bottom, spacing: 0) { MacServerPicker() }
+        .safeAreaInset(edge: .bottom, spacing: 0) { footer }
+    }
+
+    /// Where a Mac app keeps the account it is signed into, and the settings that go with
+    /// it: bottom-left, out of the way, in the same place every time.
+    private var footer: some View {
+        HStack(spacing: 4) {
+            MacServerPicker()
+            MacOptionsMenu()
+                .padding(.trailing, 12)
+        }
     }
 
     /// Sits in the space the hidden title bar frees up, so the window opens on the app's

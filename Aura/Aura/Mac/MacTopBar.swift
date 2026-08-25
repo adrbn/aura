@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// Search and options, drawn as content rather than as a toolbar.
+/// The search field, drawn as content rather than as a toolbar.
 ///
 /// A real `NSToolbar` always paints its own backdrop — a translucent grey strip that no
-/// amount of `toolbarBackground(.hidden:)` fully removes once it holds controls. Since the
-/// whole point is a window with one surface from top to bottom, the controls live in the
-/// content instead, and the window keeps nothing of its own.
+/// amount of `toolbarBackground(.hidden:)` fully removes once it holds anything at all.
+/// Since the point is a window with one surface from top to bottom, the search lives in the
+/// content and the window keeps no toolbar of its own.
 struct MacTopBar: View {
     @Binding var query: String
     @FocusState private var searching: Bool
@@ -42,7 +42,6 @@ struct MacTopBar: View {
             .frame(maxWidth: 360)
 
             Spacer(minLength: 0)
-            MacOptionsMenu()
         }
         .padding(.horizontal, 22)
         // Clears the traffic lights, which the hidden title bar leaves floating over the

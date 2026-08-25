@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "104378F2D7F8F4A6BC123D9D"
-               BuildableName = "Aura-mac.app"
+               BuildableName = "Aura.app"
                BlueprintName = "Aura-mac"
                ReferencedContainer = "container:Aura.xcodeproj">
             </BuildableReference>
@@ -31,7 +31,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "104378F2D7F8F4A6BC123D9D"
-            BuildableName = "Aura-mac.app"
+            BuildableName = "Aura.app"
             BlueprintName = "Aura-mac"
             ReferencedContainer = "container:Aura.xcodeproj">
          </BuildableReference>
@@ -54,7 +54,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "104378F2D7F8F4A6BC123D9D"
-            BuildableName = "Aura-mac.app"
+            BuildableName = "Aura.app"
             BlueprintName = "Aura-mac"
             ReferencedContainer = "container:Aura.xcodeproj">
          </BuildableReference>
@@ -71,7 +71,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "104378F2D7F8F4A6BC123D9D"
-            BuildableName = "Aura-mac.app"
+            BuildableName = "Aura.app"
             BlueprintName = "Aura-mac"
             ReferencedContainer = "container:Aura.xcodeproj">
          </BuildableReference>

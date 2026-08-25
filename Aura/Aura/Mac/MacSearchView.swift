@@ -78,10 +78,14 @@ struct MacSearchView: View {
 
                 if !results.songs.isEmpty {
                     header("Songs")
-                    MacSongTable(songs: results.songs, source: .search(query: query))
-                        .frame(height: min(CGFloat(results.songs.count) * 28 + 30, 420))
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 24)
+                    LazyVStack(spacing: 2) {
+                        ForEach(results.songs) { song in
+                            MacSongRow(song: song, source: .search(query: query),
+                                       queue: results.songs)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 28)
                 }
             }
         }

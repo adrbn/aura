@@ -54,21 +54,29 @@ struct MacRootView: View {
         NavigationSplitView {
             MacSidebar(section: $section)
         } detail: {
-            NavigationStack(path: $path) {
-                // Typing anywhere takes over the detail area, and clearing it hands the
-                // section back — search is a lens over the library, not a place in it.
-                Group {
-                    if query.trimmingCharacters(in: .whitespaces).isEmpty {
-                        detail
-                    } else {
-                        MacSearchView(query: $query)
+            // A plain VStack, not a safe-area inset. As an inset the bar was handed the
+            // whole height and centred itself in it, landing halfway down the window. Here
+            // its position is simply the top, and it cannot be anywhere else.
+            //
+            // Outside the NavigationStack on purpose, so it stays put while album and
+            // artist screens push and pop beneath it.
+            VStack(spacing: 0) {
+                MacTopBar(query: $query)
+                NavigationStack(path: $path) {
+                    // Typing anywhere takes over the detail area, and clearing it hands the
+                    // section back — search is a lens over the library, not a place in it.
+                    Group {
+                        if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                            detail
+                        } else {
+                            MacSearchView(query: $query)
+                        }
                     }
-                }
-                .safeAreaInset(edge: .top, spacing: 0) { MacTopBar(query: $query) }
                     .navigationDestination(for: Album.self) { MacAlbumDetailView(album: $0) }
                     .navigationDestination(for: Artist.self) { MacArtistDetailView(artist: $0) }
                     .navigationDestination(for: Playlist.self) { MacPlaylistDetailView(playlist: $0) }
                     .navigationDestination(for: Mix.self) { MacMixDetailView(mix: $0) }
+                }
             }
         }
         // Spans the full width, under the sidebar as well — the transport belongs to the
@@ -86,6 +94,10 @@ struct MacRootView: View {
         // Nothing draws a bar of its own. The search field and the options menu are in the
         // content (see MacTopBar) precisely so no toolbar exists to paint a strip.
         .toolbar(removing: .title)
+        // The split view adds its own sidebar button, and one toolbar item is enough to
+        // make macOS draw the whole grey strip. The sidebar still toggles from the View
+        // menu and its shortcut; the band is what had to go.
+        .toolbar(removing: .sidebarToggle)
         .toolbarBackground(.hidden, for: .windowToolbar)
         // Changing section starts a fresh trail. Keeping the old one would leave you on an
         // album you reached from Search after clicking Artists.

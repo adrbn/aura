@@ -30,6 +30,17 @@ final class AudioPlayer {
     /// restarts the track instead of moving when past 3 s, so a view that set "-1"
     /// on the gesture left it wrong even though nothing had changed.
     var songChangeDirection: Int = 1
+    /// Output level, 0...1, independent of the system volume.
+    ///
+    /// Desktop music apps are expected to have their own fader — you set the app against
+    /// everything else once and leave the system volume alone. Persisted, because a level
+    /// that resets on every launch is worse than none at all.
+    var volume: Double = UserDefaults.standard.object(forKey: "aura_volume") as? Double ?? 1 {
+        didSet {
+            player?.volume = Float(volume)
+            UserDefaults.standard.set(volume, forKey: "aura_volume")
+        }
+    }
     var isPlaying = false
     var currentTime: TimeInterval = 0
     var duration: TimeInterval = 0
@@ -349,6 +360,7 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem)
         player = AVPlayer(playerItem: playerItem)
+        player?.volume = Float(volume)
         player?.pause()
 
         timeObserver = player?.addPeriodicTimeObserver(
