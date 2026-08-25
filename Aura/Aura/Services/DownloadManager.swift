@@ -888,10 +888,14 @@ extension DownloadManager: URLSessionDownloadDelegate {
         }
     }
 
+    // Only iOS hands a background session back to a relaunched app; on macOS the process
+    // is simply still running, so there is no completion handler to call.
+    #if os(iOS)
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         Task { @MainActor in
             AppDelegate.backgroundSessionCompletionHandler?()
             AppDelegate.backgroundSessionCompletionHandler = nil
         }
     }
+    #endif
 }

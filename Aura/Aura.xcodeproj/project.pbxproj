@@ -7,14 +7,44 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
+		0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
+		125F7988574B0686E951FB7C /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
 		169403C7846F4989E4392CEF /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
 		196AB9045E589FCE183BD48E /* PlayHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE183A34FA /* PlayHistory.swift */; };
+		1DE6DF3B70B4F115C8E5194A /* ServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000012 /* ServerManager.swift */; };
 		223777C02AEF4304FF9CB3D0 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
+		260922167542C20F9CDAD108 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000080 /* AppLogger.swift */; };
+		3AB1165B891D0FE586E05EFC /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
+		3BC4FC997E17751EBE645FCB /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
+		3FB7BC62602380A759C75218 /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000032 /* ImageLoader.swift */; };
+		46A5E4A1F0899F2C8EC7F4A2 /* PlayHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE183A34FA /* PlayHistory.swift */; };
+		484DA2C7AE85EC4FA499AE5E /* SearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000B2 /* SearchIndex.swift */; };
+		5231BD9F05833F1D0842D467 /* SubsonicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000010 /* SubsonicClient.swift */; };
 		5375DDB39A738A3F48D581DB /* EqualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */; };
+		5AEBDDA3941D7AAD77C9C22A /* AuraMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */; };
+		5DACC2F94E2FBAC2FA1E5506 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
+		5EBDFB2C27EFFEF20CA718EE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 599B6E59E456CCD14BAC1A6B /* Cocoa.framework */; };
+		67044D538D8B66F71256F498 /* SearchHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C1 /* SearchHistory.swift */; };
+		6F5440002B59F82648E55409 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000099 /* GeneratedCoverView.swift */; };
+		7E8BB5A780EBB03A7F6F7786 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000013 /* AudioPlayer.swift */; };
 		87906AC1B1CBE2493FEBE438 /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
+		8BB5962C91AED0B33C182D53 /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
+		8F67E00B438C5558C819615D /* MacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A114C4B8E0319934E5F90216 /* MacRootView.swift */; };
 		A0EA5D295C3DFD151DE59C30 /* SlskdClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB587064D721AA775E21C53 /* SlskdClient.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
+		A5CF83658D8D594FC39B114A /* SlskdClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB587064D721AA775E21C53 /* SlskdClient.swift */; };
+		A966843C05E005A327BAAA64 /* OfflinePlaylistsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DE /* OfflinePlaylistsStore.swift */; };
+		B14BB8B8B6119F8BED515D05 /* AudioCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000087 /* AudioCacheManager.swift */; };
+		B308A21EB72F34D0B1A95848 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
+		B588F5C510ADD0E5A079AF5D /* MixCollageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */; };
+		BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000070 /* Localizable.xcstrings */; };
+		C4A06B22916E4B2EEB2E9205 /* ListeningStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009A /* ListeningStats.swift */; };
+		CB0915AA49DFE0752C781019 /* MusicBrainzService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAA00020000000000000001 /* MusicBrainzService.swift */; };
 		CCAA00010000000000000001 /* MusicBrainzService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAA00020000000000000001 /* MusicBrainzService.swift */; };
+		D0A5EB9898BCC71E22E56B92 /* MixCollageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */; };
+		D5BE2989193E4B96C7AA1B99 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000003 /* Assets.xcassets */; };
+		D6CD0FB601529915A9B3255C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000011 /* Models.swift */; };
 		DD459BBB131DCB0C4D972CB5 /* ImageCropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40E8E704D9B72925B6B94399 /* ImageCropView.swift */; };
 		E10000010000000000000001 /* AuraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000001 /* AuraApp.swift */; };
 		E10000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000002 /* ContentView.swift */; };
@@ -36,8 +66,6 @@
 		E10000010000000000000030 /* SongRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000030 /* SongRowView.swift */; };
 		E10000010000000000000031 /* AlbumCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000031 /* AlbumCardView.swift */; };
 		E10000010000000000000032 /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000032 /* ImageLoader.swift */; };
-		E100000100000000000000F3 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
-		E100000100000000000000F8 /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
 		E10000010000000000000033 /* ArtistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000033 /* ArtistDetailView.swift */; };
 		E10000010000000000000034 /* SongsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000034 /* SongsListView.swift */; };
 		E10000010000000000000040 /* MusicPlaybackAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000040 /* MusicPlaybackAttributes.swift */; };
@@ -78,9 +106,6 @@
 		E100000100000000000000D1 /* AudioOutputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D1 /* AudioOutputButton.swift */; };
 		E100000100000000000000D2 /* BufferedProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D2 /* BufferedProgressBar.swift */; };
 		E100000100000000000000D3 /* TabRootChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D3 /* TabRootChrome.swift */; };
-		E100000100000000000000F6 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
-		E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
-		E100000100000000000000F4 /* AlphabetIndexBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F4 /* AlphabetIndexBar.swift */; };
 		E100000100000000000000D4 /* FolderPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D4 /* FolderPicker.swift */; };
 		E100000100000000000000D5 /* SongInfoSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D5 /* SongInfoSheet.swift */; };
 		E100000100000000000000D6 /* SongCreditsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D6 /* SongCreditsSheet.swift */; };
@@ -94,6 +119,16 @@
 		E100000100000000000000DE /* OfflinePlaylistsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DE /* OfflinePlaylistsStore.swift */; };
 		E100000100000000000000F1 /* FullScreenImageViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F1 /* FullScreenImageViewer.swift */; };
 		E100000100000000000000F2 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F2 /* AppIcon.icon */; };
+		E100000100000000000000F3 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
+		E100000100000000000000F4 /* AlphabetIndexBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F4 /* AlphabetIndexBar.swift */; };
+		E100000100000000000000F6 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
+		E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
+		E100000100000000000000F8 /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
+		EBEB7A689B00639BFDCF12E6 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000050 /* DownloadManager.swift */; };
+		EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
+		F4367F560164A20E2291171A /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000089 /* KeychainHelper.swift */; };
+		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
+		FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -124,11 +159,15 @@
 		196AB9045E589FCE18380A8A /* SearchRanking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchRanking.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE183A34FA /* PlayHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayHistory.swift; sourceTree = "<group>"; };
 		40E8E704D9B72925B6B94399 /* ImageCropView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
+		599B6E59E456CCD14BAC1A6B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
+		A114C4B8E0319934E5F90216 /* MacRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
+		A747572DB3C445E463CCE4D8 /* Platform.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Platform.swift; sourceTree = "<group>"; };
 		BEB587064D721AA775E21C53 /* SlskdClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlskdClient.swift; sourceTree = "<group>"; };
 		CCAA00020000000000000001 /* MusicBrainzService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicBrainzService.swift; sourceTree = "<group>"; };
 		D7A1E179BB18A52978EC7635 /* SongLinkService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongLinkService.swift; sourceTree = "<group>"; };
+		DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraMacApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000001 /* AuraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuraApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E10000020000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -149,8 +188,6 @@
 		E10000020000000000000030 /* SongRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongRowView.swift; sourceTree = "<group>"; };
 		E10000020000000000000031 /* AlbumCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumCardView.swift; sourceTree = "<group>"; };
 		E10000020000000000000032 /* ImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoader.swift; sourceTree = "<group>"; };
-		E100000200000000000000F3 /* AppTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTypography.swift; sourceTree = "<group>"; };
-		E100000200000000000000F8 /* LyricWordTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricWordTiming.swift; sourceTree = "<group>"; };
 		E10000020000000000000033 /* ArtistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDetailView.swift; sourceTree = "<group>"; };
 		E10000020000000000000034 /* SongsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongsListView.swift; sourceTree = "<group>"; };
 		E10000020000000000000040 /* MusicPlaybackAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlaybackAttributes.swift; sourceTree = "<group>"; };
@@ -188,9 +225,6 @@
 		E100000200000000000000D1 /* AudioOutputButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputButton.swift; sourceTree = "<group>"; };
 		E100000200000000000000D2 /* BufferedProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferedProgressBar.swift; sourceTree = "<group>"; };
 		E100000200000000000000D3 /* TabRootChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabRootChrome.swift; sourceTree = "<group>"; };
-		E100000200000000000000F6 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
-		E100000200000000000000F7 /* BouncingDotsLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BouncingDotsLoader.swift; sourceTree = "<group>"; };
-		E100000200000000000000F4 /* AlphabetIndexBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlphabetIndexBar.swift; sourceTree = "<group>"; };
 		E100000200000000000000D4 /* FolderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPicker.swift; sourceTree = "<group>"; };
 		E100000200000000000000D5 /* SongInfoSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongInfoSheet.swift; sourceTree = "<group>"; };
 		E100000200000000000000D6 /* SongCreditsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongCreditsSheet.swift; sourceTree = "<group>"; };
@@ -204,12 +238,27 @@
 		E100000200000000000000DE /* OfflinePlaylistsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflinePlaylistsStore.swift; sourceTree = "<group>"; };
 		E100000200000000000000F1 /* FullScreenImageViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenImageViewer.swift; sourceTree = "<group>"; };
 		E100000200000000000000F2 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		E100000200000000000000F3 /* AppTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTypography.swift; sourceTree = "<group>"; };
+		E100000200000000000000F4 /* AlphabetIndexBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlphabetIndexBar.swift; sourceTree = "<group>"; };
+		E100000200000000000000F6 /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
+		E100000200000000000000F7 /* BouncingDotsLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BouncingDotsLoader.swift; sourceTree = "<group>"; };
+		E100000200000000000000F8 /* LyricWordTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricWordTiming.swift; sourceTree = "<group>"; };
 		E10000030000000000000001 /* Aura.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aura.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E10000030000000000000002 /* AuraWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AuraWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MixCollageView.swift; sourceTree = "<group>"; };
+		ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Aura-mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistMembershipCache.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3FA6CE23449E82799F45D642 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5EBDFB2C27EFFEF20CA718EE /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E10000040000000000000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -227,12 +276,39 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2B43EB2ADC8F9C920032929A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3FE90F5D7556521127C834DD /* OS X */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3FE90F5D7556521127C834DD /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				599B6E59E456CCD14BAC1A6B /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		8621656274C6035C8F1DE8E9 /* Mac */ = {
+			isa = PBXGroup;
+			children = (
+				DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */,
+				A114C4B8E0319934E5F90216 /* MacRootView.swift */,
+			);
+			name = Mac;
+			path = Mac;
+			sourceTree = "<group>";
+		};
 		E10000050000000000000001 = {
 			isa = PBXGroup;
 			children = (
 				E10000050000000000000002 /* Aura */,
 				E10000050000000000000010 /* AuraWidget */,
 				E10000050000000000000009 /* Products */,
+				2B43EB2ADC8F9C920032929A /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -250,6 +326,7 @@
 				E10000050000000000000004 /* Services */,
 				E10000050000000000000005 /* Views */,
 				E10000050000000000000006 /* Components */,
+				8621656274C6035C8F1DE8E9 /* Mac */,
 			);
 			path = Aura;
 			sourceTree = "<group>";
@@ -290,6 +367,7 @@
 				D7A1E179BB18A52978EC7635 /* SongLinkService.swift */,
 				FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */,
 				BEB587064D721AA775E21C53 /* SlskdClient.swift */,
+				A747572DB3C445E463CCE4D8 /* Platform.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -353,6 +431,7 @@
 				E100000200000000000000F7 /* BouncingDotsLoader.swift */,
 				E100000200000000000000F4 /* AlphabetIndexBar.swift */,
 				E100000200000000000000D4 /* FolderPicker.swift */,
+				E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -362,6 +441,7 @@
 			children = (
 				E10000030000000000000001 /* Aura.app */,
 				E10000030000000000000002 /* AuraWidgetExtension.appex */,
+				ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -378,6 +458,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		104378F2D7F8F4A6BC123D9D /* Aura-mac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 63A3A13663D596A47774F5A3 /* Build configuration list for PBXNativeTarget "Aura-mac" */;
+			buildPhases = (
+				617391C0608632DAB0F2FF52 /* Sources */,
+				3FA6CE23449E82799F45D642 /* Frameworks */,
+				2B38005DAC7267230FCF3ACE /* Resources */,
+				BA14764C4F9D39549C0E56B8 /* Embed Vavin */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Aura-mac";
+			productName = "Aura-mac";
+			productReference = ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */;
+			productType = "com.apple.product-type.application";
+		};
 		E10000060000000000000001 /* Aura */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E10000080000000000000001 /* Build configuration list for PBXNativeTarget "Aura" */;
@@ -448,11 +546,21 @@
 			targets = (
 				E10000060000000000000001 /* Aura */,
 				E10000060000000000000002 /* AuraWidgetExtension */,
+				104378F2D7F8F4A6BC123D9D /* Aura-mac */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2B38005DAC7267230FCF3ACE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D5BE2989193E4B96C7AA1B99 /* Assets.xcassets in Resources */,
+				BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E10000070000000000000002 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -474,6 +582,30 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		BA14764C4F9D39549C0E56B8 /* Embed Vavin */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Aura/VavinCondensed-Regular-Latin.ttf",
+				"$(SRCROOT)/Aura/VavinCondensed-Bold-Latin.ttf",
+				"$(SRCROOT)/Aura/Vavin-OFL.txt",
+			);
+			name = "Embed Vavin";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Regular-Latin.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Bold-Latin.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Vavin-OFL.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Only Vavin. The two evaluation faces the iOS target can embed for comparison are\n# licensed for neither redistribution nor app embedding, and the Mac app has no\n# picker to compare them in.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\nfor F in \"$SRCROOT/Aura/VavinCondensed-Regular-Latin.ttf\" \\\n         \"$SRCROOT/Aura/VavinCondensed-Bold-Latin.ttf\" \\\n         \"$SRCROOT/Aura/Vavin-OFL.txt\"; do\n  [ -f \"$F\" ] || continue\n  cp \"$F\" \"$DEST/\" || { echo \"error: found $F but could not embed it\"; exit 1; }\ndone\n";
+		};
 		E100000700000000000000F0 /* Embed display fonts if present */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -502,6 +634,43 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		617391C0608632DAB0F2FF52 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D6CD0FB601529915A9B3255C /* Models.swift in Sources */,
+				5231BD9F05833F1D0842D467 /* SubsonicClient.swift in Sources */,
+				1DE6DF3B70B4F115C8E5194A /* ServerManager.swift in Sources */,
+				7E8BB5A780EBB03A7F6F7786 /* AudioPlayer.swift in Sources */,
+				3FB7BC62602380A759C75218 /* ImageLoader.swift in Sources */,
+				B308A21EB72F34D0B1A95848 /* AppTypography.swift in Sources */,
+				125F7988574B0686E951FB7C /* LyricWordTiming.swift in Sources */,
+				EBEB7A689B00639BFDCF12E6 /* DownloadManager.swift in Sources */,
+				260922167542C20F9CDAD108 /* AppLogger.swift in Sources */,
+				0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */,
+				B14BB8B8B6119F8BED515D05 /* AudioCacheManager.swift in Sources */,
+				F4367F560164A20E2291171A /* KeychainHelper.swift in Sources */,
+				CB0915AA49DFE0752C781019 /* MusicBrainzService.swift in Sources */,
+				EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */,
+				46A5E4A1F0899F2C8EC7F4A2 /* PlayHistory.swift in Sources */,
+				C4A06B22916E4B2EEB2E9205 /* ListeningStats.swift in Sources */,
+				8BB5962C91AED0B33C182D53 /* LastfmService.swift in Sources */,
+				484DA2C7AE85EC4FA499AE5E /* SearchIndex.swift in Sources */,
+				67044D538D8B66F71256F498 /* SearchHistory.swift in Sources */,
+				A966843C05E005A327BAAA64 /* OfflinePlaylistsStore.swift in Sources */,
+				FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */,
+				04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */,
+				3AB1165B891D0FE586E05EFC /* PlaylistMembershipCache.swift in Sources */,
+				A5CF83658D8D594FC39B114A /* SlskdClient.swift in Sources */,
+				F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */,
+				5AEBDDA3941D7AAD77C9C22A /* AuraMacApp.swift in Sources */,
+				8F67E00B438C5558C819615D /* MacRootView.swift in Sources */,
+				6F5440002B59F82648E55409 /* GeneratedCoverView.swift in Sources */,
+				D0A5EB9898BCC71E22E56B92 /* MixCollageView.swift in Sources */,
+				5DACC2F94E2FBAC2FA1E5506 /* ToastManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E10000070000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -584,6 +753,8 @@
 				E100000100000000000000DB /* SettingsSaveModifiers.swift in Sources */,
 				E100000100000000000000DC /* HomeFullLists.swift in Sources */,
 				E100000100000000000000DD /* RecentlyPlayedSongsView.swift in Sources */,
+				3BC4FC997E17751EBE645FCB /* Platform.swift in Sources */,
+				B588F5C510ADD0E5A079AF5D /* MixCollageView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -635,6 +806,35 @@
 			};
 			name = "Release-AppStore";
 		};
+		213FE713A6FF311D487E2C16 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2TWQF4T93E;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ATSApplicationFontsPath = .;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.mac;
+				PRODUCT_NAME = Aura;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
 		37CA6D92B44E7E06DC1C4E44 /* Release-AppStore */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -663,6 +863,34 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Release-AppStore";
+		};
+		4CBFA4184E40FB7F0BE2B877 /* Release-AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2TWQF4T93E;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ATSApplicationFontsPath = .;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.mac;
+				PRODUCT_NAME = Aura;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
 			};
 			name = "Release-AppStore";
 		};
@@ -954,9 +1182,47 @@
 			};
 			name = "Release-AppStore";
 		};
+		F4B99FBA20E0BD513F1B9C5D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2TWQF4T93E;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ATSApplicationFontsPath = .;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.mac;
+				PRODUCT_NAME = Aura;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		63A3A13663D596A47774F5A3 /* Build configuration list for PBXNativeTarget "Aura-mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4B99FBA20E0BD513F1B9C5D /* Release */,
+				213FE713A6FF311D487E2C16 /* Debug */,
+				4CBFA4184E40FB7F0BE2B877 /* Release-AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		E10000080000000000000001 /* Build configuration list for PBXNativeTarget "Aura" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

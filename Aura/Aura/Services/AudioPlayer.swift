@@ -2,7 +2,9 @@ import Foundation
 import AVFoundation
 import MediaPlayer
 import SwiftUI
+#if os(iOS)
 import ActivityKit
+#endif
 
 @Observable
 final class AudioPlayer {
@@ -72,8 +74,10 @@ final class AudioPlayer {
     private var player: AVPlayer?
     private var timeObserver: Any?
     private var originalQueue: [Song] = []
+    #if os(iOS)
     private var currentActivity: Activity<MusicPlaybackAttributes>?
-    private var backgroundImage: UIImage?
+    #endif
+    private var backgroundImage: PlatformImage?
     /// Per-server key so each server profile keeps (and resumes) its own queue/track.
     /// A track from server A can't stream once you've switched to server B, so we never
     /// share one playback session across servers.
@@ -84,7 +88,7 @@ final class AudioPlayer {
     private var scrobbleTask: Task<Void, Never>?
     private var lastActivityUpdateTime = Date.distantPast
     private var lastActivityWasPlaying: Bool?
-    private var cachedArtwork: UIImage?
+    private var cachedArtwork: PlatformImage?
     private var cachedArtworkSongId: String?
     private var stableCoverArtURL: String?
     private var savedPlaybackSource: PlaybackSource?
@@ -148,6 +152,9 @@ final class AudioPlayer {
     }
 
     private func setupAudioSession() {
+        // No counterpart on macOS, and none wanted: there is no audio session to claim,
+        // no interruption to arbitrate with a phone call, and no route to be yanked out.
+        #if os(iOS)
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
@@ -162,8 +169,10 @@ final class AudioPlayer {
             self, selector: #selector(handleRouteChange(_:)),
             name: AVAudioSession.routeChangeNotification, object: AVAudioSession.sharedInstance()
         )
+        #endif
     }
 
+    #if os(iOS)
     @objc private func handleInterruption(_ notification: Notification) {
         guard let info = notification.userInfo,
               let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
@@ -193,6 +202,7 @@ final class AudioPlayer {
             DispatchQueue.main.async { self.pause() }
         }
     }
+    #endif
 
     private func setupRemoteCommands() {
         let center = MPRemoteCommandCenter.shared()
@@ -1893,14 +1903,17 @@ final class AudioPlayer {
     /// custom activity so the system UI takes over. (The `MusicLiveActivity` widget
     /// stays in the target, unused, so re-enabling is a one-line change.)
     private func startLiveActivity(for song: Song) {
+        #if os(iOS)
         Task {
             for activity in Activity<MusicPlaybackAttributes>.activities {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
         }
+        #endif
     }
 
     private func updateLiveActivity() {
+        #if os(iOS)
         guard let song = currentSong, let activity = currentActivity else { return }
 
         let now = Date()
@@ -1924,13 +1937,16 @@ final class AudioPlayer {
             let content = ActivityContent(state: state, staleDate: nil)
             await activity.update(content)
         }
+        #endif
     }
 
     private func endLiveActivity() {
+        #if os(iOS)
         guard let activity = currentActivity else { return }
         Task {
             await activity.end(nil, dismissalPolicy: .immediate)
             await MainActor.run { self.currentActivity = nil }
         }
+        #endif
     }
 }

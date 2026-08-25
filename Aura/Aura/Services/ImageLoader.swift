@@ -64,7 +64,7 @@ final class ArtworkRetry {
 final class ArtworkCache: @unchecked Sendable {
     static let shared = ArtworkCache()
 
-    private let memoryCache = NSCache<NSString, UIImage>()
+    private let memoryCache = NSCache<NSString, PlatformImage>()
     private let diskCacheURL: URL
     /// Permanent, non-evictable artwork store for downloaded/offline content.
     /// Lives in Application Support (unlike `diskCacheURL` which is in Caches and
@@ -106,7 +106,7 @@ final class ArtworkCache: @unchecked Sendable {
 
     /// In-flight network fetches keyed by cache key — concurrent requests for the
     /// same artwork share a single download instead of hitting the server N times.
-    private var inFlight: [String: Task<UIImage?, Never>] = [:]
+    private var inFlight: [String: Task<PlatformImage?, Never>] = [:]
     private let inFlightLock = NSLock()
 
     /// Learned byte-signature of the server's built-in "no cover art" placeholder,
@@ -172,20 +172,20 @@ final class ArtworkCache: @unchecked Sendable {
     }
 
     /// Returns the permanently-stored master artwork for a coverArt id (any size). Offline-safe.
-    func offlineArtwork(forCoverArt coverArt: String) -> UIImage? {
+    func offlineArtwork(forCoverArt coverArt: String) -> PlatformImage? {
         let memKey = offlineMemKey(coverArt)
         if let img = memoryCache.object(forKey: memKey) { return img }
         let url = offlineFileURL(forCoverArt: coverArt)
-        if let data = try? Data(contentsOf: url), let img = UIImage(data: data) {
+        if let data = try? Data(contentsOf: url), let img = PlatformImage(data: data) {
             memoryCache.setObject(img, forKey: memKey)
             return img
         }
         return nil
     }
 
-    func storeOfflineArtwork(_ image: UIImage, forCoverArt coverArt: String) {
+    func storeOfflineArtwork(_ image: PlatformImage, forCoverArt coverArt: String) {
         memoryCache.setObject(image, forKey: offlineMemKey(coverArt))
-        if let data = image.jpegData(compressionQuality: 0.9) {
+        if let data = image.auraJPEGData(quality: 0.9) {
             try? data.write(to: offlineFileURL(forCoverArt: coverArt))
         }
     }
@@ -201,7 +201,7 @@ final class ArtworkCache: @unchecked Sendable {
         guard let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: ArtworkCache.fullSize) else { return }
         do {
             let (data, _) = try await imageSession.data(from: url)
-            if let img = UIImage(data: data) {
+            if let img = PlatformImage(data: data) {
                 storeOfflineArtwork(img, forCoverArt: coverArt)
                 AppLogger.shared.log("🖼 Cached offline artwork for \(coverArt)")
             }
@@ -236,15 +236,15 @@ final class ArtworkCache: @unchecked Sendable {
     /// truth: prefetching and displaying MUST derive the key the same way or the warm
     /// entry lands in a different bucket and the prefetch silently does nothing.
     static func displayRequestSize(pointSize: CGFloat) -> Int {
-        normalizedSize(Int(pointSize * UIScreen.main.scale))
+        normalizedSize(Int(pointSize * PlatformScreen.scale))
     }
 
-    func image(for key: String) -> UIImage? {
+    func image(for key: String) -> PlatformImage? {
         let nsKey = key as NSString
         if let img = memoryCache.object(forKey: nsKey) { return img }
         let hash = SHA256.hash(data: Data(key.utf8)).compactMap { String(format: "%02x", $0) }.joined()
         let fileURL = diskCacheURL.appendingPathComponent(hash)
-        if let data = try? Data(contentsOf: fileURL), let img = UIImage(data: data) {
+        if let data = try? Data(contentsOf: fileURL), let img = PlatformImage(data: data) {
             memoryCache.setObject(img, forKey: nsKey)
             return img
         }
@@ -256,7 +256,7 @@ final class ArtworkCache: @unchecked Sendable {
     /// exact requested size loads, so a row never flashes the grey placeholder when
     /// a thumbnail of any size is already in memory. Memory-only — cheap enough to
     /// call from a SwiftUI view body during scrolling.
-    func cachedImageAnySize(forCoverArt coverArt: String, cacheToken: String? = nil) -> UIImage? {
+    func cachedImageAnySize(forCoverArt coverArt: String, cacheToken: String? = nil) -> PlatformImage? {
         // Prefer mid-sized buckets first (good quality, commonly warmed), then widen out.
         for size in [400, 200, 800, 100, 1200] {
             let key = cacheToken.map { "\(coverArt)_\($0)_\(size)" } ?? "\(coverArt)_\(size)"
@@ -266,13 +266,13 @@ final class ArtworkCache: @unchecked Sendable {
         return memoryCache.object(forKey: offlineMemKey(coverArt))
     }
 
-    func store(_ image: UIImage, for key: String) {
+    func store(_ image: PlatformImage, for key: String) {
         let nsKey = key as NSString
         memoryCache.setObject(image, forKey: nsKey)
         let hash = SHA256.hash(data: Data(key.utf8)).compactMap { String(format: "%02x", $0) }.joined()
         let fileURL = diskCacheURL.appendingPathComponent(hash)
         Task.detached(priority: .utility) {
-            if let data = image.jpegData(compressionQuality: 0.85) {
+            if let data = image.auraJPEGData(quality: 0.85) {
                 try? data.write(to: fileURL)
             }
         }
@@ -302,7 +302,7 @@ final class ArtworkCache: @unchecked Sendable {
 
     /// Resolve artwork: cache first, then network with in-flight deduplication.
     /// Offline mode and missing-server cases fall back to the permanent offline master.
-    func fetchImage(coverArt: String, requestSize: Int, key: String) async -> UIImage? {
+    func fetchImage(coverArt: String, requestSize: Int, key: String) async -> PlatformImage? {
         if let cached = image(for: key) { return cached }
         // Fall back to the downloaded-only master ONLY when the server is genuinely out
         // of reach. Gating on `offlineMode` alone produced the worst possible state: every
@@ -324,7 +324,7 @@ final class ArtworkCache: @unchecked Sendable {
             inFlightLock.unlock()
             return await existing.value
         }
-        let task = Task<UIImage?, Never> {
+        let task = Task<PlatformImage?, Never> {
             guard let server = ServerManager.shared.currentServer,
                   let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: requestSize) else {
                 return self.offlineArtwork(forCoverArt: coverArt)
@@ -343,7 +343,7 @@ final class ArtworkCache: @unchecked Sendable {
                     AppLogger.shared.log("⏳ Cover art throttled 429 id=\(coverArt)", level: .debug)
                     return nil
                 }
-                guard let img = UIImage(data: data) else {
+                guard let img = PlatformImage(data: data) else {
                     // A 404 / error body decodes as no image — log the details so missing
                     // art is diagnosable (this path was previously silent).
                     let code = (resp as? HTTPURLResponse)?.statusCode ?? -1
@@ -399,7 +399,7 @@ final class ArtworkCache: @unchecked Sendable {
         placeholderLock.unlock()
         guard let url = SubsonicClient.shared.coverArtURL(server: server, id: Self.placeholderProbeId, size: size),
               let (data, _) = try? await imageSession.data(from: url),
-              UIImage(data: data) != nil else { return nil }
+              PlatformImage(data: data) != nil else { return nil }
         let sig = Self.sha256Hex(data)
         placeholderLock.lock(); placeholderSignatures[size] = sig; placeholderLock.unlock()
         return sig
@@ -423,7 +423,7 @@ final class ArtworkCache: @unchecked Sendable {
     /// `cacheToken` (e.g. a playlist's `changed` timestamp) must match what the
     /// displaying view passes to `CoverArtImage` so keys line up.
     func prefetch(_ items: [(coverArt: String, cacheToken: String?)], pointSize: CGFloat) {
-        let requestSize = Self.normalizedSize(Int(pointSize * UIScreen.main.scale))
+        let requestSize = Self.normalizedSize(Int(pointSize * PlatformScreen.scale))
         // Dedupe while preserving order (nearest rows first)
         var seen = Set<String>()
         let unique = items.filter { seen.insert("\($0.coverArt)_\($0.cacheToken ?? "")").inserted }
@@ -460,7 +460,7 @@ final class ArtworkCache: @unchecked Sendable {
         guard let coverArt, !coverArt.isEmpty else { return }
         // Any near-full-width hero clamps to the same bucket, so the screen width is a
         // safe stand-in for the view's exact art size.
-        let requestSize = Self.displayRequestSize(pointSize: UIScreen.main.bounds.width)
+        let requestSize = Self.displayRequestSize(pointSize: PlatformScreen.width)
         let key = "\(coverArt)_\(requestSize)"
         guard image(for: key) == nil else { return }   // already warm
         Task.detached(priority: priority) {
@@ -507,13 +507,13 @@ struct CoverArtImage: View {
     var placeholderName: String? = nil
     var placeholderKind: PlaceholderCoverView.Kind = .generic
 
-    @State private var image: UIImage?
+    @State private var image: PlatformImage?
     /// The cache key the current `image` was resolved for — lets a retry bump tell
     /// "already loaded" apart from "still a placeholder".
     @State private var loadedKey: String?
 
     private var requestSize: Int {
-        ArtworkCache.normalizedSize(Int(size * UIScreen.main.scale))
+        ArtworkCache.normalizedSize(Int(size * PlatformScreen.scale))
     }
 
     private var cacheKey: String? {
@@ -523,7 +523,7 @@ struct CoverArtImage: View {
     }
 
     /// Resolve image synchronously from cache to avoid placeholder flash
-    private var resolvedImage: UIImage? {
+    private var resolvedImage: PlatformImage? {
         if let image { return image }
         guard let coverArt, let key = cacheKey else { return nil }
         if let exact = ArtworkCache.shared.image(for: key) { return exact }
@@ -536,7 +536,7 @@ struct CoverArtImage: View {
     var body: some View {
         Group {
             if let img = resolvedImage {
-                Image(uiImage: img)
+                Image(platformImage: img)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } else {
@@ -596,7 +596,7 @@ struct CoverArtAsyncImage: View {
     var placeholderName: String? = nil
     var placeholderKind: PlaceholderCoverView.Kind = .generic
 
-    @State private var image: UIImage?
+    @State private var image: PlatformImage?
     /// Track the coverArt we loaded so we can detect changes without re-flashing
     @State private var loadedCoverArt: String?
 
@@ -614,7 +614,7 @@ struct CoverArtAsyncImage: View {
     }
 
     /// Try to resolve image from cache immediately (avoids placeholder flash)
-    private var resolvedImage: UIImage? {
+    private var resolvedImage: PlatformImage? {
         if let image { return image }
         guard let coverArt else { return nil }
         if let exact = ArtworkCache.shared.image(for: cacheKey(for: coverArt)) { return exact }
@@ -628,7 +628,7 @@ struct CoverArtAsyncImage: View {
     var body: some View {
         Group {
             if let img = resolvedImage {
-                Image(uiImage: img)
+                Image(platformImage: img)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
             } else {

@@ -451,19 +451,60 @@ extension Color {
     /// Default page background: WHITE in light, black in dark. Content tabs (Home,
     /// Library, Search, Playlists) use this — they are not grouped lists.
     static var themeBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? .black : Color(.systemBackground)
+        AppSettings.shared.activeTheme.usePureBlack ? .black : .platformBackground
     }
     static var themeSecondaryBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : Color(.secondarySystemBackground)
+        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : .platformSecondaryBackground
     }
     static var themeGroupedBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : Color(.secondarySystemGroupedBackground)
+        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : .platformGroupedBackground
     }
     /// Page background for GROUPED list screens ONLY (Settings). Grey in light, so the
     /// white `themeGroupedBg` rows read as distinct cards — the iOS Settings convention.
     /// Identical to `themeBg` in dark (both black), so dark mode is untouched.
     static var themeGroupedPageBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? .black : Color(.systemGroupedBackground)
+        AppSettings.shared.activeTheme.usePureBlack ? .black : .platformGroupedPageBackground
+    }
+
+    // MARK: Platform system colours
+    //
+    // The semantic greys are named after UIKit and have no counterpart of the same name on
+    // macOS. AppKit's equivalents are named for what they sit behind — a window, a control,
+    // a page — rather than for how they are nested, so the mapping is by role: the plain
+    // page background becomes the window's, and the "grouped" backgrounds, which exist on
+    // iOS to make list rows read as cards on grey, become AppKit's control and
+    // under-page colours.
+
+    static var platformBackground: Color {
+        #if canImport(UIKit)
+        Color(.systemBackground)
+        #else
+        Color(nsColor: .windowBackgroundColor)
+        #endif
+    }
+
+    static var platformSecondaryBackground: Color {
+        #if canImport(UIKit)
+        Color(.secondarySystemBackground)
+        #else
+        Color(nsColor: .underPageBackgroundColor)
+        #endif
+    }
+
+    static var platformGroupedBackground: Color {
+        #if canImport(UIKit)
+        Color(.secondarySystemGroupedBackground)
+        #else
+        Color(nsColor: .controlBackgroundColor)
+        #endif
+    }
+
+    static var platformGroupedPageBackground: Color {
+        #if canImport(UIKit)
+        Color(.systemGroupedBackground)
+        #else
+        Color(nsColor: .underPageBackgroundColor)
+        #endif
     }
 }
 

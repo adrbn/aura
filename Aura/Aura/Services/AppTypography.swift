@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 /// The display typeface — the aura wordmark, tab-root big titles, onboarding headlines
 /// and section heads. Body copy always stays on the system font.
@@ -45,7 +44,7 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     /// so the picker can't advertise a choice that would silently render as the default.
     var isAvailable: Bool {
         guard let name = postScriptName else { return true }
-        return UIFont(name: name, size: 12) != nil
+        return PlatformFont(name: name, size: 12) != nil
     }
 
     /// Point-size multiplier so different faces read at the same visual size.
@@ -117,7 +116,7 @@ enum AppTypography {
     static func display(_ size: CGFloat, relativeTo textStyle: Font.TextStyle = .largeTitle) -> Font {
         let face = choice
         let scaled = size * face.opticalScale
-        guard let name = face.postScriptName, UIFont(name: name, size: scaled) != nil else {
+        guard let name = face.postScriptName, PlatformFont(name: name, size: scaled) != nil else {
             return .system(size: scaled, weight: .bold)
         }
         return .custom(name, size: scaled, relativeTo: textStyle)
@@ -129,7 +128,9 @@ enum AppTypography {
         size * choice.opticalScale * choice.baselineNudge
     }
 
-    /// UIKit counterpart, for the navigation-bar appearance proxy.
+    /// UIKit counterpart, for the navigation-bar appearance proxy. iOS only — the Mac app
+    /// has no navigation bar to dress, and nothing else needs a concrete font object.
+    #if canImport(UIKit)
     static func uiDisplay(_ size: CGFloat) -> UIFont {
         let face = choice
         let scaled = size * face.opticalScale
@@ -138,6 +139,7 @@ enum AppTypography {
         }
         return font
     }
+    #endif
 }
 
 extension View {
