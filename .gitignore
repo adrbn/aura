@@ -55,3 +55,6 @@ tools/
 # ships in the repo unlike the commercially licensed faces the rules above cover.
 !Aura/Aura/Vavin*.ttf
 !Aura/Aura/Vavin-OFL.txt
+
+# Xcode's legacy build location, used by command-line builds of the Mac target
+Aura/build/
