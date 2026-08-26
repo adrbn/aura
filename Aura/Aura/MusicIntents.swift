@@ -49,7 +49,30 @@ struct PreviousTrackIntent: LiveActivityIntent {
 // Kept out of the widget target, which uses the LiveActivityIntents above.
 #if !WIDGET_EXTENSION
 
-struct SiriPlayPauseIntent: AppIntent {
+// Every playback intent below conforms to `AudioPlaybackIntent` rather than plain
+// `AppIntent`.
+//
+// That protocol is the contract that lets an intent run in the background AND take the
+// audio session. A plain `AppIntent` is allowed to run but has no standing to start or
+// resume audio, so "Play Aura" with the app closed was at best unreliable.
+// `AudioStartingIntent` is its stricter form, for the one intent here that begins playback
+// from nothing.
+//
+// `openAppWhenRun` stays false throughout: bringing the app to the front to press play is
+// exactly what asking out loud was meant to avoid.
+
+/// The only one that can answer from cold, hence `AudioStartingIntent`.
+struct SiriPlayIntent: AudioStartingIntent {
+    static var title: LocalizedStringResource = "Play Music"
+    static var description = IntentDescription("Resumes Aura, or starts something if nothing is loaded.")
+    static var openAppWhenRun = false
+    func perform() async throws -> some IntentResult {
+        await AudioPlayer.shared.playSomething()
+        return .result()
+    }
+}
+
+struct SiriPlayPauseIntent: AudioPlaybackIntent {
     static var title: LocalizedStringResource = "Play or Pause"
     static var description = IntentDescription("Toggles playback in Aura.")
     static var openAppWhenRun = false
@@ -59,7 +82,7 @@ struct SiriPlayPauseIntent: AppIntent {
     }
 }
 
-struct SiriNextTrackIntent: AppIntent {
+struct SiriNextTrackIntent: AudioPlaybackIntent {
     static var title: LocalizedStringResource = "Next Track"
     static var description = IntentDescription("Skips to the next track in Aura.")
     static var openAppWhenRun = false
@@ -69,7 +92,7 @@ struct SiriNextTrackIntent: AppIntent {
     }
 }
 
-struct SiriPreviousTrackIntent: AppIntent {
+struct SiriPreviousTrackIntent: AudioPlaybackIntent {
     static var title: LocalizedStringResource = "Previous Track"
     static var description = IntentDescription("Goes to the previous track in Aura.")
     static var openAppWhenRun = false
@@ -79,7 +102,7 @@ struct SiriPreviousTrackIntent: AppIntent {
     }
 }
 
-struct SiriShuffleIntent: AppIntent {
+struct SiriShuffleIntent: AudioPlaybackIntent {
     static var title: LocalizedStringResource = "Shuffle"
     static var description = IntentDescription("Toggles shuffle in Aura.")
     static var openAppWhenRun = false
@@ -89,8 +112,43 @@ struct SiriShuffleIntent: AppIntent {
     }
 }
 
+struct SiriRepeatIntent: AudioPlaybackIntent {
+    static var title: LocalizedStringResource = "Repeat"
+    static var description = IntentDescription("Cycles repeat in Aura: off, all, then one.")
+    static var openAppWhenRun = false
+    func perform() async throws -> some IntentResult {
+        await MainActor.run {
+            let player = AudioPlayer.shared
+            player.repeatMode = player.repeatMode.next
+        }
+        return .result()
+    }
+}
+
+/// Favouriting touches the library, not the audio session, so a plain `AppIntent` is the
+/// honest conformance — claiming playback rights it does not need would be worse, not safer.
+struct SiriFavouriteIntent: AppIntent {
+    static var title: LocalizedStringResource = "Favourite Current Song"
+    static var description = IntentDescription("Adds the song playing in Aura to your favourites.")
+    static var openAppWhenRun = false
+    func perform() async throws -> some IntentResult {
+        await MainActor.run { AudioPlayer.shared.toggleFavorite() }
+        return .result()
+    }
+}
+
 struct AuraAppShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
+        AppShortcut(
+            intent: SiriPlayIntent(),
+            phrases: [
+                "Play \(.applicationName)",
+                "Play music on \(.applicationName)",
+                "Start \(.applicationName)"
+            ],
+            shortTitle: "Play",
+            systemImageName: "play.fill"
+        )
         AppShortcut(
             intent: SiriPlayPauseIntent(),
             phrases: [
@@ -128,6 +186,25 @@ struct AuraAppShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Shuffle",
             systemImageName: "shuffle"
+        )
+        AppShortcut(
+            intent: SiriRepeatIntent(),
+            phrases: [
+                "Repeat in \(.applicationName)",
+                "Change repeat in \(.applicationName)"
+            ],
+            shortTitle: "Repeat",
+            systemImageName: "repeat"
+        )
+        AppShortcut(
+            intent: SiriFavouriteIntent(),
+            phrases: [
+                "Favourite this in \(.applicationName)",
+                "Favorite this song in \(.applicationName)",
+                "Like this in \(.applicationName)"
+            ],
+            shortTitle: "Favourite",
+            systemImageName: "heart.fill"
         )
     }
 }

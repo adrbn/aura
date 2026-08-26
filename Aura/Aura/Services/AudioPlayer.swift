@@ -228,6 +228,52 @@ final class AudioPlayer {
             }
             return .success
         }
+
+        // Some Bluetooth accessories, and macOS itself, send a single toggle rather than
+        // separate play and pause. Unhandled, they did nothing at all.
+        center.togglePlayPauseCommand.addTarget { [weak self] _ in
+            self?.togglePlayPause()
+            return .success
+        }
+
+        // "Skip ahead thirty seconds" is a spoken command, and it reaches an app only
+        // through these two. The interval is what the system reads back and what the lock
+        // screen draws inside the arrows.
+        center.skipForwardCommand.preferredIntervals = [15]
+        center.skipBackwardCommand.preferredIntervals = [15]
+        center.skipForwardCommand.addTarget { [weak self] event in
+            guard let self, let e = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
+            self.seek(to: min(self.duration, self.currentTime + e.interval))
+            return .success
+        }
+        center.skipBackwardCommand.addTarget { [weak self] event in
+            guard let self, let e = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
+            self.seek(to: max(0, self.currentTime - e.interval))
+            return .success
+        }
+
+        center.stopCommand.addTarget { [weak self] _ in
+            self?.pause()
+            return .success
+        }
+    }
+
+    /// Starts something when nothing is playing.
+    ///
+    /// Every remote command above needs a session that already exists, so none of them can
+    /// answer "play Aura" from cold — this is the one path that can. It resumes whatever is
+    /// loaded if there is anything, and only reaches for the server when there is not.
+    func playSomething() async {
+        if currentSong != nil {
+            await MainActor.run { self.play() }
+            return
+        }
+        guard let server = ServerManager.shared.currentServer,
+              let songs = try? await SubsonicClient.shared.getRandomSongs(server: server, size: 50),
+              !songs.isEmpty else { return }
+        await MainActor.run {
+            self.playSong(songs[0], fromQueue: songs, startIndex: 0, source: .songs)
+        }
     }
 
     private struct LastPlayback: Codable {
@@ -883,14 +929,13 @@ final class AudioPlayer {
 
     /// Tells the system whether we are playing.
     ///
-    /// iOS infers this from the audio session, so it never needed saying. macOS does not:
-    /// until an app publishes a playback state it is not treated as the Now Playing app at
-    /// all, and the media keys, the Touch Bar and Control Centre go on addressing whatever
-    /// was there before it.
+    /// macOS will not treat an app as the Now Playing app at all until it publishes one, so
+    /// without this the media keys, the Touch Bar and Control Centre go on addressing
+    /// whatever was there before it. iOS can infer the state from the playback rate and so
+    /// never strictly needed it — but the rate is ambiguous while paused with the session
+    /// deactivated, which is exactly when Siri is asked to resume. Stated on both.
     private func publishPlaybackState() {
-        #if os(macOS)
         MPNowPlayingInfoCenter.default().playbackState = isPlaying ? .playing : .paused
-        #endif
     }
     func togglePlayPause() { if isPlaying { pause() } else { play() } }
 
@@ -1908,7 +1953,13 @@ final class AudioPlayer {
             MPMediaItemPropertyAlbumTitle: song.album ?? "Unknown",
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
+            // Without a media type the system does not reliably classify this as music,
+            // which is what decides whether it appears where music is expected. The content
+            // identifier gives the item a stable name across processes, so anything that
+            // wants to resume or re-target this exact song has something to hold on to.
+            MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
+            MPNowPlayingInfoPropertyExternalContentIdentifier: song.id
         ]
 
         // Use cached artwork immediately if available for this song

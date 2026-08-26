@@ -61,7 +61,7 @@ Initial public release. Native SwiftUI music client for Navidrome and Subsonic-A
 ### Added — iOS Integration
 - Lock Screen and Control Center
 - Dynamic Island and Live Activities
-- Siri: play, pause, skip, queue
+- Siri: play, pause, skip, previous, shuffle, repeat, favourite
 - AirPlay and Bluetooth auto-detection
 - Share Sheet
 - Keychain credential storage

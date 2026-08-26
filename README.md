@@ -35,7 +35,7 @@ Lossless streaming · time-synced lyrics · 5-band EQ · Instant Mix · full off
 - 📻 **Discovery** — **Instant Mix** from any song/artist, auto-generated genre / mood / time-of-day **"Made For You"** mixes, and a **Year Wrapped** retrospective.
 - ✈️ **Offline** — download songs / albums / playlists / whole library, automatic streaming cache, offline search, and a graceful offline mode when the server is unreachable.
 - 📚 **Library** — fuzzy unified search ranked by relevance — with a Recently Searched list that records what you actually *played*, not everything you tapped — an A–Z fast-scroll rail on long lists, shuffle-all, custom playlist covers, content-based duplicate detection, multi-folder Navidrome, and **multiple server profiles** switchable from the Home title.
-- 🍎 **iOS integration** — Lock Screen & Control Center, system Now Playing in the **Dynamic Island**, **Siri Shortcuts** (play/pause · next · previous · shuffle), AirPlay, Share Sheet, and Keychain-only credentials.
+- 🍎 **iOS integration** — Lock Screen & Control Center, system Now Playing in the **Dynamic Island**, **Siri Shortcuts** (play · play/pause · next · previous · shuffle · repeat · favourite), AirPlay, Share Sheet, and Keychain-only credentials.
 - 🎨 **Appearance** — dark by default, 7 accent colors, pure-black OLED mode, adjustable density, reorderable tabs, a landscape nightstand clock, generated cover art for missing artwork, and titles too long to fit scroll so you can read them in full.
 
 ## 🛠️ Built with
