@@ -7,22 +7,27 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     case vavinCondensed
     case vavinCondensedBold
     case system
-    /// DEV BUILDS ONLY. Tuaf is a *trial* font and ITC Garamond's own fsType forbids app
-    /// embedding; both are kept selectable so alternatives can still be compared on
-    /// device, and both are excluded from anything shippable.
-    case tuaf
+    /// LOCAL EVALUATION ONLY. ITC Garamond's own fsType forbids app embedding; it is
+    /// kept selectable so alternatives can still be compared on device, and is
+    /// excluded from anything shippable.
     case garamond
 
     var id: String { rawValue }
 
+    /// Decode unknown values to the app's own face instead of throwing.
+    ///
+    /// Settings are persisted as one JSON blob decoded with `try?`, so a face that
+    /// no longer exists — Tuaf was a trial cut and was removed — would fail the
+    /// whole decode and silently reset every other preference with it.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = DisplayFont(rawValue: raw) ?? .vavinCondensed
+    }
+
     /// PostScript name of the embedded face; `nil` draws with a system font.
     ///
-    /// The licensed Tuaf ships under a different PostScript name than the trial (no
-    /// "Trial" suffix), and the name lives in the font's own `name` table — renaming the
-    /// file changes nothing. When the licensed `.otf` lands, update this one string.
     var postScriptName: String? {
         switch self {
-        case .tuaf: return "TuafTrial-Bold"
         case .system: return nil
         case .vavinCondensed: return "VavinCondensed-Regular"
         case .vavinCondensedBold: return "VavinCondensed-Bold"
@@ -32,7 +37,6 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .tuaf: return "Tuaf"
         case .system: return "System"
         case .vavinCondensed: return "Vavin Condensed"
         case .vavinCondensedBold: return "Vavin Condensed Bold"
@@ -50,14 +54,14 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     /// Point-size multiplier so different faces read at the same visual size.
     ///
     /// Point size measures the em box, not the letters, so two faces at 40 pt can look
-    /// nothing alike. Measured from the files: cap height is 0.714 em for Tuaf against
+    /// nothing alike. The multipliers below were measured against a 0.714 em cap height
     /// 0.626 for ITC Garamond Light Condensed, and Garamond's 'n' is 444 units wide against
-    /// Tuaf's 809 — nearly half. Matching cap heights alone would need ~1.14x; the extra
+    /// an 809 unit ascender — nearly half. Matching cap heights alone would need ~1.14x; the extra
     /// allows for it being both condensed and Light, which reads lighter again.
     var opticalScale: CGFloat {
         switch self {
-        case .tuaf, .system: return 1.0
-        // Measured: cap height 0.649 em against Tuaf's 0.714 asks ~1.10 on its own, and
+        case .system: return 1.0
+        // Measured: cap height 0.649 em against that 0.714 asks ~1.10 on its own, and
         // Vavin Condensed is also half the width (n 418 vs 809), so it reads smaller again.
         // The Regular carries less ink than a Bold at the same size, hence the extra over
         // the Bold — the goal is equal presence, not equal cap height.
@@ -69,15 +73,15 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
 
     /// Downward nudge as a fraction of the point size, to line the faces up vertically.
     ///
-    /// Layout positions text from the ascender, and the two differ enormously: Tuaf's is
+    /// Layout positions text from the ascender, and faces differ enormously: the baseline is
     /// 1.108 em with 0.394 of clear space above its capitals, Garamond's is 0.703 em with
     /// only 0.077. Garamond therefore sits noticeably higher in the same line box. Damped
     /// well below the raw 0.317 em difference — the goal is to look right, not to force
     /// two very different faces onto one baseline.
     var baselineNudge: CGFloat {
         switch self {
-        case .tuaf, .system: return 0
-        // Vavin inherits EB Garamond's vertical metrics — a shorter ascender than Tuaf's
+        case .system: return 0
+        // Vavin inherits EB Garamond's vertical metrics — a shorter ascender than the baseline
         // 1.108 em — so it sits high in the same line box, like ITC Garamond but less so.
         case .vavinCondensed, .vavinCondensedBold: return 0.06
         case .garamond: return 0.09
@@ -97,9 +101,7 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     static var selectable: [DisplayFont] {
         allCases.filter { face in
             #if APPSTORE_BUILD
-            // Neither may ship: Tuaf is an unlicensed trial, ITC Garamond's fsType is 4
-            // ("Preview & Print"), which does not permit embedding in an application.
-            if face == .tuaf || face == .garamond { return false }
+            if face == .garamond { return false }
             #endif
             return face.isAvailable
         }

@@ -17,7 +17,6 @@
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
-		<string>TuafTrial-Bold.otf</string>
 		<string>ITCGaramondStd-LtCond.otf</string>
 		<string>VavinCondensed-Regular-Latin.ttf</string>
 		<string>VavinCondensed-Bold-Latin.ttf</string>

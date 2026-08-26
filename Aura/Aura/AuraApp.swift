@@ -132,8 +132,8 @@ struct AuraApp: App {
         let theme = AppSettings.shared.activeTheme
 
         // Display face for navigation titles.
-        let tuafLarge = AppTypography.uiDisplay(34)
-        let tuafInline = AppTypography.uiDisplay(17)
+        let displayLarge = AppTypography.uiDisplay(34)
+        let displayInline = AppTypography.uiDisplay(17)
 
         if theme.usePureBlack {
             let black = UIColor.black
@@ -144,13 +144,13 @@ struct AuraApp: App {
             let navBarAppearance = UINavigationBarAppearance()
             navBarAppearance.configureWithOpaqueBackground()
             navBarAppearance.backgroundColor = black
-            navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.white, .font: tuafInline]
-            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white, .font: tuafLarge]
+            navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.white, .font: displayInline]
+            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white, .font: displayLarge]
             UINavigationBar.appearance().standardAppearance = navBarAppearance
             let scrollEdge = UINavigationBarAppearance()
             scrollEdge.configureWithTransparentBackground()
-            scrollEdge.titleTextAttributes = [.foregroundColor: UIColor.white, .font: tuafInline]
-            scrollEdge.largeTitleTextAttributes = [.foregroundColor: UIColor.white, .font: tuafLarge]
+            scrollEdge.titleTextAttributes = [.foregroundColor: UIColor.white, .font: displayInline]
+            scrollEdge.largeTitleTextAttributes = [.foregroundColor: UIColor.white, .font: displayLarge]
             UINavigationBar.appearance().scrollEdgeAppearance = scrollEdge
         } else {
             UITableView.appearance().backgroundColor = nil
@@ -158,8 +158,8 @@ struct AuraApp: App {
             UINavigationBar.appearance().barTintColor = nil
             let navBarAppearance = UINavigationBarAppearance()
             navBarAppearance.configureWithDefaultBackground()
-            navBarAppearance.titleTextAttributes = [.font: tuafInline]
-            navBarAppearance.largeTitleTextAttributes = [.font: tuafLarge]
+            navBarAppearance.titleTextAttributes = [.font: displayInline]
+            navBarAppearance.largeTitleTextAttributes = [.font: displayLarge]
             UINavigationBar.appearance().standardAppearance = navBarAppearance
             UINavigationBar.appearance().scrollEdgeAppearance = navBarAppearance
         }
