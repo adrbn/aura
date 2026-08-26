@@ -151,6 +151,7 @@
 		E100000100000000000000F6 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
 		E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
 		E100000100000000000000F8 /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
+		E384C913F8C88AB732ED752D /* MusicEntities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */; };
 		EAD18EB0F47BC2E6F77CB899 /* MacServerPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2840376375D75F5F54A64277 /* MacServerPicker.swift */; };
 		EBA1389D873C96B20ECBC2AD /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
 		EBEB7A689B00639BFDCF12E6 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000050 /* DownloadManager.swift */; };
@@ -211,6 +212,7 @@
 		7B7AA32B23D8B48D503402F9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		88855F68FD1F326A2B289FF3 /* MacGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacGrid.swift; sourceTree = "<group>"; };
 		8BF55BE55F578254EC9F3FB0 /* AuraMac.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = AuraMac.entitlements; sourceTree = "<group>"; };
+		8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MusicEntities.swift; sourceTree = "<group>"; };
 		972B2D4634806C3FA589AE66 /* MacMixesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacMixesView.swift; sourceTree = "<group>"; };
 		A114C4B8E0319934E5F90216 /* MacRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
@@ -414,6 +416,7 @@
 				E10000050000000000000005 /* Views */,
 				E10000050000000000000006 /* Components */,
 				8621656274C6035C8F1DE8E9 /* Mac */,
+				8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */,
 			);
 			path = Aura;
 			sourceTree = "<group>";
@@ -873,6 +876,7 @@
 				3BC4FC997E17751EBE645FCB /* Platform.swift in Sources */,
 				B588F5C510ADD0E5A079AF5D /* MixCollageView.swift in Sources */,
 				2A26205247DC4A5946E2A737 /* PinSync.swift in Sources */,
+				E384C913F8C88AB732ED752D /* MusicEntities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

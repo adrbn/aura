@@ -196,6 +196,28 @@ struct AuraAppShortcuts: AppShortcutsProvider {
             shortTitle: "Repeat",
             systemImageName: "repeat"
         )
+        // The two parameterised ones. A spoken phrase resolves its parameter only against
+        // the values `suggestedEntities()` supplied beforehand, which is why playlists and
+        // recent albums work by voice while the library at large does not — and why both
+        // are still fully usable by name in the Shortcuts app, where you type it.
+        AppShortcut(
+            intent: PlayPlaylistIntent(),
+            phrases: [
+                "Play \(\.$playlist) in \(.applicationName)",
+                "Play the \(\.$playlist) playlist in \(.applicationName)"
+            ],
+            shortTitle: "Play Playlist",
+            systemImageName: "music.note.list"
+        )
+        AppShortcut(
+            intent: PlayAlbumIntent(),
+            phrases: [
+                "Play the album \(\.$album) in \(.applicationName)",
+                "Play \(\.$album) album in \(.applicationName)"
+            ],
+            shortTitle: "Play Album",
+            systemImageName: "square.stack"
+        )
         AppShortcut(
             intent: SiriFavouriteIntent(),
             phrases: [

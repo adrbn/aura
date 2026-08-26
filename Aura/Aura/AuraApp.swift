@@ -98,6 +98,11 @@ struct AuraApp: App {
                 // Pinned playlists follow you between devices; start listening for the
                 // Mac's changes before anything can touch them here.
                 PinSync.shared.start()
+                // Spoken shortcut phrases match a parameter only against values handed to
+                // the system in advance, so the vocabulary has to be refreshed whenever the
+                // library might have changed — a playlist made on the web will not be
+                // sayable until this runs.
+                AuraAppShortcuts.updateAppShortcutParameters()
                 // Wordmark finishes its entrance at ~1.5s (0.3s delay + 1.2s ease); hold a
                 // beat past that, then fade. 2.5s felt draggy.
                 try? await Task.sleep(for: .seconds(1.8))
