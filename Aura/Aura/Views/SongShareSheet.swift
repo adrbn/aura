@@ -14,6 +14,9 @@ struct SongShareSheet: View {
     @State private var copiedPlatform: String?
     @State private var shareURL: URL?
     @State private var isRefreshing = false
+    /// Measured height of the content, so the sheet fits it exactly instead of
+    /// relying on a hard-coded detent that goes stale whenever a row changes.
+    @State private var contentHeight: CGFloat = 0
 
     var body: some View {
         NavigationStack {
@@ -25,7 +28,7 @@ struct SongShareSheet: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, minHeight: 240)
                 } else if let links = songLinks {
                     VStack(spacing: 10) {
                         sharePlatformRow(
@@ -75,6 +78,7 @@ struct SongShareSheet: View {
                         )
                     }
                     .padding(.horizontal)
+                    .padding(.top, 16)
                 } else {
                     VStack(spacing: 12) {
                         Image(systemName: "exclamationmark.triangle")
@@ -84,9 +88,12 @@ struct SongShareSheet: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, minHeight: 240)
                 }
             }
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.size.height
+            } action: { contentHeight = $0 }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -116,6 +123,24 @@ struct SongShareSheet: View {
                 isLoading = false
             }
         }
+        // Chrome around the measured content: inline nav bar, drag indicator, and
+        // the home-indicator inset the sheet reserves at the bottom.
+        .presentationDetents([.height(max(320, contentHeight + 94))])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(.ultraThinMaterial)
+    }
+
+    /// Open a destination, preferring the platform's own URI scheme when it has one.
+    /// Falls back to the web URL if that app isn't installed — `openURL`'s completion
+    /// reports whether the system could handle it, so no Info.plist query entry is needed.
+    private func open(_ link: SongLinkService.PlatformLink) {
+        if let appURL = link.appURL, let scheme = URL(string: appURL) {
+            openURL(scheme) { accepted in
+                if !accepted, let web = URL(string: link.url) { openURL(web) }
+            }
+        } else if let web = URL(string: link.url) {
+            openURL(web)
+        }
     }
 
     private func refreshForCurrentSong() {
@@ -136,7 +161,7 @@ struct SongShareSheet: View {
             // Tapping the row opens the destination itself. The copy and share
             // buttons stay for when you want the URL rather than the page.
             Button {
-                if let link, let url = URL(string: link.url) { openURL(url) }
+                if let link { open(link) }
             } label: {
                 HStack(spacing: 14) {
                     Image(systemName: icon)

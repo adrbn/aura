@@ -155,9 +155,6 @@ struct SongRowView: View {
         }
         .sheet(isPresented: $showShareSheet) {
             SongShareSheet(song: song)
-                .presentationDetents([.height(580)])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(.ultraThinMaterial)
         }
     }
 

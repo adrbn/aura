@@ -23,6 +23,11 @@ final class SongLinkService {
     struct PlatformLink {
         let url: String
         let isSearch: Bool
+        /// A platform-native URI that opens its app straight to this destination.
+        /// Universal links to *search* pages are unreliable — Spotify's app swallows
+        /// `open.spotify.com/search/…` and lands on "recent searches" instead of the
+        /// query. `nil` when the plain URL already behaves.
+        var appURL: String? = nil
     }
 
     struct SongLinks {
@@ -239,7 +244,11 @@ final class SongLinkService {
 
         return SongLinks(
             pageUrl: pageUrl,
-            spotify: PlatformLink(url: spotifySearchUrl(title: title, artist: artist), isSearch: true),
+            spotify: PlatformLink(
+                url: spotifySearchUrl(title: title, artist: artist),
+                isSearch: true,
+                appURL: "spotify:search:\(encodeQuery(fallbackQuery(title: title, artist: artist)))"
+            ),
             appleMusic: itunes.map { PlatformLink(url: $0.url, isSearch: false) },
             youtubeMusic: PlatformLink(url: youtubeMusicSearchUrl(title: title, artist: artist), isSearch: true),
             deezer: deezer.map { PlatformLink(url: $0.url, isSearch: false) },

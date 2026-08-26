@@ -168,9 +168,6 @@ struct NowPlayingView: View {
         .sheet(isPresented: $showShareSheet) {
             if let song = player.currentSong {
                 SongShareSheet(song: song)
-                    .presentationDetents([.height(580)])
-                    .presentationDragIndicator(.visible)
-                    .presentationBackground(.ultraThinMaterial)
             }
         }
         .sheet(isPresented: $showEqualizer) {
