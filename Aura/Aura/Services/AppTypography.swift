@@ -7,10 +7,6 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     case vavinCondensed
     case vavinCondensedBold
     case system
-    /// LOCAL EVALUATION ONLY. ITC Garamond's own fsType forbids app embedding; it is
-    /// kept selectable so alternatives can still be compared on device, and is
-    /// excluded from anything shippable.
-    case garamond
 
     var id: String { rawValue }
 
@@ -31,7 +27,6 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
         case .system: return nil
         case .vavinCondensed: return "VavinCondensed-Regular"
         case .vavinCondensedBold: return "VavinCondensed-Bold"
-        case .garamond: return "ITCGaramondStd-LtCond"
         }
     }
 
@@ -40,7 +35,6 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
         case .system: return "System"
         case .vavinCondensed: return "Vavin Condensed"
         case .vavinCondensedBold: return "Vavin Condensed Bold"
-        case .garamond: return "ITC Garamond"
         }
     }
 
@@ -55,7 +49,7 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     ///
     /// Point size measures the em box, not the letters, so two faces at 40 pt can look
     /// nothing alike. The multipliers below were measured against a 0.714 em cap height
-    /// 0.626 for ITC Garamond Light Condensed, and Garamond's 'n' is 444 units wide against
+    /// 0.626 for ITC Garamond Light Condensed, whose 'n' is 444 units wide against
     /// an 809 unit ascender — nearly half. Matching cap heights alone would need ~1.14x; the extra
     /// allows for it being both condensed and Light, which reads lighter again.
     var opticalScale: CGFloat {
@@ -67,24 +61,22 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
         // the Bold — the goal is equal presence, not equal cap height.
         case .vavinCondensed: return 1.30
         case .vavinCondensedBold: return 1.26
-        case .garamond: return 1.32
         }
     }
 
     /// Downward nudge as a fraction of the point size, to line the faces up vertically.
     ///
     /// Layout positions text from the ascender, and faces differ enormously: the baseline is
-    /// 1.108 em with 0.394 of clear space above its capitals, Garamond's is 0.703 em with
-    /// only 0.077. Garamond therefore sits noticeably higher in the same line box. Damped
+    /// 1.108 em with 0.394 of clear space above its capitals, a Garamond's is 0.703 em
+    /// with only 0.077, so it sits noticeably higher in the same line box. Damped
     /// well below the raw 0.317 em difference — the goal is to look right, not to force
     /// two very different faces onto one baseline.
     var baselineNudge: CGFloat {
         switch self {
         case .system: return 0
         // Vavin inherits EB Garamond's vertical metrics — a shorter ascender than the baseline
-        // 1.108 em — so it sits high in the same line box, like ITC Garamond but less so.
+        // 1.108 em — so it sits high in the same line box, though less markedly.
         case .vavinCondensed, .vavinCondensedBold: return 0.06
-        case .garamond: return 0.09
         }
     }
 
@@ -92,19 +84,12 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
     /// or an App Store build where the evaluation face is deliberately absent.
     var resolved: DisplayFont { isAvailable ? self : .vavinCondensed }
 
-    /// What the picker lists.
-    ///
-    /// ITC Garamond is excluded from App Store builds in code as well as in the build
-    /// phase. Its `fsType` is 4 — "Preview & Print" — which does NOT permit embedding in
-    /// an application; it is here purely so the look can be judged on-device before
-    /// committing to a licensed face. Do not ship it.
+    /// What the picker lists. Every remaining face may ship: Vavin is ours under
+    /// SIL OFL 1.1, and the system font needs no licence. The two evaluation faces
+    /// that could not be distributed — a Tuaf trial and ITC Garamond, whose fsType
+    /// is 4, "Preview & Print" — have been removed, so nothing needs excluding here.
     static var selectable: [DisplayFont] {
-        allCases.filter { face in
-            #if APPSTORE_BUILD
-            if face == .garamond { return false }
-            #endif
-            return face.isAvailable
-        }
+        allCases.filter(\.isAvailable)
     }
 }
 
