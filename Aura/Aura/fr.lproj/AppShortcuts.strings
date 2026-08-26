@@ -1,0 +1,35 @@
+/* Phrases des raccourcis Siri. Les clés reprennent exactement les phrases
+   déclarées dans AuraAppShortcuts. Chaque phrase doit contenir ${applicationName},
+   sinon le système la rejette. Formulations pensées pour l'oral, pas traduites
+   littéralement de l'anglais. */
+
+"Play ${applicationName}" = "Joue ${applicationName}";
+"Play music on ${applicationName}" = "Mets de la musique sur ${applicationName}";
+"Start ${applicationName}" = "Lance ${applicationName}";
+
+"Play or pause ${applicationName}" = "Lecture ou pause sur ${applicationName}";
+"Pause ${applicationName}" = "Mets ${applicationName} en pause";
+"Resume ${applicationName}" = "Reprends ${applicationName}";
+
+"Skip in ${applicationName}" = "Passe au suivant sur ${applicationName}";
+"Next track in ${applicationName}" = "Morceau suivant sur ${applicationName}";
+"Play the next song in ${applicationName}" = "Joue le morceau suivant sur ${applicationName}";
+
+"Previous track in ${applicationName}" = "Morceau précédent sur ${applicationName}";
+"Go back a track in ${applicationName}" = "Reviens au morceau précédent sur ${applicationName}";
+
+"Shuffle ${applicationName}" = "Lecture aléatoire sur ${applicationName}";
+"Toggle shuffle in ${applicationName}" = "Change la lecture aléatoire sur ${applicationName}";
+
+"Repeat in ${applicationName}" = "Répétition sur ${applicationName}";
+"Change repeat in ${applicationName}" = "Change la répétition sur ${applicationName}";
+
+"Play ${playlist} in ${applicationName}" = "Joue ${playlist} sur ${applicationName}";
+"Play the ${playlist} playlist in ${applicationName}" = "Joue la playlist ${playlist} sur ${applicationName}";
+
+"Play the album ${album} in ${applicationName}" = "Joue l'album ${album} sur ${applicationName}";
+"Play ${album} album in ${applicationName}" = "Mets l'album ${album} sur ${applicationName}";
+
+"Favourite this in ${applicationName}" = "Ajoute aux favoris sur ${applicationName}";
+"Favorite this song in ${applicationName}" = "Ajoute ce morceau aux favoris sur ${applicationName}";
+"Like this in ${applicationName}" = "J'aime ce morceau sur ${applicationName}";

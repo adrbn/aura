@@ -75,6 +75,7 @@
 		DE538F275F2FE804D1678772 /* MacOptionsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */; };
 		E10000010000000000000001 /* AuraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000001 /* AuraApp.swift */; };
 		E10000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000002 /* ContentView.swift */; };
+		E100000100000000000000B0 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = E100000500000000000000B0 /* AppShortcuts.strings */; };
 		E10000010000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000003 /* Assets.xcassets */; };
 		E10000010000000000000010 /* SubsonicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000010 /* SubsonicClient.swift */; };
 		E10000010000000000000011 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000011 /* Models.swift */; };
@@ -228,6 +229,8 @@
 		DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraMacApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000001 /* AuraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuraApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		E100000200000000000000B0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E100000200000000000000B3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E10000020000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E10000020000000000000010 /* SubsonicClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubsonicClient.swift; sourceTree = "<group>"; };
 		E10000020000000000000011 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -406,6 +409,7 @@
 			children = (
 				E10000020000000000000001 /* AuraApp.swift */,
 				E10000020000000000000002 /* ContentView.swift */,
+				E100000500000000000000B0 /* AppShortcuts.strings */,
 				E10000020000000000000003 /* Assets.xcassets */,
 				E100000200000000000000F2 /* AppIcon.icon */,
 				E10000020000000000000060 /* MusicIntents.swift */,
@@ -548,6 +552,18 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXVariantGroup section */
+		E100000500000000000000B0 /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E100000200000000000000B0 /* en */,
+				E100000200000000000000B3 /* fr */,
+			);
+			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin PBXNativeTarget section */
 		104378F2D7F8F4A6BC123D9D /* Aura-mac */ = {
 			isa = PBXNativeTarget;
@@ -629,6 +645,7 @@
 			knownRegions = (
 				en,
 				Base,
+				fr,
 			);
 			mainGroup = E10000050000000000000001;
 			productRefGroup = E10000050000000000000009 /* Products */;
@@ -658,6 +675,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E10000010000000000000003 /* Assets.xcassets in Resources */,
+				E100000100000000000000B0 /* AppShortcuts.strings in Resources */,
 				E100000100000000000000F2 /* AppIcon.icon in Resources */,
 				E10000010000000000000070 /* Localizable.xcstrings in Resources */,
 				E10000010000000000000090 /* PrivacyInfo.xcprivacy in Resources */,

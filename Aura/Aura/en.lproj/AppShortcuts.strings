@@ -1,0 +1,35 @@
+/* App Shortcut phrases. Keys must match the phrases declared in AuraAppShortcuts,
+   with Swift's \(.applicationName) written as ${applicationName} and parameters
+   such as \(\.$playlist) written as ${playlist}. Every phrase must contain
+   ${applicationName} or the system rejects it as an invalid utterance. */
+
+"Play ${applicationName}" = "Play ${applicationName}";
+"Play music on ${applicationName}" = "Play music on ${applicationName}";
+"Start ${applicationName}" = "Start ${applicationName}";
+
+"Play or pause ${applicationName}" = "Play or pause ${applicationName}";
+"Pause ${applicationName}" = "Pause ${applicationName}";
+"Resume ${applicationName}" = "Resume ${applicationName}";
+
+"Skip in ${applicationName}" = "Skip in ${applicationName}";
+"Next track in ${applicationName}" = "Next track in ${applicationName}";
+"Play the next song in ${applicationName}" = "Play the next song in ${applicationName}";
+
+"Previous track in ${applicationName}" = "Previous track in ${applicationName}";
+"Go back a track in ${applicationName}" = "Go back a track in ${applicationName}";
+
+"Shuffle ${applicationName}" = "Shuffle ${applicationName}";
+"Toggle shuffle in ${applicationName}" = "Toggle shuffle in ${applicationName}";
+
+"Repeat in ${applicationName}" = "Repeat in ${applicationName}";
+"Change repeat in ${applicationName}" = "Change repeat in ${applicationName}";
+
+"Play ${playlist} in ${applicationName}" = "Play ${playlist} in ${applicationName}";
+"Play the ${playlist} playlist in ${applicationName}" = "Play the ${playlist} playlist in ${applicationName}";
+
+"Play the album ${album} in ${applicationName}" = "Play the album ${album} in ${applicationName}";
+"Play ${album} album in ${applicationName}" = "Play ${album} album in ${applicationName}";
+
+"Favourite this in ${applicationName}" = "Favourite this in ${applicationName}";
+"Favorite this song in ${applicationName}" = "Favorite this song in ${applicationName}";
+"Like this in ${applicationName}" = "Like this in ${applicationName}";
