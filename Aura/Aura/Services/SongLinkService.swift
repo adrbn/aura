@@ -1,18 +1,39 @@
 import Foundation
 
-/// Fetches streaming platform links via the odesli.co (song.link) API
-/// with built-in caching so links are ready when the user opens the share sheet.
+/// Resolves streaming-platform links for a song, with caching so the links are
+/// ready by the time the user opens the share sheet.
+///
+/// This used to resolve every platform in one call through the odesli.co
+/// (song.link) API. That API now rejects unauthenticated callers with
+/// `401 PUBLIC_API_ACCESS_DEPRECATED`, so we resolve what we can from the free,
+/// key-less search APIs instead:
+///   - iTunes Search → a real Apple Music link, plus the track id
+///   - Deezer Search → a real Deezer link, plus the track id
+///   - song.link/i/<id> (or /d/<id>) → a real universal link, built from either id
+///
+/// Spotify, YouTube Music and Yandex have no key-less lookup, so they keep a
+/// search-URL fallback — a search that lands on the right song beats a dead link.
 @Observable
 final class SongLinkService {
     static let shared = SongLinkService()
 
+    /// A resolved destination. `isSearch` marks the key-less fallbacks (Spotify,
+    /// YouTube Music, Yandex) so the share sheet can label them honestly instead of
+    /// passing a search page off as a direct link.
+    struct PlatformLink {
+        let url: String
+        let isSearch: Bool
+    }
+
     struct SongLinks {
-        let pageUrl: String // song.link universal URL
-        let spotify: String?
-        let appleMusic: String?
-        let youtubeMusic: String?
-        let deezer: String?
-        let yandex: String?
+        /// song.link universal URL. `nil` when neither catalogue matched, so the
+        /// share sheet shows "Not available" instead of a bare, useless domain.
+        let pageUrl: String?
+        let spotify: PlatformLink?
+        let appleMusic: PlatformLink?
+        let youtubeMusic: PlatformLink?
+        let deezer: PlatformLink?
+        let yandex: PlatformLink?
     }
 
     private let session: URLSession = {
@@ -21,33 +42,25 @@ final class SongLinkService {
         return URLSession(configuration: config)
     }()
 
-    /// Cache: songKey → SongLinks (or nil if not found)
+    /// Cache: songKey → SongLinks
     private(set) var cache: [String: SongLinks] = [:]
     private(set) var loadingKey: String?
     private var currentTask: Task<Void, Never>?
 
-    private struct OdesliResponse: Decodable {
-        let pageUrl: String?
-        let linksByPlatform: [String: PlatformLink]?
+    // MARK: - API response shapes
 
-        struct PlatformLink: Decodable {
-            let url: String?
-        }
-    }
-
-    // iTunes Search API response
     private struct ITunesSearchResponse: Decodable {
         let resultCount: Int
         let results: [ITunesTrack]
     }
 
     private struct ITunesTrack: Decodable {
+        let trackId: Int?
         let trackViewUrl: String?
         let trackName: String?
         let artistName: String?
     }
 
-    // Deezer Search API response
     private struct DeezerSearchResponse: Decodable {
         let data: [DeezerTrack]?
     }
@@ -63,12 +76,20 @@ final class SongLinkService {
         let name: String?
     }
 
-    /// Build a cache key from title + artist
+    /// A verified catalogue hit: the shareable URL plus the id used to build the
+    /// song.link universal URL.
+    private struct CatalogueMatch {
+        let url: String
+        let trackId: Int
+    }
+
+    // MARK: - Cache
+
     private func cacheKey(title: String, artist: String) -> String {
         "\(title.lowercased())|\(artist.lowercased())"
     }
 
-    /// Pre-fetch links for a song in the background. Call this when song starts playing.
+    /// Pre-fetch links in the background. Call this when a song starts playing.
     func preloadLinks(title: String, artist: String) {
         let key = cacheKey(title: title, artist: artist)
         if cache[key] != nil || loadingKey == key { return }
@@ -88,7 +109,7 @@ final class SongLinkService {
         }
     }
 
-    /// Get cached links (instant) or fetch if not cached
+    /// Get cached links (instant) or fetch if not cached.
     func fetchLinks(title: String, artist: String) async -> SongLinks? {
         let key = cacheKey(title: title, artist: artist)
         if let cached = cache[key] { return cached }
@@ -100,7 +121,7 @@ final class SongLinkService {
         return links
     }
 
-    /// Clear old entries, keeping only the most recent
+    /// Clear old entries, keeping only the most recent.
     func trimCache(keeping title: String, artist: String) {
         let keepKey = cacheKey(title: title, artist: artist)
         if cache.count > 10 {
@@ -161,9 +182,9 @@ final class SongLinkService {
         return 0
     }
 
-    // MARK: - Internal
+    // MARK: - Search-URL fallbacks
 
-    /// De-bulleted free-text query for the last-resort search-URL fallbacks.
+    /// De-bulleted free-text query for the search-URL fallbacks.
     private func fallbackQuery(title: String, artist: String) -> String {
         let cleanedArtist = artist
             .replacingOccurrences(of: "•", with: " ")
@@ -173,218 +194,148 @@ final class SongLinkService {
             .trimmingCharacters(in: .whitespaces)
     }
 
-    /// Build a Spotify search URL as last-resort fallback when Odesli has no direct match
+    /// Percent-encode free text for use in a path segment OR a query value.
+    /// `.urlQueryAllowed` leaves `&`, `+` and `?` intact, which silently truncates
+    /// the query for artists like "Simon & Garfunkel".
+    private func encodeQuery(_ s: String) -> String {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        return s.addingPercentEncoding(withAllowedCharacters: allowed) ?? ""
+    }
+
     private func spotifySearchUrl(title: String, artist: String) -> String {
-        let query = fallbackQuery(title: title, artist: artist)
-            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return "https://open.spotify.com/search/\(query)"
+        "https://open.spotify.com/search/\(encodeQuery(fallbackQuery(title: title, artist: artist)))"
     }
 
-    /// Build a YouTube Music search URL as fallback when Odesli has no direct match
     private func youtubeMusicSearchUrl(title: String, artist: String) -> String {
-        let query = fallbackQuery(title: title, artist: artist)
-            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return "https://music.youtube.com/search?q=\(query)"
+        "https://music.youtube.com/search?q=\(encodeQuery(fallbackQuery(title: title, artist: artist)))"
     }
 
-    /// Fill in missing platform links with search URL fallbacks
-    private func applyFallbacks(_ links: SongLinks, title: String, artist: String) -> SongLinks {
-        SongLinks(
-            pageUrl: links.pageUrl,
-            spotify: links.spotify ?? spotifySearchUrl(title: title, artist: artist),
-            appleMusic: links.appleMusic,
-            youtubeMusic: links.youtubeMusic ?? youtubeMusicSearchUrl(title: title, artist: artist),
-            deezer: links.deezer,
-            yandex: links.yandex
-        )
+    private func yandexSearchUrl(title: String, artist: String) -> String {
+        "https://music.yandex.com/search?text=\(encodeQuery(fallbackQuery(title: title, artist: artist)))"
     }
+
+    // MARK: - Resolution
 
     private func fetchLinksInternal(title: String, artist: String) async -> SongLinks? {
         let country = Locale.current.region?.identifier ?? "US"
 
-        // Strategy: Try iTunes → odesli first.
-        // If any major platform is missing, try Deezer search → odesli for better cross-platform matching.
-        // Finally, inject search URL fallbacks for any still-missing platforms.
+        // Both catalogue searches are independent and key-less — run them together.
+        async let itunesSearch = searchITunes(title: title, artist: artist, country: country)
+        async let deezerSearch = searchDeezer(title: title, artist: artist)
+        let (itunes, deezer) = await (itunesSearch, deezerSearch)
 
-        // Step 1: Search iTunes to get a platform URL
-        let itunesLinks = await fetchViaITunes(title: title, artist: artist, country: country)
-
-        // If we got all major platforms from iTunes path, we're done
-        if let links = itunesLinks, links.spotify != nil && links.youtubeMusic != nil {
-            return applyFallbacks(links, title: title, artist: artist)
+        // The universal link is built from whichever track id we found; song.link's
+        // own page then resolves the remaining platforms.
+        let pageUrl: String?
+        if let itunes {
+            pageUrl = "https://song.link/i/\(itunes.trackId)"
+        } else if let deezer {
+            pageUrl = "https://song.link/d/\(deezer.trackId)"
+        } else {
+            pageUrl = nil
+            AppLogger.shared.log("SongLink: no catalogue match for '\(title)' by '\(artist)' — search links only")
         }
 
-        // Step 2: Try Deezer search → odesli for better cross-platform matching
-        let missingPlatforms = [
-            itunesLinks?.spotify == nil ? "Spotify" : nil,
-            itunesLinks?.youtubeMusic == nil ? "YouTube Music" : nil
-        ].compactMap { $0 }.joined(separator: ", ")
-        AppLogger.shared.log("SongLink: \(missingPlatforms) missing from iTunes path, trying Deezer search...")
-
-        if let deezerLinks = await fetchViaDeezer(title: title, artist: artist, country: country) {
-            let merged = SongLinks(
-                pageUrl: deezerLinks.pageUrl,
-                spotify: deezerLinks.spotify ?? itunesLinks?.spotify,
-                appleMusic: deezerLinks.appleMusic ?? itunesLinks?.appleMusic,
-                youtubeMusic: deezerLinks.youtubeMusic ?? itunesLinks?.youtubeMusic,
-                deezer: deezerLinks.deezer ?? itunesLinks?.deezer,
-                yandex: deezerLinks.yandex ?? itunesLinks?.yandex
-            )
-            return applyFallbacks(merged, title: title, artist: artist)
-        }
-
-        // Step 3: Return iTunes results with fallbacks
-        if let links = itunesLinks {
-            return applyFallbacks(links, title: title, artist: artist)
-        }
-
-        // Nothing from any API — build minimal result with search fallbacks
-        AppLogger.shared.log("SongLink: All APIs failed, using search URL fallbacks")
         return SongLinks(
-            pageUrl: "https://song.link",
-            spotify: spotifySearchUrl(title: title, artist: artist),
-            appleMusic: nil,
-            youtubeMusic: youtubeMusicSearchUrl(title: title, artist: artist),
-            deezer: nil,
-            yandex: nil
+            pageUrl: pageUrl,
+            spotify: PlatformLink(url: spotifySearchUrl(title: title, artist: artist), isSearch: true),
+            appleMusic: itunes.map { PlatformLink(url: $0.url, isSearch: false) },
+            youtubeMusic: PlatformLink(url: youtubeMusicSearchUrl(title: title, artist: artist), isSearch: true),
+            deezer: deezer.map { PlatformLink(url: $0.url, isSearch: false) },
+            yandex: PlatformLink(url: yandexSearchUrl(title: title, artist: artist), isSearch: true)
         )
     }
 
-    // MARK: - iTunes → Odesli path
+    // MARK: - iTunes catalogue
 
-    private func fetchViaITunes(title: String, artist: String, country: String) async -> SongLinks? {
+    /// Strip Apple's `uo` analytics parameter so the shared link stays clean.
+    private func cleanStoreUrl(_ url: String) -> String {
+        guard var comps = URLComponents(string: url) else { return url }
+        let kept = (comps.queryItems ?? []).filter { $0.name != "uo" }
+        comps.queryItems = kept.isEmpty ? nil : kept
+        return comps.url?.absoluteString ?? url
+    }
+
+    private func searchITunes(title: String, artist: String, country: String) async -> CatalogueMatch? {
         // Search with the LEAD artist + cleaned title — the full multi-artist credit
         // string ("A • B • C") rarely matches Apple's catalogue.
         let searchQuery = "\(primaryArtist(artist)) \(cleanTitle(title))"
-        var searchComponents = URLComponents(string: "https://itunes.apple.com/search")!
-        searchComponents.queryItems = [
+        var components = URLComponents(string: "https://itunes.apple.com/search")!
+        components.queryItems = [
             URLQueryItem(name: "term", value: searchQuery),
             URLQueryItem(name: "media", value: "music"),
             URLQueryItem(name: "entity", value: "song"),
+            URLQueryItem(name: "country", value: country),
             URLQueryItem(name: "limit", value: "10")
         ]
-        guard let searchUrl = searchComponents.url else { return nil }
-
-        AppLogger.shared.log("SongLink: Searching iTunes for '\(searchQuery)'")
+        guard let url = components.url else { return nil }
 
         do {
-            let (searchData, searchResponse) = try await session.data(from: searchUrl)
-            guard let http = searchResponse as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
-
-            let searchResult = try JSONDecoder().decode(ITunesSearchResponse.self, from: searchData)
-            // Among artist-matching results, pick the closest title (original over remix);
-            // never blindly take the first hit (which is often a remix not on every platform).
-            let target = cleanTitle(title).lowercased()
-            let candidates = searchResult.results.filter { artistMatches($0.artistName, query: artist) }
-            let match = candidates.max { titleScore($0.trackName, target: target) < titleScore($1.trackName, target: target) }
-                ?? candidates.first
-                ?? searchResult.results.first
-            guard let track = match, let trackUrl = track.trackViewUrl else {
-                AppLogger.shared.log("SongLink: No iTunes results for '\(searchQuery)'")
+            let (data, response) = try await session.data(from: url)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                AppLogger.shared.log("SongLink: iTunes HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)")
                 return nil
             }
 
-            AppLogger.shared.log("SongLink: Found iTunes match: \(track.trackName ?? "?") by \(track.artistName ?? "?")")
-            return await queryOdesli(url: trackUrl, country: country)
+            let decoded = try JSONDecoder().decode(ITunesSearchResponse.self, from: data)
+            // Only consider artist-matching results, then pick the closest title
+            // (original over remix). An unverified first hit is worse than no link.
+            let target = cleanTitle(title).lowercased()
+            let candidates = decoded.results.filter { artistMatches($0.artistName, query: artist) }
+            let best = candidates.max { titleScore($0.trackName, target: target) < titleScore($1.trackName, target: target) }
+
+            guard let track = best, let trackId = track.trackId, let viewUrl = track.trackViewUrl else {
+                AppLogger.shared.log("SongLink: no iTunes match for '\(searchQuery)'")
+                return nil
+            }
+
+            AppLogger.shared.log("SongLink: iTunes match '\(track.trackName ?? "?")' by \(track.artistName ?? "?") (id \(trackId))")
+            return CatalogueMatch(url: cleanStoreUrl(viewUrl), trackId: trackId)
         } catch {
             AppLogger.shared.log("SongLink: iTunes search failed: \(error.localizedDescription)")
             return nil
         }
     }
 
-    // MARK: - Deezer → Odesli path
+    // MARK: - Deezer catalogue
 
-    private func fetchViaDeezer(title: String, artist: String, country: String) async -> SongLinks? {
-        // Deezer search API is free, no auth required. Use the lead artist + cleaned
-        // title so the structured query matches (a "A • B • C" artist string won't).
-        // Escape double quotes so a name like 'AC"DC' can't break the structured query.
+    private func searchDeezer(title: String, artist: String) async -> CatalogueMatch? {
+        // Deezer's search API is free and key-less. Use the lead artist + cleaned
+        // title so the structured query matches (a "A • B • C" string won't).
+        // Escape double quotes so a name like 'AC"DC' can't break the query.
         let safeArtist = primaryArtist(artist).replacingOccurrences(of: "\"", with: "\\\"")
         let safeTitle = cleanTitle(title).replacingOccurrences(of: "\"", with: "\\\"")
-        let query = "artist:\"\(safeArtist)\" track:\"\(safeTitle)\""
-        var searchComponents = URLComponents(string: "https://api.deezer.com/search")!
-        searchComponents.queryItems = [
-            URLQueryItem(name: "q", value: query),
-            URLQueryItem(name: "limit", value: "3")
-        ]
-        guard let searchUrl = searchComponents.url else { return nil }
-
-        AppLogger.shared.log("SongLink: Searching Deezer for '\(title)' by '\(artist)'")
-
-        do {
-            let (searchData, searchResponse) = try await session.data(from: searchUrl)
-            guard let http = searchResponse as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
-
-            let searchResult = try JSONDecoder().decode(DeezerSearchResponse.self, from: searchData)
-            guard let firstTrack = searchResult.data?.first else {
-                AppLogger.shared.log("SongLink: No Deezer results for '\(title)' by '\(artist)'")
-                return nil
-            }
-
-            AppLogger.shared.log("SongLink: Found Deezer match: \(firstTrack.title ?? "?") by \(firstTrack.artist?.name ?? "?") (id: \(firstTrack.id))")
-
-            // Query odesli with the Deezer track ID directly
-            var components = URLComponents(string: "https://api.song.link/v1-alpha.1/links")!
-            components.queryItems = [
-                URLQueryItem(name: "platform", value: "deezer"),
-                URLQueryItem(name: "type", value: "song"),
-                URLQueryItem(name: "id", value: String(firstTrack.id)),
-                URLQueryItem(name: "userCountry", value: country)
-            ]
-            guard let url = components.url else { return nil }
-
-            let (data, response) = try await session.data(from: url)
-            guard let odesliHttp = response as? HTTPURLResponse, (200...299).contains(odesliHttp.statusCode) else {
-                AppLogger.shared.log("SongLink: Odesli via Deezer HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)")
-                return nil
-            }
-            let decoded = try JSONDecoder().decode(OdesliResponse.self, from: data)
-            let pageUrl = decoded.pageUrl ?? "https://song.link"
-            let links = decoded.linksByPlatform
-            AppLogger.shared.log("SongLink (Deezer path): Spotify: \(links?["spotify"]?.url != nil), Apple Music: \(links?["appleMusic"]?.url != nil), YouTube Music: \(links?["youtubeMusic"]?.url != nil), Deezer: \(links?["deezer"]?.url != nil), Yandex: \(links?["yandex"]?.url != nil)")
-            return SongLinks(
-                pageUrl: pageUrl,
-                spotify: links?["spotify"]?.url,
-                appleMusic: links?["appleMusic"]?.url,
-                youtubeMusic: links?["youtubeMusic"]?.url,
-                deezer: links?["deezer"]?.url,
-                yandex: links?["yandex"]?.url
-            )
-        } catch {
-            AppLogger.shared.log("SongLink: Deezer search failed: \(error.localizedDescription)")
-            return nil
-        }
-    }
-
-    // MARK: - Odesli query by URL
-
-    private func queryOdesli(url inputUrl: String, country: String) async -> SongLinks? {
-        var components = URLComponents(string: "https://api.song.link/v1-alpha.1/links")!
+        var components = URLComponents(string: "https://api.deezer.com/search")!
         components.queryItems = [
-            URLQueryItem(name: "url", value: inputUrl),
-            URLQueryItem(name: "userCountry", value: country)
+            URLQueryItem(name: "q", value: "artist:\"\(safeArtist)\" track:\"\(safeTitle)\""),
+            URLQueryItem(name: "limit", value: "5")
         ]
         guard let url = components.url else { return nil }
 
         do {
             let (data, response) = try await session.data(from: url)
-            guard let odesliHttp = response as? HTTPURLResponse, (200...299).contains(odesliHttp.statusCode) else {
-                AppLogger.shared.log("SongLink API: HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)")
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                AppLogger.shared.log("SongLink: Deezer HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)")
                 return nil
             }
-            let decoded = try JSONDecoder().decode(OdesliResponse.self, from: data)
-            let pageUrl = decoded.pageUrl ?? "https://song.link"
-            let links = decoded.linksByPlatform
-            AppLogger.shared.log("SongLink (iTunes path): Spotify: \(links?["spotify"]?.url != nil), Apple Music: \(links?["appleMusic"]?.url != nil), YouTube Music: \(links?["youtubeMusic"]?.url != nil), Deezer: \(links?["deezer"]?.url != nil), Yandex: \(links?["yandex"]?.url != nil)")
-            return SongLinks(
-                pageUrl: pageUrl,
-                spotify: links?["spotify"]?.url,
-                appleMusic: links?["appleMusic"]?.url,
-                youtubeMusic: links?["youtubeMusic"]?.url,
-                deezer: links?["deezer"]?.url,
-                yandex: links?["yandex"]?.url
-            )
+
+            let decoded = try JSONDecoder().decode(DeezerSearchResponse.self, from: data)
+            // Same verification as the iTunes path — the structured query can still
+            // return a loose match, and a wrong link is worse than a search link.
+            let target = cleanTitle(title).lowercased()
+            let candidates = (decoded.data ?? []).filter { artistMatches($0.artist?.name, query: artist) }
+            let best = candidates.max { titleScore($0.title, target: target) < titleScore($1.title, target: target) }
+
+            guard let track = best, let link = track.link else {
+                AppLogger.shared.log("SongLink: no Deezer match for '\(title)' by '\(artist)'")
+                return nil
+            }
+
+            AppLogger.shared.log("SongLink: Deezer match '\(track.title ?? "?")' by \(track.artist?.name ?? "?") (id \(track.id))")
+            return CatalogueMatch(url: link, trackId: track.id)
         } catch {
-            AppLogger.shared.log("SongLink: Odesli query failed: \(error.localizedDescription)")
+            AppLogger.shared.log("SongLink: Deezer search failed: \(error.localizedDescription)")
             return nil
         }
     }
