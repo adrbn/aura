@@ -41,11 +41,20 @@ final class SongLinkService {
         let yandex: PlatformLink?
     }
 
-    private let session: URLSession = {
+    private let session: URLSession
+
+    /// The session used in production. Kept as a factory so tests can build the
+    /// service with a stubbed session and exercise the catalogue paths offline,
+    /// while `shared` keeps exactly the behaviour it had.
+    static func defaultSession() -> URLSession {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 10
         return URLSession(configuration: config)
-    }()
+    }
+
+    init(session: URLSession = SongLinkService.defaultSession()) {
+        self.session = session
+    }
 
     /// Cache: songKey → SongLinks
     private(set) var cache: [String: SongLinks] = [:]

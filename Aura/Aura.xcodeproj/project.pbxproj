@@ -22,6 +22,7 @@
 		2654DD345C3C590F7D60DA5B /* MacPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */; };
 		2A26205247DC4A5946E2A737 /* PinSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E789F4384A074A1B5C0CC509 /* PinSync.swift */; };
 		30809170EF314ADF20C2CFE9 /* MacPlayerBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A7A8D3269A4534007744BF /* MacPlayerBar.swift */; };
+		30CDA697DD9DFA3D48C1ADEA /* SongLinkServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F4E2D16AB99E6213E82E52 /* SongLinkServiceTests.swift */; };
 		32A49759C5A3CF32AEA00A68 /* MacPlaylistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */; };
 		38937ABA4C1C046DBB0779CD /* MacBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67D53CBB8991E7A47AB055E /* MacBackground.swift */; };
 		3AB1165B891D0FE586E05EFC /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
@@ -217,6 +218,7 @@
 		4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPendingNavigation.swift; sourceTree = "<group>"; };
 		50A7A8D3269A4534007744BF /* MacPlayerBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlayerBar.swift; sourceTree = "<group>"; };
 		52EF92C7DDB19233A3394D28 /* MacSongsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongsView.swift; sourceTree = "<group>"; };
+		55F4E2D16AB99E6213E82E52 /* SongLinkServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongLinkServiceTests.swift; sourceTree = "<group>"; };
 		599B6E59E456CCD14BAC1A6B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		5FC303FFB1AA5654FA101AC6 /* AuraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AuraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6163600181237025007A32C2 /* MacShelf.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacShelf.swift; sourceTree = "<group>"; };
@@ -384,6 +386,7 @@
 			isa = PBXGroup;
 			children = (
 				3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */,
+				55F4E2D16AB99E6213E82E52 /* SongLinkServiceTests.swift */,
 			);
 			name = AuraTests;
 			path = AuraTests;
@@ -873,6 +876,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7076A0E916BEEBA79DBB0125 /* SongQueryTests.swift in Sources */,
+				30CDA697DD9DFA3D48C1ADEA /* SongLinkServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
