@@ -242,7 +242,7 @@ struct OnboardingView: View {
         }
     }
 
-    private func featurePill(icon: String, text: String) -> some View {
+    private func featurePill(icon: String, text: LocalizedStringKey) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
@@ -261,7 +261,7 @@ struct OnboardingView: View {
 
     // MARK: - Feature Page
 
-    private func featurePage(icon: String, title: String, subtitle: String, detail: String) -> some View {
+    private func featurePage(icon: String, title: LocalizedStringKey, subtitle: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         VStack(spacing: 0) {
             Spacer()
 
