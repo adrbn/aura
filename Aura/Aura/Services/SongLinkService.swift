@@ -135,91 +135,6 @@ final class SongLinkService {
         }
     }
 
-    // MARK: - Query normalization
-
-    /// The primary artist for matching. Streaming search APIs match poorly on
-    /// multi-artist credit strings ("Armand van Helden • KAREN HARDING", "A feat. B"),
-    /// so we search with just the lead artist and verify the result.
-    private func primaryArtist(_ artist: String) -> String {
-        let separators = [" • ", " •", "• ", "•", " feat.", " feat ", " featuring",
-                          " ft.", " ft ", " & ", ", ", " x ", " X ", " vs. ", " vs ",
-                          " with ", " / ", "/", ";"]
-        var result = artist
-        for sep in separators {
-            if let range = result.range(of: sep, options: [.caseInsensitive]) {
-                result = String(result[..<range.lowerBound])
-            }
-        }
-        let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? artist : trimmed
-    }
-
-    /// Strip "(feat. …)" / "(with …)" clutter that blocks exact matches, while keeping
-    /// meaningful parentheticals (remix names, "(I Won't Let You Down)", etc.).
-    private func cleanTitle(_ title: String) -> String {
-        var t = title
-        for p in ["\\s*\\(feat\\.?.*?\\)", "\\s*\\(ft\\.?.*?\\)",
-                  "\\s*\\(featuring.*?\\)", "\\s*\\(with .*?\\)"] {
-            t = t.replacingOccurrences(of: p, with: "", options: [.regularExpression, .caseInsensitive])
-        }
-        return t.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// Loose check that a search result actually corresponds to the song we asked for
-    /// (so we never hand back a real-but-wrong link, which is worse than a search link).
-    private func artistMatches(_ candidate: String?, query: String) -> Bool {
-        guard let c = candidate?.lowercased() else { return false }
-        let q = primaryArtist(query).lowercased()
-        guard !q.isEmpty else { return false }
-        return c.contains(q) || q.contains(c)
-    }
-
-    /// Rank a candidate track title against the target — exact match wins, then the
-    /// shortest bracket-stripped match (so the ORIGINAL beats "[… Remix]"/"[Mixed]"
-    /// variants, which often aren't on every platform).
-    private func titleScore(_ trackName: String?, target: String) -> Int {
-        guard let n = trackName?.lowercased() else { return 0 }
-        if n == target { return 1000 }
-        let stripped = n.replacingOccurrences(of: "\\s*\\[.*?\\]", with: "", options: .regularExpression)
-            .trimmingCharacters(in: .whitespaces)
-        if stripped == target { return 600 - n.count }
-        if n.contains(target) || target.contains(n) { return 300 - n.count }
-        return 0
-    }
-
-    // MARK: - Search-URL fallbacks
-
-    /// De-bulleted free-text query for the search-URL fallbacks.
-    private func fallbackQuery(title: String, artist: String) -> String {
-        let cleanedArtist = artist
-            .replacingOccurrences(of: "•", with: " ")
-            .replacingOccurrences(of: "/", with: " ")
-        return "\(cleanedArtist) \(title)"
-            .replacingOccurrences(of: "  ", with: " ")
-            .trimmingCharacters(in: .whitespaces)
-    }
-
-    /// Percent-encode free text for use in a path segment OR a query value.
-    /// `.urlQueryAllowed` leaves `&`, `+` and `?` intact, which silently truncates
-    /// the query for artists like "Simon & Garfunkel".
-    private func encodeQuery(_ s: String) -> String {
-        var allowed = CharacterSet.alphanumerics
-        allowed.insert(charactersIn: "-._~")
-        return s.addingPercentEncoding(withAllowedCharacters: allowed) ?? ""
-    }
-
-    private func spotifySearchUrl(title: String, artist: String) -> String {
-        "https://open.spotify.com/search/\(encodeQuery(fallbackQuery(title: title, artist: artist)))"
-    }
-
-    private func youtubeMusicSearchUrl(title: String, artist: String) -> String {
-        "https://music.youtube.com/search?q=\(encodeQuery(fallbackQuery(title: title, artist: artist)))"
-    }
-
-    private func yandexSearchUrl(title: String, artist: String) -> String {
-        "https://music.yandex.com/search?text=\(encodeQuery(fallbackQuery(title: title, artist: artist)))"
-    }
-
     // MARK: - Resolution
 
     private func fetchLinksInternal(title: String, artist: String) async -> SongLinks? {
@@ -245,31 +160,23 @@ final class SongLinkService {
         return SongLinks(
             pageUrl: pageUrl,
             spotify: PlatformLink(
-                url: spotifySearchUrl(title: title, artist: artist),
+                url: SongQuery.spotifySearchUrl(title: title, artist: artist),
                 isSearch: true,
-                appURL: "spotify:search:\(encodeQuery(fallbackQuery(title: title, artist: artist)))"
+                appURL: SongQuery.spotifyAppSearchUrl(title: title, artist: artist)
             ),
             appleMusic: itunes.map { PlatformLink(url: $0.url, isSearch: false) },
-            youtubeMusic: PlatformLink(url: youtubeMusicSearchUrl(title: title, artist: artist), isSearch: true),
+            youtubeMusic: PlatformLink(url: SongQuery.youtubeMusicSearchUrl(title: title, artist: artist), isSearch: true),
             deezer: deezer.map { PlatformLink(url: $0.url, isSearch: false) },
-            yandex: PlatformLink(url: yandexSearchUrl(title: title, artist: artist), isSearch: true)
+            yandex: PlatformLink(url: SongQuery.yandexSearchUrl(title: title, artist: artist), isSearch: true)
         )
     }
 
     // MARK: - iTunes catalogue
 
-    /// Strip Apple's `uo` analytics parameter so the shared link stays clean.
-    private func cleanStoreUrl(_ url: String) -> String {
-        guard var comps = URLComponents(string: url) else { return url }
-        let kept = (comps.queryItems ?? []).filter { $0.name != "uo" }
-        comps.queryItems = kept.isEmpty ? nil : kept
-        return comps.url?.absoluteString ?? url
-    }
-
     private func searchITunes(title: String, artist: String, country: String) async -> CatalogueMatch? {
         // Search with the LEAD artist + cleaned title — the full multi-artist credit
         // string ("A • B • C") rarely matches Apple's catalogue.
-        let searchQuery = "\(primaryArtist(artist)) \(cleanTitle(title))"
+        let searchQuery = "\(SongQuery.primaryArtist(artist)) \(SongQuery.cleanTitle(title))"
         var components = URLComponents(string: "https://itunes.apple.com/search")!
         components.queryItems = [
             URLQueryItem(name: "term", value: searchQuery),
@@ -290,17 +197,30 @@ final class SongLinkService {
             let decoded = try JSONDecoder().decode(ITunesSearchResponse.self, from: data)
             // Only consider artist-matching results, then pick the closest title
             // (original over remix). An unverified first hit is worse than no link.
-            let target = cleanTitle(title).lowercased()
-            let candidates = decoded.results.filter { artistMatches($0.artistName, query: artist) }
-            let best = candidates.max { titleScore($0.trackName, target: target) < titleScore($1.trackName, target: target) }
+            let target = SongQuery.cleanTitle(title)
+            // A score of 0 means the title does not correspond at all. Without this
+            // filter `max` still returns something, and the sheet presents it as a
+            // resolved link — the exact "real but wrong" outcome we must avoid.
+            let scored = decoded.results
+                .filter { SongQuery.artistMatches($0.artistName, query: artist) }
+                .map { (track: $0, score: SongQuery.titleScore($0.trackName, target: target)) }
+                .filter { $0.score > 0 }
+            let best = scored.max { a, b in
+                // Ties are routine (a single and its album share a title) and
+                // `max` keeps the first, i.e. whatever order the API replied in.
+                a.score != b.score
+                    ? a.score < b.score
+                    : (!SongQuery.isExactArtist(a.track.artistName, query: artist)
+                       && SongQuery.isExactArtist(b.track.artistName, query: artist))
+            }
 
-            guard let track = best, let trackId = track.trackId, let viewUrl = track.trackViewUrl else {
+            guard let track = best?.track, let trackId = track.trackId, let viewUrl = track.trackViewUrl else {
                 AppLogger.shared.log("SongLink: no iTunes match for '\(searchQuery)'")
                 return nil
             }
 
             AppLogger.shared.log("SongLink: iTunes match '\(track.trackName ?? "?")' by \(track.artistName ?? "?") (id \(trackId))")
-            return CatalogueMatch(url: cleanStoreUrl(viewUrl), trackId: trackId)
+            return CatalogueMatch(url: SongQuery.cleanStoreUrl(viewUrl), trackId: trackId)
         } catch {
             AppLogger.shared.log("SongLink: iTunes search failed: \(error.localizedDescription)")
             return nil
@@ -313,8 +233,8 @@ final class SongLinkService {
         // Deezer's search API is free and key-less. Use the lead artist + cleaned
         // title so the structured query matches (a "A • B • C" string won't).
         // Escape double quotes so a name like 'AC"DC' can't break the query.
-        let safeArtist = primaryArtist(artist).replacingOccurrences(of: "\"", with: "\\\"")
-        let safeTitle = cleanTitle(title).replacingOccurrences(of: "\"", with: "\\\"")
+        let safeArtist = SongQuery.primaryArtist(artist).replacingOccurrences(of: "\"", with: "\\\"")
+        let safeTitle = SongQuery.cleanTitle(title).replacingOccurrences(of: "\"", with: "\\\"")
         var components = URLComponents(string: "https://api.deezer.com/search")!
         components.queryItems = [
             URLQueryItem(name: "q", value: "artist:\"\(safeArtist)\" track:\"\(safeTitle)\""),
@@ -332,11 +252,19 @@ final class SongLinkService {
             let decoded = try JSONDecoder().decode(DeezerSearchResponse.self, from: data)
             // Same verification as the iTunes path — the structured query can still
             // return a loose match, and a wrong link is worse than a search link.
-            let target = cleanTitle(title).lowercased()
-            let candidates = (decoded.data ?? []).filter { artistMatches($0.artist?.name, query: artist) }
-            let best = candidates.max { titleScore($0.title, target: target) < titleScore($1.title, target: target) }
+            let target = SongQuery.cleanTitle(title)
+            let scored = (decoded.data ?? [])
+                .filter { SongQuery.artistMatches($0.artist?.name, query: artist) }
+                .map { (track: $0, score: SongQuery.titleScore($0.title, target: target)) }
+                .filter { $0.score > 0 }
+            let best = scored.max { a, b in
+                a.score != b.score
+                    ? a.score < b.score
+                    : (!SongQuery.isExactArtist(a.track.artist?.name, query: artist)
+                       && SongQuery.isExactArtist(b.track.artist?.name, query: artist))
+            }
 
-            guard let track = best, let link = track.link else {
+            guard let track = best?.track, let link = track.link else {
                 AppLogger.shared.log("SongLink: no Deezer match for '\(title)' by '\(artist)'")
                 return nil
             }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0031110FB412232B510DA63F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332E4899162985D5A2BE70F9 /* Foundation.framework */; };
 		00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7507C823E9A1C89305C77937 /* MacHomeView.swift */; };
 		04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
 		08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */; };
@@ -41,6 +42,7 @@
 		69CB76644A67D845CC364E92 /* MacSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECC9389652F34E463A5C765C /* MacSearchView.swift */; };
 		69F2D8A569CD130DF5E0FE74 /* MacPlaylistOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 192D83957C7F2C1E93977841 /* MacPlaylistOrder.swift */; };
 		6F5440002B59F82648E55409 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000099 /* GeneratedCoverView.swift */; };
+		7076A0E916BEEBA79DBB0125 /* SongQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */; };
 		7232B8C3D331010529C1A904 /* MacSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31E6A5950E5B49121F1EDCD /* MacSidebar.swift */; };
 		79226C21CD16E88AF9BA7E57 /* MacServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */; };
 		7E8ABA46083A765581C69A5E /* MacGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88855F68FD1F326A2B289FF3 /* MacGrid.swift */; };
@@ -75,7 +77,6 @@
 		DE538F275F2FE804D1678772 /* MacOptionsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */; };
 		E10000010000000000000001 /* AuraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000001 /* AuraApp.swift */; };
 		E10000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000002 /* ContentView.swift */; };
-		E100000100000000000000B0 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = E100000500000000000000B0 /* AppShortcuts.strings */; };
 		E10000010000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000003 /* Assets.xcassets */; };
 		E10000010000000000000010 /* SubsonicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000010 /* SubsonicClient.swift */; };
 		E10000010000000000000011 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000011 /* Models.swift */; };
@@ -128,9 +129,12 @@
 		E1000001000000000000009C /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
 		E100000100000000000000A1 /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
 		E100000100000000000000A2 /* MixDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A2 /* MixDetailView.swift */; };
+		E100000100000000000000B0 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = E100000500000000000000B0 /* AppShortcuts.strings */; };
 		E100000100000000000000B1 /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000B1 /* SkeletonView.swift */; };
 		E100000100000000000000B2 /* SearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000B2 /* SearchIndex.swift */; };
+		E100000100000000000000C0 /* SongQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C0 /* SongQuery.swift */; };
 		E100000100000000000000C1 /* SearchHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C1 /* SearchHistory.swift */; };
+		E100000100000000000000C2 /* SongQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C0 /* SongQuery.swift */; };
 		E100000100000000000000D1 /* AudioOutputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D1 /* AudioOutputButton.swift */; };
 		E100000100000000000000D2 /* BufferedProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D2 /* BufferedProgressBar.swift */; };
 		E100000100000000000000D3 /* TabRootChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D3 /* TabRootChrome.swift */; };
@@ -164,6 +168,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		149019746FE8A17CD3407ACF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E10000090000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E10000060000000000000001;
+			remoteInfo = Aura;
+		};
 		E1000000B000000000000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E10000090000000000000001 /* Project object */;
@@ -197,6 +208,8 @@
 		2840376375D75F5F54A64277 /* MacServerPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerPicker.swift; sourceTree = "<group>"; };
 		2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistsView.swift; sourceTree = "<group>"; };
 		2DE0E8DD48DEACB25983419C /* MacCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacCommands.swift; sourceTree = "<group>"; };
+		332E4899162985D5A2BE70F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQueryTests.swift; sourceTree = "<group>"; };
 		40E8E704D9B72925B6B94399 /* ImageCropView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
 		485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerSetupView.swift; sourceTree = "<group>"; };
 		48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacEqualizerView.swift; sourceTree = "<group>"; };
@@ -205,6 +218,7 @@
 		50A7A8D3269A4534007744BF /* MacPlayerBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlayerBar.swift; sourceTree = "<group>"; };
 		52EF92C7DDB19233A3394D28 /* MacSongsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongsView.swift; sourceTree = "<group>"; };
 		599B6E59E456CCD14BAC1A6B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		5FC303FFB1AA5654FA101AC6 /* AuraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AuraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6163600181237025007A32C2 /* MacShelf.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacShelf.swift; sourceTree = "<group>"; };
 		61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlaylistsView.swift; sourceTree = "<group>"; };
 		6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistLinks.swift; sourceTree = "<group>"; };
@@ -229,8 +243,6 @@
 		DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraMacApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000001 /* AuraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuraApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		E100000200000000000000B0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		E100000200000000000000B3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E10000020000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E10000020000000000000010 /* SubsonicClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubsonicClient.swift; sourceTree = "<group>"; };
 		E10000020000000000000011 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -280,8 +292,11 @@
 		E1000002000000000000009C /* LastfmService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastfmService.swift; sourceTree = "<group>"; };
 		E100000200000000000000A1 /* MixGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixGenerator.swift; sourceTree = "<group>"; };
 		E100000200000000000000A2 /* MixDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixDetailView.swift; sourceTree = "<group>"; };
+		E100000200000000000000B0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E100000200000000000000B1 /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
 		E100000200000000000000B2 /* SearchIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchIndex.swift; sourceTree = "<group>"; };
+		E100000200000000000000B3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E100000200000000000000C0 /* SongQuery.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQuery.swift; sourceTree = "<group>"; };
 		E100000200000000000000C1 /* SearchHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHistory.swift; sourceTree = "<group>"; };
 		E100000200000000000000D1 /* AudioOutputButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputButton.swift; sourceTree = "<group>"; };
 		E100000200000000000000D2 /* BufferedProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferedProgressBar.swift; sourceTree = "<group>"; };
@@ -315,6 +330,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		09A754FE5DEB8FC52EEE04F3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0031110FB412232B510DA63F /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3FA6CE23449E82799F45D642 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -344,6 +367,7 @@
 			isa = PBXGroup;
 			children = (
 				3FE90F5D7556521127C834DD /* OS X */,
+				6D023D5BE16A62FC9C72524F /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -354,6 +378,23 @@
 				599B6E59E456CCD14BAC1A6B /* Cocoa.framework */,
 			);
 			name = "OS X";
+			sourceTree = "<group>";
+		};
+		552B2B5BE81D4ECC96B2BA91 /* AuraTests */ = {
+			isa = PBXGroup;
+			children = (
+				3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */,
+			);
+			name = AuraTests;
+			path = AuraTests;
+			sourceTree = SOURCE_ROOT;
+		};
+		6D023D5BE16A62FC9C72524F /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				332E4899162985D5A2BE70F9 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 		8621656274C6035C8F1DE8E9 /* Mac */ = {
@@ -401,6 +442,7 @@
 				E10000050000000000000010 /* AuraWidget */,
 				E10000050000000000000009 /* Products */,
 				2B43EB2ADC8F9C920032929A /* Frameworks */,
+				552B2B5BE81D4ECC96B2BA91 /* AuraTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -459,6 +501,7 @@
 				E100000200000000000000DE /* OfflinePlaylistsStore.swift */,
 				E100000200000000000000A1 /* MixGenerator.swift */,
 				D7A1E179BB18A52978EC7635 /* SongLinkService.swift */,
+				E100000200000000000000C0 /* SongQuery.swift */,
 				FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */,
 				BEB587064D721AA775E21C53 /* SlskdClient.swift */,
 				A747572DB3C445E463CCE4D8 /* Platform.swift */,
@@ -537,6 +580,7 @@
 				E10000030000000000000001 /* Aura.app */,
 				E10000030000000000000002 /* AuraWidgetExtension.appex */,
 				ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */,
+				5FC303FFB1AA5654FA101AC6 /* AuraTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -551,18 +595,6 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
-
-/* Begin PBXVariantGroup section */
-		E100000500000000000000B0 /* AppShortcuts.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				E100000200000000000000B0 /* en */,
-				E100000200000000000000B3 /* fr */,
-			);
-			name = AppShortcuts.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
 		104378F2D7F8F4A6BC123D9D /* Aura-mac */ = {
@@ -582,6 +614,24 @@
 			productName = "Aura-mac";
 			productReference = ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */;
 			productType = "com.apple.product-type.application";
+		};
+		14E9655B0E42340E60963398 /* AuraTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1C0E9684FB49C07DFEDA97BA /* Build configuration list for PBXNativeTarget "AuraTests" */;
+			buildPhases = (
+				C20F0809663A40B58DE87C2A /* Sources */,
+				09A754FE5DEB8FC52EEE04F3 /* Frameworks */,
+				90E0C48E06B8409189FD66D9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CC753A5EC635CA55D9AE1AFC /* PBXTargetDependency */,
+			);
+			name = AuraTests;
+			productName = AuraTests;
+			productReference = 5FC303FFB1AA5654FA101AC6 /* AuraTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		E10000060000000000000001 /* Aura */ = {
 			isa = PBXNativeTarget;
@@ -655,6 +705,7 @@
 				E10000060000000000000001 /* Aura */,
 				E10000060000000000000002 /* AuraWidgetExtension */,
 				104378F2D7F8F4A6BC123D9D /* Aura-mac */,
+				14E9655B0E42340E60963398 /* AuraTests */,
 			);
 		};
 /* End PBXProject section */
@@ -667,6 +718,13 @@
 				D5BE2989193E4B96C7AA1B99 /* Assets.xcassets in Resources */,
 				BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */,
 				80FBFEA4B8D74CC894B51E42 /* AppIcon.icon in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		90E0C48E06B8409189FD66D9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -770,6 +828,7 @@
 				A966843C05E005A327BAAA64 /* OfflinePlaylistsStore.swift in Sources */,
 				FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */,
 				04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */,
+				E100000100000000000000C0 /* SongQuery.swift in Sources */,
 				3AB1165B891D0FE586E05EFC /* PlaylistMembershipCache.swift in Sources */,
 				A5CF83658D8D594FC39B114A /* SlskdClient.swift in Sources */,
 				F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */,
@@ -806,6 +865,14 @@
 				08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */,
 				B225BE723A71BD7C8986CD35 /* MacWindowChrome.swift in Sources */,
 				0CF35D1498580545AAB8E5CF /* MacArtistLinks.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C20F0809663A40B58DE87C2A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7076A0E916BEEBA79DBB0125 /* SongQueryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -873,6 +940,7 @@
 				E100000100000000000000DE /* OfflinePlaylistsStore.swift in Sources */,
 				E100000100000000000000A1 /* MixGenerator.swift in Sources */,
 				223777C02AEF4304FF9CB3D0 /* SongLinkService.swift in Sources */,
+				E100000100000000000000C2 /* SongQuery.swift in Sources */,
 				87906AC1B1CBE2493FEBE438 /* PlaylistMembershipCache.swift in Sources */,
 				A0EA5D295C3DFD151DE59C30 /* SlskdClient.swift in Sources */,
 				E100000100000000000000D1 /* AudioOutputButton.swift in Sources */,
@@ -912,12 +980,30 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		CC753A5EC635CA55D9AE1AFC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Aura;
+			target = E10000060000000000000001 /* Aura */;
+			targetProxy = 149019746FE8A17CD3407ACF /* PBXContainerItemProxy */;
+		};
 		E1000000C000000000000001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E10000060000000000000002 /* AuraWidgetExtension */;
 			targetProxy = E1000000B000000000000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		E100000500000000000000B0 /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E100000200000000000000B0 /* en */,
+				E100000200000000000000B3 /* fr */,
+			);
+			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		09645B1D8CA32D293E48C723 /* Release-AppStore */ = {
@@ -1036,6 +1122,44 @@
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+			};
+			name = "Release-AppStore";
+		};
+		6EEB4A1AE0B4EF7BDE095AD0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.AuraTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aura.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Aura";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C84F5AA6FA4F842AA8AE87BA /* Release-AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.AuraTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aura.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Aura";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = "Release-AppStore";
 		};
@@ -1359,9 +1483,37 @@
 			};
 			name = Release;
 		};
+		FFBBB51B8BA3CFCB701FF002 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.AuraTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aura.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Aura";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1C0E9684FB49C07DFEDA97BA /* Build configuration list for PBXNativeTarget "AuraTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6EEB4A1AE0B4EF7BDE095AD0 /* Release */,
+				FFBBB51B8BA3CFCB701FF002 /* Debug */,
+				C84F5AA6FA4F842AA8AE87BA /* Release-AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		63A3A13663D596A47774F5A3 /* Build configuration list for PBXNativeTarget "Aura-mac" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
