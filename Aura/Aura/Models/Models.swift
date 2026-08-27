@@ -97,9 +97,9 @@ final class AppSettings {
     var showHomeSearchBar: Bool = true
     var showUpNext: Bool = true
     var appAccentColor: AppAccentColor = .pink
-    /// How pages are grounded. Defaults to `.aurora`: the flat fill read as a void on
-    /// OLED, and the mesh is the same ground `MacBackground` has always drawn.
-    var backgroundStyle: AuraBackgroundStyle = .aurora
+    /// How pages are grounded. Defaults to `.plain` — an even, barely-warmed near-black.
+    /// The colour in the app is meant to come from the records, not from underneath them.
+    var backgroundStyle: AuraBackgroundStyle = .plain
     var activeTheme: AppTheme = .standard
     /// Dark by default. Aura is a dark-first app — the artwork canvas, Now Playing and
     /// the landscape clock are always dark — so following a light system appearance made
@@ -202,7 +202,7 @@ final class AppSettings {
             showHomeSearchBar = decoded.showHomeSearchBar ?? true
             showUpNext = decoded.showUpNext ?? true
             appAccentColor = decoded.appAccentColor ?? .pink
-            backgroundStyle = decoded.backgroundStyle ?? .aurora
+            backgroundStyle = decoded.backgroundStyle ?? .plain
             activeTheme = decoded.activeTheme ?? .standard
             appearanceMode = decoded.appearanceMode ?? .dark
             eqPreset = decoded.eqPreset ?? .flat

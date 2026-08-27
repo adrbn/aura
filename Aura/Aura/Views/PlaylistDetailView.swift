@@ -160,7 +160,7 @@ struct PlaylistDetailView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .auraPageBackground()
+                .auraArtworkBackground(coverArt: playlist.coverArt)
                 .scrollIndicators(.hidden)
             } else if isLoading {
                 List {

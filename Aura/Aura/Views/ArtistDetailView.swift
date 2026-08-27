@@ -241,6 +241,7 @@ struct ArtistDetailView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .auraArtworkBackground(coverArt: artist?.coverArt ?? coverArt)
         .scrollIndicators(.hidden)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

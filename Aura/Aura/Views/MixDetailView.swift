@@ -96,7 +96,7 @@ struct MixDetailView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .auraPageBackground()
+        .auraArtworkBackground(coverArt: mix.coverArt)
         .scrollIndicators(.hidden)
         // Title is shown under the cover already — keep the nav bar title empty to avoid a duplicate.
         .navigationTitle("")

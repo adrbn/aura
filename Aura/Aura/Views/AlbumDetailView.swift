@@ -165,7 +165,7 @@ struct AlbumDetailView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .auraPageBackground()
+                .auraArtworkBackground(coverArt: album.coverArt)
                 .scrollIndicators(.hidden)
             } else if isLoading {
                 List {
