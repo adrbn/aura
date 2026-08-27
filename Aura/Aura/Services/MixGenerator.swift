@@ -62,6 +62,104 @@ struct Mix: Identifiable, Codable, Hashable {
     }
 }
 
+// MARK: - Per-server mix cache
+
+/// Where generated mixes live between launches.
+///
+/// A mix is built entirely out of ONE server's library — its song ids, stream URLs and
+/// cover art only resolve against the server they came from — so every entry is keyed by
+/// server id, the same shape `AudioPlayer.lastPlaybackKey` and `HomeDataCache` already
+/// use. Keying (rather than clearing on each switch) is what lets the app hold several
+/// servers at once: switching away parks a server's mixes, switching back finds them.
+struct MixCache {
+    private let defaults: UserDefaults
+
+    init(defaults: UserDefaults = .standard) { self.defaults = defaults }
+
+    /// `v6` because the `v5` keys carried no server: whatever is cached under them was
+    /// generated against a server nobody recorded and can't be attributed to one now, so
+    /// they are dropped (see `pruneLegacyKeys`) and the mixes regenerate once.
+    private func key(_ name: String, _ serverId: UUID?) -> String {
+        "musika_auto_mixes_\(name)_v6_\(serverId?.uuidString ?? "none")"
+    }
+
+    func mixes(for serverId: UUID?) -> [Mix] {
+        guard let data = defaults.data(forKey: key("contents", serverId)),
+              let decoded = try? JSONDecoder().decode([Mix].self, from: data) else { return [] }
+        return decoded
+    }
+
+    func save(_ mixes: [Mix], for serverId: UUID?, bucket: String, at date: Date = Date()) {
+        if let data = try? JSONEncoder().encode(mixes) {
+            defaults.set(data, forKey: key("contents", serverId))
+        }
+        defaults.set(date, forKey: key("date", serverId))
+        defaults.set(bucket, forKey: key("bucket", serverId))
+    }
+
+    /// When this server last generated — `nil` means never, so it must generate now.
+    func lastGenerated(for serverId: UUID?) -> Date? {
+        defaults.object(forKey: key("date", serverId)) as? Date
+    }
+
+    /// The time-of-day bucket this server's mixes were built for.
+    func bucket(for serverId: UUID?) -> String? {
+        defaults.string(forKey: key("bucket", serverId))
+    }
+
+    /// Whether `serverId` needs its mixes rebuilt: it has never generated, its mixes are
+    /// older than eight hours, the part of the day moved on, or the shelf is empty.
+    ///
+    /// Pure, and takes the server explicitly, because this is the gate the bug walked
+    /// through: it used to read one global date and bucket, so a server that had just
+    /// generated answered "still fresh" on behalf of every other server too.
+    func needsRegeneration(for serverId: UUID?, hasMixes: Bool, bucket: String, now: Date = Date()) -> Bool {
+        guard hasMixes,
+              self.bucket(for: serverId) == bucket,
+              let last = lastGenerated(for: serverId) else { return true }
+        return now.timeIntervalSince(last) > 8 * 3600
+    }
+
+    // MARK: Saved-as-playlist signatures
+
+    private func signatures(for serverId: UUID?) -> [String: String] {
+        (defaults.dictionary(forKey: key("signatures", serverId)) as? [String: String]) ?? [:]
+    }
+
+    func savedSignature(mixId: String, for serverId: UUID?) -> String? {
+        signatures(for: serverId)[mixId]
+    }
+
+    /// Scoped per server too: mix ids repeat across servers ("now", "chill", "genre_rock"),
+    /// so one global dictionary let saving a mix on one server un-mark it on another.
+    func setSavedSignature(_ signature: String, mixId: String, for serverId: UUID?) {
+        var sigs = signatures(for: serverId)
+        sigs[mixId] = signature
+        defaults.set(sigs, forKey: key("signatures", serverId))
+    }
+
+    // MARK: Housekeeping
+
+    /// Drop everything held for one server. Called when that server is removed, so its
+    /// mixes don't outlive it — the same tidy-up `removeServer` already does for the
+    /// server's Keychain password.
+    func removeAll(for serverId: UUID?) {
+        for name in ["contents", "date", "bucket", "signatures"] {
+            defaults.removeObject(forKey: key(name, serverId))
+        }
+    }
+
+    /// Clear the pre-`v6` global keys. Nothing can read them any more — they held one
+    /// server's mixes under no server at all — and a full shelf is a few hundred KB of
+    /// JSON, so they're deleted once rather than left to sit in every user's defaults.
+    func pruneLegacyKeys() {
+        for key in ["musika_auto_mixes_v5", "musika_auto_mixes_date_v5",
+                    "musika_auto_mixes_bucket_v5", "musika_saved_mix_signatures_v1"] {
+            defaults.removeObject(forKey: key)
+        }
+    }
+}
+
 // MARK: - Mix generator
 
 @MainActor
@@ -72,11 +170,33 @@ final class MixGenerator {
     private(set) var mixes: [Mix] = []
     var isGenerating = false
 
-    private let cacheKey = "musika_auto_mixes_v5"
-    private let cacheDateKey = "musika_auto_mixes_date_v5"
-    private let cacheBucketKey = "musika_auto_mixes_bucket_v5"
+    private let cache: MixCache
+    /// Which server the mixes currently in memory belong to. Tracked explicitly so any
+    /// path into a refresh can notice the active server moved on, not just `selectServer`.
+    private(set) var loadedServerId: UUID?
 
-    private init() { loadCache() }
+    private init() {
+        cache = MixCache()
+        cache.pruneLegacyKeys()
+        restoreForServer(ServerManager.shared.currentServer?.id)
+    }
+
+    /// Test seam — an isolated defaults suite with no `ServerManager` involved.
+    init(defaults: UserDefaults) {
+        cache = MixCache(defaults: defaults)
+    }
+
+    /// Swap the in-memory mixes for the ones cached against `serverId`. Called on launch,
+    /// by `ServerManager.selectServer` the moment the active server changes, and defensively
+    /// from `generateIfNeeded()`. Mirrors `AudioPlayer.restoreForCurrentServer()`.
+    ///
+    /// Empty is the correct outcome for a server that has never generated: it drops the
+    /// previous server's songs off screen straight away and makes `generateIfNeeded()`
+    /// rebuild, instead of showing a library the app is no longer pointed at.
+    func restoreForServer(_ serverId: UUID?) {
+        loadedServerId = serverId
+        mixes = cache.mixes(for: serverId)
+    }
 
     // MARK: Time of day
 
@@ -172,11 +292,14 @@ final class MixGenerator {
     /// Regenerate when there are no mixes, the cache is stale (>8h), or the
     /// time-of-day bucket changed (so the "Now" mix stays fresh). Cheap no-op otherwise.
     func generateIfNeeded() async {
-        let last = UserDefaults.standard.object(forKey: cacheDateKey) as? Date
-        let savedBucket = UserDefaults.standard.string(forKey: cacheBucketKey)
-        let bucketChanged = savedBucket != TimeBucket.current.rawValue
-        let stale = last == nil || Date().timeIntervalSince(last!) > 8 * 3600
-        if mixes.isEmpty || stale || bucketChanged {
+        // Catch a server change that didn't come through `selectServer` — `removeServer`
+        // also reassigns `currentServer`. Without this the freshness check below would be
+        // asked about the wrong server and happily keep the old one's mixes on screen.
+        let serverId = ServerManager.shared.currentServer?.id
+        if serverId != loadedServerId { restoreForServer(serverId) }
+
+        if cache.needsRegeneration(for: serverId, hasMixes: !mixes.isEmpty,
+                                   bucket: TimeBucket.current.rawValue) {
             await generate()
         }
     }
@@ -245,9 +368,17 @@ final class MixGenerator {
             built.append(fallback)
         }
 
-        mixes = built
-        saveCache()
+        // Generating takes many round-trips, and the user can switch servers while it runs.
+        // The result belongs to the server it was built from, so file it there either way —
+        // but only put it on screen if that server is still the active one.
+        cache.save(built, for: server.id, bucket: bucket.rawValue)
         AppLogger.shared.log("🎚 Auto-mixes ready: \(built.count) (\(built.map { $0.title }.joined(separator: ", ")))")
+        guard ServerManager.shared.currentServer?.id == server.id else {
+            AppLogger.shared.log("🎚 Server switched mid-generation — mixes cached, not shown")
+            return
+        }
+        mixes = built
+        loadedServerId = server.id
     }
 
     // MARK: Mix builders
@@ -355,25 +486,7 @@ final class MixGenerator {
         return songs.filter { seen.insert($0.id).inserted }
     }
 
-    // MARK: Persistence
-
-    private func loadCache() {
-        guard let data = UserDefaults.standard.data(forKey: cacheKey),
-              let decoded = try? JSONDecoder().decode([Mix].self, from: data) else { return }
-        mixes = decoded
-    }
-
-    private func saveCache() {
-        if let data = try? JSONEncoder().encode(mixes) {
-            UserDefaults.standard.set(data, forKey: cacheKey)
-        }
-        UserDefaults.standard.set(Date(), forKey: cacheDateKey)
-        UserDefaults.standard.set(TimeBucket.current.rawValue, forKey: cacheBucketKey)
-    }
-
     // MARK: Saved-as-playlist tracking
-
-    private let savedSignaturesKey = "musika_saved_mix_signatures_v1"
 
     /// Stable, launch-independent fingerprint of a mix's exact contents (ordered song ids).
     private func signature(for mix: Mix) -> String {
@@ -382,22 +495,16 @@ final class MixGenerator {
         return digest.compactMap { String(format: "%02x", $0) }.joined()
     }
 
-    private func savedSignatures() -> [String: String] {
-        (UserDefaults.standard.dictionary(forKey: savedSignaturesKey) as? [String: String]) ?? [:]
-    }
-
     /// True only when *this exact version* of the mix was already saved. Once the mix
     /// is regenerated (different songs), its signature changes and this returns false
     /// again, so the refreshed version can be saved.
     func isSavedAsPlaylist(_ mix: Mix) -> Bool {
-        savedSignatures()[mix.id] == signature(for: mix)
+        cache.savedSignature(mixId: mix.id, for: loadedServerId) == signature(for: mix)
     }
 
     /// Record that the current version of this mix has been saved as a playlist.
     func markSavedAsPlaylist(_ mix: Mix) {
-        var sigs = savedSignatures()
-        sigs[mix.id] = signature(for: mix)
-        UserDefaults.standard.set(sigs, forKey: savedSignaturesKey)
+        cache.setSavedSignature(signature(for: mix), mixId: mix.id, for: loadedServerId)
     }
 }
 

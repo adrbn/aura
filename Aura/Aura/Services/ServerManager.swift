@@ -84,17 +84,25 @@ final class ServerManager {
         }
     }
 
+    @MainActor
     func removeServer(_ server: ServerConfig) {
         AppLogger.shared.log("🖥 removeServer: \(server.friendlyName)")
         KeychainHelper.delete(for: server.id.uuidString)
+        // The server's generated mixes are only meaningful against it, so they go too —
+        // otherwise they'd sit in defaults forever under an id nothing can reach again.
+        MixCache().removeAll(for: server.id)
         servers.removeAll { $0.id == server.id }
         saveServers()
         if currentServer?.id == server.id {
             currentServer = servers.first
             saveCurrentServer()
+            // Same reasoning as `selectServer`: the shelf must follow the active server
+            // immediately, not one refresh later.
+            MixGenerator.shared.restoreForServer(currentServer?.id)
         }
     }
 
+    @MainActor
     func selectServer(_ server: ServerConfig) {
         guard server.id != currentServer?.id else { return }
         AppLogger.shared.log("🖥 selectServer: \(server.friendlyName)")
@@ -104,6 +112,10 @@ final class ServerManager {
         currentServer = server
         saveCurrentServer()
         AudioPlayer.shared.restoreForCurrentServer()
+        // Mixes are built from one library and are just as unreachable across a switch as
+        // the playing track. Swap them synchronously, here, so Home never renders a frame
+        // of the previous server's songs before its own `onChange` gets to refresh.
+        MixGenerator.shared.restoreForServer(server.id)
     }
 
     func testConnection() async {
