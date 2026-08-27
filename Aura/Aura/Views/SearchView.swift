@@ -64,7 +64,7 @@ struct SearchView: View {
                 .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                     scrollY = y
                 }
-                .background(Color.themeBg)
+                .auraPageBackground()
                 .toolbar(.hidden, for: .navigationBar)
                 .searchDestinations()
         }
@@ -126,7 +126,7 @@ struct SearchResultsContainer: View {
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.never)
-        .background(Color.themeBg)
+        .auraPageBackground()
         .task { SearchIndex.shared.prefetchIfNeeded() }
         .task(id: query) { await runSearch() }
         // What turns a look into a listen. An album or artist opened from search sits armed

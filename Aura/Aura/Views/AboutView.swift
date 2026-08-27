@@ -31,7 +31,7 @@ struct AboutView: View {
         }
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
-        .background(Color.themeBg)
+        .auraPageBackground()
         .navigationTitle("about")
         .navigationBarTitleDisplayMode(.inline)
     }

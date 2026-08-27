@@ -235,6 +235,7 @@ struct SongsListView: View {
                         SkeletonSongRow()
                             .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
+                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
@@ -352,6 +353,7 @@ struct SongsListView: View {
                             }
                         }
                     }
+                    .clearListRows()
 
                     if displayLimit < sortedSongs.count {
                         HStack {
@@ -367,7 +369,7 @@ struct SongsListView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .background(Color.themeBg)
+                .auraPageBackground()
                 .scrollIndicators(.hidden)
                 .overlay(alignment: .trailing) {
                     if !indexTitles.isEmpty {

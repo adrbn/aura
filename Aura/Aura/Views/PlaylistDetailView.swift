@@ -160,7 +160,7 @@ struct PlaylistDetailView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .background(Color.themeBg)
+                .auraPageBackground()
                 .scrollIndicators(.hidden)
             } else if isLoading {
                 List {
@@ -173,10 +173,11 @@ struct PlaylistDetailView: View {
                         SkeletonSongRow()
                             .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
+                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .background(Color.themeBg)
+                .auraPageBackground()
                 .scrollIndicators(.hidden)
             } else {
                 loadFailedView
@@ -332,7 +333,7 @@ struct PlaylistDetailView: View {
             .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.themeBg)
+        .auraPageBackground()
     }
 
     private func loadPlaylist() async {

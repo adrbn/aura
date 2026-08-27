@@ -179,7 +179,7 @@ struct OfflineLibraryView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Color.themeBg)
+        .auraPageBackground()
         .scrollIndicators(.hidden)
         .tabRootGlass(scrollY: $scrollY)
         .onAppear { refreshCachedSongs() }
@@ -387,7 +387,7 @@ struct OfflineAlbumDetailView: View {
             .padding(.top, 12)
         }
         .scrollIndicators(.hidden)
-        .background(Color.themeBg)
+        .auraPageBackground()
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -453,7 +453,7 @@ struct OfflinePlaylistDetailView: View {
             .padding(.top, 12)
         }
         .scrollIndicators(.hidden)
-        .background(Color.themeBg)
+        .auraPageBackground()
         .navigationTitle(snapshot.name)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -520,7 +520,7 @@ struct OfflineArtistDetailView: View {
             .padding(.top, 12)
         }
         .scrollIndicators(.hidden)
-        .background(Color.themeBg)
+        .auraPageBackground()
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -189,7 +189,7 @@ struct PlaylistsView: View {
                     Color.clear.frame(height: 80)
                 }
                 .scrollIndicators(.hidden)
-                .background(Color.themeBg)
+                .auraPageBackground()
                 .overlay(alignment: .trailing) {
                     if !indexTitles.isEmpty {
                         AlphabetIndexBar(titles: indexTitles, tint: accentColor) { letter in
@@ -668,6 +668,7 @@ struct ReorderPinnedView: View {
                 .onMove { source, dest in
                     appSettings.movePinnedPlaylist(from: source, to: dest)
                 }
+                .clearListRows()
             }
             .scrollIndicators(.hidden)
             .environment(\.editMode, .constant(.active))

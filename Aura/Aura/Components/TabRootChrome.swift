@@ -73,7 +73,7 @@ struct TabRootGlass: ViewModifier {
             .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                 scrollY = y
             }
-            .background(Color.themeBg)
+            .auraPageBackground()
             .toolbar(.hidden, for: .navigationBar)
     }
 }

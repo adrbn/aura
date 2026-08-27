@@ -402,7 +402,7 @@ struct ArtistAllSongsView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Color.themeBg)
+        .auraPageBackground()
         .scrollIndicators(.hidden)
         .navigationTitle("Songs by \(artistName)")
     }
