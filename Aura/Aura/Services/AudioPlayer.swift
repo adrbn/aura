@@ -236,21 +236,21 @@ final class AudioPlayer {
             return .success
         }
 
-        // "Skip ahead thirty seconds" is a spoken command, and it reaches an app only
-        // through these two. The interval is what the system reads back and what the lock
-        // screen draws inside the arrows.
-        center.skipForwardCommand.preferredIntervals = [15]
-        center.skipBackwardCommand.preferredIntervals = [15]
-        center.skipForwardCommand.addTarget { [weak self] event in
-            guard let self, let e = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
-            self.seek(to: min(self.duration, self.currentTime + e.interval))
-            return .success
-        }
-        center.skipBackwardCommand.addTarget { [weak self] event in
-            guard let self, let e = event as? MPSkipIntervalCommandEvent else { return .commandFailed }
-            self.seek(to: max(0, self.currentTime - e.interval))
-            return .success
-        }
+        // Aura is a track player, so Control Center and the Lock Screen must show ⏮ / ⏭.
+        //
+        // Those two buttons are not ours to place: the system picks between track
+        // navigation and interval skipping, and interval skipping wins whenever it is
+        // enabled — the arrows are meant for podcasts and audiobooks, where there is no
+        // next track to go to. Registering a handler on a command enables it implicitly,
+        // so simply *supporting* "skip ahead thirty seconds" as a spoken command was
+        // enough to replace both track buttons with ⏪15 / ⏩15 everywhere.
+        //
+        // Being able to change song from the Lock Screen is worth more to a music app
+        // than a spoken seek, so the skip commands stay off, explicitly.
+        center.skipForwardCommand.isEnabled = false
+        center.skipBackwardCommand.isEnabled = false
+        center.nextTrackCommand.isEnabled = true
+        center.previousTrackCommand.isEnabled = true
 
         center.stopCommand.addTarget { [weak self] _ in
             self?.pause()
