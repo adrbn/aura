@@ -243,3 +243,49 @@ struct MixCacheTests {
         }
     }
 }
+
+
+/// The background style is stored inside the same single settings blob as every other
+/// preference, and that blob is read back with `try?`. A style the build no longer knows
+/// about therefore does not fail alone — it takes the accent colour, the appearance mode
+/// and the equaliser down with it. `flat` was renamed to `plain`, so this is not
+/// hypothetical: anyone who chose it has that word sitting in their stored settings.
+@Suite("Background style")
+struct AuraBackgroundStyleTests {
+
+    private struct Stored: Codable {
+        let backgroundStyle: AuraBackgroundStyle?
+    }
+
+    @Test("the retired 'flat' name falls back instead of failing")
+    func retiredNameFallsBack() throws {
+        let stored = try JSONDecoder().decode(
+            Stored.self, from: Data(#"{"backgroundStyle":"flat"}"#.utf8))
+        #expect(stored.backgroundStyle == .plain)
+    }
+
+    @Test("an unknown style does not take the rest of the settings down with it")
+    func unknownStyleDoesNotResetEverything() {
+        let json = Data(#"{"backgroundStyle":"some-style-from-a-later-build"}"#.utf8)
+        #expect(throws: Never.self) {
+            _ = try JSONDecoder().decode(Stored.self, from: json)
+        }
+    }
+
+    @Test("every shipping style still round-trips")
+    func knownStylesRoundTrip() throws {
+        for style in AuraBackgroundStyle.allCases {
+            let data = try JSONEncoder().encode(Stored(backgroundStyle: style))
+            let back = try JSONDecoder().decode(Stored.self, from: data)
+            #expect(back.backgroundStyle == style, "\(style.rawValue) did not survive a round-trip")
+        }
+    }
+
+    @Test("only the plain ground is free of the mesh")
+    func onlyPlainIsFlat() {
+        #expect(!AuraBackgroundStyle.plain.isMesh)
+        for style in AuraBackgroundStyle.allCases where style != .plain {
+            #expect(style.isMesh, "\(style.rawValue) should draw a mesh")
+        }
+    }
+}

@@ -20,6 +20,17 @@ enum AuraBackgroundStyle: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Decode unknown values to the plain ground instead of throwing.
+    ///
+    /// Settings are persisted as one JSON blob decoded with `try?`, so a style that no
+    /// longer exists — `"flat"`, this case's own earlier name — would take the whole
+    /// decode down and silently reset every other preference with it: accent colour,
+    /// appearance, equaliser, the lot.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = AuraBackgroundStyle(rawValue: raw) ?? .plain
+    }
+
     var label: LocalizedStringKey {
         switch self {
         case .plain:   return "Plain"
@@ -212,11 +223,19 @@ private struct ArtworkGroundedPage: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .auraPageBackground(tint: tintService.tint(for: coverArt))
-            // The colour arrives after the page does — a cover that is not cached yet has
-            // to be fetched — so it fades in rather than snapping on once the list has
-            // already been read.
-            .animation(.easeInOut(duration: 0.45), value: tintService.tint(for: coverArt))
+            .scrollContentBackground(.hidden)
+            .background {
+                // The colour arrives after the page does — an uncached cover has to be
+                // fetched — so it fades in rather than snapping on once the list has
+                // already been read.
+                //
+                // The animation belongs to the background and nowhere else. Put on the
+                // page instead, `animation(_:value:)` animates the whole subtree: when the
+                // tint lands the list itself cross-fades, and mid-transition you see two
+                // renderings of the rows at once.
+                AuraBackground(tint: tintService.tint(for: coverArt))
+                    .animation(.easeInOut(duration: 0.45), value: tintService.tint(for: coverArt))
+            }
             .task(id: coverArt) { await tintService.resolve(coverArt: coverArt) }
     }
 }
