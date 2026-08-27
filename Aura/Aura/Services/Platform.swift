@@ -38,17 +38,6 @@ extension PlatformImage {
     }
 }
 
-extension PlatformImage {
-    /// The backing bitmap, on either platform — needed by anything that reads pixels.
-    var auraCGImage: CGImage? {
-        #if canImport(UIKit)
-        return cgImage
-        #else
-        return cgImage(forProposedRect: nil, context: nil, hints: nil)
-        #endif
-    }
-}
-
 extension Image {
     /// `Image(uiImage:)` / `Image(nsImage:)`, spelled once.
     init(platformImage: PlatformImage) {

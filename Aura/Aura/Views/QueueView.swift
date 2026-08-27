@@ -158,7 +158,7 @@ struct QueueView: View {
             }
             .scrollIndicators(.hidden)
             .scrollContentBackground(.hidden)
-            .auraPageBackground()
+            .background(Color.themeBg)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

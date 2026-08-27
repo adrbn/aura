@@ -97,9 +97,6 @@ final class AppSettings {
     var showHomeSearchBar: Bool = true
     var showUpNext: Bool = true
     var appAccentColor: AppAccentColor = .pink
-    /// How pages are grounded. Defaults to `.plain` — an even, barely-warmed near-black.
-    /// The colour in the app is meant to come from the records, not from underneath them.
-    var backgroundStyle: AuraBackgroundStyle = .plain
     var activeTheme: AppTheme = .standard
     /// Dark by default. Aura is a dark-first app — the artwork canvas, Now Playing and
     /// the landscape clock are always dark — so following a light system appearance made
@@ -202,7 +199,6 @@ final class AppSettings {
             showHomeSearchBar = decoded.showHomeSearchBar ?? true
             showUpNext = decoded.showUpNext ?? true
             appAccentColor = decoded.appAccentColor ?? .pink
-            backgroundStyle = decoded.backgroundStyle ?? .plain
             activeTheme = decoded.activeTheme ?? .standard
             appearanceMode = decoded.appearanceMode ?? .dark
             eqPreset = decoded.eqPreset ?? .flat
@@ -263,7 +259,6 @@ final class AppSettings {
             showHomeSearchBar: showHomeSearchBar,
             showUpNext: showUpNext,
             appAccentColor: appAccentColor,
-            backgroundStyle: backgroundStyle,
             activeTheme: activeTheme,
             appearanceMode: appearanceMode,
             eqPreset: eqPreset,
@@ -358,7 +353,6 @@ struct SettingsData: Codable {
     var showHomeSearchBar: Bool?
     var showUpNext: Bool?
     var appAccentColor: AppAccentColor?
-    var backgroundStyle: AuraBackgroundStyle?
     var activeTheme: AppTheme?
     var appearanceMode: AppearanceMode?
     var eqPreset: EQPreset?
@@ -401,25 +395,6 @@ enum AppAccentColor: String, Codable, CaseIterable {
         case .blue: return .blue
         case .indigo: return .indigo
         case .purple: return .purple
-        }
-    }
-
-    /// The accent's place on the colour wheel, 0...1, taken from Apple's own values
-    /// (`.pink` is #FF2D55, `.blue` is #007AFF, and so on). Stated as a number rather
-    /// than read back off the `Color` because these are dynamic — they resolve
-    /// differently in light and dark — and `AuraBackground` needs one stable hue to
-    /// build a whole page's worth of tones around.
-    var hue: Double {
-        switch self {
-        case .pink: return 0.944
-        case .red: return 0.011
-        case .orange: return 0.097
-        case .yellow: return 0.133
-        case .green: return 0.375
-        case .teal: return 0.528
-        case .blue: return 0.586
-        case .indigo: return 0.669
-        case .purple: return 0.781
         }
     }
 }

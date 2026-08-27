@@ -39,7 +39,7 @@ struct EqualizerView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 20)
             }
-            .auraPageBackground()
+            .background(Color.themeBg)
             .navigationTitle("Equalizer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -37,15 +37,6 @@ struct Mix: Identifiable, Codable, Hashable {
     }
 
     var coverArt: String? { songs.first?.coverArt }
-
-    /// The cover a page should take its colour from — `nil` when the mix draws a
-    /// templated cover of its own.
-    ///
-    /// `coverArt` is the *first song's* artwork, which is right for a collage and wrong
-    /// for anything else: a genre or daypart mix shows a designed block of colour, and
-    /// tinting its page from some unrelated sleeve puts a clashing wash directly behind
-    /// the cover it is supposed to belong to.
-    var tintCoverArt: String? { generatedCover == nil ? coverArt : nil }
     /// Up to four distinct cover art ids for a collage thumbnail.
     var collageCoverArts: [String] {
         var seen = Set<String>()

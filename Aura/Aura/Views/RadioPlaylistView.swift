@@ -110,7 +110,7 @@ struct RadioPlaylistView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .auraPageBackground()
+        .background(Color.themeBg)
         .scrollIndicators(.hidden)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

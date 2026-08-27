@@ -241,7 +241,6 @@ struct ArtistDetailView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .auraArtworkBackground(coverArt: artist?.coverArt ?? coverArt)
         .scrollIndicators(.hidden)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -403,7 +402,7 @@ struct ArtistAllSongsView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .auraPageBackground()
+        .background(Color.themeBg)
         .scrollIndicators(.hidden)
         .navigationTitle("Songs by \(artistName)")
     }

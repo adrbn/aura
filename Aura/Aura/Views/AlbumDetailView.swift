@@ -165,7 +165,7 @@ struct AlbumDetailView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .auraArtworkBackground(coverArt: album.coverArt)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             } else if isLoading {
                 List {
@@ -178,11 +178,10 @@ struct AlbumDetailView: View {
                         SkeletonSongRow()
                             .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
-                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .auraPageBackground()
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             } else {
                 loadFailedView
@@ -207,7 +206,7 @@ struct AlbumDetailView: View {
             .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .auraPageBackground()
+        .background(Color.themeBg)
     }
 
     private func loadAlbum() async {

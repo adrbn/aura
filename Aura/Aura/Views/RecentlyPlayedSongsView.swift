@@ -26,7 +26,7 @@ struct RecentlyPlayedSongsView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .auraPageBackground()
+        .background(Color.themeBg)
         .scrollIndicators(.hidden)
         .navigationTitle("Recently Played")
         .navigationBarTitleDisplayMode(.inline)
@@ -37,7 +37,6 @@ struct RecentlyPlayedSongsView: View {
                         SkeletonSongRow()
                             .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     }
-                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollIndicators(.hidden)

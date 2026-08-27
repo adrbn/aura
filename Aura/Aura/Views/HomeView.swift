@@ -144,7 +144,7 @@ struct HomeView: View {
                         }
                     }
                 }
-            .auraPageBackground()
+            .background(Color.themeBg)
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Album.self) { AlbumDetailView(albumId: $0.id) }
             .navigationDestination(for: Artist.self) { ArtistDetailView(artistId: $0.id, artistName: $0.name, coverArt: $0.coverArt) }
@@ -652,7 +652,6 @@ struct HomeView: View {
                             trailing: 16
                         ))
                     }
-                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)

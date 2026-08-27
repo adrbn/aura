@@ -31,11 +31,10 @@ struct LibraryView: View {
                             .foregroundStyle(accentColor)
                     }
                 }
-                .clearListRows()
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .auraPageBackground()
+            .background(Color.themeBg)
             .scrollIndicators(.hidden)
             .tabRootGlass(scrollY: $scrollY)
             .sheet(isPresented: $showCategoriesEditor) {
@@ -190,7 +189,6 @@ struct LibraryCategoriesEditor: View {
                     appSettings.save()
                 }
             }
-            .clearListRows()
 
             if !disabledCategories.isEmpty {
                 Section("Available") {
@@ -301,7 +299,6 @@ struct GenresListView: View {
                     ForEach(0..<12, id: \.self) { _ in
                         SkeletonGenreRow()
                     }
-                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollIndicators(.hidden)
@@ -389,7 +386,6 @@ struct GenreSongsView: View {
                             }
                         }
                     }
-                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollIndicators(.hidden)
@@ -496,7 +492,6 @@ struct ArtistsFullListView: View {
                     ForEach(0..<15, id: \.self) { _ in
                         SkeletonArtistRow()
                     }
-                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollIndicators(.hidden)
@@ -527,7 +522,7 @@ struct ArtistsFullListView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .auraPageBackground()
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
                 .searchable(text: $searchText, prompt: "Search artists")
             }

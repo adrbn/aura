@@ -39,7 +39,7 @@ struct WrappedView: View {
             .animation(.easeInOut(duration: 0.25), value: isLoading)
         }
         .scrollIndicators(.hidden)
-        .auraPageBackground()
+        .background(Color.themeBg)
         .navigationTitle("Wrapped")
         .navigationBarTitleDisplayMode(.inline)
         // Source / period filters and Save live in a toolbar menu so the stats sit right

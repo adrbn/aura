@@ -82,7 +82,6 @@ struct ArtistsListView: View {
                     ForEach(0..<12, id: \.self) { _ in
                         SkeletonArtistRow()
                     }
-                    .clearListRows()
                 }
                 .listStyle(.plain)
                 .scrollIndicators(.hidden)
