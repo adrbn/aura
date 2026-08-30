@@ -167,15 +167,32 @@ struct MacHomeView: View {
         defer { isLoading = false }
         // Four independent calls; issued together rather than in sequence, so the page fills
         // in one round trip's worth of time instead of four.
-        async let recentCall  = try? await SubsonicClient.shared.getAlbumList2(server: server, type: "recent", size: 24)
-        async let newestCall  = try? await SubsonicClient.shared.getAlbumList2(server: server, type: "newest", size: 24)
-        async let frequentCall = try? await SubsonicClient.shared.getAlbumList2(server: server, type: "frequent", size: 24)
-        async let playlistCall = try? await SubsonicClient.shared.getPlaylists(server: server)
-        recent = await recentCall ?? []
-        newest = await newestCall ?? []
-        frequent = await frequentCall ?? []
-        playlists = await playlistCall ?? []
+        //
+        // Each one says what happened. A shelf whose call fails renders as nothing at all —
+        // `MacShelf` draws no heading for an empty list — so a `try?` here turns any server
+        // error into a page that is simply, silently short, with no way to tell a library
+        // that has no recent albums from a request that never came back.
+        async let recentCall   = Self.shelf("recent")   { try await SubsonicClient.shared.getAlbumList2(server: server, type: "recent", size: 24) }
+        async let newestCall   = Self.shelf("newest")   { try await SubsonicClient.shared.getAlbumList2(server: server, type: "newest", size: 24) }
+        async let frequentCall = Self.shelf("frequent") { try await SubsonicClient.shared.getAlbumList2(server: server, type: "frequent", size: 24) }
+        async let playlistCall = Self.shelf("playlists") { try await SubsonicClient.shared.getPlaylists(server: server) }
+        recent = await recentCall
+        newest = await newestCall
+        frequent = await frequentCall
+        playlists = await playlistCall
         await generator.generateIfNeeded()
+    }
+
+    /// Runs one shelf's request, reporting what it returned rather than swallowing it.
+    private static func shelf<T>(_ name: String, _ call: () async throws -> [T]) async -> [T] {
+        do {
+            let items = try await call()
+            if items.isEmpty { AppLogger.shared.log("🖥 home shelf '\(name)': empty (server returned nothing)") }
+            return items
+        } catch {
+            AppLogger.shared.log("❌ home shelf '\(name)' failed: \(error.localizedDescription)")
+            return []
+        }
     }
 
     private func play(_ songs: [Song], source: PlaybackSource) {
