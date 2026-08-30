@@ -71,11 +71,22 @@ struct MacWindowChrome: NSViewRepresentable {
 
             guard !window.styleMask.contains(.fullScreen) else { return }
             for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
-                let view = window.standardWindowButton(button)
-                view?.isHidden = false
-                view?.alphaValue = 1
-                view?.superview?.isHidden = false
-                view?.superview?.alphaValue = 1
+                guard let view = window.standardWindowButton(button) else { continue }
+                // Up the whole chain, not one step of it.
+                //
+                // The buttons live two containers deep — `NSTitlebarView` inside
+                // `NSTitlebarContainerView` — and hiding the toolbar hides the *outer*
+                // one. Restoring only the button and its immediate parent, as this did
+                // before, left three perfectly visible widgets sitting inside an
+                // invisible box: every property said `hidden = false, alpha = 1`, and
+                // nothing was drawn. Walking to the window's frame view covers that, and
+                // covers AppKit adding another layer in some later release.
+                var node: NSView? = view
+                while let current = node, current !== window.contentView?.superview {
+                    current.isHidden = false
+                    current.alphaValue = 1
+                    node = current.superview
+                }
             }
         }
     }
