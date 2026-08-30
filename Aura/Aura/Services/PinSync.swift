@@ -37,6 +37,7 @@ final class PinSync {
             MainActor.assumeIsolated { self?.pull() }
         }
         store.synchronize()
+        AppLogger.shared.log("📌 PinSync start — local pins: \(AppSettings.shared.pinnedPlaylistIds.count), remote: \((store.array(forKey: Self.idsKey) as? [String])?.count.description ?? "none")")
         pull()
         publishIfStoreIsEmpty()
     }
@@ -52,10 +53,17 @@ final class PinSync {
     /// be able to publish its emptiness over another device's list — under last-write-wins
     /// that would delete them everywhere, which is the one outcome worth designing against.
     private func publishIfStoreIsEmpty() {
-        guard store.array(forKey: Self.idsKey) == nil,
-              !AppSettings.shared.pinnedPlaylistIds.isEmpty else { return }
+        guard store.array(forKey: Self.idsKey) == nil else {
+            AppLogger.shared.log("📌 PinSync: store already has pins — not seeding")
+            return
+        }
+        guard !AppSettings.shared.pinnedPlaylistIds.isEmpty else {
+            AppLogger.shared.log("📌 PinSync: nothing local to seed the store with")
+            return
+        }
         push()
         lastLocalPush = store.double(forKey: Self.stampKey)
+        AppLogger.shared.log("📌 PinSync: seeded the store with \(AppSettings.shared.pinnedPlaylistIds.count) pins")
     }
 
     /// Publishes the local pins. Called whenever they change.
@@ -65,12 +73,20 @@ final class PinSync {
         store.set(Array(settings.pinnedPlaylistIds), forKey: Self.idsKey)
         store.set(settings.pinnedPlaylistOrder, forKey: Self.orderKey)
         store.set(Date().timeIntervalSince1970, forKey: Self.stampKey)
-        store.synchronize()
+        // `synchronize` only hands the values to the daemon; it returns false when the
+        // store is unusable at all — no iCloud account, or the entitlement missing — which
+        // is the difference between "sent" and "silently went nowhere".
+        let accepted = store.synchronize()
+        AppLogger.shared.log("📌 PinSync push: \(settings.pinnedPlaylistIds.count) pins, store \(accepted ? "accepted" : "REFUSED — no iCloud account or entitlement")")
     }
 
     /// Adopts the remote pins when they are newer than what this device last published.
     private func pull() {
-        guard let ids = store.array(forKey: Self.idsKey) as? [String] else { return }
+        guard let ids = store.array(forKey: Self.idsKey) as? [String] else {
+            AppLogger.shared.log("📌 PinSync pull: store is empty")
+            return
+        }
+        AppLogger.shared.log("📌 PinSync pull: \(ids.count) pins in the store")
         let remoteStamp = store.double(forKey: Self.stampKey)
         guard remoteStamp > lastLocalPush else { return }
 
