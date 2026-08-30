@@ -80,6 +80,14 @@ struct MacRootView: View {
                     .navigationDestination(for: Mix.self) { MacMixDetailView(mix: $0) }
                     .macPendingNavigation(path: $path)
                 }
+                // The way back.
+                //
+                // SwiftUI's own back button is a toolbar item, and this window has no
+                // toolbar — so pushing into a playlist, album or artist was a one-way
+                // trip. Hiding the toolbar bought a clean title bar and quietly took
+                // navigation with it; this puts it back, in the detail column's own
+                // top-left corner, clear of the window buttons over the sidebar.
+                .overlay(alignment: .topLeading) { backButton }
             }
         }
         // Spans the full width, under the sidebar as well — the transport belongs to the
@@ -104,6 +112,29 @@ struct MacRootView: View {
         .onChange(of: section) { _, _ in path = NavigationPath() }
         .task {
             if !serverManager.isConnected { await serverManager.testConnection() }
+        }
+    }
+
+    /// Shown only when there is somewhere to go back to. `⌘[` as well as the button,
+    /// because that is the shortcut every other Mac app answers to.
+    @ViewBuilder private var backButton: some View {
+        if !path.isEmpty {
+            Button {
+                path.removeLast()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 30, height: 30)
+                    .background(.regularMaterial, in: Circle())
+                    .overlay(Circle().stroke(.white.opacity(0.10), lineWidth: 0.5))
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut("[", modifiers: .command)
+            .help("Back")
+            .padding(.leading, 18)
+            .padding(.top, 14)
+            .transition(.opacity)
         }
     }
 
