@@ -38,6 +38,24 @@ final class PinSync {
         }
         store.synchronize()
         pull()
+        publishIfStoreIsEmpty()
+    }
+
+    /// Publishes this device's pins the first time anything is written to the store.
+    ///
+    /// `push()` only ever ran when a pin was toggled. A device carrying pins from before
+    /// this sync existed — which is every device, on the day it shipped — therefore kept
+    /// them to itself until someone happened to unpin and re-pin something. The pins were
+    /// there, the store was empty, and nothing was going to change that on its own.
+    ///
+    /// Guarded so it can only ever *seed* an empty store. A device with no pins must not
+    /// be able to publish its emptiness over another device's list — under last-write-wins
+    /// that would delete them everywhere, which is the one outcome worth designing against.
+    private func publishIfStoreIsEmpty() {
+        guard store.array(forKey: Self.idsKey) == nil,
+              !AppSettings.shared.pinnedPlaylistIds.isEmpty else { return }
+        push()
+        lastLocalPush = store.double(forKey: Self.stampKey)
     }
 
     /// Publishes the local pins. Called whenever they change.
