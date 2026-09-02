@@ -726,6 +726,18 @@ final class DownloadManager: NSObject {
         }
     }
 
+    /// The lyrics saved beside a downloaded song, if any.
+    ///
+    /// These are written at download time and, until now, never read again: playback went
+    /// to the server and then to LRCLIB, so a downloaded song played offline reported "no
+    /// lyrics" with its own `.lrc` sitting next to the audio.
+    func localLyrics(for songId: String) -> String? {
+        let file = downloadsDirectory.appendingPathComponent("\(songId).lrc")
+        guard let text = try? String(contentsOf: file, encoding: .utf8),
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return text
+    }
+
     // MARK: - Persistence
 
     /// Download metadata lives in JSON files, not UserDefaults — the full Song array

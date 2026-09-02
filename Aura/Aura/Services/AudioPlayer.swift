@@ -1600,6 +1600,11 @@ final class AudioPlayer {
     /// `isLoadingLyrics` on a single, well-defined completion point (the early `return`s
     /// used to make that impossible).
     private func resolveLyrics(for song: Song) async -> Bool {
+        // 0. The copy already on this device, saved when the song was downloaded.
+        //    It costs nothing, it cannot fail, and it is the only source that works with
+        //    the network off — which is the whole point of having downloaded the song.
+        //    Until now it was written at download time and never read again.
+        if await tryLocalLyrics(for: song) { return true }
         // 1. Prefer the user's OWN server. This matches the privacy policy ("Aura
         //    queries LRCLIB only when your server does not provide lyrics") and avoids
         //    reaching a third-party, largely-unlicensed lyrics DB whenever the server
@@ -1624,6 +1629,23 @@ final class AudioPlayer {
         return false
     }
 
+
+    /// Reads the `.lrc` saved next to a downloaded song.
+    private func tryLocalLyrics(for song: Song) async -> Bool {
+        guard let text = await MainActor.run(body: { DownloadManager.shared.localLyrics(for: song.id) })
+        else { return false }
+        let parsed = parseLRC(text)
+        guard !parsed.isEmpty else { return false }
+        AppLogger.shared.log("🎵 Lyrics from the downloaded copy: \(parsed.count) lines")
+        await MainActor.run {
+            self.lyrics = parsed
+            // A `.lrc` carrying timestamps follows the song; one without them is a plain
+            // sheet, and `legacy` is what this app calls that.
+            self.lyricsSource = parsed.contains { $0.time != nil } ? .structured : .legacy
+            self.lyricsStatus = ""
+        }
+        return true
+    }
 
     private func tryLRCLIB(song: Song) async -> Bool {
         await MainActor.run { self.lyricsStatus = "Trying LRCLIB..." }
