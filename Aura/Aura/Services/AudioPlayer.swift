@@ -195,9 +195,15 @@ final class AudioPlayer {
         case .ended:
             let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
-            if options.contains(.shouldResume) {
-                AppLogger.shared.log("🔊 Interruption ended — resuming")
-                DispatchQueue.main.async { self.play() }
+            let shouldResume = options.contains(.shouldResume)
+            AppLogger.shared.log("🔊 Interruption ended — \(shouldResume ? "resuming" : "staying paused")")
+            DispatchQueue.main.async {
+                // Reclaim the session either way. Without `.shouldResume` we correctly stay
+                // paused, but the session stays dead too, and the *next* press of play
+                // would have been a silent no-op — which is how one voice message in
+                // another app used to end listening until the app was force-quit.
+                self.activateAudioSession()
+                if shouldResume { self.play() }
             }
         @unknown default:
             break
@@ -924,7 +930,29 @@ final class AudioPlayer {
         skipToNextPlayableOffline()
     }
 
-    func play() { AppLogger.shared.log("▶️ play()"); player?.play(); isPlaying = true; publishPlaybackState(); updateLiveActivity() }
+    func play() {
+        AppLogger.shared.log("▶️ play()")
+        activateAudioSession()
+        player?.play(); isPlaying = true; publishPlaybackState(); updateLiveActivity()
+    }
+
+    /// Claims the audio session before playing.
+    ///
+    /// Anything that interrupts us — a call, a voice message in another app — leaves our
+    /// session deactivated, and the system does not hand it back. `AVPlayer.play()` on a
+    /// dead session fails silently, so playback would stop while `isPlaying` went on
+    /// saying otherwise: the button read "playing", nothing came out, and every later tap
+    /// did the same. Reclaiming here is idempotent and costs nothing when we already hold
+    /// it, and it means no missed notification can strand playback for the whole session.
+    private func activateAudioSession() {
+        #if os(iOS)
+        do {
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            AppLogger.shared.log("❌ Could not claim the audio session: \(error.localizedDescription)")
+        }
+        #endif
+    }
     func pause() { AppLogger.shared.log("⏸ pause()"); player?.pause(); isPlaying = false; publishPlaybackState(); updateLiveActivity() }
 
     /// Tells the system whether we are playing.
@@ -1595,6 +1623,7 @@ final class AudioPlayer {
         if await tryLRCLIB(song: song) { return true }
         return false
     }
+
 
     private func tryLRCLIB(song: Song) async -> Bool {
         await MainActor.run { self.lyricsStatus = "Trying LRCLIB..." }
