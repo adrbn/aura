@@ -144,7 +144,7 @@ final class SearchIndex {
 
             // If an artist name matches >90%, focus songs on that artist.
             let filteredSongs: [Song]
-            if let matchedArtist = finalArtists.first(where: { Fuzzy.score(query: query, target: $0.name) >= 0.9 }) {
+            if let matchedArtist = Self.principalArtist(for: query, among: finalArtists) {
                 let artistName = matchedArtist.name.lowercased()
                 let artistSongs = finalSongs.filter {
                     ($0.artist ?? "").lowercased().contains(artistName) ||
@@ -170,6 +170,28 @@ final class SearchIndex {
             // Offline fallback: search downloaded + cached songs locally.
             return await searchOffline(query: query)
         }
+    }
+
+    /// The artist a query is actually about.
+    ///
+    /// `Fuzzy.score` returns 1.0 for any name that merely *contains* the query, so on a
+    /// server that lists every credit as its own artist — "Avicii", "Avicii, CAZZETTE",
+    /// "Avicii, Nicky Romero" — all of them tie at a perfect score. Taking the *first* of
+    /// those meant whichever the server happened to return first won, and the song list
+    /// was then narrowed to that one collaboration: searching "Avicii" returned nothing
+    /// but "Avicii, someone else".
+    ///
+    /// An exact name wins outright; failing that the shortest, which is the standalone
+    /// credit rather than a collaboration built on top of it. Narrowing to "Avicii" still
+    /// keeps the collaborations, because their credit strings contain it.
+    nonisolated static func principalArtist(for query: String, among artists: [Artist]) -> Artist? {
+        // Trimmed once, and used for the scoring too: `Fuzzy.score` asks whether the name
+        // *contains* the query, and a query carrying the spaces a keyboard left on it is
+        // contained by nothing at all.
+        let q = query.lowercased().trimmingCharacters(in: .whitespaces)
+        let candidates = artists.filter { Fuzzy.score(query: q, target: $0.name) >= 0.9 }
+        if let exact = candidates.first(where: { $0.name.lowercased() == q }) { return exact }
+        return candidates.min { $0.name.count < $1.name.count }
     }
 
     /// Collapse collaboration-string artists into the standalone artist.

@@ -54,6 +54,7 @@
 		8C4E3E5E24DD37272F4E615D /* MacQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE00E8954AF9B98264A367E /* MacQueueView.swift */; };
 		8D706C18449CC22207E37AA6 /* DisplayFontTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E318A59381EE24D9E5853599 /* DisplayFontTests.swift */; };
 		AA11BB22CC33DD44EE55F001 /* MixCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55F002 /* MixCacheTests.swift */; };
+		AA11BB22CC33DD44EE55F301 /* SearchArtistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55F302 /* SearchArtistTests.swift */; };
 		8F67E00B438C5558C819615D /* MacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A114C4B8E0319934E5F90216 /* MacRootView.swift */; };
 		A0EA5D295C3DFD151DE59C30 /* SlskdClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB587064D721AA775E21C53 /* SlskdClient.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
@@ -327,6 +328,7 @@
 		E10000030000000000000002 /* AuraWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AuraWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E318A59381EE24D9E5853599 /* DisplayFontTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayFontTests.swift; sourceTree = "<group>"; };
 		AA11BB22CC33DD44EE55F002 /* MixCacheTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MixCacheTests.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55F302 /* SearchArtistTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchArtistTests.swift; sourceTree = "<group>"; };
 		E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MixCollageView.swift; sourceTree = "<group>"; };
 		E67D53CBB8991E7A47AB055E /* MacBackground.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacBackground.swift; sourceTree = "<group>"; };
 		E789F4384A074A1B5C0CC509 /* PinSync.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PinSync.swift; sourceTree = "<group>"; };
@@ -393,6 +395,7 @@
 				55F4E2D16AB99E6213E82E52 /* SongLinkServiceTests.swift */,
 				E318A59381EE24D9E5853599 /* DisplayFontTests.swift */,
 				AA11BB22CC33DD44EE55F002 /* MixCacheTests.swift */,
+				AA11BB22CC33DD44EE55F302 /* SearchArtistTests.swift */,
 			);
 			name = AuraTests;
 			path = AuraTests;
@@ -881,6 +884,7 @@
 				30CDA697DD9DFA3D48C1ADEA /* SongLinkServiceTests.swift in Sources */,
 				8D706C18449CC22207E37AA6 /* DisplayFontTests.swift in Sources */,
 				AA11BB22CC33DD44EE55F001 /* MixCacheTests.swift in Sources */,
+				AA11BB22CC33DD44EE55F301 /* SearchArtistTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
