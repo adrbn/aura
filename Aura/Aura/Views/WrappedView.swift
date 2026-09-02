@@ -14,7 +14,23 @@ struct WrappedView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var isSaving = false
-    @State private var isSaved = false
+    @State private var saveState: SaveState = .notSaved
+
+    /// Where this retrospective stands relative to the playlist on the server.
+    ///
+    /// It used to be a single `isSaved` flag fed only by a local signature, so the button
+    /// offered to save a playlist that was plainly already there — saved from another
+    /// device, or saved here before the stats moved on. The server is the only thing that
+    /// actually knows.
+    enum SaveState {
+        /// No playlist by this name on the server.
+        case notSaved
+        /// The playlist is there and holds this exact retrospective.
+        case saved
+        /// The playlist is there but the retrospective has changed since — more plays
+        /// have landed. Offering "save" again would be a lie; this offers "update".
+        case outdated
+    }
 
     init(initialPeriod: WrappedPeriod = .currentYear) {
         _period = State(initialValue: initialPeriod)
@@ -110,8 +126,8 @@ struct WrappedView: View {
         } else {
             stats = ListeningStats.compute(from: PlayHistory.shared.allPlays(), period: period)
         }
-        // Reflect whether *this exact* retrospective was already solidified.
-        isSaved = stats.map(isAlreadySaved) ?? false
+        // Ask the server, not just our own memory of what we saved.
+        await refreshSaveState()
         // Enrich the shown rows with real server cover art + tap targets (Last.fm serves
         // star placeholders and has no ids; even device rows lack server album/artist ids).
         if let s = stats { await resolveArtwork(for: s) }
@@ -221,14 +237,14 @@ struct WrappedView: View {
             ToastManager.shared.show("No matching songs on your server", icon: "exclamationmark.triangle.fill")
             return
         }
-        let name = "Wrapped • \(stats.period.title)"
+        let name = playlistName(for: stats)
         do {
             // Re-saving updates the existing playlist with the same name (no dupes).
             let existing = try await SubsonicClient.shared.getPlaylists(server: server)
             let existingId = existing.first(where: { $0.name == name })?.id
             _ = try await SubsonicClient.shared.createPlaylist(server: server, name: name, songIds: ids, playlistId: existingId)
             markSaved(stats)
-            isSaved = true
+            saveState = .saved
             ToastManager.shared.show("Saved “\(name)” to your playlists")
         } catch {
             AppLogger.shared.log("❌ Failed to save Wrapped: \(error.localizedDescription)")
@@ -291,8 +307,27 @@ struct WrappedView: View {
         return String(h, radix: 16)
     }
 
-    private func isAlreadySaved(_ stats: ListeningStats) -> Bool {
-        savedSignatures()[stats.period.title] == signature(for: stats)
+    /// Whether the playlist exists on the server, and whether it still matches.
+    ///
+    /// The local signature alone cannot answer this: it only records what *this device*
+    /// saved, so a playlist made on another one — or one whose signature was lost — read
+    /// as "never saved" and the button kept offering to create a duplicate.
+    private func refreshSaveState() async {
+        guard let stats else { saveState = .notSaved; return }
+        guard let server = ServerManager.shared.currentServer,
+              let playlists = try? await SubsonicClient.shared.getPlaylists(server: server) else {
+            // Offline: fall back to what we remember saving, which is better than
+            // insisting nothing has ever been saved.
+            saveState = savedSignatures()[stats.period.title] == signature(for: stats) ? .saved : .notSaved
+            return
+        }
+        let name = playlistName(for: stats)
+        guard playlists.contains(where: { $0.name == name }) else { saveState = .notSaved; return }
+        saveState = savedSignatures()[stats.period.title] == signature(for: stats) ? .saved : .outdated
+    }
+
+    private func playlistName(for stats: ListeningStats) -> String {
+        "Wrapped • \(stats.period.title)"
     }
 
     private func markSaved(_ stats: ListeningStats) {
@@ -330,21 +365,21 @@ struct WrappedView: View {
             HStack(spacing: 10) {
                 ZStack {
                     Circle()
-                        .fill(isSaved ? AnyShapeStyle(accent) : AnyShapeStyle(accent.opacity(0.15)))
+                        .fill(saveState == .saved ? AnyShapeStyle(accent) : AnyShapeStyle(accent.opacity(0.15)))
                         .frame(width: 34, height: 34)
                     if isSaving {
                         ProgressView().controlSize(.small)
                     } else {
-                        Image(systemName: isSaved ? "star.fill" : "plus")
+                        Image(systemName: saveIcon)
                             .font(.subheadline.bold())
-                            .foregroundStyle(isSaved ? .white : accent)
+                            .foregroundStyle(saveState == .saved ? .white : accent)
                     }
                 }
-                Text(isSaved ? "Saved to Playlists" : "Save as Playlist")
+                Text(saveTitle)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(isSaved ? .secondary : .primary)
+                    .foregroundStyle(saveState == .saved ? .secondary : .primary)
                 Spacer()
-                if !isSaved && !isSaving {
+                if saveState != .saved && !isSaving {
                     Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(.tertiary)
                 }
             }
@@ -353,8 +388,24 @@ struct WrappedView: View {
             .background(Color.themeSecondaryBg, in: RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
-        .disabled(isSaving || isSaved)
-        .animation(.easeInOut(duration: 0.2), value: isSaved)
+        .disabled(isSaving || saveState == .saved)
+        .animation(.easeInOut(duration: 0.2), value: saveState)
+    }
+
+    private var saveIcon: String {
+        switch saveState {
+        case .saved: return "star.fill"
+        case .outdated: return "arrow.trianglehead.clockwise"
+        case .notSaved: return "plus"
+        }
+    }
+
+    private var saveTitle: String {
+        switch saveState {
+        case .saved: return "Saved to Playlists"
+        case .outdated: return "Update Playlist"
+        case .notSaved: return "Save as Playlist"
+        }
     }
 
     // MARK: - Stat tiles
@@ -423,7 +474,7 @@ struct WrappedView: View {
             VStack(spacing: 12) {
                 ForEach(Array(stats.topSongs.prefix(5).enumerated()), id: \.element.id) { index, song in
                     Button {
-                        if let sid = song.serverId { playServerSong(id: sid) }
+                        if let sid = song.serverId { playServerSong(id: sid, in: stats) }
                     } label: {
                         HStack(spacing: 12) {
                             rankBadge(index + 1)
@@ -444,11 +495,32 @@ struct WrappedView: View {
         }
     }
 
-    private func playServerSong(id: String) {
+    /// Play a row, with the rest of the retrospective behind it.
+    ///
+    /// This used to hand `playSong` a single track and no source at all, which left Now
+    /// Playing with an empty header — nothing to name where the music came from, and
+    /// nothing to tap to get back — and no queue, so the song ended and playback stopped.
+    private func playServerSong(id: String, in stats: ListeningStats) {
         guard let server = ServerManager.shared.currentServer else { return }
+        let ids = stats.topSongs.compactMap(\.serverId)
+        guard let start = ids.firstIndex(of: id) else { return }
         Task {
-            if let song = try? await SubsonicClient.shared.getSong(server: server, id: id) {
-                await MainActor.run { AudioPlayer.shared.playSong(song) }
+            // Resolve the whole list, in order, so next/previous walk the retrospective.
+            let songs = await withTaskGroup(of: (Int, Song?).self) { group in
+                for (index, songId) in ids.enumerated() {
+                    group.addTask {
+                        (index, try? await SubsonicClient.shared.getSong(server: server, id: songId))
+                    }
+                }
+                var pairs: [(Int, Song)] = []
+                for await (index, song) in group { if let song { pairs.append((index, song)) } }
+                return pairs.sorted { $0.0 < $1.0 }.map { $0.1 }
+            }
+            guard let index = songs.firstIndex(where: { $0.id == id }) ?? (songs.isEmpty ? nil : start)
+            else { return }
+            await MainActor.run {
+                AudioPlayer.shared.playSong(songs[index], fromQueue: songs, startIndex: index,
+                                            source: .wrapped(period: stats.period))
             }
         }
     }

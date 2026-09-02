@@ -58,6 +58,7 @@ final class AudioPlayer {
     var pendingFrequentlyPlayedOpen = false
     /// Set when the user taps a "mix" playback source on Now Playing — Home opens that mix.
     var pendingMixId: String?
+    var pendingWrappedPeriod: WrappedPeriod?
     var playbackSource: PlaybackSource = .unknown
     var pendingPlaylistId: String?
     var lyrics: [LyricsLine] = []

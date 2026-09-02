@@ -791,6 +791,9 @@ struct NowPlayingView: View {
         case .mix(let id, _):
             player.isShowingNowPlaying = false
             player.pendingMixId = id
+        case .wrapped(let period):
+            player.isShowingNowPlaying = false
+            player.pendingWrappedPeriod = period
         case .radio(let name):
             // Dismiss NowPlaying first, THEN navigate after animation completes
             player.isShowingNowPlaying = false

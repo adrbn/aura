@@ -772,6 +772,9 @@ enum PlaybackSource: Equatable, Codable {
     case album(id: String, name: String)
     case playlist(id: String, name: String)
     case mix(id: String, name: String)
+    /// A retrospective. Carries the period rather than an id, because a Wrapped is
+    /// recomputed from listening history and has no identity on the server to point at.
+    case wrapped(period: WrappedPeriod)
     case radio(name: String)
     case artist(id: String, name: String)
     case genre(name: String)
@@ -789,6 +792,7 @@ enum PlaybackSource: Equatable, Codable {
         case .album(_, let name): return name
         case .playlist(_, let name): return name
         case .mix(_, let name): return name
+        case .wrapped(let period): return "Wrapped • \(period.title)"
         case .radio(let name): return name
         case .artist(_, let name): return name
         case .genre(let name): return name
@@ -808,6 +812,7 @@ enum PlaybackSource: Equatable, Codable {
         case .album: return "square.stack"
         case .playlist: return "music.note.list"
         case .mix: return "square.stack.3d.up.fill"
+        case .wrapped: return "sparkles"
         case .radio: return "antenna.radiowaves.left.and.right"
         case .artist: return "music.mic"
         case .genre: return "guitars"
@@ -824,7 +829,7 @@ enum PlaybackSource: Equatable, Codable {
 
     var isNavigable: Bool {
         switch self {
-        case .album, .playlist, .mix, .artist, .radio, .favorites, .genre, .recentlyPlayed, .frequentlyPlayed, .queue, .autoplay: return true
+        case .album, .playlist, .mix, .wrapped, .artist, .radio, .favorites, .genre, .recentlyPlayed, .frequentlyPlayed, .queue, .autoplay: return true
         case .search, .songs, .unknown: return false
         }
     }

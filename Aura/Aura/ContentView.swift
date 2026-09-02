@@ -107,6 +107,10 @@ struct ContentView: View {
             guard newId != nil else { return }
             switchToHomeTab()
         }
+        .onChange(of: audioPlayer.pendingWrappedPeriod) { _, period in
+            guard period != nil else { return }
+            switchToHomeTab()
+        }
         .task {
             await serverManager.testConnection()
             serverManager.startMonitoring()

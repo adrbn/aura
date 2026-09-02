@@ -173,6 +173,18 @@ struct HomeView: View {
                 QueueView()
             }
         }
+        .onChange(of: player.pendingWrappedPeriod) { _, period in
+            // Tapping the "Wrapped • …" source on Now Playing brings us here.
+            guard let period else { return }
+            player.pendingWrappedPeriod = nil
+            if !navPath.isEmpty { navPath = NavigationPath() }
+            Task { @MainActor in
+                // Push once Now Playing has finished dismissing — otherwise the root
+                // flashes and a second copy stacks behind it.
+                try? await Task.sleep(for: .milliseconds(250))
+                navPath.append(HomeRoute.wrapped(period))
+            }
+        }
         .onChange(of: player.pendingMixId) { _, newId in
             // Tapping a "mix" source on Now Playing brings us here — open that mix.
             guard let id = newId else { return }

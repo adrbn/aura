@@ -1,7 +1,7 @@
 import Foundation
 
 /// A retrospective window — a whole year or a single month.
-enum WrappedPeriod: Hashable {
+enum WrappedPeriod: Hashable, Codable {
     case year(Int)
     case month(year: Int, month: Int)
 
