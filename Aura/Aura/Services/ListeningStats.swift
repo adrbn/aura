@@ -97,12 +97,12 @@ enum WrappedAvailability {
 }
 
 /// Aggregated listening statistics for a period — the data behind a Wrapped screen.
-struct ListeningStats {
+struct ListeningStats: Codable {
     /// Where the numbers came from. `.lastfm` is real long-term scrobble history;
     /// `.device` is the app's local play log (accurate only since logging began).
-    enum Source { case device, lastfm }
+    enum Source: String, Codable { case device, lastfm }
 
-    struct RankedSong: Identifiable {
+    struct RankedSong: Identifiable, Codable {
         let id: String            // stable list identity (device: server id; Last.fm: synthetic)
         let title: String
         let artist: String
@@ -111,7 +111,7 @@ struct ListeningStats {
         let plays: Int
         var serverId: String? = nil  // resolved server song id → tap plays it
     }
-    struct RankedArtist: Identifiable {
+    struct RankedArtist: Identifiable, Codable {
         var id: String { name }
         let name: String
         let plays: Int
@@ -120,7 +120,7 @@ struct ListeningStats {
         var serverId: String? = nil       // resolved server artist id → tap opens it
         var serverCoverArt: String? = nil // resolved server cover (Last.fm drops artist images)
     }
-    struct RankedAlbum: Identifiable {
+    struct RankedAlbum: Identifiable, Codable {
         var id: String { "\(name)|\(artist)" }
         let name: String
         let artist: String
@@ -129,7 +129,7 @@ struct ListeningStats {
         let plays: Int
         var serverId: String? = nil       // resolved server album id → tap opens it
     }
-    struct RankedGenre: Identifiable {
+    struct RankedGenre: Identifiable, Codable {
         var id: String { name }
         let name: String
         let plays: Int
@@ -324,5 +324,34 @@ struct ListeningStats {
                               uniqueArtists: uniqueArtists, topSongs: newSongs,
                               topArtists: newArtists, topAlbums: newAlbums, topGenres: topGenres,
                               allTimeScrobbles: allTimeScrobbles, scrobblingSinceYear: scrobblingSinceYear)
+    }
+}
+
+// MARK: - Keeping a retrospective between visits
+
+/// Remembers the last retrospective worked out for each period, so reopening Wrapped
+/// shows it at once instead of computing and re-resolving from scratch.
+///
+/// A retrospective is expensive in a way its appearance hides: the Last.fm source is a
+/// network fetch, and either source then resolves its top rows against the server for
+/// real cover art. Doing all of that on every visit meant a spinner every time, for
+/// numbers that had not meaningfully changed since the last look.
+///
+/// Kept per server as well as per period — two servers are two libraries and two sets of
+/// listening, and the mixes learned that lesson already.
+enum WrappedCache {
+    private static func key(period: WrappedPeriod, source: ListeningStats.Source) -> String {
+        let server = ServerManager.shared.currentServer?.id.uuidString ?? "none"
+        return "musika_wrapped_v1_\(server)_\(source.rawValue)_\(period.title)"
+    }
+
+    static func load(period: WrappedPeriod, source: ListeningStats.Source) -> ListeningStats? {
+        guard let data = UserDefaults.standard.data(forKey: key(period: period, source: source)) else { return nil }
+        return try? JSONDecoder().decode(ListeningStats.self, from: data)
+    }
+
+    static func save(_ stats: ListeningStats) {
+        guard let data = try? JSONEncoder().encode(stats) else { return }
+        UserDefaults.standard.set(data, forKey: key(period: stats.period, source: stats.source))
     }
 }

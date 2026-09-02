@@ -28,6 +28,9 @@ struct SettingsView: View {
     @State private var showDownloadManager = false
     @State private var showDownloadAllConfirmation = false
     @State private var isClearingCache = false
+    /// What clearing the cache would actually cost, measured when the button is pressed
+    /// rather than guessed at in the warning's wording.
+    @State private var pendingCacheClear: CacheAudit?
     @State private var isDownloadingLibrary = false
     @State private var libraryDownloadProgress: String?
     @State private var showFolderPicker = false
@@ -116,22 +119,7 @@ struct SettingsView: View {
                 }
 
                 quickTile(icon: "xmark.bin.fill", label: "Clear Cache", color: .red) {
-                    isClearingCache = true
-                    Task {
-                        // Measure size before clearing
-                        let audioBytes = AudioCacheManager.shared.currentCacheSizeBytes
-                        let artworkBytes = ArtworkCache.shared.currentCacheSizeBytes
-                        let totalBytes = audioBytes + artworkBytes
-
-                        AudioCacheManager.shared.clearCache()
-                        ArtworkCache.shared.clearAll()
-                        URLCache.shared.removeAllCachedResponses()
-                        try? await Task.sleep(for: .milliseconds(500))
-                        isClearingCache = false
-
-                        let freed = ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
-                        ToastManager.shared.show("Cache cleared — \(freed) freed", icon: "trash")
-                    }
+                    pendingCacheClear = CacheAudit.measure()
                 }
             }
             .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0))
@@ -218,6 +206,7 @@ struct SettingsView: View {
             EqualizerView()
                 .presentationDetents([.large])
         }
+        .confirmsCacheClear($pendingCacheClear, isClearing: $isClearingCache)
     }
 
     // MARK: - Sections
@@ -664,21 +653,7 @@ struct SettingsView: View {
                 }
 
                 Button(role: .destructive) {
-                    isClearingCache = true
-                    Task {
-                        let audioBytes = AudioCacheManager.shared.currentCacheSizeBytes
-                        let artworkBytes = ArtworkCache.shared.currentCacheSizeBytes
-                        let totalBytes = audioBytes + artworkBytes
-
-                        AudioCacheManager.shared.clearCache()
-                        ArtworkCache.shared.clearAll()
-                        URLCache.shared.removeAllCachedResponses()
-                        try? await Task.sleep(for: .milliseconds(500))
-                        isClearingCache = false
-
-                        let freed = ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
-                        ToastManager.shared.show("Cache cleared — \(freed) freed", icon: "trash")
-                    }
+                    pendingCacheClear = CacheAudit.measure()
                 } label: {
                     HStack {
                         Text("Clear Cache")
@@ -1158,3 +1133,71 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - Clearing the cache
+
+/// What clearing the cache would cost, counted rather than described.
+///
+/// Cache and downloads live in different folders and only one of them is being emptied,
+/// but nothing on screen said so — "Clear Cache" next to a library someone spent a night
+/// downloading is an alarming button with no way to find out what it does except press it.
+struct CacheAudit: Equatable {
+    let songs: Int
+    let audioBytes: Int64
+    let artworkBytes: Int64
+
+    var totalBytes: Int64 { audioBytes + artworkBytes }
+
+    static func measure() -> CacheAudit {
+        CacheAudit(
+            songs: AudioCacheManager.shared.getCachedSongs().count,
+            audioBytes: AudioCacheManager.shared.currentCacheSizeBytes,
+            artworkBytes: ArtworkCache.shared.currentCacheSizeBytes
+        )
+    }
+
+    private func size(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+
+    var total: String { size(totalBytes) }
+
+    /// Spelled out line by line, and ending on what is *not* at stake — which is the
+    /// thing anyone pressing this button actually wants to know.
+    var summary: String {
+        var lines: [String] = []
+        lines.append(songs == 1
+            ? "1 recently played song (\(size(audioBytes)))"
+            : "\(songs) recently played songs (\(size(audioBytes)))")
+        lines.append("Cover art (\(size(artworkBytes)))")
+        lines.append("")
+        lines.append("Your downloads are not touched, and anything cleared is fetched again next time you play it.")
+        return lines.joined(separator: "\n")
+    }
+}
+
+extension View {
+    /// Asks before emptying the cache, and says what that costs.
+    func confirmsCacheClear(_ audit: Binding<CacheAudit?>, isClearing: Binding<Bool>) -> some View {
+        alert("Clear cache?",
+              isPresented: Binding(get: { audit.wrappedValue != nil },
+                                   set: { if !$0 { audit.wrappedValue = nil } }),
+              presenting: audit.wrappedValue) { _ in
+            Button("Cancel", role: .cancel) { audit.wrappedValue = nil }
+            Button("Clear", role: .destructive) {
+                let freed = audit.wrappedValue?.total ?? ""
+                audit.wrappedValue = nil
+                isClearing.wrappedValue = true
+                Task {
+                    AudioCacheManager.shared.clearCache()
+                    ArtworkCache.shared.clearAll()
+                    URLCache.shared.removeAllCachedResponses()
+                    try? await Task.sleep(for: .milliseconds(500))
+                    isClearing.wrappedValue = false
+                    ToastManager.shared.show("Cache cleared — \(freed) freed", icon: "trash")
+                }
+            }
+        } message: { audit in
+            Text("This frees \(audit.total):\n\n\(audit.summary)")
+        }
+    }
+}

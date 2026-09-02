@@ -111,26 +111,49 @@ struct WrappedView: View {
 
     // MARK: - Loading
 
+    /// Show last time's retrospective at once, then quietly bring it up to date.
+    ///
+    /// Recomputing on every visit meant a spinner every time — a Last.fm fetch, then a
+    /// round of server lookups to put real cover art on the rows — for numbers that had
+    /// barely moved since the last look. A retrospective is a summary of months; it does
+    /// not need to be rebuilt from nothing to be opened.
     private func reload() async {
         errorMessage = nil
+
+        let cached = WrappedCache.load(period: period, source: source)
+        if let cached {
+            stats = cached
+            isLoading = false
+        }
+
+        // Nothing to show yet is the only case that earns a spinner.
+        if cached == nil { isLoading = true }
+        defer { isLoading = false }
+
         if source == .lastfm {
-            isLoading = true
-            defer { isLoading = false }
             do {
                 let wrapped = try await LastfmService.shared.fetchWrapped(period: period)
                 stats = ListeningStats.from(lastfm: wrapped, period: period)
             } catch {
-                stats = nil
-                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                // A failed refresh must not take a perfectly good cached retrospective
+                // down with it — that is the difference between "offline" and "empty".
+                if cached == nil {
+                    stats = nil
+                    errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                }
             }
         } else {
             stats = ListeningStats.compute(from: PlayHistory.shared.allPlays(), period: period)
         }
+
         // Ask the server, not just our own memory of what we saved.
         await refreshSaveState()
         // Enrich the shown rows with real server cover art + tap targets (Last.fm serves
         // star placeholders and has no ids; even device rows lack server album/artist ids).
         if let s = stats { await resolveArtwork(for: s) }
+        // Store the finished article — resolved artwork and all — so the next visit opens
+        // on it rather than on a spinner.
+        if let s = stats { WrappedCache.save(s) }
     }
 
     // MARK: - Server resolution (real cover art + tap targets)
