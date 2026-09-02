@@ -204,20 +204,47 @@ final class DownloadManager: NSObject {
         }
     }
 
+    /// Exporting hands over the file itself, so it is always the original — the point of
+    /// "export" is the actual track, not a copy re-encoded to a listening preference.
     func buildExportURL(server: ServerConfig, id: String) -> URL? {
-        return buildDownloadURL(server: server, id: id)
+        buildTransferURL(server: server, id: id, capBitRate: nil)
     }
 
     private func buildDownloadURL(server: ServerConfig, id: String) -> URL? {
+        buildTransferURL(server: server, id: id, capBitRate: AppSettings.shared.downloadQuality.bitRate)
+    }
+
+    /// `stream` when a bit rate is asked for, `download` when the original is.
+    ///
+    /// These are not interchangeable, and using the wrong one is why the quality setting
+    /// did nothing at all: the Subsonic spec defines `download` as returning the media
+    /// "without transcoding or downsampling", and it ignores `maxBitRate` outright. Every
+    /// download came back as the original file — a FLAC library downloaded as FLAC no
+    /// matter which of the four qualities was chosen. Only `stream` transcodes.
+    private func buildTransferURL(server: ServerConfig, id: String, capBitRate: Int?) -> URL? {
         let salt = UUID().uuidString.prefix(8).lowercased()
         let data = Data("\(server.password)\(salt)".utf8)
         let hash = Insecure.MD5.hash(data: data)
         let token = hash.map { String(format: "%02hhx", $0) }.joined()
-        var urlString = "\(server.baseURL)/rest/download?u=\(server.username)&t=\(token)&s=\(salt)&v=1.16.1&c=Aura&f=json&id=\(id)"
-        if let maxBitRate = AppSettings.shared.downloadQuality.bitRate {
-            urlString += "&maxBitRate=\(maxBitRate)"
+        let endpoint = capBitRate == nil ? "download" : "stream"
+        var urlString = "\(server.baseURL)/rest/\(endpoint)?u=\(server.username)&t=\(token)&s=\(salt)&v=1.16.1&c=Aura&f=json&id=\(id)"
+        if let capBitRate {
+            // `format` as well as `maxBitRate`: without it the server is free to answer in
+            // the source container, and a 320 kbps stream still wrapped as FLAC saves none
+            // of the space the setting was chosen for.
+            urlString += "&maxBitRate=\(capBitRate)&format=mp3"
         }
         return URL(string: urlString)
+    }
+
+    /// What a downloaded file should be called on disk.
+    ///
+    /// A capped download arrives transcoded, so it must not keep the source's extension —
+    /// naming an MP3 `.flac` leaves a file nothing can play.
+    private func downloadExtension(for songId: String) -> String {
+        AppSettings.shared.downloadQuality.bitRate == nil
+            ? (knownSong(songId)?.suffix ?? "mp3")
+            : "mp3"
     }
 
     // MARK: - Group progress helpers
@@ -872,8 +899,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
             return
         }
         // The temp file disappears when this method returns — move it synchronously.
-        let ext = knownSong(songId)?.suffix ?? "mp3"
-        let destination = downloadsDirectory.appendingPathComponent("\(songId).\(ext)")
+        let destination = downloadsDirectory.appendingPathComponent("\(songId).\(downloadExtension(for: songId))")
         do {
             try? FileManager.default.removeItem(at: destination)
             try FileManager.default.moveItem(at: location, to: destination)
