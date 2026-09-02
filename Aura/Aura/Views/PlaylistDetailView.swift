@@ -26,20 +26,7 @@ struct PlaylistDetailView: View {
                     VStack(spacing: 16) {
                         // Cover + name sit at the top; the song list follows directly
                         // below the buttons rather than being pushed to mid-screen.
-                        ZStack {
-                            CoverArtAsyncImage(coverArt: playlist.coverArt, size: 200)
-                                .id(coverArtRefreshId)
-                                .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
-
-                            if isProcessingPhoto {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(.ultraThinMaterial)
-                                    .frame(width: 200, height: 200)
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                                    .tint(.primary)
-                            }
-                        }
+                        headerCover
                         .frame(width: 200, height: 200)
                         .contentShape(Rectangle())
                         .contextMenu {
@@ -60,7 +47,7 @@ struct PlaylistDetailView: View {
                             }
                         } preview: {
                             // Lift only the cover (not the whole header block) on long-press.
-                            CoverArtAsyncImage(coverArt: playlist.coverArt, size: 260)
+                            PlaylistCoverView(playlistId: playlistId, coverArt: playlist.coverArt, size: 260, cornerRadius: 12)
                         }
 
                         VStack(spacing: 4) {
@@ -477,6 +464,25 @@ struct PlaylistDetailView: View {
             AppLogger.shared.log("❌ Navidrome auth error: \(error.localizedDescription)")
         }
         return nil
+    }
+
+    /// Pulled out of the header: inlined, the surrounding expression stopped
+    /// type-checking in reasonable time.
+    @ViewBuilder private var headerCover: some View {
+        ZStack {
+            PlaylistCoverView(playlistId: playlistId, coverArt: playlist?.coverArt, size: 200, cornerRadius: 12)
+                .id(coverArtRefreshId)
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
+
+            if isProcessingPhoto {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 200, height: 200)
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .tint(.primary)
+            }
+        }
     }
 
     private func saveCoverArt(coverArtId: String?) {

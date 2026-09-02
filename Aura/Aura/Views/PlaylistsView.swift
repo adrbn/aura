@@ -618,7 +618,8 @@ struct PlaylistCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             ZStack(alignment: .topTrailing) {
-                CoverArtImage(coverArt: playlist.coverArt, size: 180, cornerRadius: 12, cacheToken: playlist.changed)
+                PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
+                                  cacheToken: playlist.changed, size: 180, cornerRadius: 12)
                 if isPinned {
                     Image(systemName: "pin.fill")
                         .font(.caption2)
@@ -659,7 +660,7 @@ struct ReorderPinnedView: View {
             List {
                 ForEach(orderedPinned) { playlist in
                     HStack(spacing: 12) {
-                        CoverArtImage(coverArt: playlist.coverArt, size: 40, cornerRadius: 6)
+                        PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt, size: 40, cornerRadius: 6)
                         Text(playlist.name)
                             .font(.subheadline.weight(.medium))
                         Spacer()

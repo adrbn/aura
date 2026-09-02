@@ -100,7 +100,7 @@ struct AddToPlaylistView: View {
                                 }
                             } label: {
                                 HStack(spacing: 12) {
-                                    CoverArtImage(coverArt: playlist.coverArt, size: 44, cornerRadius: 6)
+                                    PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt, size: 44, cornerRadius: 6)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(playlist.name)
                                             .font(.subheadline.weight(.medium))

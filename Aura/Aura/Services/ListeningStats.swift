@@ -355,3 +355,36 @@ enum WrappedCache {
         UserDefaults.standard.set(data, forKey: key(period: stats.period, source: stats.source))
     }
 }
+
+// MARK: - Retrospectives saved as playlists
+
+/// Which saved playlists are retrospectives, so Aura can draw them with the same cover
+/// the Wrapped screen used instead of a collage of whatever landed at track one.
+///
+/// Client-side, and it has to be: the Subsonic API has no way to set a playlist's
+/// artwork. `updatePlaylist` carries a name, a comment and a visibility flag and nothing
+/// else, and a server derives the picture from the songs. So the cover is remembered here
+/// and drawn here — inside Aura it looks like the retrospective it is; in the web UI or
+/// another client it stays whatever the server made of it.
+enum WrappedCovers {
+    private static let key = "musika_wrapped_playlist_covers_v1"
+
+    private static var map: [String: WrappedPeriod] {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: key) else { return [:] }
+            return (try? JSONDecoder().decode([String: WrappedPeriod].self, from: data)) ?? [:]
+        }
+        set {
+            guard let data = try? JSONEncoder().encode(newValue) else { return }
+            UserDefaults.standard.set(data, forKey: key)
+        }
+    }
+
+    static func remember(playlistId: String, period: WrappedPeriod) {
+        var current = map
+        current[playlistId] = period
+        map = current
+    }
+
+    static func period(for playlistId: String) -> WrappedPeriod? { map[playlistId] }
+}

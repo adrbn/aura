@@ -254,3 +254,30 @@ struct PlaceholderCoverView: View {
         }
     }
 }
+
+// MARK: - Playlist cover
+
+/// A playlist's picture: the retrospective template when Aura made it, the server's
+/// artwork otherwise.
+///
+/// One view rather than a check at each of the dozen places a playlist cover is drawn —
+/// the rule belongs in one place, and every list, grid and header then gets it for free.
+struct PlaylistCoverView: View {
+    /// Taken apart rather than passed a `Playlist`, because the detail screen holds a
+    /// `PlaylistWithSongs` and both need to draw the same picture.
+    let playlistId: String
+    let coverArt: String?
+    var cacheToken: String? = nil
+    var size: CGFloat
+    var cornerRadius: CGFloat = 12
+
+    var body: some View {
+        if let period = WrappedCovers.period(for: playlistId) {
+            GeneratedCoverView(nature: .retrospective(period.coverLabel),
+                               size: size, cornerRadius: cornerRadius)
+        } else {
+            CoverArtImage(coverArt: coverArt, size: size,
+                          cornerRadius: cornerRadius, cacheToken: cacheToken)
+        }
+    }
+}

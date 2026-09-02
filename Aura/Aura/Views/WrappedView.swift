@@ -265,7 +265,10 @@ struct WrappedView: View {
             // Re-saving updates the existing playlist with the same name (no dupes).
             let existing = try await SubsonicClient.shared.getPlaylists(server: server)
             let existingId = existing.first(where: { $0.name == name })?.id
-            _ = try await SubsonicClient.shared.createPlaylist(server: server, name: name, songIds: ids, playlistId: existingId)
+            let saved = try await SubsonicClient.shared.createPlaylist(server: server, name: name, songIds: ids, playlistId: existingId)
+            // Remember which playlist this is, so Aura draws it with the retrospective's
+            // own cover rather than whatever its first track happens to look like.
+            WrappedCovers.remember(playlistId: existingId ?? saved.id, period: stats.period)
             markSaved(stats)
             saveState = .saved
             ToastManager.shared.show("Saved “\(name)” to your playlists")
