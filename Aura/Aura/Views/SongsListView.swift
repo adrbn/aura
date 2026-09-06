@@ -159,7 +159,11 @@ struct SongsListView: View {
                 .font(.subheadline.weight(.semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(accentColor.opacity(0.15))
+                // Neutral, like every other secondary action in the app. A translucent
+                // wash of the accent behind accent-coloured text reads as a muddy red
+                // block rather than a button — and the same control in Mix detail was
+                // already neutral, so the two disagreed.
+                .background(Color.primary.opacity(0.08))
                 .foregroundStyle(accentColor)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
