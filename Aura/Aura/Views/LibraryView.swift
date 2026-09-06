@@ -25,10 +25,25 @@ struct LibraryView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
 
+                // A menu of destinations, so it reads as one card rather than a run of
+                // full-bleed rows: inset and rounded, the shape iOS gives this exact
+                // pattern everywhere else — Settings included, two screens away.
+                //
+                // The rows are the elevated layer and the page is the ground they sit on.
+                // Left alone a `List` paints each row with `systemBackground`, which is
+                // pure black: below the canvas rather than above it, a slab and not a
+                // surface. Square corners running edge to edge read the same way.
                 ForEach(appSettings.enabledLibraryCategories) { category in
                     NavigationLink(value: category) {
-                        Label(category.rawValue, systemImage: category.icon)
-                            .foregroundStyle(accentColor)
+                        // The icon carries the accent, the label stays white. Colouring
+                        // both meant every row was accent-coloured, and a colour that
+                        // applies to everything ranks nothing — it stops reading as
+                        // emphasis and starts reading as the text colour.
+                        Label {
+                            Text(category.rawValue).foregroundStyle(.primary)
+                        } icon: {
+                            Image(systemName: category.icon).foregroundStyle(accentColor)
+                        }
                     }
                 }
             }
