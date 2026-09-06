@@ -11,15 +11,20 @@ struct ContentView: View {
     @State private var keyboardVisible = false
 
     var body: some View {
-        if serverManager.hasServer {
-            if appSettings.offlineMode {
-                offlineContent
+        Group {
+            if serverManager.hasServer {
+                if appSettings.offlineMode {
+                    offlineContent
+                } else {
+                    mainContent
+                }
             } else {
-                mainContent
+                welcomeView
             }
-        } else {
-            welcomeView
         }
+        // Once for the window, over everything — grain belongs to the screen, not to any
+        // one page, and drawing it per page would seam at every boundary.
+        .overlay { GrainOverlay() }
     }
 
     private var mainContent: some View {

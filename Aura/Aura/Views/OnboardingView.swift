@@ -29,7 +29,7 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
 
             // Film grain overlay
-            GrainOverlay()
+            GrainOverlay(animated: true)
                 .opacity(0.06)
                 .blendMode(.overlay)
                 .ignoresSafeArea()
