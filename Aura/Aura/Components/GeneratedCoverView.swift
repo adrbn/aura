@@ -239,73 +239,18 @@ struct PlaceholderCoverView: View {
     var kind: Kind = .generic
     var size: CGFloat = 50
     var cornerRadius: CGFloat = 8
-    /// Sets the item's name inside the cover. Off by default, and deliberately so.
-    ///
-    /// Almost every cover in the app is already captioned by whatever draws it — a grid
-    /// card, a list row — so naming it again inside the artwork says the same thing
-    /// twice. And an artist's cover is masked to a circle, which crops a corner-set label
-    /// straight through the middle. Only a large cover standing on its own has room for
-    /// its own name and nothing else to say it.
-    var showsName: Bool = false
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        ZStack {
             LinearGradient(colors: GeneratedCoverView.hashedPalette(seed),
                            startPoint: .topLeading, endPoint: .bottomTrailing)
-
-            // The glyph bleeds off the top-right corner rather than sitting centred.
-            // A symbol placed in the middle of a square reads as an icon standing in for
-            // a picture — the universal "no image" shrug. One cropped by its own frame
-            // reads as a composition, which is the whole difference between artwork that
-            // is missing and artwork that was made.
             Image(systemName: glyph)
-                .font(.system(size: size * 0.62, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.22))
-                .rotationEffect(.degrees(-12))
-                .offset(x: size * 0.22, y: -size * 0.20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-
-            // Below roughly a thumbnail there is no room to set anything either, and a
-            // name shrunk past legibility is worse than no name.
-            if showsName && size >= 70 {
-                VStack(alignment: .leading, spacing: 1) {
-                    LinearGradient(colors: [.clear, .black.opacity(0.34)],
-                                   startPoint: .top, endPoint: .bottom)
-                        .frame(height: size * 0.45)
-                        .frame(maxWidth: .infinity)
-                        .allowsHitTesting(false)
-                        .overlay(alignment: .bottomLeading) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(kicker)
-                                    .font(.system(size: max(size * 0.062, 8), weight: .heavy))
-                                    .tracking(max(size * 0.006, 0.8))
-                                    .foregroundStyle(.white.opacity(0.68))
-                                Text(seed)
-                                    .auraDisplay(max(size * 0.135, 13), relativeTo: .headline)
-                                    .foregroundStyle(.white)
-                                    .lineLimit(2)
-                                    .minimumScaleFactor(0.65)
-                                    .multilineTextAlignment(.leading)
-                            }
-                            .padding(size * 0.075)
-                        }
-                }
-                .frame(maxHeight: .infinity, alignment: .bottom)
-            }
+                .font(.system(size: size * 0.34, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+                .shadow(color: .black.opacity(0.18), radius: max(1, size * 0.02), y: 1)
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-    }
-
-    /// The kind, spelled out. Says what the thing *is* where the picture cannot.
-    private var kicker: String {
-        switch kind {
-        case .artist:   return "ARTIST"
-        case .album:    return "ALBUM"
-        case .song:     return "TRACK"
-        case .playlist: return "PLAYLIST"
-        case .generic:  return "MUSIC"
-        }
     }
 
     private var glyph: String {
