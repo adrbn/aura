@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    /// Ties the mini player's artwork to the full player it expands into.
+    @Namespace private var playerTransition
     @Environment(ServerManager.self) private var serverManager
     @Environment(AudioPlayer.self) private var audioPlayer
     @State private var selectedTab = 0
@@ -44,7 +46,7 @@ struct ContentView: View {
                 }
 
                 if audioPlayer.hasQueue {
-                    MiniPlayerView()
+                    MiniPlayerView(transitionNamespace: playerTransition)
                         .padding(.bottom, keyboardVisible ? 4 : 57)
                 }
             }
@@ -63,6 +65,7 @@ struct ContentView: View {
             handlePostDismissNavigation()
         }) {
             NowPlayingView()
+                .navigationTransition(.zoom(sourceID: MiniPlayerView.transitionID, in: playerTransition))
         }
         .sheet(isPresented: $showDownloadManager) {
             NavigationStack {
@@ -137,7 +140,7 @@ struct ContentView: View {
                 if audioPlayer.hasQueue {
                     VStack(spacing: 0) {
                         Spacer()
-                        MiniPlayerView()
+                        MiniPlayerView(transitionNamespace: playerTransition)
                     }
                 }
                 ToastOverlay()
@@ -148,6 +151,7 @@ struct ContentView: View {
             set: { audioPlayer.isShowingNowPlaying = $0 }
         )) {
             NowPlayingView()
+                .navigationTransition(.zoom(sourceID: MiniPlayerView.transitionID, in: playerTransition))
         }
         .task {
             await serverManager.testConnection()

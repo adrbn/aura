@@ -2,6 +2,9 @@ import SwiftUI
 
 struct MiniPlayerView: View {
     @Environment(AudioPlayer.self) private var player
+    /// Namespace for the expansion into Now Playing. Optional so the bar can still be
+    /// used somewhere that has no such transition to offer.
+    var transitionNamespace: Namespace.ID?
 
     var body: some View {
         if let song = player.currentSong {
@@ -9,9 +12,14 @@ struct MiniPlayerView: View {
                 player.isShowingNowPlaying = true
             } label: {
                 HStack(spacing: 12) {
+                    // The cover the full player grows out of. Anchoring the expansion to
+                    // the artwork — rather than sliding a new screen up over everything —
+                    // is what makes opening the player read as *this song* opening, and
+                    // closing it as the same song folding back where it came from.
                     CoverArtImage(coverArt: song.coverArt, size: 44, cornerRadius: 10,
                                   placeholderName: song.title, placeholderKind: .song)
                         .id("mini-\(song.id)-\(song.coverArt ?? "")")
+                        .matchedTransitionSourceIfAvailable(id: Self.transitionID, in: transitionNamespace)
 
                     VStack(alignment: .leading, spacing: 2) {
                         MarqueeText(text: song.title,
@@ -63,6 +71,24 @@ struct MiniPlayerView: View {
                         }
                     }
             )
+        }
+    }
+}
+
+extension MiniPlayerView {
+    /// One id, because there is only ever one mini player on screen.
+    static let transitionID = "aura.nowPlaying"
+}
+
+extension View {
+    /// `matchedTransitionSource` only when a namespace was handed down, so the mini
+    /// player stays usable on its own.
+    @ViewBuilder
+    func matchedTransitionSourceIfAvailable(id: String, in namespace: Namespace.ID?) -> some View {
+        if let namespace {
+            self.matchedTransitionSource(id: id, in: namespace)
+        } else {
+            self
         }
     }
 }
