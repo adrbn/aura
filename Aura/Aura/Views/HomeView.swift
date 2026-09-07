@@ -393,7 +393,7 @@ struct HomeView: View {
     private var madeForYouSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Made For You").auraDisplay(26, relativeTo: .title2)
+                Text("Made For You").font(.title3.bold())
                 Spacer()
                 if mixGenerator.isGenerating {
                     ProgressView().controlSize(.small)
@@ -401,74 +401,30 @@ struct HomeView: View {
             }
             .padding(.horizontal)
 
-            // The first mix gets the width of the page; the rest keep the row.
-            //
-            // Every section on Home was the same shape — a heading over a horizontal run
-            // of equal squares — so the page had five voices at one volume and no focal
-            // point. The lead mix is the one thing here that knows what time it is and
-            // what you have been listening to, which makes it the natural place to break
-            // the rhythm rather than an arbitrary one.
-            if let lead = mixGenerator.mixes.first {
-                NavigationLink(value: lead) {
-                    leadMixCard(lead)
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 14) {
+                    ForEach(mixGenerator.mixes) { mix in
+                        NavigationLink(value: mix) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                MixCoverView(mix: mix, size: 150, cornerRadius: 12)
+                                Text(mix.title)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                Text(mix.subtitle)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                                    .frame(height: 28, alignment: .top)
+                            }
+                            .frame(width: 150)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                .buttonStyle(.plain)
                 .padding(.horizontal)
             }
-
-            let rest = Array(mixGenerator.mixes.dropFirst())
-            if !rest.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 14) {
-                        ForEach(rest) { mix in
-                            NavigationLink(value: mix) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    MixCoverView(mix: mix, size: 150, cornerRadius: 12)
-                                    Text(mix.title)
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(1)
-                                    Text(mix.subtitle)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(2)
-                                        .frame(height: 28, alignment: .top)
-                                }
-                                .frame(width: 150)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                .padding(.top, 2)
-            }
         }
-    }
-
-    /// The lead mix, set wide: cover on the left, the mix named in the app's own face on
-    /// the right, with the reason it exists underneath.
-    private func leadMixCard(_ mix: Mix) -> some View {
-        HStack(spacing: 14) {
-            MixCoverView(mix: mix, size: 116, cornerRadius: 14, showsLabel: false)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(mix.kind == .timeOfDay ? "FOR RIGHT NOW" : "MADE FOR YOU")
-                    .font(.system(size: 10, weight: .heavy))
-                    .tracking(1.2)
-                    .foregroundStyle(accentColor)
-                Text(mix.title)
-                    .auraDisplay(30, relativeTo: .title)
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.7)
-                Text(mix.subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -633,10 +589,7 @@ struct HomeView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         HStack {
-            // The app's own face, not the system's. It was used once per screen — the tab
-            // title — and everything below it spoke stock SF, which is what made a
-            // deliberate typographic choice read as a hat rather than a voice.
-            Text(title).auraDisplay(26, relativeTo: .title2)
+            Text(title).font(.title2.bold())
             Image(systemName: "chevron.right").font(.subheadline.bold()).foregroundStyle(.secondary)
             Spacer()
         }.padding(.horizontal)

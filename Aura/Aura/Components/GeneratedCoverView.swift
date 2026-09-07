@@ -15,13 +15,6 @@ struct GeneratedCoverView: View {
     let nature: Nature
     var size: CGFloat = 160
     var cornerRadius: CGFloat = 12
-    /// Draws the mix's name inside the cover.
-    ///
-    /// True nearly everywhere, because a cover in a row has nothing else naming it. False
-    /// where something alongside already does — the lead card on Home sets the title in
-    /// the display face right next to the artwork, and a cover repeating it says the same
-    /// thing twice within a few pixels of itself.
-    var showsLabel: Bool = true
 
     var body: some View {
         ZStack {
@@ -43,7 +36,7 @@ struct GeneratedCoverView: View {
             )
 
             // Foreground label (hidden on very small thumbnails where it'd be noise).
-            if showsLabel && size >= 70 {
+            if size >= 70 {
                 VStack(alignment: .leading, spacing: 2) {
                     Spacer()
                     if let kicker {
@@ -217,12 +210,10 @@ struct MixCoverView: View {
     let mix: Mix
     var size: CGFloat = 160
     var cornerRadius: CGFloat = 12
-    var showsLabel: Bool = true
 
     var body: some View {
         if let nature = mix.generatedCover {
-            GeneratedCoverView(nature: nature, size: size, cornerRadius: cornerRadius,
-                               showsLabel: showsLabel)
+            GeneratedCoverView(nature: nature, size: size, cornerRadius: cornerRadius)
         } else {
             MixCollageView(coverArts: mix.collageCoverArts, size: size, cornerRadius: cornerRadius)
         }

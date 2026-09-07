@@ -109,19 +109,6 @@ enum AppTypography {
         return .custom(name, size: scaled, relativeTo: textStyle)
     }
 
-    /// Letter-spacing for a title drawn at `size`, in points.
-    ///
-    /// Tracking is size-specific or it is wrong somewhere: letters read as drifting apart
-    /// the larger they get, so display sizes want to be pulled in, while body sizes want
-    /// to be left alone. A single fixed value — or none at all, which is what this had —
-    /// means the big titles sit loose and the face looks like a font that was chosen
-    /// rather than a face that was set.
-    ///
-    /// Zero below 17pt, tightening steadily above it: about -0.6pt at a 40pt title.
-    static func displayTracking(_ size: CGFloat) -> CGFloat {
-        size <= 17 ? 0 : -(size - 17) * 0.025
-    }
-
     /// Vertical correction for the current face, in points, for a title drawn at `size`.
     /// Apply as `.offset(y:)` where the face shares a row with other elements.
     static func displayBaselineOffset(_ size: CGFloat) -> CGFloat {
@@ -157,7 +144,6 @@ extension View {
         // opposite padding shifts the text inside a box of unchanged total height, so every
         // title lands identically whatever it is nested in.
         return font(AppTypography.display(size, relativeTo: textStyle))
-            .tracking(AppTypography.displayTracking(size))
             .padding(.top, nudge)
             .padding(.bottom, -nudge)
     }
