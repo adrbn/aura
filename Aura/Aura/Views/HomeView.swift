@@ -450,7 +450,7 @@ struct HomeView: View {
     /// the right, with the reason it exists underneath.
     private func leadMixCard(_ mix: Mix) -> some View {
         HStack(spacing: 14) {
-            MixCoverView(mix: mix, size: 116, cornerRadius: 14)
+            MixCoverView(mix: mix, size: 116, cornerRadius: 14, showsLabel: false)
             VStack(alignment: .leading, spacing: 5) {
                 Text(mix.kind == .timeOfDay ? "FOR RIGHT NOW" : "MADE FOR YOU")
                     .font(.system(size: 10, weight: .heavy))

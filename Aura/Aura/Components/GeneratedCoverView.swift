@@ -15,6 +15,13 @@ struct GeneratedCoverView: View {
     let nature: Nature
     var size: CGFloat = 160
     var cornerRadius: CGFloat = 12
+    /// Draws the mix's name inside the cover.
+    ///
+    /// True nearly everywhere, because a cover in a row has nothing else naming it. False
+    /// where something alongside already does — the lead card on Home sets the title in
+    /// the display face right next to the artwork, and a cover repeating it says the same
+    /// thing twice within a few pixels of itself.
+    var showsLabel: Bool = true
 
     var body: some View {
         ZStack {
@@ -36,7 +43,7 @@ struct GeneratedCoverView: View {
             )
 
             // Foreground label (hidden on very small thumbnails where it'd be noise).
-            if size >= 70 {
+            if showsLabel && size >= 70 {
                 VStack(alignment: .leading, spacing: 2) {
                     Spacer()
                     if let kicker {
@@ -210,10 +217,12 @@ struct MixCoverView: View {
     let mix: Mix
     var size: CGFloat = 160
     var cornerRadius: CGFloat = 12
+    var showsLabel: Bool = true
 
     var body: some View {
         if let nature = mix.generatedCover {
-            GeneratedCoverView(nature: nature, size: size, cornerRadius: cornerRadius)
+            GeneratedCoverView(nature: nature, size: size, cornerRadius: cornerRadius,
+                               showsLabel: showsLabel)
         } else {
             MixCollageView(coverArts: mix.collageCoverArts, size: size, cornerRadius: cornerRadius)
         }
@@ -230,6 +239,14 @@ struct PlaceholderCoverView: View {
     var kind: Kind = .generic
     var size: CGFloat = 50
     var cornerRadius: CGFloat = 8
+    /// Sets the item's name inside the cover. Off by default, and deliberately so.
+    ///
+    /// Almost every cover in the app is already captioned by whatever draws it — a grid
+    /// card, a list row — so naming it again inside the artwork says the same thing
+    /// twice. And an artist's cover is masked to a circle, which crops a corner-set label
+    /// straight through the middle. Only a large cover standing on its own has room for
+    /// its own name and nothing else to say it.
+    var showsName: Bool = false
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -248,9 +265,9 @@ struct PlaceholderCoverView: View {
                 .offset(x: size * 0.22, y: -size * 0.20)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
 
-            // Below roughly a thumbnail there is no room to set anything, and a name
-            // shrunk past legibility is worse than no name.
-            if size >= 70 {
+            // Below roughly a thumbnail there is no room to set anything either, and a
+            // name shrunk past legibility is worse than no name.
+            if showsName && size >= 70 {
                 VStack(alignment: .leading, spacing: 1) {
                     LinearGradient(colors: [.clear, .black.opacity(0.34)],
                                    startPoint: .top, endPoint: .bottom)
