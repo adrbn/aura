@@ -279,7 +279,7 @@ struct SplashScreen: View {
             .animation(.easeOut(duration: 1.8), value: appeared)
 
             // Film grain overlay
-            GrainOverlay(animated: true)
+            GrainOverlay()
                 .opacity(0.08)
                 .blendMode(.overlay)
                 .ignoresSafeArea()
@@ -297,6 +297,30 @@ struct SplashScreen: View {
     }
 }
 
+/// Procedural film grain using a Canvas
+struct GrainOverlay: View {
+    @State private var seed: UInt64 = 0
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 8.0)) { timeline in
+            Canvas { context, size in
+                let w = Int(size.width)
+                let h = Int(size.height)
+                let step = 4 // pixel step for performance
+                var rng = SplitMix64(state: UInt64(timeline.date.timeIntervalSince1970 * 1000))
+                for y in stride(from: 0, to: h, by: step) {
+                    for x in stride(from: 0, to: w, by: step) {
+                        let brightness = Double(rng.next() % 256) / 255.0
+                        context.fill(
+                            Path(CGRect(x: x, y: y, width: step, height: step)),
+                            with: .color(.white.opacity(brightness))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 /// Fast PRNG for grain noise
 struct SplitMix64 {
