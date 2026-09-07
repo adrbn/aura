@@ -97,6 +97,8 @@ final class AudioPlayer {
         "musika_last_playback_\(ServerManager.shared.currentServer?.id.uuidString ?? "none")"
     }
     private var sleepTimerTask: Task<Void, Never>?
+    /// Watches a play actually take effect — see `confirmPlaybackStarted`.
+    private var playbackWatchdog: Task<Void, Never>?
     private var scrobbleTask: Task<Void, Never>?
     private var lastActivityUpdateTime = Date.distantPast
     private var lastActivityWasPlaying: Bool?
@@ -933,8 +935,49 @@ final class AudioPlayer {
 
     func play() {
         AppLogger.shared.log("▶️ play()")
-        activateAudioSession()
+        // If the session refuses us, say so instead of flipping the button to "playing"
+        // over silence. A play that cannot happen is not a play.
+        guard activateAudioSession() else {
+            isPlaying = false
+            publishPlaybackState()
+            return
+        }
         player?.play(); isPlaying = true; publishPlaybackState(); updateLiveActivity()
+        confirmPlaybackStarted()
+    }
+
+    /// Checks shortly after a play that sound is actually coming out, and rebuilds the
+    /// item if it is not.
+    ///
+    /// Reclaiming the session is necessary but not sufficient: an interruption can leave
+    /// the *item* dead too. The session comes back, `play()` returns without complaint,
+    /// and the player simply sits at paused — which is why changing track appeared to fix
+    /// it, since that is the one action that builds a fresh item. This does that itself,
+    /// at the same position, rather than leaving the user to discover the workaround.
+    private func confirmPlaybackStarted() {
+        #if os(iOS)
+        playbackWatchdog?.cancel()
+        guard let song = currentSong else { return }
+        playbackWatchdog = Task { @MainActor [weak self] in
+            // Long enough that a slow start is not mistaken for a dead one; short enough
+            // that the user has not yet reached for the button a second time.
+            try? await Task.sleep(for: .milliseconds(700))
+            guard let self, !Task.isCancelled,
+                  self.isPlaying, self.currentSong?.id == song.id else { return }
+            // `paused` is the telling state. A player that is merely buffering reports
+            // `waitingToPlayAtSpecifiedRate`, so this cannot mistake a slow network for a
+            // dead item.
+            let refused = self.player?.timeControlStatus == .paused
+                || self.player?.currentItem?.status == .failed
+            guard refused else { return }
+            AppLogger.shared.log("⚠️ Playback never started — rebuilding the item at \(Int(self.currentTime))s")
+            let resume = self.currentTime
+            self.preparePlayback(song)
+            if resume > 1 { self.pendingSeekTime = resume }
+            _ = self.activateAudioSession()
+            self.player?.play()
+        }
+        #endif
     }
 
     /// Claims the audio session before playing.
@@ -945,16 +988,25 @@ final class AudioPlayer {
     /// saying otherwise: the button read "playing", nothing came out, and every later tap
     /// did the same. Reclaiming here is idempotent and costs nothing when we already hold
     /// it, and it means no missed notification can strand playback for the whole session.
-    private func activateAudioSession() {
+    @discardableResult
+    private func activateAudioSession() -> Bool {
         #if os(iOS)
         do {
             try AVAudioSession.sharedInstance().setActive(true)
+            return true
         } catch {
             AppLogger.shared.log("❌ Could not claim the audio session: \(error.localizedDescription)")
+            return false
         }
+        #else
+        return true
         #endif
     }
-    func pause() { AppLogger.shared.log("⏸ pause()"); player?.pause(); isPlaying = false; publishPlaybackState(); updateLiveActivity() }
+    func pause() {
+        AppLogger.shared.log("⏸ pause()")
+        playbackWatchdog?.cancel()
+        player?.pause(); isPlaying = false; publishPlaybackState(); updateLiveActivity()
+    }
 
     /// Tells the system whether we are playing.
     ///
