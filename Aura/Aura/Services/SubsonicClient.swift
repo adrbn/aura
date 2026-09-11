@@ -501,3 +501,62 @@ enum SubsonicClientError: LocalizedError {
 }
 
 struct EmptyContent: Decodable {}
+
+// MARK: - Media URLs
+
+/// The URLs for a song's audio and a cover's image. They lived at the bottom of
+/// `ImageLoader.swift`, which is why looking for where a stream URL is built led to the
+/// image cache; they are API calls, and belong with the rest of the client.
+extension SubsonicClient {
+    nonisolated func coverArtURL(server: ServerConfig, id: String, size: Int = 300) -> URL? {
+        let urlString = "\(server.baseURL)/rest/getCoverArt?\(SubsonicClient.authQuery(for: server))&id=\(id)&size=\(size)"
+        return URL(string: urlString)
+    }
+
+    nonisolated func streamURL(server: ServerConfig, id: String, maxBitRate: Int? = nil, songSuffix: String? = nil, songContentType: String? = nil) -> URL? {
+        var urlString = "\(server.baseURL)/rest/stream?\(SubsonicClient.authQuery(for: server))&id=\(id)"
+
+        let suffix = songSuffix?.lowercased() ?? ""
+        let contentType = songContentType?.lowercased() ?? ""
+        let quality = AppSettings.shared.streamingQuality
+
+        let lossySuffixes: Set<String> = ["mp3", "m4a", "aac", "mp4", "m4b", "opus", "ogg"]
+        let lossyContentTypes = ["audio/mpeg", "audio/mp3", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/opus", "audio/ogg"]
+
+        var isLossy = false
+        if !suffix.isEmpty {
+            isLossy = lossySuffixes.contains(suffix)
+        } else if !contentType.isEmpty {
+            isLossy = lossyContentTypes.contains { contentType.contains($0) }
+        }
+
+        AppLogger.shared.log("🎚 streamURL id=\(id) suffix=\(suffix.isEmpty ? "n/a" : suffix) isLossy=\(isLossy) quality=\(quality.rawValue)")
+
+        if isLossy {
+            // Opus/OGG are lossy but iOS can't play them — must transcode
+            let unsupportedLossySuffixes: Set<String> = ["ogg", "opus"]
+            if unsupportedLossySuffixes.contains(suffix) {
+                let br = quality.bitRate ?? 320
+                urlString += "&format=mp3&maxBitRate=\(br)"
+            }
+            // Other lossy formats (mp3, m4a, aac) — never downsample
+        } else {
+            // Lossless file (FLAC, ALAC, etc.)
+            if quality == .lossless {
+                // Stream original — format=raw avoids server's default OGG transcoding
+                urlString += "&format=raw"
+            } else {
+                // Transcode to MP3 at the selected quality
+                let br = quality.bitRate ?? 320
+                urlString += "&format=mp3&maxBitRate=\(br)"
+            }
+        }
+
+        return URL(string: urlString)
+    }
+
+    nonisolated func downloadURL(server: ServerConfig, id: String) -> URL? {
+        let urlString = "\(server.baseURL)/rest/download?\(SubsonicClient.authQuery(for: server))&id=\(id)"
+        return URL(string: urlString)
+    }
+}
