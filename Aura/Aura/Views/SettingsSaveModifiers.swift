@@ -8,8 +8,9 @@ private struct SettingsSaveModifier1: ViewModifier {
         content
             .onChange(of: s.streamingQuality) { _, _ in s.save() }
             .onChange(of: s.scrobbleEnabled) { _, _ in s.save() }
-            .onChange(of: s.replayGain) { _, _ in s.save() }
-            .onChange(of: s.gaplessPlayback) { _, _ in s.save() }
+            // Re-applied at once, so the toggle is heard on the song already playing.
+            .onChange(of: s.replayGain) { _, _ in s.save(); AudioPlayer.shared.applyOutputVolume() }
+            .onChange(of: s.scrobbleThreshold) { _, _ in s.save() }
             .onChange(of: s.cacheEnabled) { _, _ in s.save() }
             .onChange(of: s.cacheMaxSize) { _, _ in s.save() }
     }
@@ -19,12 +20,9 @@ private struct SettingsSaveModifier2: ViewModifier {
     @State private var s = AppSettings.shared
     func body(content: Content) -> some View {
         content
-            .onChange(of: s.artworkQuality) { _, _ in s.save() }
-            .onChange(of: s.crossfadeSeconds) { _, _ in s.save() }
             .onChange(of: s.downloadQuality) { _, _ in s.save() }
             .onChange(of: s.offlineMode) { _, _ in s.save() }
             .onChange(of: s.betaFeaturesEnabled) { _, _ in s.save() }
-            .onChange(of: s.externalServiceProvider) { _, _ in s.save() }
     }
 }
 
@@ -36,7 +34,6 @@ private struct SettingsSaveModifier3: ViewModifier {
             .onChange(of: s.externalServicePort) { _, _ in s.save() }
             .onChange(of: s.showStatsOnHome) { _, _ in s.save() }
             .onChange(of: s.homeTitleStyle) { _, _ in s.save() }
-            .onChange(of: s.showServerStatus) { _, _ in s.save() }
 
             .onChange(of: s.appLanguage) { _, _ in s.save() }
             .onChange(of: s.appAccentColor) { _, _ in s.save() }

@@ -308,3 +308,40 @@ struct SongQueryTests {
         #expect(SongQuery.cleanTitle("Live (With Strings)") == "Live")
     }
 }
+
+/// ReplayGain rides inside every song the server sends, so its decoding carries the whole
+/// list: one song that threw would take the album, the playlist or the search results
+/// down with it. These pin the lenient decode — a malformed value costs the gain, never
+/// the song.
+@Suite("ReplayGain decoding")
+struct ReplayGainDecodingTests {
+
+    private func song(_ replayGain: String?) throws -> Song {
+        let field = replayGain.map { #","replayGain":\#($0)"# } ?? ""
+        return try JSONDecoder().decode(
+            Song.self,
+            from: Data(#"{"id":"s1","title":"Song"\#(field)}"#.utf8))
+    }
+
+    @Test("reads OpenSubsonic's gains")
+    func readsGains() throws {
+        let s = try song(#"{"trackGain":-7.5,"albumGain":-6.25,"trackPeak":0.98}"#)
+        #expect(s.replayGain?.trackGain == -7.5)
+        #expect(s.replayGain?.albumGain == -6.25)
+        #expect(s.replayGain?.trackPeak == 0.98)
+        #expect(s.replayGain?.albumPeak == nil)
+    }
+
+    @Test("a song without it still decodes")
+    func absent() throws {
+        #expect(try song(nil).replayGain == nil)
+    }
+
+    @Test("a malformed value costs the gain, not the song",
+          arguments: [#""loud""#, "42", "[1,2]", #"{"trackGain":"-7"}"#, "null"])
+    func malformed(_ value: String) throws {
+        let s = try song(value)
+        #expect(s.title == "Song")
+        #expect(s.replayGain?.trackGain == nil)
+    }
+}

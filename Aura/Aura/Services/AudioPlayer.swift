@@ -37,7 +37,7 @@ final class AudioPlayer {
     /// that resets on every launch is worse than none at all.
     var volume: Double = UserDefaults.standard.object(forKey: "aura_volume") as? Double ?? 1 {
         didSet {
-            player?.volume = Float(volume)
+            applyOutputVolume()
             UserDefaults.standard.set(volume, forKey: "aura_volume")
         }
     }
@@ -99,7 +99,11 @@ final class AudioPlayer {
     private var sleepTimerTask: Task<Void, Never>?
     /// Watches a play actually take effect — see `confirmPlaybackStarted`.
     private var playbackWatchdog: Task<Void, Never>?
-    private var scrobbleTask: Task<Void, Never>?
+    private var playHistoryTask: Task<Void, Never>?
+    /// Last fraction of the current song seen while playing, and whether it has been
+    /// scrobbled — see `scrobbleIfDue`.
+    private var scrobbleProgress: Double?
+    private var hasScrobbledCurrent = false
     private var lastActivityUpdateTime = Date.distantPast
     private var lastActivityWasPlaying: Bool?
     private var cachedArtwork: PlatformImage?
@@ -366,7 +370,7 @@ final class AudioPlayer {
     /// must not leave a dead item loaded (that's what used to make the queue unplayable).
     func prepareForServerSwitch() {
         saveLastPlayback()                 // capture outgoing server's queue/track under ITS key
-        scrobbleTask?.cancel()
+        playHistoryTask?.cancel()
         player?.pause()
         player?.replaceCurrentItem(with: nil)
         isPlaying = false
@@ -415,7 +419,8 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem)
         player = AVPlayer(playerItem: playerItem)
-        player?.volume = Float(volume)
+        applyOutputVolume(for: song)
+        resetScrobbleProgress()
         player?.pause()
 
         timeObserver = player?.addPeriodicTimeObserver(
@@ -428,6 +433,7 @@ final class AudioPlayer {
                 self.duration = d
             }
             self.updateNowPlayingInfo()
+            self.scrobbleIfDue()
         }
 
         NotificationCenter.default.addObserver(
@@ -698,6 +704,7 @@ final class AudioPlayer {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemNewErrorLogEntry, object: nil)
 
         hasPrefetchedNext = false
+        resetScrobbleProgress()
         isSeeking = false
         bufferProgress = 0
         let playerItem = AudioCacheManager.shared.playerItem(songId: song.id, server: server, bitRate: bitRate, songSuffix: song.suffix, songContentType: song.contentType)
@@ -705,6 +712,9 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem)
         player = AVPlayer(playerItem: playerItem)
+        // This path never applied the fader: every song started from here played at full
+        // level until the fader was next touched.
+        applyOutputVolume(for: song)
 
         timeObserver = player?.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.1, preferredTimescale: 600),
@@ -722,6 +732,7 @@ final class AudioPlayer {
                 self.hasPrefetchedNext = true
                 self.prefetchNextTrack()
             }
+            self.scrobbleIfDue()
         }
 
         NotificationCenter.default.addObserver(
@@ -746,21 +757,17 @@ final class AudioPlayer {
         isPlaying = true
         currentSong = song
 
-        scrobbleTask?.cancel()
-        scrobbleTask = Task {
+        // Local history only — what Wrapped and the stats count — on the rule it has
+        // always used, half the song or 30 seconds. The server scrobble is separate: it
+        // follows the "Scrobble After" setting on the playback position, in
+        // `scrobbleIfDue`.
+        playHistoryTask?.cancel()
+        playHistoryTask = Task {
             let songDuration = Double(song.duration ?? 0)
             let delay = songDuration > 0 ? min(30.0, songDuration / 2) : 30.0
             try? await Task.sleep(for: .seconds(delay))
             guard !Task.isCancelled else { return }
             PlayHistory.shared.record(song: song)
-            if AppSettings.shared.scrobbleEnabled {
-                do {
-                    try await SubsonicClient.shared.scrobble(server: server, id: song.id)
-                } catch {
-                    // Offline or failed — queue for later
-                    ScrobbleQueue.shared.enqueue(songId: song.id)
-                }
-            }
         }
 
         loadLyrics(for: song)
@@ -931,6 +938,62 @@ final class AudioPlayer {
         AppLogger.shared.log("📴 Playback error while offline — advancing to next playable song")
         ToastManager.shared.show("Not available offline", icon: "wifi.slash")
         skipToNextPlayableOffline()
+    }
+
+    // MARK: - Output level
+
+    /// Sets the player's level: the app's own fader, times the song's ReplayGain.
+    /// Every place a player is created goes through here, and so does the toggle.
+    func applyOutputVolume(for song: Song? = nil) {
+        player?.volume = Float(volume * replayGainFactor(for: song ?? currentSong))
+    }
+
+    /// ReplayGain as a multiplier of the fader, or 1 when it is off or the song has none.
+    ///
+    /// Track gain first, album gain as the fallback. Capped at 1, because `AVPlayer.volume`
+    /// can only attenuate: loud masters come down to the reference level and quiet ones
+    /// stay where they are. That narrows the gap between them rather than closing it —
+    /// which is also how most mobile players do it without a DSP of their own.
+    private func replayGainFactor(for song: Song?) -> Double {
+        guard AppSettings.shared.replayGain,
+              let gain = song?.replayGain?.trackGain ?? song?.replayGain?.albumGain
+        else { return 1 }
+        return min(1, pow(10, gain / 20))
+    }
+
+    // MARK: - Scrobbling
+
+    private func resetScrobbleProgress() {
+        scrobbleProgress = nil
+        hasScrobbledCurrent = false
+    }
+
+    /// Scrobbles the current song when its playback position *crosses* the "Scrobble
+    /// After" share, while playing.
+    ///
+    /// Position rather than time: the old timer ran on the wall clock, so a song paused a
+    /// few seconds in was scrobbled anyway once the timer ran out. Crossing rather than
+    /// being past: a song restored at launch already beyond the threshold was scrobbled in
+    /// the session that played it, and must not be counted twice.
+    private func scrobbleIfDue() {
+        guard isPlaying, duration > 0 else { return }
+        let fraction = currentTime / duration
+        let previous = scrobbleProgress
+        scrobbleProgress = fraction
+        let threshold = AppSettings.shared.scrobbleThreshold
+        guard !hasScrobbledCurrent, let previous, previous < threshold, fraction >= threshold,
+              let song = currentSong else { return }
+        hasScrobbledCurrent = true
+        guard AppSettings.shared.scrobbleEnabled,
+              let server = ServerManager.shared.currentServer else { return }
+        Task {
+            do {
+                try await SubsonicClient.shared.scrobble(server: server, id: song.id)
+            } catch {
+                // Offline or failed — queued, and sent once the server is back.
+                ScrobbleQueue.shared.enqueue(songId: song.id)
+            }
+        }
     }
 
     func play() {

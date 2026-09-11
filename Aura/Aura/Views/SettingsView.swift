@@ -276,57 +276,27 @@ struct SettingsView: View {
     private var musicFolderSection: some View {
         if !musicFolders.isEmpty {
             Section {
-                Menu {
+                // One folder, or all of them — exactly what the server can do. The Subsonic
+                // API filters by a single `musicFolderId`, and this used to offer ticks on
+                // any number of folders: they were saved to a set nothing ever read, while
+                // every request went out with a stale single value. It now writes the value
+                // the requests actually use.
+                Picker("Music Folder", selection: $appSettings.selectedMusicFolderId) {
+                    Text("All Folders").tag(Int?.none)
                     ForEach(musicFolders) { folder in
-                        Button {
-                            if appSettings.selectedMusicFolderIds.contains(folder.id) {
-                                appSettings.selectedMusicFolderIds.remove(folder.id)
-                            } else {
-                                appSettings.selectedMusicFolderIds.insert(folder.id)
-                            }
-                            appSettings.save()
-                        } label: {
-                            HStack {
-                                Text(folder.name ?? "Folder \(folder.id)")
-                                if appSettings.selectedMusicFolderIds.contains(folder.id) {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Text("Music Folders")
-                        Spacer()
-                        Text(musicFolderSummary)
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        Text(folder.name ?? "Folder \(folder.id)").tag(Int?.some(folder.id))
                     }
                 }
-                .foregroundStyle(.primary)
             } header: {
                 Text("Music Folders")
             } footer: {
-                if appSettings.selectedMusicFolderIds.isEmpty {
-                    Text("All folders are shown. Select folders to filter content.")
+                if appSettings.selectedMusicFolderId == nil {
+                    Text("Every folder on the server is shown.")
                 } else {
-                    Text("\(appSettings.selectedMusicFolderIds.count) folder(s) selected.")
+                    Text("Only this folder is shown across the app.")
                 }
             }
         }
-    }
-
-    private var musicFolderSummary: String {
-        if appSettings.selectedMusicFolderIds.isEmpty {
-            return "All"
-        }
-        let selected = musicFolders.filter { appSettings.selectedMusicFolderIds.contains($0.id) }
-        if selected.count == 1, let first = selected.first {
-            return first.name ?? "1 folder"
-        }
-        return "\(selected.count) folders"
     }
 
     private var libraryScanSection: some View {
@@ -375,29 +345,37 @@ struct SettingsView: View {
             Toggle("Scrobble", isOn: $appSettings.scrobbleEnabled)
 
             if appSettings.scrobbleEnabled {
-                HStack {
-                    Text("Scrobble After")
-                    Spacer()
-                    Text("\(Int(appSettings.scrobbleThreshold * 100))%")
-                        .foregroundStyle(.secondary)
+                // A choice, where there used to be a line of text: the share was displayed
+                // but could not be changed, and songs were scrobbled after 30 seconds
+                // whatever it said. It is measured on the playback position now, so a
+                // pause does not count as listening.
+                Picker("Scrobble After", selection: $appSettings.scrobbleThreshold) {
+                    Text("50%").tag(0.5)
+                    Text("75%").tag(0.75)
+                    Text("90%").tag(0.9)
                 }
             }
 
             Toggle("ReplayGain", isOn: $appSettings.replayGain)
-            Toggle("Gapless Playback", isOn: $appSettings.gaplessPlayback)
 
-            Stepper("Crossfade: \(appSettings.crossfadeSeconds)s",
-                    value: $appSettings.crossfadeSeconds, in: 0...12)
+            // Gapless and Crossfade used to sit here, as switches wired to nothing. Both
+            // need the player to hold the next song ready while the current one plays,
+            // which it does not yet; they return with that work rather than pretending.
 
             Toggle("Landscape Clock", isOn: $appSettings.landscapeClockEnabled)
 
         } header: {
             Text("Playback")
         } footer: {
-            if appSettings.streamingQuality == .lossless {
-                Text("Streams original files (FLAC/ALAC). Uses more data. Incompatible formats (OGG/Opus) are auto-transcoded.")
-            } else {
-                Text("Lossless files will be transcoded to MP3 at \(appSettings.streamingQuality.bitRate ?? 320) kbps. Incompatible formats (OGG/Opus) are auto-transcoded.")
+            VStack(alignment: .leading, spacing: 6) {
+                if appSettings.streamingQuality == .lossless {
+                    Text("Streams original files (FLAC/ALAC). Uses more data. Incompatible formats (OGG/Opus) are auto-transcoded.")
+                } else {
+                    Text("Lossless files will be transcoded to MP3 at \(appSettings.streamingQuality.bitRate ?? 320) kbps. Incompatible formats (OGG/Opus) are auto-transcoded.")
+                }
+                if appSettings.replayGain {
+                    Text("ReplayGain turns loud tracks down to a common level, using the tags on your server. Quiet tracks are not boosted.")
+                }
             }
         }
     }
@@ -666,11 +644,6 @@ struct SettingsView: View {
                 .disabled(isClearingCache)
             }
 
-            Picker("Artwork Quality", selection: $appSettings.artworkQuality) {
-                ForEach(ArtworkQuality.allCases, id: \.self) { q in
-                    Text(q.rawValue).tag(q)
-                }
-            }
         }
     }
 

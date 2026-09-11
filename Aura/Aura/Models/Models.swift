@@ -73,28 +73,21 @@ final class AppSettings {
     var maxBitRate: Int = 320
     var cacheEnabled: Bool = true
     var cacheMaxSize: Int = 2048 // MB
-    var artworkQuality: ArtworkQuality = .high
     var scrobbleEnabled: Bool = true
     var scrobbleThreshold: Double = 0.5
     var replayGain: Bool = false
-    var crossfadeSeconds: Int = 0
-    var gaplessPlayback: Bool = true
     var downloadQuality: DownloadQuality = .high
     var offlineMode: Bool = false
     var betaFeaturesEnabled: Bool = false
-    var externalServiceProvider: ExternalServiceProvider = .slskd
     var externalServiceURL: String = "127.0.0.1"
     var externalServicePort: Int = 5030
     var slskdUsername: String = "slskd"
     /// Kept in the Keychain, never in UserDefaults — `save()`/`load()` handle the sync.
     var slskdPassword: String = ""
     var showStatsOnHome: Bool = true
-    var upNextLayout: UpNextLayout = .grid
     var homeTitleStyle: HomeTitleStyle = .server
-    var showServerStatus: Bool = true
     var listDensity: ListDensity = .normal
     var appLanguage: AppLanguage = .english
-    var showHomeSearchBar: Bool = true
     var showUpNext: Bool = true
     var appAccentColor: AppAccentColor = .pink
     var activeTheme: AppTheme = .standard
@@ -105,10 +98,7 @@ final class AppSettings {
     var appearanceMode: AppearanceMode = .dark
     var eqPreset: EQPreset = .flat
     var eqCustomBands: [Float] = [0, 0, 0, 0, 0]
-    var forceMP3Transcoding: Bool = false
-    var losslessTranscodeMode: LosslessTranscodeMode = .mp3_320
     var selectedMusicFolderId: Int? = nil
-    var selectedMusicFolderIds: Set<Int> = []
     var enabledLibraryCategories: [LibraryCategory] = LibraryCategory.defaultEnabled
     var showPlayCounts: Bool = false
     var homeSectionOrder: [HomeSection] = HomeSection.defaultOrder
@@ -165,16 +155,12 @@ final class AppSettings {
             maxBitRate = decoded.maxBitRate
             cacheEnabled = decoded.cacheEnabled
             cacheMaxSize = decoded.cacheMaxSize
-            artworkQuality = decoded.artworkQuality
             scrobbleEnabled = decoded.scrobbleEnabled
             scrobbleThreshold = decoded.scrobbleThreshold
             replayGain = decoded.replayGain
-            crossfadeSeconds = decoded.crossfadeSeconds
-            gaplessPlayback = decoded.gaplessPlayback
             downloadQuality = decoded.downloadQuality ?? .high
             offlineMode = decoded.offlineMode ?? false
             betaFeaturesEnabled = decoded.betaFeaturesEnabled ?? false
-            externalServiceProvider = decoded.externalServiceProvider ?? .slskd
             externalServiceURL = decoded.externalServiceURL ?? "127.0.0.1"
             externalServicePort = decoded.externalServicePort ?? 5030
             slskdUsername = decoded.slskdUsername ?? "slskd"
@@ -185,32 +171,25 @@ final class AppSettings {
                 KeychainHelper.save(password: legacy, for: Self.slskdKeychainAccount)
             }
             slskdPassword = KeychainHelper.loadPassword(for: Self.slskdKeychainAccount) ?? ""
-            // Migrate: if provider is slskd but port is the old SoulSync default, fix it
-            if externalServiceProvider == .slskd && externalServicePort == 8008 {
+            // Migrate: the old SoulSync default port, which slskd — the only service the
+            // app speaks to — never listens on.
+            if externalServicePort == 8008 {
                 externalServicePort = 5030
             }
             showStatsOnHome = decoded.showStatsOnHome ?? true
-            upNextLayout = decoded.upNextLayout ?? .grid
             homeTitleStyle = decoded.homeTitleStyle ?? (decoded.hideHomeTitle == true ? .none : (decoded.showServerName == false ? .home : .server))
-            showServerStatus = decoded.showServerStatus ?? true
             listDensity = decoded.listDensity ?? .normal
             pinnedPlaylistOrder = decoded.pinnedPlaylistOrder ?? Array(pinnedPlaylistIds)
             appLanguage = decoded.appLanguage ?? .english
-            showHomeSearchBar = decoded.showHomeSearchBar ?? true
             showUpNext = decoded.showUpNext ?? true
             appAccentColor = decoded.appAccentColor ?? .pink
             activeTheme = decoded.activeTheme ?? .standard
             appearanceMode = decoded.appearanceMode ?? .dark
             eqPreset = decoded.eqPreset ?? .flat
             eqCustomBands = decoded.eqCustomBands ?? [0, 0, 0, 0, 0]
-            forceMP3Transcoding = decoded.forceMP3Transcoding ?? false
-            losslessTranscodeMode = decoded.losslessTranscodeMode ?? .mp3_320
-            selectedMusicFolderId = decoded.selectedMusicFolderId
-            if let ids = decoded.selectedMusicFolderIds {
-                selectedMusicFolderIds = ids
-            } else if let singleId = decoded.selectedMusicFolderId, singleId != -1 {
-                selectedMusicFolderIds = [singleId]
-            }
+            // -1 once meant "all folders". Sent as-is it would be a real `musicFolderId`
+            // matching nothing, so it is read back as no filter at all.
+            selectedMusicFolderId = decoded.selectedMusicFolderId.flatMap { $0 == -1 ? nil : $0 }
             enabledLibraryCategories = decoded.enabledLibraryCategories ?? LibraryCategory.defaultEnabled
             showPlayCounts = decoded.showPlayCounts ?? false
             let loadedOrder = decoded.homeSectionOrder ?? HomeSection.defaultOrder
@@ -239,34 +218,26 @@ final class AppSettings {
             tabOrder: tabOrder, pinnedPlaylistIds: pinnedPlaylistIds,
             streamingQuality: streamingQuality, maxBitRate: maxBitRate,
             cacheEnabled: cacheEnabled, cacheMaxSize: cacheMaxSize,
-            artworkQuality: artworkQuality, scrobbleEnabled: scrobbleEnabled,
+            scrobbleEnabled: scrobbleEnabled,
             scrobbleThreshold: scrobbleThreshold, replayGain: replayGain,
-            crossfadeSeconds: crossfadeSeconds, gaplessPlayback: gaplessPlayback,
             downloadQuality: downloadQuality, offlineMode: offlineMode,
             betaFeaturesEnabled: betaFeaturesEnabled,
-            externalServiceProvider: externalServiceProvider,
             externalServiceURL: externalServiceURL,
             externalServicePort: externalServicePort,
             slskdUsername: slskdUsername,
             slskdPassword: "", // never persisted to UserDefaults — lives in the Keychain
             showStatsOnHome: showStatsOnHome,
-            upNextLayout: upNextLayout,
             homeTitleStyle: homeTitleStyle,
-            showServerStatus: showServerStatus,
             listDensity: listDensity,
             pinnedPlaylistOrder: pinnedPlaylistOrder,
             appLanguage: appLanguage,
-            showHomeSearchBar: showHomeSearchBar,
             showUpNext: showUpNext,
             appAccentColor: appAccentColor,
             activeTheme: activeTheme,
             appearanceMode: appearanceMode,
             eqPreset: eqPreset,
             eqCustomBands: eqCustomBands,
-            forceMP3Transcoding: forceMP3Transcoding,
-            losslessTranscodeMode: losslessTranscodeMode,
             selectedMusicFolderId: selectedMusicFolderId,
-            selectedMusicFolderIds: selectedMusicFolderIds,
             enabledLibraryCategories: enabledLibraryCategories,
             showPlayCounts: showPlayCounts,
             homeSectionOrder: homeSectionOrder,
@@ -327,40 +298,30 @@ struct SettingsData: Codable {
     var maxBitRate: Int
     var cacheEnabled: Bool
     var cacheMaxSize: Int
-    var artworkQuality: ArtworkQuality
     var scrobbleEnabled: Bool
     var scrobbleThreshold: Double
     var replayGain: Bool
-    var crossfadeSeconds: Int
-    var gaplessPlayback: Bool
     var downloadQuality: DownloadQuality?
     var offlineMode: Bool?
     var betaFeaturesEnabled: Bool?
-    var externalServiceProvider: ExternalServiceProvider?
     var externalServiceURL: String?
     var externalServicePort: Int?
     var slskdUsername: String?
     var slskdPassword: String?
     var showStatsOnHome: Bool?
-    var upNextLayout: UpNextLayout?
     var showServerName: Bool?
     var hideHomeTitle: Bool?
     var homeTitleStyle: HomeTitleStyle?
-    var showServerStatus: Bool?
     var listDensity: ListDensity?
     var pinnedPlaylistOrder: [String]?
     var appLanguage: AppLanguage?
-    var showHomeSearchBar: Bool?
     var showUpNext: Bool?
     var appAccentColor: AppAccentColor?
     var activeTheme: AppTheme?
     var appearanceMode: AppearanceMode?
     var eqPreset: EQPreset?
     var eqCustomBands: [Float]?
-    var forceMP3Transcoding: Bool?
-    var losslessTranscodeMode: LosslessTranscodeMode?
     var selectedMusicFolderId: Int?
-    var selectedMusicFolderIds: Set<Int>?
     var enabledLibraryCategories: [LibraryCategory]?
     var showPlayCounts: Bool?
     var homeSectionOrder: [HomeSection]?
@@ -556,11 +517,6 @@ enum EQPreset: String, Codable, CaseIterable {
     static let bandLabels = ["60", "230", "910", "3.6k", "14k"]
 }
 
-enum UpNextLayout: String, Codable, CaseIterable {
-    case grid = "Grid"
-    case list = "List"
-}
-
 enum HomeTitleStyle: String, Codable, CaseIterable {
     case server = "Server"
     case home = "Home"
@@ -611,22 +567,6 @@ enum StreamingQuality: String, Codable, CaseIterable {
     }
 }
 
-enum ArtworkQuality: String, Codable, CaseIterable {
-    case low = "Low (150px)"
-    case medium = "Medium (300px)"
-    case high = "High (600px)"
-    case original = "Original"
-
-    var size: Int {
-        switch self {
-        case .low: return 150
-        case .medium: return 300
-        case .high: return 600
-        case .original: return 1200
-        }
-    }
-}
-
 // MARK: - Subsonic Response Types
 
 struct SubsonicResponse<T: Decodable>: Decodable {
@@ -657,6 +597,31 @@ struct ArtistRef: Codable, Hashable, Identifiable {
     let name: String
 }
 
+/// A song's ReplayGain values from the server, in dB (gains) and linear full scale
+/// (peaks).
+///
+/// Decoded leniently, on purpose. It rides inside every song the server sends, so a
+/// server that shapes it differently must cost the gain and never the song: a strict
+/// decode that threw here would take the whole list of songs down with it.
+struct ReplayGainInfo: Codable, Hashable {
+    var trackGain: Double?
+    var albumGain: Double?
+    var trackPeak: Double?
+    var albumPeak: Double?
+
+    private enum CodingKeys: String, CodingKey {
+        case trackGain, albumGain, trackPeak, albumPeak
+    }
+
+    init(from decoder: Decoder) {
+        guard let c = try? decoder.container(keyedBy: CodingKeys.self) else { return }
+        trackGain = try? c.decodeIfPresent(Double.self, forKey: .trackGain)
+        albumGain = try? c.decodeIfPresent(Double.self, forKey: .albumGain)
+        trackPeak = try? c.decodeIfPresent(Double.self, forKey: .trackPeak)
+        albumPeak = try? c.decodeIfPresent(Double.self, forKey: .albumPeak)
+    }
+}
+
 struct Song: Identifiable, Codable, Hashable {
     let id: String
     let title: String
@@ -685,6 +650,9 @@ struct Song: Identifiable, Codable, Hashable {
     let mediaType: String?  // OpenSubsonic extension
     let explicit: Bool?     // OpenSubsonic: explicit content flag (proposed)
     let created: String?    // ISO 8601 date when song was added to server
+    /// OpenSubsonic loudness data. Absent on servers below the extension and on songs
+    /// whose files carry no ReplayGain tags — see `AudioPlayer.replayGainFactor`.
+    var replayGain: ReplayGainInfo? = nil
 
     var isExplicit: Bool { explicit == true }
 
@@ -969,10 +937,6 @@ enum DownloadQuality: String, Codable, CaseIterable {
     }
 }
 
-enum ExternalServiceProvider: String, Codable, CaseIterable {
-    case slskd = "slskd"
-}
-
 // MARK: - Downloaded Song
 
 struct DownloadedSong: Codable, Identifiable {
@@ -1109,32 +1073,3 @@ enum RepeatMode: String, Codable {
     }
 }
 
-enum LosslessTranscodeMode: String, Codable, CaseIterable, Identifiable {
-    case original = "Original (No transcode)"
-    case mp3_320 = "MP3 (320 kbps)"
-    case mp3_256 = "MP3 (256 kbps)"
-    case mp3_192 = "MP3 (192 kbps)"
-    case mp3_128 = "MP3 (128 kbps)"
-    case aac_256 = "AAC (256 kbps)"
-    case aac_128 = "AAC (128 kbps)"
-
-    var id: String { rawValue }
-
-    var formatIdentifier: String? {
-        switch self {
-        case .original: return nil
-        case .mp3_320, .mp3_256, .mp3_192, .mp3_128: return "mp3"
-        case .aac_256, .aac_128: return "aac"
-        }
-    }
-
-    var bitrate: Int? {
-        switch self {
-        case .mp3_320: return 320
-        case .mp3_256, .aac_256: return 256
-        case .mp3_192: return 192
-        case .mp3_128, .aac_128: return 128
-        case .original: return nil
-        }
-    }
-}

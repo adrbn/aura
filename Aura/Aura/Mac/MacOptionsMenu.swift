@@ -39,7 +39,6 @@ struct MacOptionsMenu: View {
             Picker("Streaming Quality", selection: $settings.streamingQuality) {
                 ForEach(StreamingQuality.allCases, id: \.self) { Text($0.rawValue).tag($0) }
             }
-            Toggle("Gapless Playback", isOn: $settings.gaplessPlayback)
         } label: {
             Image(systemName: "gearshape")
                 .font(.system(size: 12))
@@ -58,6 +57,6 @@ struct MacOptionsMenu: View {
     private var settingsFingerprint: String {
         [settings.appAccentColor.rawValue,
          String(settings.betaKaraokeLyrics), String(settings.lyricsOffset),
-         settings.streamingQuality.rawValue, String(settings.gaplessPlayback)].joined(separator: "|")
+         settings.streamingQuality.rawValue].joined(separator: "|")
     }
 }
