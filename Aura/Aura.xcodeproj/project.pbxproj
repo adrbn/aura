@@ -44,6 +44,7 @@
 		69F2D8A569CD130DF5E0FE74 /* MacPlaylistOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 192D83957C7F2C1E93977841 /* MacPlaylistOrder.swift */; };
 		6F5440002B59F82648E55409 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000099 /* GeneratedCoverView.swift */; };
 		7076A0E916BEEBA79DBB0125 /* SongQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */; };
+		AA11BB22CC33DD44EE55F401 /* LyricWordTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55F402 /* LyricWordTimingTests.swift */; };
 		7232B8C3D331010529C1A904 /* MacSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31E6A5950E5B49121F1EDCD /* MacSidebar.swift */; };
 		79226C21CD16E88AF9BA7E57 /* MacServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */; };
 		7E8ABA46083A765581C69A5E /* MacGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88855F68FD1F326A2B289FF3 /* MacGrid.swift */; };
@@ -214,6 +215,7 @@
 		2DE0E8DD48DEACB25983419C /* MacCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacCommands.swift; sourceTree = "<group>"; };
 		332E4899162985D5A2BE70F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQueryTests.swift; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55F402 /* LyricWordTimingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricWordTimingTests.swift; sourceTree = "<group>"; };
 		40E8E704D9B72925B6B94399 /* ImageCropView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
 		485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerSetupView.swift; sourceTree = "<group>"; };
 		48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacEqualizerView.swift; sourceTree = "<group>"; };
@@ -396,6 +398,7 @@
 				E318A59381EE24D9E5853599 /* DisplayFontTests.swift */,
 				AA11BB22CC33DD44EE55F002 /* MixCacheTests.swift */,
 				AA11BB22CC33DD44EE55F302 /* SearchArtistTests.swift */,
+				AA11BB22CC33DD44EE55F402 /* LyricWordTimingTests.swift */,
 			);
 			name = AuraTests;
 			path = AuraTests;
@@ -885,6 +888,7 @@
 				8D706C18449CC22207E37AA6 /* DisplayFontTests.swift in Sources */,
 				AA11BB22CC33DD44EE55F001 /* MixCacheTests.swift in Sources */,
 				AA11BB22CC33DD44EE55F301 /* SearchArtistTests.swift in Sources */,
+				AA11BB22CC33DD44EE55F401 /* LyricWordTimingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -229,13 +229,10 @@ struct MacLyricsSheet: View {
     }
 
     private func karaokeWords(line: LyricsLine) -> [LyricWord]? {
-        guard AppSettings.shared.betaKaraokeLyrics else { return nil }
-        if let real = line.words, !real.isEmpty { return real }
-        guard let start = line.time,
-              let index = player.lyrics.firstIndex(where: { $0.id == line.id }),
-              let end = LyricWordTiming.lineEnd(lines: player.lyrics, index: index)
+        guard AppSettings.shared.betaKaraokeLyrics,
+              let index = player.lyrics.firstIndex(where: { $0.id == line.id })
         else { return nil }
-        return LyricWordTiming.words(in: line.text, start: start, end: end)
+        return LyricWordTiming.timedWords(lines: player.lyrics, index: index)
     }
 
     private func opacity(_ distance: Int) -> Double {

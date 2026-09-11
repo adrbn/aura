@@ -580,38 +580,14 @@ struct NowPlayingView: View {
     /// only a line timing to go on it has to be estimated from the text length, which is why
     /// the estimate is deliberately generous — holding a finished line a beat too long reads
     /// far better than jumping ahead of the music.
-    private func focusIndex(after index: Int?, at time: TimeInterval) -> Int? {
-        guard let index, index + 1 < player.lyrics.count else { return index }
-        let line = player.lyrics[index]
-        guard let start = line.time, let nextStart = player.lyrics[index + 1].time else { return index }
-
-        let finished: TimeInterval
-        if let words = line.words, let lastCue = words.last {
-            finished = lastCue.start + 0.6
-        } else {
-            finished = start + min(max(Double(line.text.count) * 0.09, 2.5), 10)
-        }
-        // Only worth moving early if there is a real pause to fill; on a normal line the
-        // next one arrives about when this one ends and the jump would just look twitchy.
-        guard nextStart - finished > 2.0, time > finished else { return index }
-        return index + 1
-    }
-
     // Not a @ViewBuilder: the builder would wrap the branches in _ConditionalContent, and
     // returning a concrete `Text` is the whole point — only `Text` concatenates.
     /// The words of `line` with their timings, or `nil` when it should be drawn as one
     /// undivided run: highlighting off, unsynced lyrics, or nothing to time it against.
     private func karaokeWords(line: LyricsLine, index: Int, isCurrent: Bool) -> [LyricWord]? {
         guard appSettings.betaKaraokeLyrics, isCurrent, areLyricsSynced else { return nil }
-        // Prefer the server's own word timings (OpenSubsonic songLyrics v2) — they're
-        // measured, not guessed. Interpolation is only the fallback for lines that arrive
-        // with nothing but a start time.
-        if let real = line.words, !real.isEmpty { return real }
-        guard let start = line.time,
-              let end = LyricWordTiming.lineEnd(lines: player.lyrics, index: index)
-        else { return nil }
-        let words = LyricWordTiming.words(in: line.text, start: start, end: end)
-        return words.isEmpty ? nil : words
+        // The same words `LyricWordTiming.focusIndex` judges the line's end by.
+        return LyricWordTiming.timedWords(lines: player.lyrics, index: index)
     }
 
     private func lyricLineText(line: LyricsLine, index: Int, isCurrent: Bool) -> Text {
@@ -1196,7 +1172,7 @@ struct NowPlayingView: View {
         // passes the "already sung" test, so the whole line comes out grey — and lights up
         // word by word when it starts. Clearing the focus instead, as this used to, left no
         // current line at all, so every line went dim and blurred during the instrumental.
-        currentLineIndex = focusIndex(after: last, at: time)
+        currentLineIndex = LyricWordTiming.focusIndex(lines: player.lyrics, after: last, at: time)
     }
 
     private var currentLyricId: UUID? {
