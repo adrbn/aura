@@ -266,12 +266,25 @@ struct NowPlayingView: View {
             // hands a view a new frame, and CoverArtAsyncImage fixes its own dimensions
             // internally — so the frame travelled while the picture stayed hero-sized, and
             // the already-small copy simply appeared at the destination. It read as a jump.
-            HStack(spacing: 12) {
+            HStack(spacing: 0) {
                 artworkView(song: song, size: showLyrics ? 44 : artSize, slideWidth: w)
-                if showLyrics {
-                    lyricsHeaderText(song: song)
-                    Spacer(minLength: 0)
+                // The title's column is always in the tree and only its width changes, so
+                // it travels *with* the artwork: its leading edge rides the cover's
+                // trailing edge all the way to the corner, and it opens from nothing as
+                // the cover makes room.
+                //
+                // It used to be inserted with `if showLyrics`. An inserted view has no
+                // starting frame, so the title appeared straight at its final place —
+                // beside a 44pt cover — while the cover was still shrinking from full
+                // size, and for most of the animation it sat on top of the artwork. The
+                // text itself is still only built while lyrics are open, so a zero-width
+                // marquee is never left scrolling out of sight.
+                ZStack(alignment: .leading) {
+                    if showLyrics { lyricsHeaderText(song: song) }
                 }
+                .padding(.leading, 12)
+                .frame(maxWidth: showLyrics ? .infinity : 0, alignment: .leading)
+                .clipped()
             }
             .frame(maxWidth: .infinity, alignment: showLyrics ? .leading : .center)
             .padding(.horizontal, horizontalPadding)
@@ -364,6 +377,9 @@ struct NowPlayingView: View {
                 if !showLyrics, height > 0 { songInfoHeight = height }
             }
             .frame(height: showLyrics ? 0 : songInfoHeight, alignment: .top)
+            // Clipped to the collapsing frame. Unclipped, the title overflowed the frame
+            // as it shrank and lay across the year and the heart below it while fading.
+            .clipped()
             .opacity(showLyrics ? 0 : 1)
             // It still owns a coordinate space once collapsed, it just has no height —
             // so make sure nothing invisible can be tapped.
