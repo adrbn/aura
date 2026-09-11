@@ -20,6 +20,15 @@ struct ArtistDetailView: View {
     @State private var selectedAlbumId: String?
     @State private var isDownloadingAll = false
     @State private var downloadedAlbumIds: Set<String> = []
+    /// What the hero needs from scrolling, and nothing more: the value only changes while
+    /// the list is pulled past its top or when the title crosses its threshold, so an
+    /// ordinary scroll does not re-render the whole page on every frame.
+    @State private var heroScroll = HeroScroll()
+
+    private struct HeroScroll: Equatable {
+        var stretch: CGFloat = 0
+        var showsTitle = false
+    }
 
     private var allAlbumsDownloaded: Bool {
         guard !albums.isEmpty else { return false }
@@ -34,30 +43,15 @@ struct ArtistDetailView: View {
     var body: some View {
         List {
             // Artist header — always visible
-            VStack(spacing: 12) {
-                ArtistImageView(
+            VStack(spacing: 6) {
+                ArtistHero(
                     coverArt: artist?.coverArt ?? coverArt,
                     artistImageURL: artistImageURL,
-                    size: 160
+                    name: displayName,
+                    albumCount: albums.count,
+                    isLoading: isLoading,
+                    stretch: heroScroll.stretch
                 )
-                .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
-
-                if !displayName.isEmpty {
-                    Text(displayName)
-                        .font(.title.bold())
-                }
-
-                if !albums.isEmpty {
-                    Text("\(albums.count) Albums")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                } else if isLoading {
-                    // Visible spinner instead of a stray grey placeholder rectangle.
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(accentColor)
-                        .frame(height: 20)
-                }
 
                 HStack(spacing: 10) {
                     Button {
@@ -108,10 +102,8 @@ struct ArtistDetailView: View {
                     .opacity(isLoading ? 0.4 : 1)
                     .disabled(isLoading)
                 }
-                .padding(.top, 14) // air between the info block (image/name/count) and the actions
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, 10) // was 20 — header sat low, crushed against the buttons
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets())
@@ -242,6 +234,21 @@ struct ArtistDetailView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
+        // The hero runs up under the status bar and the floating buttons, so the list opts
+        // out of the top safe area and starts at the very top of the screen — the move the
+        // tab roots already make, with no margin put back because the photograph is meant
+        // to be there.
+        .ignoresSafeArea(.container, edges: .top)
+        .contentMargins(.top, 0, for: .scrollContent)
+        .onScrollGeometryChange(for: HeroScroll.self) { geo in
+            let y = geo.contentOffset.y + geo.contentInsets.top
+            return HeroScroll(stretch: max(0, -y), showsTitle: y > ArtistHero.height - 90)
+        } action: { _, new in
+            heroScroll = new
+        }
+        .background(Color.themeBg)
+        // Once the portrait has scrolled away, the bar says whose page this is.
+        .navigationTitle(heroScroll.showsTitle ? displayName : "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -408,12 +415,114 @@ struct ArtistAllSongsView: View {
     }
 }
 
+// MARK: - Artist hero
+
+/// The artist's portrait as the top of the page, the way Apple Music opens an artist.
+///
+/// It runs edge to edge and up under the status bar and the floating buttons. A photograph
+/// that starts below the bar reads as a picture placed on a screen; one that starts at the
+/// glass reads as the screen itself. Pulled down, it stretches instead of opening a gap
+/// above it; at the bottom it dissolves into the page instead of stopping on a line.
+///
+/// Every layer is a sibling in one `ZStack` with the geometry set here, so what is drawn
+/// is exactly what is listed — nothing hangs off a modifier chain inside the image view.
+struct ArtistHero: View {
+    let coverArt: String?
+    let artistImageURL: URL?
+    let name: String
+    let albumCount: Int
+    let isLoading: Bool
+    /// How far the list is pulled past its top, in points. Zero at rest.
+    let stretch: CGFloat
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// Whether the page the picture dissolves into is dark. Follows `Color.themeBg`,
+    /// which is black under the pure-black theme whatever the system appearance.
+    private var pageIsDark: Bool {
+        colorScheme == .dark || AppSettings.shared.activeTheme.usePureBlack
+    }
+
+    /// Height at rest: the status bar, then a portrait close to square — what a face
+    /// needs — while still leaving the actions and the first songs on screen.
+    static var height: CGFloat { TabChrome.windowSafeTop + 330 }
+
+    /// Band at the bottom where the picture fades into the page.
+    private static let dissolve: CGFloat = 56
+
+    var body: some View {
+        let height = Self.height
+        ZStack(alignment: .bottomLeading) {
+            ArtistImageView(coverArt: coverArt, artistImageURL: artistImageURL, fillsFrame: true)
+                .frame(maxWidth: .infinity)
+                .frame(height: height + stretch)
+                .clipped()
+
+            // Keeps the clock and the floating buttons legible over a bright sky.
+            LinearGradient(colors: [.black.opacity(0.38), .clear],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: 120)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .allowsHitTesting(false)
+
+            // Darkens the lower half so the name reads over any photograph — a white
+            // press shot as much as a dark one. Not optional: without it, white type on a
+            // bright portrait simply disappears.
+            LinearGradient(stops: [
+                .init(color: .clear, location: 0.35),
+                .init(color: .black.opacity(0.6), location: 0.8),
+            ], startPoint: .top, endPoint: .bottom)
+                .allowsHitTesting(false)
+
+            // The dissolve itself: the last band of the picture fades into the page, so
+            // there is no bottom edge to see.
+            LinearGradient(colors: [.clear, Color.themeBg],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: Self.dissolve)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .allowsHitTesting(false)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(name)
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                    .shadow(color: .black.opacity(0.25), radius: 8, y: 2)
+                if albumCount > 0 {
+                    Text("\(albumCount) Albums")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.8))
+                } else if isLoading {
+                    ProgressView().controlSize(.small).tint(.white)
+                }
+            }
+            // 16, the same column as Top Songs and the rows below, so the name lines up
+            // with everything under it rather than sitting a few points off.
+            .padding(.horizontal, 16)
+            // Low in the picture, where a name belongs and where it reads as one block with
+            // the actions just beneath. Over a dark page the dissolve fades to black and
+            // white type stays legible across it. Over a light page it fades to white, so
+            // there the name is held clear of the band instead.
+            .padding(.bottom, pageIsDark ? 20 : Self.dissolve)
+        }
+        .frame(height: height + stretch)
+        // Laid out at the resting height, with the stretch growing upward into the space
+        // the pull opens above the list — so pulling never pushes the page down.
+        .frame(height: height, alignment: .bottom)
+    }
+}
+
 // MARK: - Artist Image View (with external URL fallback)
 
 struct ArtistImageView: View {
     let coverArt: String?
     let artistImageURL: URL?
     var size: CGFloat = 160
+    /// Draws the picture to fill whatever frame the parent gives it, instead of as a
+    /// `size`-point circle. The parent then owns the size, the crop and anything layered
+    /// on top — see `ArtistHero`.
+    var fillsFrame: Bool = false
 
     @State private var image: UIImage?
     @State private var showFullScreen = false
@@ -445,14 +554,40 @@ struct ArtistImageView: View {
     }
 
     var body: some View {
+        shape
+            .onTapGesture {
+                if resolvedImage != nil { showFullScreen = true }
+            }
+            .onAppear {
+                if image == nil, let key = cacheKey, let cached = ArtworkCache.shared.image(for: key) {
+                    image = cached
+                }
+            }
+            .task(id: cacheKey) { await loadImage() }
+            .fullScreenCover(isPresented: $showFullScreen) {
+                if let img = resolvedImage {
+                    FullScreenImageViewer(
+                        initialImage: img,
+                        coverArt: coverArt,
+                        fallbackURL: artistImageURL,
+                        isPresented: $showFullScreen
+                    )
+                }
+            }
+    }
+
+    // MARK: Shapes
+
+    @ViewBuilder private var shape: some View {
+        if fillsFrame { fill } else { bubble }
+    }
+
+    private var bubble: some View {
         Group {
             if let img = resolvedImage {
-                Image(uiImage: img)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
+                Image(uiImage: img).resizable().aspectRatio(contentMode: .fill)
             } else {
-                Circle()
-                    .fill(Color(.systemGray5))
+                Circle().fill(Color(.systemGray5))
                     .overlay {
                         Image(systemName: "music.mic")
                             .foregroundStyle(.secondary)
@@ -463,24 +598,22 @@ struct ArtistImageView: View {
         .frame(width: size, height: size)
         .clipShape(Circle())
         .contentShape(Circle())
-        .onTapGesture {
-            if resolvedImage != nil { showFullScreen = true }
-        }
-        .onAppear {
-            if image == nil, let key = cacheKey, let cached = ArtworkCache.shared.image(for: key) {
-                image = cached
-            }
-        }
-        .task(id: cacheKey) { await loadImage() }
-        .fullScreenCover(isPresented: $showFullScreen) {
-            if let img = resolvedImage {
-                FullScreenImageViewer(
-                    initialImage: img,
-                    coverArt: coverArt,
-                    fallbackURL: artistImageURL,
-                    isPresented: $showFullScreen
-                )
-            }
+    }
+
+    /// No frame and no crop of its own, on purpose: the parent sizes and clips it.
+    @ViewBuilder private var fill: some View {
+        if let img = resolvedImage {
+            Image(uiImage: img).resizable().aspectRatio(contentMode: .fill)
+        } else {
+            // No portrait: a seeded wash rather than a grey slab, so the page keeps its
+            // shape and nothing jumps when a picture does arrive.
+            LinearGradient(colors: GeneratedCoverView.hashedPalette(coverArt ?? "artist"),
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                .overlay {
+                    Image(systemName: "music.mic")
+                        .font(.system(size: 72, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.2))
+                }
         }
     }
 
@@ -506,7 +639,6 @@ struct ArtistImageView: View {
             }
             AppLogger.shared.log("⚠️ Artist coverArt fetch returned no image: \(coverArt)")
         }
-
 
         // 2. Fall back to external artist image URL (Last.fm / MusicBrainz)
         if let artistImageURL,
