@@ -797,7 +797,12 @@ enum PlaybackSource: Equatable, Codable {
         case .artist(_, let name): return name
         case .genre(let name): return name
         case .favorites: return "Favorites"
-        case .search(let query): return "Search: \(query)"
+        // Played from the history list there is no query to show, and "Search:" followed
+        // by nothing read as a bug. Name the list the song was picked from instead — the
+        // same words as the section heading in Search.
+        case .search(let query):
+            let trimmed = query.trimmingCharacters(in: .whitespaces)
+            return trimmed.isEmpty ? String(localized: "Recently Searched") : "Search: \(trimmed)"
         case .songs: return "Songs"
         case .recentlyPlayed: return "Recently Played"
         case .frequentlyPlayed: return "Frequently Played"
