@@ -70,14 +70,6 @@ struct HomeView: View {
     /// Measured content width (replaces UIScreen.main.bounds for layout math).
     @State private var layoutWidth: CGFloat = 0
 
-    /// Top safe-area inset (status bar / Dynamic Island height) so content rests below it
-    /// while still scrolling up underneath the top glass.
-    private var safeTop: CGFloat {
-        (UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.top) ?? 59
-    }
-
     private var hasHomeContent: Bool {
         !recentSongs.isEmpty || !frequentAlbums.isEmpty || !newestAlbums.isEmpty
             || !randomAlbums.isEmpty || songCount > 0
@@ -123,19 +115,7 @@ struct HomeView: View {
                         // resting below them at the top.
                         .ignoresSafeArea(.container, edges: .top)
                         .contentMargins(.top, TabChrome.contentTop, for: .scrollContent)
-                        .overlay(alignment: .top) {
-                            // Liquid Glass band pinned at the very top (covers the status bar
-                            // area), so scrolled content dissolves under it — like the bottom
-                            // bar. Off at rest so resting content stays sharp.
-                            Color.clear
-                                .frame(height: safeTop + 26)
-                                .glassEffect(.regular, in: Rectangle())
-                                .mask(LinearGradient(colors: [Color.black, Color.black, Color.black.opacity(0)],
-                                                     startPoint: .top, endPoint: .bottom))
-                                .opacity(min(max(scrollY / 16, 0), 1))
-                                .allowsHitTesting(false)
-                                .ignoresSafeArea(.container, edges: .top)
-                        }
+                        .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
                         .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                             scrollY = y
                         }

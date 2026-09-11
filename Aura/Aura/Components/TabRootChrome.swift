@@ -5,7 +5,7 @@ import UIKit
 
 /// Chrome for a tab root whose big title is placed as the FIRST scrolling row (via
 /// `TabTitleRow`). Hides the native nav bar (no large-title gap), lets content scroll under
-/// the status bar, and fades in a Liquid Glass strip at the very top on scroll — like Home.
+/// the status bar, and fades in a `TopEdgeVeil` at the very top on scroll — like Home.
 /// Because the title is part of the scroll content, content can never overlap it and any
 /// trailing control (e.g. a `Menu`) lives in the real hierarchy, so it works normally.
 /// Shared top-inset metrics for tab roots.
@@ -51,25 +51,47 @@ func refreshTabContent(_ reload: () async -> Void) async {
     UIImpactFeedbackGenerator(style: .soft).impactOccurred()
 }
 
+/// Where scrolled content meets the top of the screen, on every tab root.
+///
+/// A fade of the page's own colour rather than a band of Liquid Glass. The glass read as a
+/// frosted slab laid across the top of the screen — an object with an edge — when all that
+/// is wanted is for content to thin out before it reaches the clock. A gradient of the page
+/// colour does exactly that: no material, no edge, and in light mode it fades to white
+/// instead of tinting the top of the screen grey.
+///
+/// Dense at the very top, where the clock sits over whatever happens to be scrolling past,
+/// and gone by the bottom. Invisible at rest, when nothing is under the status bar, and
+/// faded in over the first few points of scroll.
+///
+/// One view for every tab root: Home and Search each used to carry their own copy of the
+/// glass band.
+struct TopEdgeVeil: View {
+    let scrollY: CGFloat
+
+    var body: some View {
+        LinearGradient(
+            stops: [
+                .init(color: Color.themeBg.opacity(0.92), location: 0),
+                .init(color: Color.themeBg.opacity(0.6), location: 0.5),
+                .init(color: Color.themeBg.opacity(0), location: 1),
+            ],
+            startPoint: .top, endPoint: .bottom
+        )
+        .frame(height: TabChrome.windowSafeTop + 34)
+        .opacity(min(max(scrollY / 16, 0), 1))
+        .allowsHitTesting(false)
+        .ignoresSafeArea(.container, edges: .top)
+    }
+}
+
 struct TabRootGlass: ViewModifier {
     @Binding var scrollY: CGFloat
-
-    private var safeTop: CGFloat { TabChrome.windowSafeTop }
 
     func body(content: Content) -> some View {
         content
             .ignoresSafeArea(.container, edges: .top)
             .contentMargins(.top, TabChrome.contentTop, for: .scrollContent)
-            .overlay(alignment: .top) {
-                Color.clear
-                    .frame(height: safeTop + 26)
-                    .glassEffect(.regular, in: Rectangle())
-                    .mask(LinearGradient(colors: [Color.black, Color.black, Color.black.opacity(0)],
-                                         startPoint: .top, endPoint: .bottom))
-                    .opacity(min(max(scrollY / 16, 0), 1))
-                    .allowsHitTesting(false)
-                    .ignoresSafeArea(.container, edges: .top)
-            }
+            .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
             .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                 scrollY = y
             }

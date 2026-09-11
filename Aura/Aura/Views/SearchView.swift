@@ -9,11 +9,6 @@ struct SearchView: View {
     @State private var path = NavigationPath()
     @State private var scrollY: CGFloat = 0
 
-    private var safeTop: CGFloat {
-        (UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.top) ?? 59
-    }
     private let titleHeight: CGFloat = 52
     private let searchBarHeight: CGFloat = 56
 
@@ -32,17 +27,7 @@ struct SearchView: View {
                 // Results scroll UNDER the status bar; reserve room for title + search field.
                 .ignoresSafeArea(.container, edges: .top)
                 .contentMargins(.top, TabChrome.contentTop + titleHeight + 8 + searchBarHeight, for: .scrollContent)
-                // Liquid Glass strip at the very top, fading in on scroll.
-                .overlay(alignment: .top) {
-                    Color.clear
-                        .frame(height: safeTop + 26)
-                        .glassEffect(.regular, in: Rectangle())
-                        .mask(LinearGradient(colors: [Color.black, Color.black, Color.black.opacity(0)],
-                                             startPoint: .top, endPoint: .bottom))
-                        .opacity(min(max(scrollY / 16, CGFloat(0)), CGFloat(1)))
-                        .allowsHitTesting(false)
-                        .ignoresSafeArea(.container, edges: .top)
-                }
+                .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
                 // Big-left title (fades + slides away) above the search field (stays, pinning
                 // under the glass) — drawn on top of the glass so the field stays sharp.
                 .overlay(alignment: .top) {
