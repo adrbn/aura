@@ -491,18 +491,22 @@ struct ArtistImageView: View {
             return
         }
 
-        // 1. Try Subsonic coverArt — works for Navidrome with local artist art
-        if let coverArt, !coverArt.isEmpty,
-           let server = ServerManager.shared.currentServer,
-           let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: requestSize) {
-            if let img = await fetchImage(from: url) {
-                let key = "\(coverArt)_\(requestSize)"
-                ArtworkCache.shared.store(img, for: key)
+        // 1. Try Subsonic coverArt — works for Navidrome with local artist art.
+        //
+        // Through `ArtworkCache` rather than fetching directly, because that is where the
+        // server's own "no artwork" placeholder is recognised. Fetching straight from the
+        // URL took Navidrome's generic silhouette for a real portrait and displayed it as
+        // one — tolerable in a 160pt bubble, absurd filling a header.
+        if let coverArt, !coverArt.isEmpty, ServerManager.shared.currentServer != nil {
+            let key = "\(coverArt)_\(requestSize)"
+            if let img = await ArtworkCache.shared.fetchImage(coverArt: coverArt,
+                                                              requestSize: requestSize, key: key) {
                 await MainActor.run { self.image = img }
                 return
             }
             AppLogger.shared.log("⚠️ Artist coverArt fetch returned no image: \(coverArt)")
         }
+
 
         // 2. Fall back to external artist image URL (Last.fm / MusicBrainz)
         if let artistImageURL,
