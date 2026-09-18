@@ -144,6 +144,12 @@ final class ArtworkCache: @unchecked Sendable {
     /// giving up — and the answer cannot change until the library is rescanned.
     private var missingArtCovers: Set<String> = []
 
+    /// Roughly what an image occupies once decoded: four bytes a pixel. Artwork is built
+    /// with `PlatformImage(data:)`, whose `size` is already in pixels.
+    private static func decodedByteCost(_ image: PlatformImage) -> Int {
+        Int(image.size.width * image.size.height * 4)
+    }
+
     private static func sha256Hex(_ data: Data) -> String {
         SHA256.hash(data: data).compactMap { String(format: "%02x", $0) }.joined()
     }
@@ -226,12 +232,19 @@ final class ArtworkCache: @unchecked Sendable {
         }
     }
 
-    /// Normalize pixel size to standard buckets so thumbnails share cache entries.
-    /// Small sizes get bucketed; large sizes (cover art in NowPlaying) get a high-res bucket.
+    /// Normalize pixel size to standard buckets so views of similar size share cache
+    /// entries instead of each fetching its own resize.
     /// Small bucket: list rows, artist circles, blurred backdrops.
     static let thumbSize = 300
-    /// Large bucket: grid cards, heroes, Now Playing, lock screen, full-screen viewer.
+    /// Middle bucket: album-grid cards and anything else around a third of the screen.
     static let fullSize = 800
+    /// Hero bucket: Now Playing, artist and album headers, the full-screen viewer.
+    ///
+    /// These render edge to edge. On a 3x phone that is 1200 physical pixels and more, so
+    /// the 800 they used to share with grid cards was being stretched by half again —
+    /// visibly soft on artwork the library holds at 3000px. Clears the widest iPhone
+    /// full-screen (1320) with room to spare.
+    static let heroSize = 1400
 
     /// TWO buckets, deliberately.
     ///
@@ -245,7 +258,9 @@ final class ArtworkCache: @unchecked Sendable {
     /// cards (≈480 px @3x) land on the large one, so cards stay sharp and share their
     /// resize with the heroes.
     static func normalizedSize(_ pixels: Int) -> Int {
-        pixels <= 400 ? thumbSize : fullSize
+        if pixels <= 400 { return thumbSize }
+        if pixels <= 900 { return fullSize }
+        return heroSize
     }
 
     /// THE bucket a `CoverArtAsyncImage` of `pointSize` will ask for. Single source of
@@ -273,8 +288,11 @@ final class ArtworkCache: @unchecked Sendable {
     /// a thumbnail of any size is already in memory. Memory-only — cheap enough to
     /// call from a SwiftUI view body during scrolling.
     func cachedImageAnySize(forCoverArt coverArt: String, cacheToken: String? = nil) -> PlatformImage? {
-        // Prefer mid-sized buckets first (good quality, commonly warmed), then widen out.
-        for size in [400, 200, 800, 100, 1200] {
+        // Sharpest first, so a hero waiting on its own fetch borrows the best already in
+        // hand rather than the smallest. These are THE buckets: the list this walked
+        // before (400, 200, 100, 1200) named four sizes nothing ever stored and left out
+        // the thumbnail every list row warms, so it almost never found anything.
+        for size in [Self.heroSize, Self.fullSize, Self.thumbSize] {
             let key = cacheToken.map { "\(coverArt)_\($0)_\(size)" } ?? "\(coverArt)_\(size)"
             if let img = memoryCache.object(forKey: key as NSString) { return img }
         }
@@ -284,11 +302,17 @@ final class ArtworkCache: @unchecked Sendable {
 
     func store(_ image: PlatformImage, for key: String) {
         let nsKey = key as NSString
-        memoryCache.setObject(image, forKey: nsKey)
+        // With no cost, `totalCostLimit` was dead and `countLimit` alone governed: 300
+        // images of whatever size, which at hero resolution is gigabytes. Decoded bytes
+        // are what they actually occupy.
+        memoryCache.setObject(image, forKey: nsKey, cost: Self.decodedByteCost(image))
         let hash = SHA256.hash(data: Data(key.utf8)).compactMap { String(format: "%02x", $0) }.joined()
         let fileURL = diskCacheURL.appendingPathComponent(hash)
         Task.detached(priority: .utility) {
-            if let data = image.auraJPEGData(quality: 0.85) {
+            // 0.85 is fine for a 300px row and wasteful of a 1400px hero, where the
+            // artefacts land on exactly the detail the larger fetch went to get.
+            let quality: CGFloat = image.size.width >= 1000 ? 0.94 : 0.85
+            if let data = image.auraJPEGData(quality: quality) {
                 try? data.write(to: fileURL)
             }
         }
@@ -543,7 +567,8 @@ final class ArtworkCache: @unchecked Sendable {
         // Normalized thumbnail buckets + common exact retina sizes for large displays
         // 300 is `thumbSize`, the bucket every list row uses: leaving it out meant a
         // cover could be "removed" and still be exactly what the next list drew.
-        let sizes = [100, 200, ArtworkCache.thumbSize, 400, 780, ArtworkCache.fullSize, 840, 999, 1000, 1170, 1200]
+        let sizes = [100, 200, ArtworkCache.thumbSize, 400, 780, ArtworkCache.fullSize,
+                     840, 999, 1000, 1170, 1200, ArtworkCache.heroSize]
         for size in sizes {
             let key = "\(coverArt)_\(size)"
             let nsKey = key as NSString
@@ -671,11 +696,15 @@ struct CoverArtAsyncImage: View {
     /// Track the coverArt we loaded so we can detect changes without re-flashing
     @State private var loadedCoverArt: String?
 
-    /// Hero images: cap the on-demand server resize at the 800 bucket. It's
-    /// imperceptible on a phone but far faster for Navidrome to generate and to
-    /// transfer than 1200, and — being a normalized bucket — it SHARES the cache
-    /// with album-grid thumbnails, so an already-seen album shows instantly with no
-    /// late "HD" swap. (Was `max(1200, …)`, which made every hero a slow full-res fetch.)
+    /// Whichever bucket this view's size falls in — grid cards land in the middle one,
+    /// anything near full width in the hero one.
+    ///
+    /// Heroes used to be capped at the middle bucket on the grounds that the difference
+    /// was imperceptible on a phone and that sharing with grid cards meant an album
+    /// already seen appeared instantly. It is not imperceptible: the cap was a 1.5x
+    /// upscale on every full-width cover. Sharing is preserved where it matters —
+    /// `resolvedImage` shows the grid's copy immediately and swaps when the sharp one
+    /// lands, rather than making the user wait on a placeholder.
     private var requestSize: Int {
         ArtworkCache.displayRequestSize(pointSize: size)
     }
