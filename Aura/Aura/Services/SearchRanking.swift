@@ -61,3 +61,48 @@ final class SearchRanking: @unchecked Sendable {
         UserDefaults.standard.set(data, forKey: key)
     }
 }
+
+// MARK: - Section order
+
+/// Which kind of result leads the search page.
+///
+/// Pure and self-contained so the rule can be exercised directly — it decides what the
+/// user sees first, and it is the kind of rule that looks obvious and isn't.
+enum SearchSectionOrder {
+    /// Songs lead unless something answers the query more directly.
+    static let base = ["songs", "albums", "artists", "playlists"]
+
+    /// Whether a section holds something the query is plainly *about*.
+    ///
+    /// Only a whole-name hit, or a prefix once the query is long enough to mean it,
+    /// counts. A bare substring deliberately does not: "avicii" appears in dozens of
+    /// song titles too, and promoting on that made the page reshuffle under the user
+    /// on nearly every keystroke.
+    static func leads(_ names: [String], query: String) -> Bool {
+        names.contains { name in
+            let n = name.lowercased()
+            return n == query || (query.count >= 3 && n.hasPrefix(query))
+        }
+    }
+
+    static func sections(query rawQuery: String,
+                         songTitles: [String],
+                         albumNames: [String],
+                         artistNames: [String],
+                         playlistNames: [String]) -> [String] {
+        let q = rawQuery.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !q.isEmpty else { return base }
+
+        // An artist's name is unambiguous: nothing else is called that on purpose, so
+        // typing one asks for the artist.
+        if leads(artistNames, query: q) { return ["artists", "songs", "albums", "playlists"] }
+        // A title, though, is shared — a single and the album built around it carry the
+        // same name. Promoting the album on that match put "World Away" the record above
+        // "World Away" the song, which is the opposite of what typing a song's title
+        // asks for. A container only takes the lead when no song answers as directly.
+        if leads(songTitles, query: q) { return base }
+        if leads(albumNames, query: q) { return ["albums", "songs", "artists", "playlists"] }
+        if leads(playlistNames, query: q) { return ["playlists", "songs", "albums", "artists"] }
+        return base
+    }
+}

@@ -159,7 +159,7 @@ final class AudioPlayer {
     private var consecutiveFailures = 0
     /// One-shot per track: prevents repeated offline error toasts/skips from the
     /// multiple AVPlayerItem failure signals a single dead item can emit.
-    private var offlineErrorHandled = false
+    private var playbackErrorHandled = false
     private var playerItemStatusObservation: NSKeyValueObservation?
     private var bufferObservation: NSKeyValueObservation?
 
@@ -684,7 +684,7 @@ final class AudioPlayer {
             skipToNextPlayableOffline()
             return
         }
-        offlineErrorHandled = false
+        playbackErrorHandled = false
         let bitRate = AppSettings.shared.streamingQuality.bitRate
         AppLogger.shared.log("▶️ Playing: \(song.title) by \(song.artist ?? "Unknown") | bitRate: \(bitRate) | id: \(song.id)")
         currentTime = 0
@@ -753,9 +753,18 @@ final class AudioPlayer {
             duration = Double(songDuration)
         }
 
+        // The same claim the play button makes. Without it a track change simply
+        // inherited whatever state the session was left in: after an interruption — a
+        // call, a voice prompt in another app — the session is dead, `play()` on it is a
+        // silent no-op, and the queue looked like it had stopped of its own accord at the
+        // end of a song. The watchdog then covers the other half of that failure, where
+        // the session comes back but the item is still dead.
+        activateAudioSession()
         player?.play()
         isPlaying = true
         currentSong = song
+        publishPlaybackState()
+        confirmPlaybackStarted()
 
         // Local history only — what Wrapped and the stats count — on the rule it has
         // always used, half the song or 30 seconds. The server scrobble is separate: it
@@ -911,7 +920,7 @@ final class AudioPlayer {
         let error = notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? Error
         AppLogger.shared.log("❌ playerItemFailedToPlayToEnd: \(error?.localizedDescription ?? "unknown error")")
         DispatchQueue.main.async { [weak self] in
-            self?.handleOfflinePlaybackError()
+            self?.handleStreamEndedEarly()
         }
     }
 
@@ -933,11 +942,31 @@ final class AudioPlayer {
     /// Offline recovery for a track AVPlayer can't load: toast once and move on to
     /// the next locally-playable song instead of failing silently.
     private func handleOfflinePlaybackError() {
-        guard isEffectivelyOffline, !offlineErrorHandled else { return }
-        offlineErrorHandled = true
+        guard isEffectivelyOffline, !playbackErrorHandled else { return }
+        playbackErrorHandled = true
         AppLogger.shared.log("📴 Playback error while offline — advancing to next playable song")
         ToastManager.shared.show("Not available offline", icon: "wifi.slash")
         skipToNextPlayableOffline()
+    }
+
+    /// A stream that broke instead of finishing.
+    ///
+    /// `AVPlayerItemDidPlayToEndTime` never arrives for these, and online this was the
+    /// end of it: the error was logged and nothing else happened. The song stopped —
+    /// typically seconds from its end, where a dropped connection is least likely to be
+    /// noticed as one — the queue never advanced, and the result was indistinguishable
+    /// from the app having paused itself. A queue does not stop because one stream died.
+    ///
+    /// From the queue's point of view this is simply the track being over, so it takes
+    /// the ordinary end-of-track path: repeat, user queue, next, radio, all of it. The
+    /// exception is repeat-one, where replaying an item that just failed would fail the
+    /// same way, forever.
+    private func handleStreamEndedEarly() {
+        if isEffectivelyOffline { handleOfflinePlaybackError(); return }
+        guard !playbackErrorHandled else { return }
+        playbackErrorHandled = true
+        AppLogger.shared.log("⚠️ Stream ended early at \(Int(currentTime))s/\(Int(duration))s — treating as end of track")
+        if repeatMode == .one { next() } else { handlePlayerDidFinish() }
     }
 
     // MARK: - Output level

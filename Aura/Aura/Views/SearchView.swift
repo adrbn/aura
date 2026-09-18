@@ -430,34 +430,10 @@ struct SearchResultsContainer: View {
     // MARK: Section ordering
 
     private func orderedSections() -> [String] {
-        let q = trimmedQuery.lowercased()
-        let base = ["songs", "albums", "artists", "playlists"]
-        guard !q.isEmpty else { return base }
-
-        /// Whether a section holds something the query is plainly *about*.
-        ///
-        /// Only a whole-name hit, or a prefix once the query is long enough to mean it,
-        /// counts. A bare substring deliberately does not: "avicii" appears in dozens of
-        /// song titles too, and promoting on that made the page reshuffle under the user
-        /// on nearly every keystroke. Songs still lead by default — what changed is that
-        /// typing an artist's actual name now puts the artist first, which is what asking
-        /// for "avicii" means.
-        func namesLead(_ names: [String]) -> Bool {
-            names.contains { name in
-                let n = name.lowercased()
-                return n == q || (q.count >= 3 && n.hasPrefix(q))
-            }
-        }
-
-        if namesLead(results.artists.map(\.name)) {
-            return ["artists", "songs", "albums", "playlists"]
-        }
-        if namesLead(results.albums.map(\.name)) {
-            return ["albums", "songs", "artists", "playlists"]
-        }
-        if namesLead(results.playlists.map(\.name)) {
-            return ["playlists", "songs", "albums", "artists"]
-        }
-        return base
+        SearchSectionOrder.sections(query: trimmedQuery,
+                                    songTitles: results.songs.map(\.title),
+                                    albumNames: results.albums.map(\.name),
+                                    artistNames: results.artists.map(\.name),
+                                    playlistNames: results.playlists.map(\.name))
     }
 }

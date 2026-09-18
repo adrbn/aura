@@ -55,3 +55,86 @@ struct SearchArtistTests {
         #expect(Fuzzy.score(query: "Avicii", target: "Avicii, CAZZETTE") == 1.0)
     }
 }
+
+/// Which section leads the results page.
+///
+/// A single and the album built around it share a name, so searching "world away" matched
+/// both — and the album took the lead, putting the record the user wanted to hear second.
+@Suite("Search — section order")
+struct SearchSectionOrderTests {
+
+    private let none: [String] = []
+
+    @Test("songs lead by default")
+    func songsLead() {
+        #expect(SearchSectionOrder.sections(query: "midnight", songTitles: ["Midnight City"],
+                                            albumNames: none, artistNames: none, playlistNames: none)
+                == SearchSectionOrder.base)
+    }
+
+    @Test("a song keeps the lead over an album of the same name")
+    func songBeatsSameNamedAlbum() {
+        let order = SearchSectionOrder.sections(query: "world away",
+                                                songTitles: ["World Away"],
+                                                albumNames: ["World Away", "A World Away"],
+                                                artistNames: none, playlistNames: none)
+        #expect(order.first == "songs")
+    }
+
+    @Test("an album still leads when no song is called that")
+    func albumLeadsAlone() {
+        let order = SearchSectionOrder.sections(query: "random access memories",
+                                                songTitles: ["Get Lucky"],
+                                                albumNames: ["Random Access Memories"],
+                                                artistNames: none, playlistNames: none)
+        #expect(order.first == "albums")
+    }
+
+    @Test("a playlist still leads when no song is called that")
+    func playlistLeadsAlone() {
+        let order = SearchSectionOrder.sections(query: "late night", songTitles: ["Drive"],
+                                                albumNames: none, artistNames: none,
+                                                playlistNames: ["Late Night"])
+        #expect(order.first == "playlists")
+    }
+
+    @Test("an artist outranks a song of the same name")
+    func artistOutranksSong() {
+        let order = SearchSectionOrder.sections(query: "gryffin", songTitles: ["Gryffin"],
+                                                albumNames: none, artistNames: ["Gryffin"],
+                                                playlistNames: none)
+        #expect(order.first == "artists")
+    }
+
+    @Test("a mere substring promotes nothing")
+    func substringDoesNotPromote() {
+        let order = SearchSectionOrder.sections(query: "away", songTitles: none,
+                                                albumNames: ["World Away"], artistNames: none,
+                                                playlistNames: none)
+        #expect(order == SearchSectionOrder.base)
+    }
+
+    @Test("two letters are too few to promote on a prefix", arguments: ["wo", "w"])
+    func shortQueriesDoNotPromote(query: String) {
+        let order = SearchSectionOrder.sections(query: query, songTitles: none,
+                                                albumNames: ["World Away"], artistNames: none,
+                                                playlistNames: none)
+        #expect(order == SearchSectionOrder.base)
+    }
+
+    @Test("the query is matched case- and whitespace-insensitively")
+    func trimsAndLowercases() {
+        let order = SearchSectionOrder.sections(query: "  World Away  ",
+                                                songTitles: ["World Away"],
+                                                albumNames: ["World Away"],
+                                                artistNames: none, playlistNames: none)
+        #expect(order.first == "songs")
+    }
+
+    @Test("an empty query leaves the default order")
+    func emptyQuery() {
+        #expect(SearchSectionOrder.sections(query: "   ", songTitles: ["x"], albumNames: ["x"],
+                                            artistNames: ["x"], playlistNames: ["x"])
+                == SearchSectionOrder.base)
+    }
+}
