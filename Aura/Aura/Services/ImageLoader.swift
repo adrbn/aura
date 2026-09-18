@@ -273,7 +273,9 @@ final class ArtworkCache: @unchecked Sendable {
         let hash = SHA256.hash(data: Data(key.utf8)).compactMap { String(format: "%02x", $0) }.joined()
         let fileURL = diskCacheURL.appendingPathComponent(hash)
         if let data = try? Data(contentsOf: fileURL), let img = PlatformImage(data: data) {
-            memoryCache.setObject(img, forKey: nsKey)
+            // Same cost as `store`: an image promoted from disk occupies exactly as much
+            // memory as one that arrived over the network, and cost 0 would exempt it.
+            memoryCache.setObject(img, forKey: nsKey, cost: Self.decodedByteCost(img))
             return img
         }
         return nil
@@ -681,6 +683,10 @@ struct CoverArtAsyncImage: View {
     @State private var image: PlatformImage?
     /// Track the coverArt we loaded so we can detect changes without re-flashing
     @State private var loadedCoverArt: String?
+    /// The bucket `image` was actually loaded at. One view serves both the hero and the
+    /// 44-point header beside the lyrics, so its requested size changes under it — and
+    /// without this, whichever size happened to load first was kept forever.
+    @State private var loadedSize: Int = 0
 
     /// Whichever bucket this view's size falls in — grid cards land in the middle one,
     /// anything near full width in the hero one.
@@ -728,21 +734,27 @@ struct CoverArtAsyncImage: View {
         .task(id: retryKey) { await loadImage() }
     }
 
-    /// Re-runs both when the cover changes and when a reconnection asks stuck
-    /// placeholders to retry. `loadImage()` already returns early for covers that
-    /// resolved, so the bump only costs a refetch where one is actually needed.
+    /// Re-runs when the cover changes, when the size asked for grows, and when a
+    /// reconnection asks stuck placeholders to retry. `loadImage()` already returns early
+    /// for covers that resolved at a big enough size, so a bump only costs a refetch
+    /// where one is actually needed.
     private var retryKey: String {
-        "\(coverArt ?? "")#\(ArtworkRetry.shared.generation)"
+        "\(coverArt ?? "")#\(requestSize)#\(ArtworkRetry.shared.generation)"
+    }
+
+    /// Whether what is in hand is already at least as sharp as what is being asked for.
+    private var haveSharpEnough: Bool {
+        image != nil && loadedCoverArt == coverArt && loadedSize >= requestSize
     }
 
     /// Load from memory/disk cache synchronously to avoid placeholder flash on re-appear
     private func loadFromCacheSync() {
-        guard image == nil || loadedCoverArt != coverArt,
-              let coverArt else { return }
+        guard !haveSharpEnough, let coverArt else { return }
         let key = cacheKey(for: coverArt)
         if let cached = ArtworkCache.shared.image(for: key) {
             image = cached
             loadedCoverArt = coverArt
+            loadedSize = requestSize
         }
     }
 
@@ -758,16 +770,20 @@ struct CoverArtAsyncImage: View {
                 await MainActor.run {
                     self.image = cached
                     self.loadedCoverArt = coverArt
+                    self.loadedSize = requestSize
                 }
                 return
             }
         }
-        // Already loaded for this coverArt
-        if image != nil && loadedCoverArt == coverArt { return }
+        // Already loaded for this cover, at this size or better. Shrinking to the
+        // 44-point lyrics header must NOT throw the hero copy away and fetch a
+        // thumbnail: the picture would come back blurred the next time it grows.
+        if haveSharpEnough { return }
         if let result = await ArtworkCache.shared.fetchImage(coverArt: coverArt, requestSize: requestSize, key: key) {
             await MainActor.run {
                 self.image = result
                 self.loadedCoverArt = coverArt
+                self.loadedSize = requestSize
             }
         } else if let fb = fallbackCoverArt, fb != coverArt {
             // Primary id had no art — try the album cover.
@@ -776,6 +792,7 @@ struct CoverArtAsyncImage: View {
                 await MainActor.run {
                     self.image = result
                     self.loadedCoverArt = coverArt
+                    self.loadedSize = requestSize
                 }
             }
         }
