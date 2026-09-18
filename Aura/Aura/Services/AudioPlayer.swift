@@ -507,65 +507,97 @@ final class AudioPlayer {
         saveLastPlayback()
     }
 
+    /// Bumped by every fill. A fetch that finishes after a newer one started — or after
+    /// the user moved on — compares its captured value and stands down.
+    private var autoplayFillGeneration = 0
+
     func fillQueueWithRandomSongs(around song: Song) async {
         guard !AppSettings.shared.offlineMode else { return }
         guard let server = ServerManager.shared.currentServer else { return }
-        await MainActor.run { isBuildingQueue = true }
-        defer { Task { @MainActor in isBuildingQueue = false } }
-        do {
-            // Try similar songs first for a better autoplay experience
-            var autoplaySongs: [Song] = []
-            do {
-                let similar = try await SubsonicClient.shared.getSimilarSongs2(server: server, id: song.id, count: 50)
-                // De-duplicate by id. getSimilarSongs2 (Last.fm-backed) can repeat the
-                // same track — and sometimes the seed itself — inside one response. A queue
-                // holding duplicate ids breaks everything keyed on id: SwiftUI's queue list
-                // (a tap lands on the FIRST row sharing that id) and every firstIndex(where:id)
-                // that positions queueIndex. That's what made the queue appear to "loop back
-                // to the first song". Keep only the first occurrence of each id.
-                var seen: Set<String> = [song.id]
-                autoplaySongs = similar.filter { seen.insert($0.id).inserted }
-                let removed = similar.count - autoplaySongs.count
-                if removed > 0 {
-                    AppLogger.shared.log("🎵 Autoplay: dropped \(removed) duplicate similar song(s)", level: .warning)
-                }
-                AppLogger.shared.log("🎵 Autoplay: found \(autoplaySongs.count) similar songs")
-            } catch {
-                AppLogger.shared.log("🎵 Autoplay: getSimilarSongs2 failed, falling back to random")
-            }
-
-            // If similar songs are too few, pad with random songs
-            if autoplaySongs.count < 20 {
-                let existingIds = Set(autoplaySongs.map { $0.id } + [song.id])
-                var random = try await SubsonicClient.shared.getRandomSongs(server: server, size: 50)
-                random.removeAll { existingIds.contains($0.id) }
-                autoplaySongs.append(contentsOf: random.prefix(50 - autoplaySongs.count))
-                AppLogger.shared.log("🎵 Autoplay: padded with \(random.prefix(50 - autoplaySongs.count).count) random songs (total: \(autoplaySongs.count))")
-            }
-
-            await MainActor.run {
-                // Do not overwrite a queue that has already moved to another context.
-                if !(self.queue.count <= 1 && self.queue.first?.id == song.id) {
-                    AppLogger.shared.log("🎵 Autoplay fill ignored (queue changed while fetching)")
-                    return
-                }
-
-                let activeSongId = self.currentSong?.id ?? song.id
-                self.queue = [song] + autoplaySongs
-                self.originalQueue = self.queue
-                self.queueIndex = self.queue.firstIndex(where: { $0.id == activeSongId }) ?? 0
-                self.autoplayFromIndex = 1  // Songs after index 0 are autoplay
-                // If playback already advanced past autoplay boundary, update source now
-                if self.queueIndex >= 1 && self.playbackSource != .autoplay {
-                    self.playbackSource = .autoplay
-                }
-                if isShuffled { shuffleQueue() }
-                saveLastPlayback()
-            }
-            AppLogger.shared.log("🎵 Autoplay queue filled with \(autoplaySongs.count) songs | queueIdx: \(queueIndex)")
-        } catch {
-            AppLogger.shared.log("Failed to fill autoplay queue: \(error.localizedDescription)")
+        let generation = await MainActor.run { () -> Int in
+            autoplayFillGeneration += 1
+            isBuildingQueue = true
+            return autoplayFillGeneration
         }
+        defer { Task { @MainActor in
+            if self.autoplayFillGeneration == generation { self.isBuildingQueue = false }
+        } }
+
+        // Two sources, asked at the same time rather than one after the other.
+        // Random songs answer in about a second and exist so the queue is never
+        // empty; similar songs are the ones actually worth having, but they come
+        // from the server's Last.fm agent, which takes twenty seconds on a good
+        // day and over a minute when Last.fm doesn't answer. Waiting for them in
+        // sequence is what left "Nothing in the queue" on screen long after the
+        // music had started.
+        async let similarFetch = try? SubsonicClient.shared.getSimilarSongs2(server: server, id: song.id, count: 50)
+        async let randomFetch = try? SubsonicClient.shared.getRandomSongs(server: server, size: 50)
+
+        let random = await randomFetch
+        if let random {
+            let seeded = Self.deduplicated(random, excluding: song.id)
+            if await applyAutoplay(seeded, around: song, generation: generation) {
+                AppLogger.shared.log("🎵 Autoplay: seeded with \(seeded.count) random songs")
+            }
+        }
+
+        guard let similar = await similarFetch, !similar.isEmpty else {
+            if random == nil {
+                AppLogger.shared.log("🎵 Autoplay: neither similar nor random songs could be fetched", level: .warning)
+            }
+            return
+        }
+
+        // De-duplicate by id. getSimilarSongs2 (Last.fm-backed) can repeat the
+        // same track — and sometimes the seed itself — inside one response. A queue
+        // holding duplicate ids breaks everything keyed on id: SwiftUI's queue list
+        // (a tap lands on the FIRST row sharing that id) and every firstIndex(where:id)
+        // that positions queueIndex. That's what made the queue appear to "loop back
+        // to the first song". Keep only the first occurrence of each id.
+        var autoplaySongs = Self.deduplicated(similar, excluding: song.id)
+        let removed = similar.count - autoplaySongs.count
+        if removed > 0 {
+            AppLogger.shared.log("🎵 Autoplay: dropped \(removed) duplicate similar song(s)", level: .warning)
+        }
+
+        // Too few to carry a listening session on their own — pad with the random
+        // songs already in hand rather than asking the server a second time.
+        if autoplaySongs.count < 20, let random {
+            let taken = Set(autoplaySongs.map { $0.id } + [song.id])
+            autoplaySongs += random.filter { !taken.contains($0.id) }.prefix(50 - autoplaySongs.count)
+        }
+
+        if await applyAutoplay(autoplaySongs, around: song, generation: generation) {
+            AppLogger.shared.log("🎵 Autoplay: upgraded to \(autoplaySongs.count) similar songs")
+        } else {
+            AppLogger.shared.log("🎵 Autoplay: similar songs arrived too late — queue had moved on")
+        }
+    }
+
+    private static func deduplicated(_ songs: [Song], excluding seedId: String) -> [Song] {
+        var seen: Set<String> = [seedId]
+        return songs.filter { seen.insert($0.id).inserted }
+    }
+
+    /// Installs an autoplay tail behind `song`, but only while the queue is still the
+    /// one this fill is entitled to write: same seed, still sitting on it, nothing the
+    /// listener has queued or played since. Returns whether it was applied.
+    @MainActor
+    private func applyAutoplay(_ autoplaySongs: [Song], around song: Song, generation: Int) -> Bool {
+        guard autoplayFillGeneration == generation else { return false }
+        guard userQueue.isEmpty else { return false }
+        guard queueIndex == 0, queue.first?.id == song.id, currentSong?.id == song.id else { return false }
+        // Either an untouched single-song queue, or the tail an earlier pass of this
+        // same fill put there. Anything else is a real context and not ours to replace.
+        guard queue.count <= 1 || autoplayFromIndex == 1 else { return false }
+
+        queue = [song] + autoplaySongs
+        originalQueue = queue
+        queueIndex = 0
+        autoplayFromIndex = 1  // Songs after index 0 are autoplay
+        if isShuffled { shuffleQueue() }
+        saveLastPlayback()
+        return true
     }
 
     private var hasPrefetchedNext = false

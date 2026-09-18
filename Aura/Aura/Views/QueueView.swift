@@ -150,9 +150,21 @@ struct QueueView: View {
                     }
                 } else if player.userQueue.isEmpty {
                     Section("Autoplay") {
-                        Text("Nothing in the queue")
-                            .foregroundStyle(.secondary)
-                            .font(.subheadline)
+                        // The tail is fetched after playback starts, and the server's
+                        // recommendation agent can take half a minute to answer. Say so,
+                        // rather than claim there is nothing coming.
+                        if player.isBuildingQueue {
+                            HStack(spacing: 10) {
+                                ProgressView().controlSize(.small)
+                                Text("Finding songs to play next…")
+                                    .foregroundStyle(.secondary)
+                                    .font(.subheadline)
+                            }
+                        } else {
+                            Text("Nothing in the queue")
+                                .foregroundStyle(.secondary)
+                                .font(.subheadline)
+                        }
                     }
                 }
             }
