@@ -114,35 +114,32 @@ final class ArtworkCache: @unchecked Sendable {
     private var inFlight: [String: Task<PlatformImage?, Never>] = [:]
     private let inFlightLock = NSLock()
 
-    /// Learned byte-signature of the server's built-in "no cover art" placeholder,
-    /// per requested pixel size. Navidrome serves this generic image (a blue vinyl)
-    /// for art that is missing OR not yet processed after a scan — so caching it
-    /// would pin a freshly-added album to the placeholder forever. We learn the
-    /// signature once per size by probing a cover id that cannot exist, then refuse
-    /// to cache any response that matches it. See `fetchImage`.
-    private var placeholderSignatures: [Int: String] = [:]
-    /// Sizes whose probe has already been attempted — success OR failure.
-    ///
-    /// Only successes used to be remembered. This server answers an unknown cover id with
-    /// a JSON error rather than a placeholder image, so the probe never succeeded, nothing
-    /// was ever memoized, and every single cover fetch fired its own fresh probe — inside
-    /// the download gate, doubling the load on the exact endpoint already under strain.
-    private var probedSizes: Set<Int> = []
     private let placeholderLock = NSLock()
-    /// A cover art id guaranteed to have no artwork, used to learn the server's
-    /// placeholder image. Unknown ids make Navidrome return its default cover.
-    private static let placeholderProbeId = "__aura_missing_art_probe__"
 
-    /// Byte-hash of what each cover id returned, per size bucket — the raw material for
-    /// the size-invariance test in `classifyArtwork`. Two buckets exist (`thumbSize`,
-    /// `fullSize`), so this holds at most two entries per cover seen.
-    private var seenArtworkHashes: [String: String] = [:]
-    /// Hashes proven to be the server's one generic "no cover art" image.
-    private var placeholderHashes: Set<String> = []
-    /// Covers already shown to resolve to it. Re-asking costs a full round trip — on this
+    /// A size so small no real artwork survives it untouched — the question put to the
+    /// server when a response is ambiguous. See `classifyArtwork`.
+    private static let proofSize = 64
+    /// Below this, a square of the requested size is a flat shape rather than a picture.
+    /// The server's artist silhouette is 546 bytes; the smallest real 300px cover seen on
+    /// a full library is over six kilobytes.
+    private static let plausibleArtworkBytes = 3_072
+
+    /// Hashes proven to be one of the server's fixed "no artwork" images, and hashes
+    /// proven to be real artwork. A verdict is reached once and then costs nothing:
+    /// one library's worth of art-less albums all share a single hash.
+    private var genericHashes: Set<String> = []
+    private var artworkHashes: Set<String> = []
+    /// Covers proven to have real artwork, whatever size was asked for — so a cover
+    /// resolved in a list never pays for proof again when its hero is loaded.
+    private var provenArtworkCovers: Set<String> = []
+    /// Covers already shown to have none. Re-asking costs a full round trip — on this
     /// library about ten seconds each, because the server goes out to Last.fm before
     /// giving up — and the answer cannot change until the library is rescanned.
     private var missingArtCovers: Set<String> = []
+    /// Set the first time the server answers with exactly the size asked for. Until then
+    /// nothing can be concluded from a size that does not match: a server that ignores
+    /// `size` altogether would otherwise have every one of its covers called generic.
+    private var serverResizesArtwork = false
 
     /// Roughly what an image occupies once decoded: four bytes a pixel. Artwork is built
     /// with `PlatformImage(data:)`, whose `size` is already in pixels.
@@ -398,11 +395,15 @@ final class ArtworkCache: @unchecked Sendable {
                 // printed on it. Showing that would put another product's branding in the
                 // middle of Aura, and inconsistently, since it only ever reached some of
                 // the screens. Aura draws its own placeholder for missing art instead.
-                let verdict = self.classifyArtwork(data: data, coverArt: coverArt, size: requestSize)
-                if verdict.generic {
-                    // Whatever we cached from this same image was that generic picture too.
-                    for id in verdict.purge { self.removeImages(forCoverArt: id) }
-                    AppLogger.shared.log("🕳 Cover art id=\(coverArt): the server has none — using Aura's placeholder")
+                let width = Int(img.size.width.rounded())
+                var verdict = self.classifyArtwork(data: data, width: width, coverArt: coverArt, size: requestSize)
+                if verdict == .undecided {
+                    // Still inside the download gate on purpose: the proof is a 64-pixel
+                    // thumbnail, and taking a second slot for it could deadlock the gate.
+                    verdict = await self.prove(artworkOf: coverArt, data: data, server: server) ? .artwork : .generic
+                }
+                if verdict == .generic {
+                    AppLogger.shared.log("🕳 Cover art id=\(coverArt): the server has none (\(width)px for a \(requestSize)px request) — using Aura's placeholder")
                     return nil
                 }
                 self.store(img, for: key)
@@ -434,80 +435,65 @@ final class ArtworkCache: @unchecked Sendable {
         missingArtCovers.removeAll()
     }
 
-    /// Decides whether a downloaded image is this album's cover or the server's generic
-    /// "no cover art" fallback, and returns the covers whose cached copies that verdict
-    /// has just invalidated.
+    /// Whether a downloaded image is this cover's artwork, the server's generic "no
+    /// artwork" picture, or not yet decidable without asking the server again.
+    private enum ArtworkVerdict { case artwork, generic, undecided }
+
+    /// Decides what came back, from the one thing a server cannot fake: the size.
     ///
-    /// The test is size invariance. A server resizes real artwork, so one album's cover
-    /// cannot come back byte-for-byte identical in the thumbnail bucket and the full-size
-    /// one. The fallback can: it is a single fixed file, served whatever size is asked
-    /// for. Two covers legitimately sharing an image (a single and its album, a deluxe
-    /// edition) share it at every size equally and so never trip this — the match has to
-    /// be the SAME cover id at two different sizes.
+    /// Artwork is resized to order — ask for 300 pixels and 300 come back, ask for 64 and
+    /// 64 come back — capped by the picture's own size. The "no artwork" images bypass
+    /// that entirely: they are fixed files, served at their own size whatever was asked.
+    /// So a response that is exactly the size requested is this cover's artwork, and one
+    /// that is larger cannot be. Smaller is ambiguous — a real cover whose original is
+    /// small looks the same as a fixed file — and `prove(artworkOf:)` settles it.
     ///
-    /// This replaces probing a made-up cover id, which only ever worked on servers that
-    /// answer an unknown id with the fallback image; Navidrome answers it with an XML
-    /// error, so that probe learned nothing here and the check silently did nothing. The
-    /// probe's answer is still honoured where it does work. Neither costs a request.
-    private func classifyArtwork(data: Data, coverArt: String, size: Int) -> (generic: Bool, purge: [String]) {
+    /// This replaces two tests that did not hold here. Probing a made-up cover id only
+    /// works on servers that answer an unknown id with the fallback image; Navidrome
+    /// answers with an error, so it learned nothing. Comparing one cover's bytes across
+    /// two sizes looked sound and is not: Navidrome caps output at the original's size,
+    /// so every cover smaller than the bucket asked for comes back identical in both —
+    /// which is most of them, and would have blanked most of a library.
+    private func classifyArtwork(data: Data, width: Int, coverArt: String, size: Int) -> ArtworkVerdict {
         let hash = Self.sha256Hex(data)
         placeholderLock.lock(); defer { placeholderLock.unlock() }
 
-        if let probed = placeholderSignatures[size], probed == hash {
-            placeholderHashes.insert(hash)
-        }
-        if placeholderHashes.contains(hash) {
+        if genericHashes.contains(hash) {
             missingArtCovers.insert(coverArt)
-            return (true, [])
+            return .generic
         }
-
-        let key = "\(coverArt)#\(size)"
-        let sameCoverOtherSize = seenArtworkHashes.contains { seen, seenHash in
-            seenHash == hash && seen != key && seen.hasPrefix("\(coverArt)#")
+        // Resized to order: nothing but this cover's own artwork can answer that.
+        if width == size && data.count >= Self.plausibleArtworkBytes {
+            serverResizesArtwork = true
+            artworkHashes.insert(hash)
+            provenArtworkCovers.insert(coverArt)
+            return .artwork
         }
-        guard sameCoverOtherSize else {
-            // Two buckets per cover, so this cannot run away; the ceiling is a safety net
-            // for a server that somehow varies its output.
-            if seenArtworkHashes.count < 4000 { seenArtworkHashes[key] = hash }
-            return (false, [])
-        }
-
-        placeholderHashes.insert(hash)
-        // Every cover that ever returned these bytes was this same generic image.
-        let affected = Set(seenArtworkHashes.filter { $0.value == hash }
-            .keys.compactMap { $0.split(separator: "#").first.map(String.init) })
-        seenArtworkHashes = seenArtworkHashes.filter { $0.value != hash }
-        missingArtCovers.formUnion(affected)
-        missingArtCovers.insert(coverArt)
-        return (true, Array(affected))
+        if artworkHashes.contains(hash) || provenArtworkCovers.contains(coverArt) { return .artwork }
+        // Nothing is known yet about how this server treats `size`, so a mismatch proves
+        // nothing. Show the picture rather than hide real artwork on a guess.
+        guard serverResizesArtwork else { return .artwork }
+        return .undecided
     }
 
-    private func placeholderSignature(forSize size: Int, server: ServerConfig) async -> String? {
-        placeholderLock.lock()
-        if let sig = placeholderSignatures[size] { placeholderLock.unlock(); return sig }
-        // Attempted once per size and never again: a server that can't be probed must cost
-        // one wasted request in total, not one per cover.
-        if probedSizes.contains(size) { placeholderLock.unlock(); return nil }
-        probedSizes.insert(size)
-        placeholderLock.unlock()
-        guard let url = SubsonicClient.shared.coverArtURL(server: server, id: Self.placeholderProbeId, size: size),
-              let (data, _) = try? await imageSession.data(from: url),
-              PlatformImage(data: data) != nil else { return nil }
-        let sig = Self.sha256Hex(data)
-        placeholderLock.lock(); placeholderSignatures[size] = sig; placeholderLock.unlock()
-        return sig
-    }
-
-    /// Learn the server's placeholder signatures for the sizes we actually use, in
-    /// the background, right after connecting — so the per-fetch placeholder check in
-    /// `fetchImage` finds them cached and NEVER blocks a real cover on a probe download.
-    /// Call once per server. This is the single biggest cover-load latency win.
-    func primePlaceholderSignatures(server: ServerConfig) {
-        Task.detached(priority: .utility) {
-            for size in [Self.thumbSize, Self.fullSize] {
-                _ = await self.placeholderSignature(forSize: size, server: server)
-            }
+    /// Ask for the same cover at a size no picture survives untouched. Artwork comes back
+    /// shrunk; a fixed "no artwork" file comes back byte for byte the same, and that is
+    /// the proof. Costs one small request, once per image — a library's worth of art-less
+    /// albums share a single one between them.
+    private func prove(artworkOf coverArt: String, data: Data, server: ServerConfig) async -> Bool {
+        let hash = Self.sha256Hex(data)
+        guard let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: Self.proofSize),
+              let (proof, _) = try? await imageSession.data(from: url) else { return true }
+        let isArtwork = Self.sha256Hex(proof) != hash
+        placeholderLock.lock(); defer { placeholderLock.unlock() }
+        if isArtwork {
+            artworkHashes.insert(hash)
+            provenArtworkCovers.insert(coverArt)
+        } else {
+            genericHashes.insert(hash)
+            missingArtCovers.insert(coverArt)
         }
+        return isArtwork
     }
 
     /// Warm the cache for a list of cover art ids at a given point size so list

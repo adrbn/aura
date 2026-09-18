@@ -114,11 +114,6 @@ struct ContentView: View {
         .task {
             await serverManager.testConnection()
             serverManager.startMonitoring()
-            // Learn the server's cover-art placeholder signatures up front so real
-            // cover fetches never block on a probe download.
-            if let server = serverManager.currentServer {
-                ArtworkCache.shared.primePlaceholderSignatures(server: server)
-            }
             // Backfill permanent artwork for existing downloads while we have a connection.
             await DownloadManager.shared.ensureOfflineArtwork()
         }
