@@ -30,7 +30,7 @@ Keychain entries are scoped to Aura and can be cleared by deleting the app.
 
 - Server URL(s) and usernames
 - UI preferences (theme, accent color, home dashboard layout, etc.)
-- Playback preferences (EQ curve, crossfade, transcoding)
+- Playback preferences (EQ curve, transcoding, sleep timer)
 - Last-played state (queue, current track, position)
 - Download quality settings
 

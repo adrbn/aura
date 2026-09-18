@@ -6,12 +6,24 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Fixed — Search
+- A song no longer loses its place to an album of the same name: an exact hit on a title now leads the results, and an artist still outranks both
+- The search field is tappable across its whole width, and the cross that cleared it is now a full-size **Clear** button
+
+### Fixed — Playback
+- A stream that dies mid-song moves to the next track instead of stopping on a silent pause
+- The audio session is reclaimed at every track change, so the queue keeps playing after an interruption
+
+### Fixed — Artwork
+- Full-width artwork is drawn from a full-resolution copy instead of being stretched from a thumbnail
+- The in-memory artwork cache now measures what it holds, so its 120 MB limit is real
+- An album or artist the server has no picture for gets Aura's own generated cover, instead of the server's "no cover" vinyl or grey silhouette — and is remembered, so it stops costing a ten-second round trip each time it scrolls past
+
 ## [1.0.0] — TBD
 
 Initial public release. Native SwiftUI music client for Navidrome and Subsonic-API-compatible servers.
 
 ### Added — Playback
-- Gapless playback with adjustable crossfade (0–12 s)
 - Replay gain support
 - Streaming at 128 / 192 / 320 kbps plus original lossless (FLAC, ALAC, others)
 - Smart transcoding: MP3, AAC, OGG, or server-decided
