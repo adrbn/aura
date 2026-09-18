@@ -531,19 +531,16 @@ final class AudioPlayer {
         // sequence is what left "Nothing in the queue" on screen long after the
         // music had started.
         async let similarFetch = try? SubsonicClient.shared.getSimilarSongs2(server: server, id: song.id, count: 50)
-        async let randomFetch = try? SubsonicClient.shared.getRandomSongs(server: server, size: 50)
+        async let nearbyFetch = buildSimilarTail(for: song, server: server, limit: 50)
 
-        let random = await randomFetch
-        if let random {
-            let seeded = Self.deduplicated(random, excluding: song.id)
-            if await applyAutoplay(seeded, around: song, generation: generation) {
-                AppLogger.shared.log("🎵 Autoplay: seeded with \(seeded.count) random songs")
-            }
+        let nearby = await nearbyFetch
+        if !nearby.isEmpty, await applyAutoplay(nearby, around: song, generation: generation) {
+            AppLogger.shared.log("🎵 Autoplay: seeded with \(nearby.count) songs from nearby artists and genre")
         }
 
         guard let similar = await similarFetch, !similar.isEmpty else {
-            if random == nil {
-                AppLogger.shared.log("🎵 Autoplay: neither similar nor random songs could be fetched", level: .warning)
+            if nearby.isEmpty {
+                AppLogger.shared.log("🎵 Autoplay: nothing to queue behind \(song.title)", level: .warning)
             }
             return
         }
@@ -560,17 +557,90 @@ final class AudioPlayer {
             AppLogger.shared.log("🎵 Autoplay: dropped \(removed) duplicate similar song(s)", level: .warning)
         }
 
-        // Too few to carry a listening session on their own — pad with the random
-        // songs already in hand rather than asking the server a second time.
-        if autoplaySongs.count < 20, let random {
+        // Too few to carry a listening session on their own — pad from the tail
+        // already in hand rather than asking the server a second time.
+        if autoplaySongs.count < 20, !nearby.isEmpty {
             let taken = Set(autoplaySongs.map { $0.id } + [song.id])
-            autoplaySongs += random.filter { !taken.contains($0.id) }.prefix(50 - autoplaySongs.count)
+            autoplaySongs += nearby.filter { !taken.contains($0.id) }.prefix(50 - autoplaySongs.count)
         }
 
         if await applyAutoplay(autoplaySongs, around: song, generation: generation) {
             AppLogger.shared.log("🎵 Autoplay: upgraded to \(autoplaySongs.count) similar songs")
         } else {
             AppLogger.shared.log("🎵 Autoplay: similar songs arrived too late — queue had moved on")
+        }
+    }
+
+    /// Songs that actually belong next to `song`, found without waiting on the
+    /// server's recommendation agent.
+    ///
+    /// Navidrome answers `getSimilarSongs2` by asking Last.fm for similar artists and
+    /// then for the top tracks of each, one HTTP call at a time — measured at twenty
+    /// to seventy seconds on a cold cache. This asks for the similar artists only, a
+    /// single call it answers in about a second, and then reads their music straight
+    /// out of the library, which is a local database query. Same idea, a second
+    /// instead of half a minute, and every track is one you own.
+    private func buildSimilarTail(for song: Song, server: ServerConfig, limit: Int) async -> [Song] {
+        async let nearbyFetch = songsByArtistsNear(song, server: server)
+        async let genreFetch: [Song] = {
+            guard let genre = song.genre, !genre.isEmpty else { return [] }
+            return (try? await SubsonicClient.shared.getSongsByGenre(server: server, genre: genre, count: 100)) ?? []
+        }()
+
+        let nearby = await nearbyFetch
+        var genre = await genreFetch
+
+        // Prefer the same era when the seed is dated — a 1974 chanson and a 2024 one
+        // share a genre label and very little else.
+        if let seedYear = song.year, seedYear > 0 {
+            genre.sort { a, b in
+                let da = a.year.map { abs($0 - seedYear) } ?? Int.max
+                let db = b.year.map { abs($0 - seedYear) } ?? Int.max
+                return da < db
+            }
+        } else {
+            genre.shuffle()
+        }
+
+        // Artists the server calls close come first; the genre pool is what keeps the
+        // queue long enough to be worth having.
+        var tail = Self.deduplicated(nearby.shuffled() + genre, excluding: song.id)
+        if tail.count < 10 {
+            // No artist match and no genre — a library with bare tags. Rather than
+            // leave the queue empty, fall back to whatever the server offers.
+            let random = (try? await SubsonicClient.shared.getRandomSongs(server: server, size: 50)) ?? []
+            tail = Self.deduplicated(tail + random, excluding: song.id)
+        }
+        return Array(tail.prefix(limit))
+    }
+
+    /// Up to two albums' worth of music from each artist the server places near this
+    /// one, fetched concurrently. Every call here hits the library, not the internet.
+    private func songsByArtistsNear(_ song: Song, server: ServerConfig) async -> [Song] {
+        guard let artistId = song.artistId, !artistId.isEmpty else { return [] }
+        guard let info = try? await SubsonicClient.shared.getArtistInfo2(server: server, id: artistId, count: 12),
+              let similar = info.similarArtist, !similar.isEmpty else { return [] }
+
+        // The seed's own artist belongs in the mix too, and costs nothing extra.
+        let ids = ([artistId] + similar.map(\.id)).filter { !$0.isEmpty }.prefix(10)
+
+        return await withTaskGroup(of: [Song].self) { group in
+            for id in ids {
+                group.addTask {
+                    guard let artist = try? await SubsonicClient.shared.getArtist(server: server, id: id),
+                          let albums = artist.album else { return [] }
+                    var songs: [Song] = []
+                    for album in albums.shuffled().prefix(2) {
+                        if let full = try? await SubsonicClient.shared.getAlbum(server: server, id: album.id) {
+                            songs += full.song ?? []
+                        }
+                    }
+                    return songs
+                }
+            }
+            var all: [Song] = []
+            for await songs in group { all += songs }
+            return all
         }
     }
 
