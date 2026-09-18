@@ -147,6 +147,39 @@ final class ArtworkCache: @unchecked Sendable {
         Int(image.size.width * image.size.height * 4)
     }
 
+    /// The last few full-size covers, held strongly so nothing can take them away.
+    ///
+    /// `NSCache` evicts whenever it feels like it, and now that entries carry their real
+    /// byte cost, the biggest image in the app — the one filling the Now Playing screen —
+    /// is the first to go. Losing it meant that reopening the screen had to fetch the
+    /// cover again, and until it arrived the view showed either a smaller copy or Aura's
+    /// own placeholder. Four is the song playing plus its neighbours in the queue; at
+    /// hero resolution that is about 25 MB, which is worth it for the one picture the
+    /// user is actually looking at.
+    private var pinned: [(key: String, image: PlatformImage)] = []
+    private static let pinnedLimit = 4
+    /// Only full-size covers are worth pinning; thumbnails are cheap to rebuild.
+    private static let pinnableWidth: CGFloat = 700
+    private let pinLock = NSLock()
+
+    private func pinIfLarge(_ image: PlatformImage, for key: String) {
+        guard image.size.width >= Self.pinnableWidth else { return }
+        pinLock.lock(); defer { pinLock.unlock() }
+        pinned.removeAll { $0.key == key }
+        pinned.append((key, image))
+        if pinned.count > Self.pinnedLimit { pinned.removeFirst(pinned.count - Self.pinnedLimit) }
+    }
+
+    private func pinnedImage(for key: String) -> PlatformImage? {
+        pinLock.lock(); defer { pinLock.unlock() }
+        return pinned.first { $0.key == key }?.image
+    }
+
+    private func unpinAll(matching coverArt: String) {
+        pinLock.lock(); defer { pinLock.unlock() }
+        pinned.removeAll { $0.key.hasPrefix("\(coverArt)_") }
+    }
+
     private static func sha256Hex(_ data: Data) -> String {
         SHA256.hash(data: data).compactMap { String(format: "%02x", $0) }.joined()
     }
@@ -268,6 +301,7 @@ final class ArtworkCache: @unchecked Sendable {
     }
 
     func image(for key: String) -> PlatformImage? {
+        if let pinned = pinnedImage(for: key) { return pinned }
         let nsKey = key as NSString
         if let img = memoryCache.object(forKey: nsKey) { return img }
         let hash = SHA256.hash(data: Data(key.utf8)).compactMap { String(format: "%02x", $0) }.joined()
@@ -276,7 +310,24 @@ final class ArtworkCache: @unchecked Sendable {
             // Same cost as `store`: an image promoted from disk occupies exactly as much
             // memory as one that arrived over the network, and cost 0 would exempt it.
             memoryCache.setObject(img, forKey: nsKey, cost: Self.decodedByteCost(img))
+            pinIfLarge(img, for: key)
             return img
+        }
+        return nil
+    }
+
+    /// The largest copy of this cover already in hand that is at least `minSize` — the
+    /// answer to "do we need to go to the network at all?".
+    ///
+    /// Reopening Now Playing used to re-fetch the cover it had just shown, because the
+    /// view only looked for the one exact key it wanted. An 800-pixel copy satisfies a
+    /// request for 800 and is the best there will ever be for a cover the server holds
+    /// at 800 — asking again buys nothing and risks showing a placeholder while it waits.
+    func cachedImage(forCoverArt coverArt: String, atLeast minSize: Int,
+                     cacheToken: String? = nil) -> (image: PlatformImage, size: Int)? {
+        for size in [Self.heroSize, Self.fullSize, Self.thumbSize] where size >= minSize {
+            let key = cacheToken.map { "\(coverArt)_\($0)_\(size)" } ?? "\(coverArt)_\(size)"
+            if let img = image(for: key) { return (img, size) }
         }
         return nil
     }
@@ -305,6 +356,7 @@ final class ArtworkCache: @unchecked Sendable {
         // images of whatever size, which at hero resolution is gigabytes. Decoded bytes
         // are what they actually occupy.
         memoryCache.setObject(image, forKey: nsKey, cost: Self.decodedByteCost(image))
+        pinIfLarge(image, for: key)
         let hash = SHA256.hash(data: Data(key.utf8)).compactMap { String(format: "%02x", $0) }.joined()
         let fileURL = diskCacheURL.appendingPathComponent(hash)
         Task.detached(priority: .utility) {
@@ -329,6 +381,7 @@ final class ArtworkCache: @unchecked Sendable {
 
     /// Remove all cached images
     func clearAll() {
+        pinLock.lock(); pinned.removeAll(); pinLock.unlock()
         memoryCache.removeAllObjects()
         if let files = try? FileManager.default.contentsOfDirectory(at: diskCacheURL, includingPropertiesForKeys: nil) {
             for file in files {
@@ -552,6 +605,7 @@ final class ArtworkCache: @unchecked Sendable {
 
     /// Remove all cached images for a given cover art ID (all sizes)
     func removeImages(forCoverArt coverArt: String) {
+        unpinAll(matching: coverArt)
         // Normalized thumbnail buckets + common exact retina sizes for large displays
         // 300 is `thumbSize`, the bucket every list row uses: leaving it out meant a
         // cover could be "removed" and still be exactly what the next list drew.
@@ -747,14 +801,15 @@ struct CoverArtAsyncImage: View {
         image != nil && loadedCoverArt == coverArt && loadedSize >= requestSize
     }
 
-    /// Load from memory/disk cache synchronously to avoid placeholder flash on re-appear
+    /// Load from memory/disk cache synchronously to avoid placeholder flash on re-appear.
+    /// Any copy at least as large as the one wanted counts — a cover the server only
+    /// holds at 800 pixels is already as good as it will ever get.
     private func loadFromCacheSync() {
         guard !haveSharpEnough, let coverArt else { return }
-        let key = cacheKey(for: coverArt)
-        if let cached = ArtworkCache.shared.image(for: key) {
-            image = cached
+        if let cached = ArtworkCache.shared.cachedImage(forCoverArt: coverArt, atLeast: requestSize) {
+            image = cached.image
             loadedCoverArt = coverArt
-            loadedSize = requestSize
+            loadedSize = cached.size
         }
     }
 
@@ -764,20 +819,20 @@ struct CoverArtAsyncImage: View {
             return
         }
         let key = cacheKey(for: coverArt)
-        // If coverArt changed, try cache first before clearing
-        if loadedCoverArt != coverArt {
-            if let cached = ArtworkCache.shared.image(for: key) {
-                await MainActor.run {
-                    self.image = cached
-                    self.loadedCoverArt = coverArt
-                    self.loadedSize = requestSize
-                }
-                return
+        // Anything already in hand that is big enough ends it here — no network, no
+        // window during which the screen shows a smaller copy or a placeholder.
+        if !haveSharpEnough,
+           let cached = ArtworkCache.shared.cachedImage(forCoverArt: coverArt, atLeast: requestSize) {
+            await MainActor.run {
+                self.image = cached.image
+                self.loadedCoverArt = coverArt
+                self.loadedSize = cached.size
             }
+            return
         }
         // Already loaded for this cover, at this size or better. Shrinking to the
         // 44-point lyrics header must NOT throw the hero copy away and fetch a
-        // thumbnail: the picture would come back blurred the next time it grows.
+        // thumbnail: the picture would come back coarse the next time it grows.
         if haveSharpEnough { return }
         if let result = await ArtworkCache.shared.fetchImage(coverArt: coverArt, requestSize: requestSize, key: key) {
             await MainActor.run {
