@@ -57,6 +57,7 @@ struct HomeView: View {
     @State private var isLoading = true
     @State private var appSettings = AppSettings.shared
     @State private var mixGenerator = MixGenerator.shared
+    @State private var radarService = RadarService.shared
     @State private var navPath = NavigationPath()
     @State private var songCount: Int = 0
     @State private var albumCount: Int = 0
@@ -169,7 +170,7 @@ struct HomeView: View {
             // Tapping a "mix" source on Now Playing brings us here — open that mix.
             guard let id = newId else { return }
             player.pendingMixId = nil
-            guard let mix = mixGenerator.mixes.first(where: { $0.id == id }) else { return }
+            guard let mix = shelf.first(where: { $0.id == id }) else { return }
             // Pop to root first so we don't stack a SECOND copy when the mix is already
             // open in the background (the source was launched from its own detail view).
             if !navPath.isEmpty { navPath = NavigationPath() }
@@ -187,8 +188,10 @@ struct HomeView: View {
             // Generate / refresh "Made For You" mixes (cheap no-op when fresh)
             // concurrently with the main data load.
             async let mixRefresh: Void = mixGenerator.generateIfNeeded()
+            async let radarRefresh: Void = radarService.refreshIfNeeded()
             await loadData()
             await mixRefresh
+            await radarRefresh
         }
         .onChange(of: serverManager.currentServer?.id) { _, newId in
             // Server switched: clear the previous server's content immediately, then show
@@ -206,6 +209,7 @@ struct HomeView: View {
             Task {
                 await loadData(force: true)
                 await mixGenerator.generateIfNeeded()
+                await radarService.refreshIfNeeded()
             }
         }
     }
@@ -328,7 +332,7 @@ struct HomeView: View {
                 }
 
                 // Made For You — auto-generated mixes
-                if !mixGenerator.mixes.isEmpty {
+                if !shelf.isEmpty {
                     madeForYouSection
                 }
 
@@ -370,6 +374,14 @@ struct HomeView: View {
 
     // MARK: - Made For You (auto-mixes)
 
+    /// The generated mixes, with the radar second — after the mix for right now — once it
+    /// has found something.
+    private var shelf: [Mix] {
+        let mixes = mixGenerator.mixes
+        guard appSettings.radarEnabled, let radar = radarService.current, !radar.releases.isEmpty else { return mixes }
+        return Array(mixes.prefix(1)) + [radar.mix] + Array(mixes.dropFirst())
+    }
+
     private var madeForYouSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -383,7 +395,7 @@ struct HomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 14) {
-                    ForEach(mixGenerator.mixes) { mix in
+                    ForEach(shelf) { mix in
                         NavigationLink(value: mix) {
                             VStack(alignment: .leading, spacing: 6) {
                                 EditorialMixCover(mix: mix, size: 150, cornerRadius: 12)

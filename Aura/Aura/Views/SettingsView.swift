@@ -171,6 +171,7 @@ struct SettingsView: View {
                 equalizerSection
                 lastfmSection
                 wrappedSection
+                radarSection
             }
             // The system's grouped rows are the canvas's own shade in dark mode; lift them.
             .listRowBackground(Color.themeGroupedBg)
@@ -494,6 +495,18 @@ struct SettingsView: View {
             Text(appSettings.lastfmConfigured
                  ? "Your year & month in music, from your Last.fm scrobbles. When shown on Home, it appears around the end of each period."
                  : "Your year & month in music. Connect Last.fm above for full history, or it uses this device's play log. When shown on Home, it appears around the end of each period.")
+        }
+    }
+
+    private var radarSection: some View {
+        Section {
+            Toggle(isOn: $appSettings.radarEnabled) {
+                Label("Show Radar on Home", systemImage: "dot.radiowaves.left.and.right")
+            }
+        } header: {
+            Text("Release Radar")
+        } footer: {
+            Text("New releases from the artists you play most, found in Deezer's public catalogue. Only artist names are sent.")
         }
     }
 

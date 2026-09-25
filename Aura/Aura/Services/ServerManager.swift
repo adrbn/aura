@@ -91,6 +91,9 @@ final class ServerManager {
         // The server's generated mixes are only meaningful against it, so they go too —
         // otherwise they'd sit in defaults forever under an id nothing can reach again.
         MixCache().removeAll(for: server.id)
+        #if os(iOS)
+        RadarStore.removeAll(for: server.id)
+        #endif
         servers.removeAll { $0.id == server.id }
         saveServers()
         if currentServer?.id == server.id {

@@ -107,6 +107,10 @@
 		E100000100000000000000FC /* CoverTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FC /* CoverTemplates.swift */; };
 		E100000100000000000000FD /* EditorialCovers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FD /* EditorialCovers.swift */; };
 		E100000100000000000000FE /* PageTint.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FE /* PageTint.swift */; };
+		E1000001000000000000A001 /* RadarCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A001 /* RadarCatalog.swift */; };
+		E1000001000000000000A002 /* RadarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A002 /* RadarService.swift */; };
+		E1000001000000000000A003 /* RadarReleasesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A003 /* RadarReleasesSection.swift */; };
+		E1000001000000000000A004 /* RadarRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A004 /* RadarRulesTests.swift */; };
 		E10000010000000000000034 /* SongsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000034 /* SongsListView.swift */; };
 		E10000010000000000000040 /* MusicPlaybackAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000040 /* MusicPlaybackAttributes.swift */; };
 		E10000010000000000000041 /* MusicPlaybackAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000040 /* MusicPlaybackAttributes.swift */; };
@@ -281,6 +285,10 @@
 		E100000200000000000000FC /* CoverTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverTemplates.swift; sourceTree = "<group>"; };
 		E100000200000000000000FD /* EditorialCovers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorialCovers.swift; sourceTree = "<group>"; };
 		E100000200000000000000FE /* PageTint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageTint.swift; sourceTree = "<group>"; };
+		E1000002000000000000A001 /* RadarCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarCatalog.swift; sourceTree = "<group>"; };
+		E1000002000000000000A002 /* RadarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarService.swift; sourceTree = "<group>"; };
+		E1000002000000000000A003 /* RadarReleasesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarReleasesSection.swift; sourceTree = "<group>"; };
+		E1000002000000000000A004 /* RadarRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarRulesTests.swift; sourceTree = "<group>"; };
 		E10000020000000000000034 /* SongsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongsListView.swift; sourceTree = "<group>"; };
 		E10000020000000000000040 /* MusicPlaybackAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlaybackAttributes.swift; sourceTree = "<group>"; };
 		E10000020000000000000041 /* MusicLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicLiveActivity.swift; sourceTree = "<group>"; };
@@ -411,6 +419,7 @@
 				AA11BB22CC33DD44EE55F002 /* MixCacheTests.swift */,
 				AA11BB22CC33DD44EE55F302 /* SearchArtistTests.swift */,
 				AA11BB22CC33DD44EE55F402 /* LyricWordTimingTests.swift */,
+				E1000002000000000000A004 /* RadarRulesTests.swift */,
 			);
 			name = AuraTests;
 			path = AuraTests;
@@ -534,6 +543,8 @@
 				A747572DB3C445E463CCE4D8 /* Platform.swift */,
 				E789F4384A074A1B5C0CC509 /* PinSync.swift */,
 				E100000200000000000000F9 /* FaceFraming.swift */,
+				E1000002000000000000A001 /* RadarCatalog.swift */,
+				E1000002000000000000A002 /* RadarService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -572,6 +583,7 @@
 				E100000200000000000000DB /* SettingsSaveModifiers.swift */,
 				E100000200000000000000DC /* HomeFullLists.swift */,
 				E100000200000000000000DD /* RecentlyPlayedSongsView.swift */,
+				E1000002000000000000A003 /* RadarReleasesSection.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -923,6 +935,7 @@
 				AA11BB22CC33DD44EE55F001 /* MixCacheTests.swift in Sources */,
 				AA11BB22CC33DD44EE55F301 /* SearchArtistTests.swift in Sources */,
 				AA11BB22CC33DD44EE55F401 /* LyricWordTimingTests.swift in Sources */,
+				E1000001000000000000A004 /* RadarRulesTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1019,6 +1032,9 @@
 				B588F5C510ADD0E5A079AF5D /* MixCollageView.swift in Sources */,
 				2A26205247DC4A5946E2A737 /* PinSync.swift in Sources */,
 				E384C913F8C88AB732ED752D /* MusicEntities.swift in Sources */,
+				E1000001000000000000A001 /* RadarCatalog.swift in Sources */,
+				E1000001000000000000A002 /* RadarService.swift in Sources */,
+				E1000001000000000000A003 /* RadarReleasesSection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

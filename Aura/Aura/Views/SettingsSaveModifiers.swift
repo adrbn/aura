@@ -58,6 +58,7 @@ private struct SettingsSaveModifier4: ViewModifier {
             .onChange(of: s.lyricsOffset) { _, _ in s.save() }
             .onChange(of: s.alphaAutoHideToolbar) { _, _ in s.save() }
             .onChange(of: s.wrappedShowOnHome) { _, _ in s.save() }
+            .onChange(of: s.radarEnabled) { _, _ in s.save() }
             // Last.fm username/key are NOT auto-saved here: the Last.fm section owns an
             // explicit Save button that validates the key before persisting.
     }

@@ -139,6 +139,9 @@ final class AppSettings {
     /// Wrapped is reached from its explicit entry in Settings, and (when this is on)
     /// only during its seasonal windows. Configuring Last.fm no longer force-shows it.
     var wrappedShowOnHome: Bool = false
+    /// Whether the release radar looks up new releases (in Deezer's public catalogue) and
+    /// shows them on Home. On by default; off, nothing is sent.
+    var radarEnabled: Bool = true
 
     private let settingsKey = "musika_app_settings"
     private static let slskdKeychainAccount = "slskd-external-service"
@@ -210,6 +213,7 @@ final class AppSettings {
             lastfmUsername = decoded.lastfmUsername ?? ""
             lastfmApiKey = KeychainHelper.loadPassword(for: Self.lastfmKeychainAccount) ?? ""
             wrappedShowOnHome = decoded.wrappedShowOnHome ?? false
+            radarEnabled = decoded.radarEnabled ?? true
         }
     }
 
@@ -247,7 +251,8 @@ final class AppSettings {
             lyricsOffset: lyricsOffset,
             alphaAutoHideToolbar: alphaAutoHideToolbar,
             lastfmUsername: lastfmUsername,
-            wrappedShowOnHome: wrappedShowOnHome
+            wrappedShowOnHome: wrappedShowOnHome,
+            radarEnabled: radarEnabled
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: settingsKey)
@@ -332,6 +337,7 @@ struct SettingsData: Codable {
     var alphaAutoHideToolbar: Bool?
     var lastfmUsername: String?
     var wrappedShowOnHome: Bool?
+    var radarEnabled: Bool?
 }
 
 enum AppAccentColor: String, Codable, CaseIterable {

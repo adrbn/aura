@@ -11,6 +11,7 @@ enum MixKind: String, Codable {
     case genre          // one mix per top genre
     case discovery      // fresh, unheard songs
     case retrospective  // month / year "wrapped"
+    case radar          // new releases from the artists played most
     case generic
 }
 
@@ -25,15 +26,19 @@ struct Mix: Identifiable, Codable, Hashable {
     let kind: MixKind?
     /// Drives the cover template: a genre name, daypart, mood key, or period label.
     let templateSeed: String?
+    /// Who the cover shows, when that isn't simply who plays most in `songs` — the radar's
+    /// artists, some of whose releases aren't on the server yet.
+    let coverArtists: [ArtistRef]?
 
     init(id: String, title: String, subtitle: String, songs: [Song],
-         kind: MixKind? = nil, templateSeed: String? = nil) {
+         kind: MixKind? = nil, templateSeed: String? = nil, coverArtists: [ArtistRef]? = nil) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
         self.songs = songs
         self.kind = kind
         self.templateSeed = templateSeed
+        self.coverArtists = coverArtists
     }
 
     var coverArt: String? { songs.first?.coverArt }
@@ -57,7 +62,7 @@ struct Mix: Identifiable, Codable, Hashable {
         case .timeOfDay:      return templateSeed.map { .daypart($0) }
         case .mood:           return templateSeed.map { .mood($0) }
         case .retrospective:  return .retrospective(templateSeed ?? title)
-        case .discovery, .generic: return nil
+        case .discovery, .radar, .generic: return nil
         }
     }
 }

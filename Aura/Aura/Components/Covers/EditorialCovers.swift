@@ -52,7 +52,7 @@ struct MixCoverSpec {
 
     init(_ mix: Mix) {
         seed = mix.id
-        artists = CoverArtists.ranked(mix.songs)
+        artists = mix.coverArtists ?? CoverArtists.ranked(mix.songs)
         let leadId = artists.first?.id
         fallbackCoverArt = (mix.songs.first { CoverArtists.lead(of: $0)?.id == leadId } ?? mix.songs.first)?
             .displayCoverArt
@@ -69,6 +69,8 @@ struct MixCoverSpec {
             template = .mix(kicker: String(localized: "Mix"), title: Self.mood(key))
         case .discovery:
             template = .mix(kicker: String(localized: "For You"), title: String(localized: "Discoveries"))
+        case .radar:
+            template = .mix(kicker: String(localized: "New Releases"), title: String(localized: "Radar"))
         case .retrospective:
             template = .year(period: mix.templateSeed ?? mix.title)
         case .generic:

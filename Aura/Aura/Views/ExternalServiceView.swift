@@ -34,6 +34,9 @@ struct ExternalServiceView: View {
 // MARK: - Native slskd Search View
 
 struct SlskdSearchView: View {
+    /// Searched for as soon as the view appears — the radar opens it on a missing release.
+    var initialQuery: String = ""
+
     @Environment(\.appAccentColor) private var accentColor
     @State private var searchQuery = ""
     @State private var isSearching = false
@@ -336,6 +339,11 @@ struct SlskdSearchView: View {
                 .frame(height: 80)
         }
         .scrollIndicators(.hidden)
+        .task {
+            guard !initialQuery.isEmpty, searchQuery.isEmpty else { return }
+            searchQuery = initialQuery
+            startSearch()
+        }
     }
 
     // MARK: - Filter Pills
