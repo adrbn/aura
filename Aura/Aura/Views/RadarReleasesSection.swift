@@ -6,24 +6,12 @@ struct RadarMissingRows: View {
     let releases: [RadarRelease]
 
     var body: some View {
-        Text("Not in your library yet")
-            .font(.title3.bold())
-            .padding(.top, 20)
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-
         ForEach(releases) { release in
             RadarReleaseRow(release: release)
                 .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
                                           bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 16))
                 .listRowBackground(Color.clear)
         }
-
-        Text("Found in Deezer's catalogue — tap one to hear it. A release joins the playlist above once it's on your server.")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
     }
 }
 
@@ -32,6 +20,7 @@ struct RadarReleaseRow: View {
 
     @Environment(AudioPlayer.self) private var player
     @Environment(\.openURL) private var openURL
+    @Environment(\.appAccentColor) private var accentColor
     @State private var showSoulseek = false
     @State private var isLoadingPreview = false
 
@@ -69,13 +58,15 @@ struct RadarReleaseRow: View {
             Group {
                 if isLoadingPreview {
                     ProgressView()
+                } else if canSearchSoulseek {
+                    getControl
                 } else {
                     Image(systemName: "play.circle")
                         .font(.title3)
                         .foregroundStyle(.tertiary)
                 }
             }
-            .frame(width: 28)
+            .frame(width: 32)
         }
         .contentShape(Rectangle())
         .onTapGesture { Task { await playPreviews() } }
@@ -89,8 +80,13 @@ struct RadarReleaseRow: View {
                 }
             }
             if canSearchSoulseek {
+                #if !APPSTORE_BUILD
+                Button { ReleaseFetcher.shared.get(release) } label: {
+                    Label("Get It", systemImage: "arrow.down.circle")
+                }
+                #endif
                 Button { showSoulseek = true } label: {
-                    Label("Search on Soulseek", systemImage: "magnifyingglass")
+                    Label("Search by Hand", systemImage: "magnifyingglass")
                 }
             }
             Button { player.pendingArtistId = release.artist.id } label: {
@@ -122,6 +118,33 @@ struct RadarReleaseRow: View {
         player.isShowingNowPlaying = true
     }
 
+    /// Gets the release in one tap, then shows how far along it is.
+    @ViewBuilder
+    private var getControl: some View {
+        #if !APPSTORE_BUILD
+        let fetch = ReleaseFetcher.shared.fetch(for: release.id)
+        switch fetch?.stage {
+        case .searching?, .downloading?, .importing?:
+            FetchRing(fetch: fetch!)
+        case .ready?:
+            Image(systemName: "checkmark.circle.fill")
+                .font(.title3)
+                .foregroundStyle(accentColor)
+                .accessibilityLabel("In your library")
+        default:
+            Button { ReleaseFetcher.shared.get(release) } label: {
+                Image(systemName: fetch?.stage == .failed ? "arrow.clockwise.circle" : "arrow.down.circle")
+                    .font(.title3)
+                    .foregroundStyle(fetch?.stage == .failed ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
+                    .frame(width: 32, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Get It")
+        }
+        #endif
+    }
+
     private var dateLabel: String {
         release.releaseDate?.formatted(.dateTime.month(.abbreviated).day()) ?? release.released
     }
@@ -142,3 +165,33 @@ struct RadarReleaseRow: View {
         #endif
     }
 }
+
+#if !APPSTORE_BUILD
+/// A fetch's progress as a small ring: the download's share, or a spinning arc while it
+/// searches or waits for the server.
+private struct FetchRing: View {
+    let fetch: ReleaseFetch
+    @Environment(\.appAccentColor) private var accentColor
+    @State private var spin = false
+
+    var body: some View {
+        let determinate = fetch.stage == .downloading && fetch.progress > 0
+        ZStack {
+            Circle().stroke(Color.primary.opacity(0.15), lineWidth: 2.5)
+            Circle()
+                .trim(from: 0, to: determinate ? max(0.04, fetch.progress) : 0.25)
+                .stroke(accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .rotationEffect(.degrees(determinate ? -90 : (spin ? 270 : -90)))
+                .animation(determinate ? .easeInOut(duration: 0.3)
+                           : .linear(duration: 1.2).repeatForever(autoreverses: false), value: spin)
+                .animation(.easeInOut(duration: 0.3), value: fetch.progress)
+            Image(systemName: fetch.stage == .importing ? "tray.and.arrow.down.fill" : "arrow.down")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(width: 22, height: 22)
+        .onAppear { spin = true }
+        .accessibilityLabel(fetch.headline)
+    }
+}
+#endif

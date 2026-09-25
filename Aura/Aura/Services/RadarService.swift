@@ -18,6 +18,12 @@ struct Radar: Codable {
         RadarRules.playlist(releases.compactMap { release in inLibrary[release.id].map { (release: release, songs: $0) } })
     }
 
+    /// The radar's page before its first run, filled in live once the run lands.
+    static var emptyMix: Mix {
+        Mix(id: "radar", title: String(localized: "Radar"),
+            subtitle: String(localized: "New releases from your artists"), songs: [], kind: .radar)
+    }
+
     var mix: Mix {
         var seen = Set<String>()
         let artists = releases.map(\.artist).filter { seen.insert($0.id).inserted }
@@ -45,6 +51,17 @@ final class RadarService {
 
     private static let catalogueAge: TimeInterval = 20 * 3600
     private static let libraryAge: TimeInterval = 3600
+
+    /// Deezer's track lists for the releases the server lacks, for their previews. Held for
+    /// the session only: a preview's address stops working after a quarter of an hour.
+    private(set) var trackLists: [String: TrackList] = [:]
+    private var trackListTask: Task<Void, Never>?
+    private static let previewAge: TimeInterval = 10 * 60
+
+    struct TrackList {
+        let tracks: [DeezerTrack]
+        let fetched: Date
+    }
 
     private init() {
         radar = ServerManager.shared.currentServer.flatMap { RadarStore.load(for: $0.id) }
@@ -75,6 +92,67 @@ final class RadarService {
         }
         refreshTask = task
         await task.value
+    }
+
+    // MARK: Previews
+
+    /// Fetches the track lists of the missing releases that have none yet, or one too old to
+    /// play from. Callers arriving meanwhile wait for the same run.
+    func loadTrackLists() async {
+        if let trackListTask { return await trackListTask.value }
+        guard let radar = current else { return }
+        let now = Date()
+        let due = radar.missing.filter { release in
+            trackLists[release.id].map { now.timeIntervalSince($0.fetched) > Self.previewAge } ?? true
+        }
+        guard !due.isEmpty else { return }
+        let task = Task {
+            for release in due {
+                // Deezer out of reach: the release is left out rather than the whole run.
+                guard let tracks = await RadarCatalog.tracks(albumId: release.id) else { continue }
+                trackLists[release.id] = TrackList(tracks: tracks, fetched: Date())
+            }
+            trackListTask = nil
+        }
+        trackListTask = task
+        await task.value
+    }
+
+    /// Everything the radar plays: the server's tracks for what it has, Deezer's previews —
+    /// the releases' most-played tracks — for the rest, newest release first.
+    var queue: [Song] {
+        guard let radar = current else { return [] }
+        return RadarRules.playlist(radar.releases.compactMap { release in
+            if let songs = radar.inLibrary[release.id] { return (release: release, songs: songs) }
+            guard let list = trackLists[release.id] else { return nil }
+            let ranked = list.tracks.sorted { ($0.rank ?? 0) > ($1.rank ?? 0) }
+            return (release: release, songs: ranked.compactMap { $0.previewSong(of: release) })
+        })
+    }
+
+    /// The release a preview comes from, if the radar still lists it.
+    func release(of preview: Song) -> RadarRelease? {
+        guard preview.isPreview else { return nil }
+        return current?.releases.first { $0.title == preview.album && $0.artist.id == preview.artistId }
+    }
+
+    /// Looks for one release on the server now, rather than at the next hourly match, and
+    /// moves it into the playlist when it's there. Nil while it isn't.
+    func lookUp(_ release: RadarRelease) async -> [Song]? {
+        guard let server = ServerManager.shared.currentServer else { return nil }
+        let albums = (try? await SubsonicClient.shared.getArtist(server: server, id: release.artist.id))?.album ?? []
+        guard let found = await Self.find(release, among: albums, server: server) else { return nil }
+        let songs = RadarRules.newSongs(found, of: release)
+        guard !songs.isEmpty else { return nil }
+        if let radar = current, radar.releases.contains(where: { $0.id == release.id }) {
+            var inLibrary = radar.inLibrary
+            inLibrary[release.id] = Array(songs.prefix(RadarRules.perRelease))
+            let updated = Radar(serverId: radar.serverId, releases: radar.releases, fetched: radar.fetched,
+                                inLibrary: inLibrary, matched: radar.matched)
+            RadarStore.save(updated)
+            self.radar = updated
+        }
+        return songs
     }
 
     private func refresh(server: ServerConfig, catalogue staleCatalogue: Bool) async {

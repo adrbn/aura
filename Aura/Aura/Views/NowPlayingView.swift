@@ -1525,22 +1525,80 @@ struct SongActionsRow: View {
 
     var body: some View {
         if song.isPreview {
-            previewBadge
+            HStack(spacing: 6) {
+                #if !APPSTORE_BUILD
+                if ReleaseFetcher.shared.isAvailable { getButton }
+                #endif
+                previewBadge
+            }
         } else {
             actions
         }
     }
 
-    /// A release not on the server yet: nothing to star, queue or download — only heard.
+    /// A release not on the server yet: nothing to queue or download from it — only heard,
+    /// or, in the sideload build, fetched.
     private var previewBadge: some View {
-        Text("Preview")
+        Text(badgeText)
             .font(.caption.weight(.semibold))
+            .monospacedDigit()
             .foregroundStyle(.white.opacity(0.85))
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(.white.opacity(0.15), in: Capsule())
-            .accessibilityLabel("Thirty-second preview")
+            .contentTransition(.numericText())
+            .animation(.easeInOut, value: badgeText)
+            .accessibilityLabel(badgeText == String(localized: "Preview") ? String(localized: "Thirty-second preview") : badgeText)
     }
+
+    private var badgeText: String {
+        #if !APPSTORE_BUILD
+        if let fetch = releaseFetch {
+            switch fetch.stage {
+            case .searching: return String(localized: "Searching…")
+            case .downloading:
+                return fetch.progress > 0
+                    ? fetch.progress.formatted(.percent.precision(.fractionLength(0)))
+                    : String(localized: "Queued…")
+            case .importing: return String(localized: "Adding…")
+            case .ready: return String(localized: "In your library")
+            case .failed: break
+            }
+        }
+        #endif
+        return String(localized: "Preview")
+    }
+
+    #if !APPSTORE_BUILD
+    private var releaseFetch: ReleaseFetch? {
+        RadarService.shared.release(of: song).flatMap { ReleaseFetcher.shared.fetch(for: $0.id) }
+    }
+
+    /// Liking a preview gets its release: found on Soulseek, downloaded, added to the
+    /// server — and the song starred once it's there.
+    private var getButton: some View {
+        let fetch = releaseFetch
+        let isOn = fetch != nil && fetch?.stage != .failed
+        return Image(systemName: isOn ? "heart.fill" : "heart")
+            .font(.title3)
+            .foregroundStyle(isOn ? accentColor : .white.opacity(0.7))
+            .symbolEffect(.pulse, options: .repeating, isActive: fetch?.isActive == true)
+            .scaleEffect(heartPop ? 1.35 : 1)
+            .frame(width: 36, height: 36)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard !isOn else { return }
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                ReleaseFetcher.shared.get(preview: song)
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.45)) { heartPop = true }
+                Task {
+                    try? await Task.sleep(for: .milliseconds(220))
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { heartPop = false }
+                }
+            }
+            .accessibilityLabel(isOn ? "Getting this release" : "Like, and get this release")
+    }
+    #endif
 
     private var actions: some View {
         HStack(spacing: 2) {

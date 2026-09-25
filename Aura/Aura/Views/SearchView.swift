@@ -65,6 +65,7 @@ extension View {
             .navigationDestination(for: Album.self) { AlbumDetailView(albumId: $0.id) }
             .navigationDestination(for: Artist.self) { ArtistDetailView(artistId: $0.id, artistName: $0.name, coverArt: $0.coverArt) }
             .navigationDestination(for: Playlist.self) { PlaylistDetailView(playlistId: $0.id) }
+            .navigationDestination(for: Mix.self) { MixDetailView(mix: $0) }
     }
 }
 
@@ -275,11 +276,19 @@ struct SearchResultsContainer: View {
                 .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
             }
 
+            ForEach(matchingMixes) { mix in
+                Button { navPath.append(mix) } label: { mixRow(mix) }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: appSettings.listDensity.verticalPadding + 2, leading: 16,
+                                              bottom: appSettings.listDensity.verticalPadding + 2, trailing: 16))
+            }
+
             ForEach(orderedSections(), id: \.self) { section in
                 sectionContent(section)
             }
 
-            if results.isEmpty && !isSearching && searchedQuery == trimmedQuery {
+            if results.isEmpty && matchingMixes.isEmpty && !isSearching && searchedQuery == trimmedQuery {
                 ContentUnavailableView.search(text: trimmedQuery)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -289,6 +298,42 @@ struct SearchResultsContainer: View {
         Color.clear.frame(height: 140)
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
+    }
+
+    // MARK: Made For You
+
+    /// The generated mixes a query names — a word of the title starting with it. The radar
+    /// answers to what it is as well as to its name.
+    private var matchingMixes: [Mix] {
+        let typed = SongQuery.fold(trimmedQuery)
+        guard typed.count >= 2 else { return [] }
+        var mixes = MixGenerator.shared.mixes
+        if appSettings.radarEnabled {
+            mixes.insert(RadarService.shared.current?.mix ?? Radar.emptyMix, at: 0)
+        }
+        return mixes.filter { mix in
+            var names = [mix.title]
+            if mix.kind == .radar {
+                names += [String(localized: "New releases"), "release radar", "nouveautés", "sorties"]
+            }
+            return names.contains { name in
+                let folded = SongQuery.fold(name)
+                return folded.hasPrefix(typed) || folded.split(separator: " ").contains { $0.hasPrefix(typed) }
+            }
+        }
+    }
+
+    private func mixRow(_ mix: Mix) -> some View {
+        HStack(spacing: 12) {
+            EditorialMixCover(mix: mix, size: 48, cornerRadius: 6)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(mix.title).font(.subheadline.weight(.medium)).lineLimit(1)
+                Text(mix.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+        }
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder

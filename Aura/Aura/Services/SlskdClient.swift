@@ -192,7 +192,7 @@ struct SlskdSearch: Codable {
     }
 }
 
-struct SlskdSearchResponse: Codable {
+struct SlskdSearchResponse: Codable, Hashable {
     let username: String
     let fileCount: Int
     let lockedFileCount: Int
@@ -203,7 +203,7 @@ struct SlskdSearchResponse: Codable {
     let lockedFiles: [SlskdFile]?
 }
 
-struct SlskdFile: Codable, Identifiable {
+struct SlskdFile: Codable, Identifiable, Hashable {
     let filename: String
     let size: Int64
     let bitRate: Int?
@@ -271,6 +271,8 @@ struct SlskdTransfer: Codable, Identifiable {
     let averageSpeed: Double?
     let endedAt: String?
     let startedAt: String?
+    /// Where the file waits in the peer's upload queue, while it does.
+    let placeInQueue: Int?
 
     var displayName: String {
         let parts = filename.replacingOccurrences(of: "\\", with: "/").split(separator: "/")

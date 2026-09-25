@@ -39,8 +39,7 @@ struct MixDetailView: View {
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
                         Button {
-                            guard let first = shown.songs.first else { return }
-                            player.playSong(first, fromQueue: shown.songs, startIndex: 0, source: source)
+                            Task { await play(shuffled: false) }
                         } label: {
                             Label("Play", systemImage: "play.fill")
                                 .font(.subheadline.weight(.semibold))
@@ -49,9 +48,9 @@ struct MixDetailView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .buttonStyle(.borderless)
-                        .disabled(shown.songs.isEmpty)
+                        .disabled(!canPlay)
                         Button {
-                            player.playShuffled(shown.songs, source: source)
+                            Task { await play(shuffled: true) }
                         } label: {
                             Label("Shuffle", systemImage: "shuffle")
                                 .font(.subheadline.weight(.semibold))
@@ -60,7 +59,7 @@ struct MixDetailView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .buttonStyle(.borderless)
-                        .disabled(shown.songs.isEmpty)
+                        .disabled(!canPlay)
                     }
 
                     // Hidden once this exact version of the mix has been saved; reappears
@@ -116,7 +115,11 @@ struct MixDetailView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: shown.songs.map(\.id)) { isSaved = MixGenerator.shared.isSavedAsPlaylist(shown) }
-        .task { if mix.kind == .radar { await radarService.refreshIfNeeded() } }
+        .task {
+            guard mix.kind == .radar else { return }
+            await radarService.refreshIfNeeded()
+            await radarService.loadTrackLists()
+        }
         .task(id: spec.taskKey) {
             let art = await MixCoverArt.load(spec)
             if !Task.isCancelled { tint = PageTint.tone(spec.accent(art)) }
@@ -151,7 +154,32 @@ struct MixDetailView: View {
 
     private var countLabel: String {
         guard let radar else { return String(localized: "\(mix.songs.count) songs") }
-        return String(localized: "\(radar.songs.count) songs · \(radar.releases.count) new releases")
+        // Counted once the previews are in, so it never reads "0 songs" over a page of them.
+        let songs = radarService.queue.count
+        guard songs > 0 else { return String(localized: "\(radar.releases.count) new releases") }
+        return String(localized: "\(songs) songs · \(radar.releases.count) new releases")
+    }
+
+    /// The radar plays its releases' previews too, so it has something to play as soon as it
+    /// has releases, whether or not the server has any of them.
+    private var canPlay: Bool {
+        guard let radar else { return !shown.songs.isEmpty }
+        return !radar.releases.isEmpty
+    }
+
+    private func play(shuffled: Bool) async {
+        var songs = shown.songs
+        if radar != nil {
+            // A preview's address lasts a quarter of an hour: fetch what has gone stale.
+            await radarService.loadTrackLists()
+            songs = radarService.queue
+        }
+        guard let first = songs.first else { return }
+        if shuffled {
+            player.playShuffled(songs, source: source)
+        } else {
+            player.playSong(first, fromQueue: songs, startIndex: 0, source: source)
+        }
     }
 
     private var formattedToday: String {

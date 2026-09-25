@@ -125,7 +125,13 @@ struct HomeView: View {
                         }
                     }
                 }
-            .background(Color.themeBg)
+            .background {
+                ZStack {
+                    Color.themeBg
+                    WorkshopGrid()
+                }
+                .ignoresSafeArea()
+            }
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Album.self) { AlbumDetailView(albumId: $0.id) }
             .navigationDestination(for: Artist.self) { ArtistDetailView(artistId: $0.id, artistName: $0.name, coverArt: $0.coverArt) }
@@ -374,12 +380,11 @@ struct HomeView: View {
 
     // MARK: - Made For You (auto-mixes)
 
-    /// The generated mixes, with the radar second — after the mix for right now — once it
-    /// has found something.
+    /// The generated mixes, led by the radar once it has found something.
     private var shelf: [Mix] {
         let mixes = mixGenerator.mixes
         guard appSettings.radarEnabled, let radar = radarService.current, !radar.releases.isEmpty else { return mixes }
-        return Array(mixes.prefix(1)) + [radar.mix] + Array(mixes.dropFirst())
+        return [radar.mix] + mixes
     }
 
     private var madeForYouSection: some View {

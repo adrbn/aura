@@ -66,6 +66,7 @@ struct LibraryView: View {
                 case .artists: ArtistsFullListView()
                 case .albumArtists: ArtistsFullListView(albumArtistsOnly: true)
                 case .downloaded: DownloadManagerView()
+                case .radar: MixDetailView(mix: RadarService.shared.current?.mix ?? Radar.emptyMix)
                 }
             }
             .navigationDestination(for: Album.self) { album in

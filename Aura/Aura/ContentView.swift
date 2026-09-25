@@ -43,6 +43,11 @@ struct ContentView: View {
                         .onTapGesture { showDownloadManager = true }
                 }
 
+                #if !APPSTORE_BUILD
+                FetchProgressBanner(bottomGap: audioPlayer.hasQueue ? 6 : 57)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.visible.first?.id)
+                #endif
+
                 if audioPlayer.hasQueue {
                     MiniPlayerView()
                         .padding(.bottom, keyboardVisible ? 4 : 57)

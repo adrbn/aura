@@ -198,6 +198,8 @@ struct DeezerTrack: Decodable, Hashable, Identifiable {
     /// An MP3 of thirty seconds on Deezer's CDN; empty when the rights holder allows none.
     let preview: String?
     let track_position: Int?
+    /// Deezer's popularity score, for the tracks a release leads with.
+    let rank: Int?
     let artist: Credit?
 
     var previewURL: URL? {

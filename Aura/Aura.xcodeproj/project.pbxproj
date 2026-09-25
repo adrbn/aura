@@ -183,6 +183,14 @@
 		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
 		FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC935E192C9737FFC79738ED /* MacSongRow.swift */; };
 		FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
+		E1000001000000000000A008 /* SoulseekPick.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A008 /* SoulseekPick.swift */; };
+		E1000001000000000000A009 /* ReleaseFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A009 /* ReleaseFetcher.swift */; };
+		E1000001000000000000A00A /* ReleaseFetchAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00A /* ReleaseFetchAttributes.swift */; };
+		E1000001000000000000A00B /* ReleaseFetchAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00A /* ReleaseFetchAttributes.swift */; };
+		E1000001000000000000A00C /* ReleaseFetchLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00C /* ReleaseFetchLiveActivity.swift */; };
+		E1000001000000000000A00D /* FetchProgressBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00D /* FetchProgressBanner.swift */; };
+		E1000001000000000000A00E /* SoulseekPickTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00E /* SoulseekPickTests.swift */; };
+		E1000001000000000000A00F /* WorkshopGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00F /* WorkshopGrid.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -362,6 +370,13 @@
 		ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Aura-mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ECC9389652F34E463A5C765C /* MacSearchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSearchView.swift; sourceTree = "<group>"; };
 		FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistMembershipCache.swift; sourceTree = "<group>"; };
+		E1000002000000000000A008 /* SoulseekPick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoulseekPick.swift; sourceTree = "<group>"; };
+		E1000002000000000000A009 /* ReleaseFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetcher.swift; sourceTree = "<group>"; };
+		E1000002000000000000A00A /* ReleaseFetchAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetchAttributes.swift; sourceTree = "<group>"; };
+		E1000002000000000000A00C /* ReleaseFetchLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetchLiveActivity.swift; sourceTree = "<group>"; };
+		E1000002000000000000A00D /* FetchProgressBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchProgressBanner.swift; sourceTree = "<group>"; };
+		E1000002000000000000A00E /* SoulseekPickTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoulseekPickTests.swift; sourceTree = "<group>"; };
+		E1000002000000000000A00F /* WorkshopGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkshopGrid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -426,6 +441,7 @@
 				AA11BB22CC33DD44EE55F402 /* LyricWordTimingTests.swift */,
 				E1000002000000000000A004 /* RadarRulesTests.swift */,
 				E1000002000000000000A007 /* LyricsVersionTests.swift */,
+				E1000002000000000000A00E /* SoulseekPickTests.swift */,
 			);
 			name = AuraTests;
 			path = AuraTests;
@@ -514,6 +530,7 @@
 			children = (
 				E10000020000000000000011 /* Models.swift */,
 				E10000020000000000000040 /* MusicPlaybackAttributes.swift */,
+				E1000002000000000000A00A /* ReleaseFetchAttributes.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -551,6 +568,8 @@
 				E100000200000000000000F9 /* FaceFraming.swift */,
 				E1000002000000000000A001 /* RadarCatalog.swift */,
 				E1000002000000000000A002 /* RadarService.swift */,
+				E1000002000000000000A009 /* ReleaseFetcher.swift */,
+				E1000002000000000000A008 /* SoulseekPick.swift */,
 				E1000002000000000000A005 /* LyricsVersion.swift */,
 			);
 			path = Services;
@@ -591,6 +610,7 @@
 				E100000200000000000000DC /* HomeFullLists.swift */,
 				E100000200000000000000DD /* RecentlyPlayedSongsView.swift */,
 				E1000002000000000000A003 /* RadarReleasesSection.swift */,
+				E1000002000000000000A00D /* FetchProgressBanner.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -617,6 +637,7 @@
 				E10000020000000000000099 /* GeneratedCoverView.swift */,
 				E100000500000000000000FA /* Covers */,
 				E100000200000000000000F1 /* FullScreenImageViewer.swift */,
+				E1000002000000000000A00F /* WorkshopGrid.swift */,
 				E10000020000000000000086 /* CircularProgressView.swift */,
 				E10000020000000000000088 /* TappableArtistText.swift */,
 				40E8E704D9B72925B6B94399 /* ImageCropView.swift */,
@@ -649,6 +670,7 @@
 			isa = PBXGroup;
 			children = (
 				E10000020000000000000041 /* MusicLiveActivity.swift */,
+				E1000002000000000000A00C /* ReleaseFetchLiveActivity.swift */,
 				E10000020000000000000042 /* AuraWidgetBundle.swift */,
 			);
 			path = AuraWidget;
@@ -937,6 +959,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1000001000000000000A00E /* SoulseekPickTests.swift in Sources */,
 				7076A0E916BEEBA79DBB0125 /* SongQueryTests.swift in Sources */,
 				30CDA697DD9DFA3D48C1ADEA /* SongLinkServiceTests.swift in Sources */,
 				8D706C18449CC22207E37AA6 /* DisplayFontTests.swift in Sources */,
@@ -952,6 +975,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1000001000000000000A00F /* WorkshopGrid.swift in Sources */,
+				E1000001000000000000A00D /* FetchProgressBanner.swift in Sources */,
+				E1000001000000000000A00A /* ReleaseFetchAttributes.swift in Sources */,
+				E1000001000000000000A009 /* ReleaseFetcher.swift in Sources */,
+				E1000001000000000000A008 /* SoulseekPick.swift in Sources */,
 				E10000010000000000000001 /* AuraApp.swift in Sources */,
 				E10000010000000000000002 /* ContentView.swift in Sources */,
 				E10000010000000000000010 /* SubsonicClient.swift in Sources */,
@@ -1052,6 +1080,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1000001000000000000A00C /* ReleaseFetchLiveActivity.swift in Sources */,
+				E1000001000000000000A00B /* ReleaseFetchAttributes.swift in Sources */,
 				E10000010000000000000041 /* MusicPlaybackAttributes.swift in Sources */,
 				E10000010000000000000042 /* MusicLiveActivity.swift in Sources */,
 				E10000010000000000000043 /* AuraWidgetBundle.swift in Sources */,

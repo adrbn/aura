@@ -142,6 +142,8 @@ final class AppSettings {
     /// Whether the release radar looks up new releases (in Deezer's public catalogue) and
     /// shows them on Home. On by default; off, nothing is sent.
     var radarEnabled: Bool = true
+    /// Whether the Library has been given its Radar row once. Remove it, and it stays gone.
+    var radarInLibraryOffered: Bool = false
 
     private let settingsKey = "musika_app_settings"
     private static let slskdKeychainAccount = "slskd-external-service"
@@ -214,6 +216,12 @@ final class AppSettings {
             lastfmApiKey = KeychainHelper.loadPassword(for: Self.lastfmKeychainAccount) ?? ""
             wrappedShowOnHome = decoded.wrappedShowOnHome ?? false
             radarEnabled = decoded.radarEnabled ?? true
+            radarInLibraryOffered = decoded.radarInLibraryOffered ?? false
+        }
+        // The Radar joined the Library's rows after they were set up: offered once, on top.
+        if !radarInLibraryOffered {
+            if !enabledLibraryCategories.contains(.radar) { enabledLibraryCategories.insert(.radar, at: 0) }
+            radarInLibraryOffered = true
         }
     }
 
@@ -252,7 +260,8 @@ final class AppSettings {
             alphaAutoHideToolbar: alphaAutoHideToolbar,
             lastfmUsername: lastfmUsername,
             wrappedShowOnHome: wrappedShowOnHome,
-            radarEnabled: radarEnabled
+            radarEnabled: radarEnabled,
+            radarInLibraryOffered: radarInLibraryOffered
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: settingsKey)
@@ -338,6 +347,7 @@ struct SettingsData: Codable {
     var lastfmUsername: String?
     var wrappedShowOnHome: Bool?
     var radarEnabled: Bool?
+    var radarInLibraryOffered: Bool?
 }
 
 enum AppAccentColor: String, Codable, CaseIterable {
@@ -1038,6 +1048,7 @@ enum LibraryCategory: String, Codable, CaseIterable, Identifiable {
     case artists = "Artists"
     case albumArtists = "Album Artists"
     case downloaded = "Downloaded"
+    case radar = "Radar"
 
     var id: String { rawValue }
 
@@ -1053,11 +1064,12 @@ enum LibraryCategory: String, Codable, CaseIterable, Identifiable {
         case .artists: return "music.mic"
         case .albumArtists: return "person.2.fill"
         case .downloaded: return "arrow.down.circle.fill"
+        case .radar: return "dot.radiowaves.left.and.right"
         }
     }
 
     static var defaultEnabled: [LibraryCategory] {
-        [.songs, .recentlyPlayed, .albums, .favourites, .frequentlyPlayed, .random]
+        [.radar, .songs, .recentlyPlayed, .albums, .favourites, .frequentlyPlayed, .random]
     }
 }
 
