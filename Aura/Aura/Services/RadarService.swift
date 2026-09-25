@@ -153,10 +153,21 @@ final class RadarService {
         })
     }
 
-    /// The release a preview comes from, if the radar still lists it.
+    /// The release a preview comes from, if the radar still lists it — or Search turned it up.
     func release(of preview: Song) -> RadarRelease? {
         guard preview.isPreview else { return nil }
-        return current?.releases.first { $0.title == preview.album && $0.artist.id == preview.artistId }
+        let isIt = { (release: RadarRelease) in
+            release.title == preview.album && release.artist.libraryId == preview.artistId
+        }
+        return current?.releases.first(where: isIt) ?? elsewhere.values.first(where: isIt)
+    }
+
+    /// Releases met outside the radar, in Search, so their previews still know where they're
+    /// from. Kept for the session.
+    @ObservationIgnored private var elsewhere: [String: RadarRelease] = [:]
+
+    func remember(_ releases: [RadarRelease]) {
+        for release in releases { elsewhere[release.id] = release }
     }
 
     /// Looks for one release on the server now, rather than at the next hourly match, and

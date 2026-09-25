@@ -66,6 +66,7 @@ extension View {
             .navigationDestination(for: Artist.self) { ArtistDetailView(artistId: $0.id, artistName: $0.name, coverArt: $0.coverArt) }
             .navigationDestination(for: Playlist.self) { PlaylistDetailView(playlistId: $0.id) }
             .navigationDestination(for: Mix.self) { MixDetailView(mix: $0) }
+            .navigationDestination(for: RadarRelease.self) { RadarReleaseView(release: $0) }
     }
 }
 
@@ -92,6 +93,8 @@ struct SearchResultsContainer: View {
     @State private var searchedQuery = ""
     @State private var expandedSections: Set<String> = []
     @State private var history = SearchHistory.shared
+    /// What Deezer has for the query that the library doesn't.
+    @State private var deezer = DeezerFinds()
 
     private let collapsedLimit = 4
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespaces) }
@@ -115,6 +118,7 @@ struct SearchResultsContainer: View {
         .background(Color.themeBg)
         .task { SearchIndex.shared.prefetchIfNeeded() }
         .task(id: query) { await runSearch() }
+        .task(id: query) { await runDeezerSearch() }
         // What turns a look into a listen. An album or artist opened from search sits armed
         // until something from it actually plays.
         .onChange(of: player.playbackSource) { _, source in
@@ -153,6 +157,27 @@ struct SearchResultsContainer: View {
         results = found
         searchedQuery = q
         isSearching = false
+    }
+
+    /// Asks Deezer too — with the radar on, since it's Deezer's catalogue — and leaves out
+    /// what the library's own answer already holds, so it waits for that.
+    private func runDeezerSearch() async {
+        let q = trimmedQuery
+        guard appSettings.radarEnabled, q.count >= 2 else {
+            deezer = DeezerFinds()
+            return
+        }
+        if deezer.query == q { return }
+        try? await Task.sleep(for: .milliseconds(500))
+        if Task.isCancelled { return }
+        guard let found = await RadarCatalog.search(q), !Task.isCancelled else { return }
+        for _ in 0..<100 where searchedQuery != q {
+            try? await Task.sleep(for: .milliseconds(100))
+            if Task.isCancelled { return }
+        }
+        let finds = DeezerFinds(query: q, songs: found.songs, albums: found.albums, library: results)
+        RadarService.shared.remember(finds.releases + finds.songs.map(\.release))
+        deezer = finds
     }
 
     // MARK: Recently searched (history with thumbnails)
@@ -288,7 +313,13 @@ struct SearchResultsContainer: View {
                 sectionContent(section)
             }
 
-            if results.isEmpty && matchingMixes.isEmpty && !isSearching && searchedQuery == trimmedQuery {
+            let deezerShown = deezer.query == trimmedQuery && !deezer.isEmpty
+            if deezerShown {
+                DeezerSearchRows(finds: deezer, navPath: $navPath)
+                    .id(deezer.query)
+            }
+
+            if results.isEmpty && matchingMixes.isEmpty && !deezerShown && !isSearching && searchedQuery == trimmedQuery {
                 ContentUnavailableView.search(text: trimmedQuery)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)

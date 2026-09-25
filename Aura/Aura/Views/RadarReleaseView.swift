@@ -77,8 +77,10 @@ struct RadarReleaseView: View {
                     if let link = release.link.flatMap(URL.init(string:)) {
                         Button { openURL(link) } label: { Label("Open in Deezer", systemImage: "arrow.up.right") }
                     }
-                    Button { player.pendingArtistId = release.artist.id } label: {
-                        Label("Go to Artist", systemImage: "person")
+                    if let artistId = release.artist.libraryId {
+                        Button { player.pendingArtistId = artistId } label: {
+                            Label("Go to Artist", systemImage: "person")
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -105,12 +107,18 @@ struct RadarReleaseView: View {
                 Text(release.title)
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
-                Button { player.pendingArtistId = release.artist.id } label: {
+                if let artistId = release.artist.libraryId {
+                    Button { player.pendingArtistId = artistId } label: {
+                        Text(release.artist.name)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(accentColor)
+                    }
+                    .buttonStyle(.borderless)
+                } else {
                     Text(release.artist.name)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(accentColor)
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.borderless)
                 Text(meta)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
@@ -330,9 +338,22 @@ private struct RadarTrackRow: View {
     }
 
     #if !APPSTORE_BUILD
-    /// This song's own fetch — or the whole release's, which covers it.
-    @ViewBuilder
     private var getControl: some View {
+        SongGetControl(release: release, track: SoulseekPick.Track(track))
+    }
+    #endif
+}
+
+#if !APPSTORE_BUILD
+/// A song's Get button, then how far along it is: its own fetch — or its whole release's,
+/// which covers it.
+struct SongGetControl: View {
+    let release: RadarRelease
+    let track: SoulseekPick.Track
+
+    @Environment(\.appAccentColor) private var accentColor
+
+    var body: some View {
         let fetcher = ReleaseFetcher.shared
         let own = fetcher.fetch(for: ReleaseFetch.id(release.id, track: track.id))
         let whole = fetcher.fetch(for: release.id)
@@ -346,7 +367,7 @@ private struct RadarTrackRow: View {
                 .foregroundStyle(accentColor)
                 .accessibilityLabel("In your library")
         default:
-            Button { fetcher.get(release, track: SoulseekPick.Track(track)) } label: {
+            Button { fetcher.get(release, track: track) } label: {
                 Image(systemName: own?.stage == .failed ? "arrow.clockwise.circle" : "arrow.down.circle")
                     .font(.title3)
                     .foregroundStyle(own?.stage == .failed ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
@@ -357,5 +378,5 @@ private struct RadarTrackRow: View {
             .accessibilityLabel("Get This Song")
         }
     }
-    #endif
 }
+#endif

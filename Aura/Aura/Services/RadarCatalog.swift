@@ -221,7 +221,7 @@ struct DeezerTrack: Decodable, Hashable, Identifiable {
     func previewSong(of release: RadarRelease) -> Song? {
         guard let previewURL else { return nil }
         return Song(id: "deezer-\(id)", title: title, album: release.title,
-                    artist: artist?.name ?? release.artist.name, albumId: nil, artistId: release.artist.id,
+                    artist: artist?.name ?? release.artist.name, albumId: nil, artistId: release.artist.libraryId,
                     artists: nil, track: track_position, year: Int(release.released.prefix(4)), genre: nil,
                     coverArt: release.largeCover, duration: Self.previewLength, bitRate: nil, suffix: "mp3",
                     contentType: "audio/mpeg", isDir: false, starred: nil, size: nil, path: nil, playCount: nil,
@@ -231,6 +231,42 @@ struct DeezerTrack: Decodable, Hashable, Identifiable {
 
     /// Deezer's previews all run thirty seconds.
     static let previewLength = 30
+}
+
+/// A song Deezer's search turned up, with the release it's from.
+struct DeezerHit: Decodable, Hashable, Identifiable {
+    struct Artist: Decodable, Hashable {
+        let id: Int
+        let name: String
+    }
+    struct Release: Decodable, Hashable {
+        let id: Int
+        let title: String
+        let cover_medium: String?
+    }
+
+    let id: Int
+    let title: String
+    let duration: Int?
+    let preview: String?
+    let rank: Int?
+    let artist: Artist
+    let album: Release
+
+    var track: DeezerTrack {
+        DeezerTrack(id: id, title: title, duration: duration, preview: preview, track_position: nil,
+                    rank: rank, artist: DeezerTrack.Credit(name: artist.name))
+    }
+}
+
+/// A release Deezer's search turned up.
+struct DeezerAlbumHit: Decodable, Hashable, Identifiable {
+    let id: Int
+    let title: String
+    let cover_medium: String?
+    let record_type: String?
+    let link: String?
+    let artist: DeezerHit.Artist
 }
 
 /// Deezer's public catalogue, for the artists' discographies. Keyless, and paced by
@@ -304,6 +340,27 @@ enum RadarCatalog {
               let url = URL(string: "https://api.deezer.com/album/\(albumId)/tracks?limit=200"),
               let tracks: Tracks = await fetch(url) else { return nil }
         return tracks.data ?? []
+    }
+
+    /// What Deezer's catalogue holds for a search, most relevant first. Nil when Deezer
+    /// can't be reached.
+    static func search(_ query: String) async -> (songs: [DeezerHit], albums: [DeezerAlbumHit])? {
+        guard let songsURL = searchURL("search", query: query, limit: 15),
+              let albumsURL = searchURL("search/album", query: query, limit: 8) else { return nil }
+        async let songs: Page<DeezerHit>? = fetch(songsURL)
+        async let albums: Page<DeezerAlbumHit>? = fetch(albumsURL)
+        guard let found = await songs else { return nil }
+        return (found.data ?? [], await albums?.data ?? [])
+    }
+
+    private static func searchURL(_ path: String, query: String, limit: Int) -> URL? {
+        var components = URLComponents(string: "https://api.deezer.com/\(path)")
+        components?.queryItems = [URLQueryItem(name: "q", value: query), URLQueryItem(name: "limit", value: "\(limit)")]
+        return components?.url
+    }
+
+    private struct Page<Item: Decodable>: Decodable {
+        let data: [Item]?
     }
 
     /// One track's preview address, freshly signed.

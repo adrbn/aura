@@ -652,6 +652,9 @@ struct SubsonicError: Decodable {
 struct ArtistRef: Codable, Hashable, Identifiable {
     let id: String
     let name: String
+
+    /// The id, when the library knows the artist: one found only on Deezer has none.
+    var libraryId: String? { id.isEmpty ? nil : id }
 }
 
 /// A song's ReplayGain values from the server, in dB (gains) and linear full scale

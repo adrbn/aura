@@ -77,6 +77,8 @@ For the **Release Radar** mix, Aura asks the same catalogue, about once a day, f
 
 When you open the radar, Aura asks Deezer for the **track lists** of the releases your server doesn't have yet — to count their songs, and to queue them when you press Play — and streams the tracks' **thirty-second previews** from Deezer's audio servers when they play. Deezer sees which releases were looked up and which previews were played — nothing else about you or your library.
 
+With the Radar on, what you type in **Search** is also sent to the same catalogue, so Search can show the songs and releases your server doesn't have, with their previews. Deezer receives the **search text** — no account, device identifier, or library. Switch the Radar off and Search asks only your server.
+
 ### To MusicBrainz (for song credits)
 
 When you open a song's credits/info, Aura queries the public **MusicBrainz** database (`musicbrainz.org`) with the artist and title to fetch writer/producer/label credits. No account or identifier is sent.
