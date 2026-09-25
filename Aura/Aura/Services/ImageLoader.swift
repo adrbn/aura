@@ -450,6 +450,12 @@ final class ArtworkCache: @unchecked Sendable {
                 // printed on it. Showing that would put another product's branding in the
                 // middle of Aura, and inconsistently, since it only ever reached some of
                 // the screens. Aura draws its own placeholder for missing art instead.
+                // A catalogue cover (a radar preview's) comes at one fixed size whatever is
+                // asked — the very sign of a generic picture below — and is never one.
+                if coverArt.hasPrefix("https://") {
+                    self.store(img, for: key)
+                    return img
+                }
                 let width = Int(img.size.width.rounded())
                 var verdict = self.classifyArtwork(data: data, width: width, coverArt: coverArt, size: requestSize)
                 if verdict == .undecided {
