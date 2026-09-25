@@ -8,8 +8,11 @@ struct MixDetailView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var isSaving = false
     @State private var isSaved = false
+    /// The cover's colour, once its photo is in.
+    @State private var tint: UIColor?
 
     private var source: PlaybackSource { .mix(id: mix.id, name: mix.title) }
+    private var spec: MixCoverSpec { MixCoverSpec(mix) }
 
     var body: some View {
         List {
@@ -17,7 +20,7 @@ struct MixDetailView: View {
             VStack(spacing: 16) {
                 // Cover + name + description sit at the top; the track list follows
                 // directly below the buttons, so hiding Save just lifts the list.
-                MixCoverView(mix: mix, size: 200)
+                EditorialMixCover(mix: mix, size: 200)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
 
                 VStack(spacing: 4) {
@@ -96,12 +99,16 @@ struct MixDetailView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Color.themeBg)
+        .background(TintedCanvas(tint: tint ?? PageTint.tone(spec.accent(MixCoverArt.cached(spec)))))
         .scrollIndicators(.hidden)
         // Title is shown under the cover already — keep the nav bar title empty to avoid a duplicate.
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .task { isSaved = MixGenerator.shared.isSavedAsPlaylist(mix) }
+        .task(id: spec.taskKey) {
+            let art = await MixCoverArt.load(spec)
+            if !Task.isCancelled { tint = PageTint.tone(spec.accent(art)) }
+        }
         .task {
             // Warm the song-row covers so they're ready instead of loading on scroll.
             ArtworkCache.shared.prefetch(

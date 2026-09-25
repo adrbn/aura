@@ -19,6 +19,9 @@
 	<array>
 		<string>VavinCondensed-Regular-Latin.ttf</string>
 		<string>VavinCondensed-Bold-Latin.ttf</string>
+		<string>ArchivoXCondBlack.ttf</string>
+		<string>ArchivoExpBlack.ttf</string>
+		<string>ArchivoExpBold.ttf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

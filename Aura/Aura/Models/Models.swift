@@ -416,20 +416,61 @@ extension Color {
     /// Default page background: WHITE in light, black in dark. Content tabs (Home,
     /// Library, Search, Playlists) use this — they are not grouped lists.
     static var themeBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? .black : .platformBackground
+        AppSettings.shared.activeTheme.usePureBlack ? .black : .canvas
     }
+
+    /// The page in dark mode is near-black (#121212, Spotify's canvas) rather than black, so
+    /// artwork sits on a surface instead of in a void; cards step up one shade (`card`).
+    /// #1C1C1E was tried as the canvas and read too light. Light mode keeps the system white.
+    #if canImport(UIKit)
+    private static let darkCanvas = UIColor(red: 0x12 / 255, green: 0x12 / 255, blue: 0x12 / 255, alpha: 1)
+    /// One step above the dark canvas.
+    private static let darkCard = UIColor(red: 0x1C / 255, green: 0x1C / 255, blue: 0x1E / 255, alpha: 1)
+    #endif
+
+    static let canvas: Color = {
+        #if canImport(UIKit)
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCanvas : .systemBackground })
+        #else
+        return .platformBackground
+        #endif
+    }()
     static var themeSecondaryBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : .platformSecondaryBackground
+        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : card
     }
     static var themeGroupedBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : .platformGroupedBackground
+        AppSettings.shared.activeTheme.usePureBlack ? Color(white: 0.07) : groupedCard
     }
+
+    private static let card: Color = {
+        #if canImport(UIKit)
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCard : .secondarySystemBackground })
+        #else
+        return .platformSecondaryBackground
+        #endif
+    }()
+
+    private static let groupedCard: Color = {
+        #if canImport(UIKit)
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCard : .secondarySystemGroupedBackground })
+        #else
+        return .platformGroupedBackground
+        #endif
+    }()
     /// Page background for GROUPED list screens ONLY (Settings). Grey in light, so the
     /// white `themeGroupedBg` rows read as distinct cards — the iOS Settings convention.
-    /// Identical to `themeBg` in dark (both black), so dark mode is untouched.
+    /// Identical to `themeBg` in dark, so Settings sits on the same canvas as every tab.
     static var themeGroupedPageBg: Color {
-        AppSettings.shared.activeTheme.usePureBlack ? .black : .platformGroupedPageBackground
+        AppSettings.shared.activeTheme.usePureBlack ? .black : groupedCanvas
     }
+
+    private static let groupedCanvas: Color = {
+        #if canImport(UIKit)
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCanvas : .systemGroupedBackground })
+        #else
+        return .platformGroupedPageBackground
+        #endif
+    }()
 
     // MARK: Platform system colours
     //

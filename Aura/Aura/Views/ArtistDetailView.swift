@@ -447,13 +447,23 @@ struct ArtistHero: View {
     /// needs — while still leaving the actions and the first songs on screen.
     static var height: CGFloat { TabChrome.windowSafeTop + 330 }
 
+    /// Where a face belongs: below the clock and the floating buttons, clear of the name.
+    /// Press shots put the face in the top fifth; centred, it sat right behind the buttons.
+    private static var faceCenterY: CGFloat { TabChrome.windowSafeTop + 135 }
+    /// The most the photo may come down to put its face there — about a third of the header.
+    private static let maxHeadroom: CGFloat = 130
+
     /// Band at the bottom where the picture fades into the page.
     private static let dissolve: CGFloat = 56
 
     var body: some View {
         let height = Self.height
         ZStack(alignment: .bottomLeading) {
-            ArtistImageView(coverArt: coverArt, artistImageURL: artistImageURL, fillsFrame: true)
+            // The pull grows the header upward, so the face target moves down with it and the
+            // face stays where it was on screen.
+            ArtistImageView(coverArt: coverArt, artistImageURL: artistImageURL, fillsFrame: true,
+                            faceTarget: .init(faceCenterY: stretch + Self.faceCenterY,
+                                              maxHeadroom: stretch + Self.maxHeadroom))
                 .frame(maxWidth: .infinity)
                 .frame(height: height + stretch)
                 .clipped()
@@ -523,8 +533,16 @@ struct ArtistImageView: View {
     /// `size`-point circle. The parent then owns the size, the crop and anything layered
     /// on top — see `ArtistHero`.
     var fillsFrame: Bool = false
+    /// With `fillsFrame`, frames the picture on the face instead of on its centre — see
+    /// `FaceFraming`. Nil keeps the plain centred fill.
+    var faceTarget: FaceFraming.Target? = nil
 
     @State private var image: UIImage?
+    /// The `cacheKey` that `image` was loaded for. The key can change under the same view —
+    /// the artist's full record may carry another cover than the summary it was opened from —
+    /// and the old picture must then neither stand for the new one nor be analysed as it.
+    @State private var imageKey: String?
+    @State private var analysis: (key: String, value: FaceFraming.Analysis)?
     @State private var showFullScreen = false
 
     private var requestSize: Int {
@@ -547,10 +565,21 @@ struct ArtistImageView: View {
         return nil
     }
 
-    private var resolvedImage: UIImage? {
-        if let image { return image }
+    /// The picture for the current key only.
+    private var currentImage: UIImage? {
         guard let key = cacheKey else { return nil }
+        if let image, imageKey == key { return image }
         return ArtworkCache.shared.image(for: key)
+    }
+
+    /// Keeps showing the previous picture while a changed key loads its own.
+    private var resolvedImage: UIImage? {
+        currentImage ?? image
+    }
+
+    @MainActor private func show(_ img: UIImage, for key: String) {
+        image = img
+        imageKey = key
     }
 
     var body: some View {
@@ -560,10 +589,13 @@ struct ArtistImageView: View {
             }
             .onAppear {
                 if image == nil, let key = cacheKey, let cached = ArtworkCache.shared.image(for: key) {
-                    image = cached
+                    show(cached, for: key)
                 }
             }
-            .task(id: cacheKey) { await loadImage() }
+            .task(id: cacheKey) {
+                await loadImage()
+                await analyseFace()
+            }
             .fullScreenCover(isPresented: $showFullScreen) {
                 if let img = resolvedImage {
                     FullScreenImageViewer(
@@ -602,25 +634,52 @@ struct ArtistImageView: View {
 
     /// No frame and no crop of its own, on purpose: the parent sizes and clips it.
     @ViewBuilder private var fill: some View {
-        if let img = resolvedImage {
+        if let faceTarget, let img = currentImage {
+            if let analysis = currentAnalysis {
+                FaceFramedPhoto(image: img, analysis: analysis, target: faceTarget)
+            } else {
+                // Vision needs a few milliseconds. Showing the photo centred meanwhile would
+                // make it jump down once the face is found.
+                wash
+            }
+        } else if let img = resolvedImage {
             Image(uiImage: img).resizable().aspectRatio(contentMode: .fill)
         } else {
-            // No portrait: a seeded wash rather than a grey slab, so the page keeps its
-            // shape and nothing jumps when a picture does arrive.
-            LinearGradient(colors: GeneratedCoverView.hashedPalette(coverArt ?? "artist"),
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                .overlay {
-                    Image(systemName: "music.mic")
-                        .font(.system(size: 72, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.2))
-                }
+            wash
         }
     }
 
+    /// No portrait: a seeded wash rather than a grey slab, so the page keeps its shape and
+    /// nothing jumps when a picture does arrive.
+    private var wash: some View {
+        LinearGradient(colors: GeneratedCoverView.hashedPalette(coverArt ?? "artist"),
+                       startPoint: .topLeading, endPoint: .bottomTrailing)
+            .overlay {
+                Image(systemName: "music.mic")
+                    .font(.system(size: 72, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.2))
+            }
+    }
+
+    /// Read straight from the cache as well, so a page opened again shows its framed photo
+    /// on the first frame instead of the wash.
+    private var currentAnalysis: FaceFraming.Analysis? {
+        guard let key = cacheKey else { return nil }
+        if let analysis, analysis.key == key { return analysis.value }
+        return FaceFraming.cached(key)
+    }
+
+    private func analyseFace() async {
+        guard fillsFrame, faceTarget != nil, let key = cacheKey, let img = currentImage else { return }
+        let result = await FaceFraming.analyse(img, key: key)
+        await MainActor.run { analysis = (key, result) }
+    }
+
     private func loadImage() async {
-        if image != nil { return }
-        if let key = cacheKey, let cached = ArtworkCache.shared.image(for: key) {
-            await MainActor.run { self.image = cached }
+        guard let key = cacheKey else { return }
+        if image != nil, imageKey == key { return }
+        if let cached = ArtworkCache.shared.image(for: key) {
+            await MainActor.run { show(cached, for: key) }
             return
         }
 
@@ -631,10 +690,9 @@ struct ArtistImageView: View {
         // URL took Navidrome's generic silhouette for a real portrait and displayed it as
         // one — tolerable in a 160pt bubble, absurd filling a header.
         if let coverArt, !coverArt.isEmpty, ServerManager.shared.currentServer != nil {
-            let key = "\(coverArt)_\(requestSize)"
             if let img = await ArtworkCache.shared.fetchImage(coverArt: coverArt,
                                                               requestSize: requestSize, key: key) {
-                await MainActor.run { self.image = img }
+                await MainActor.run { show(img, for: key) }
                 return
             }
             AppLogger.shared.log("⚠️ Artist coverArt fetch returned no image: \(coverArt)")
@@ -643,9 +701,9 @@ struct ArtistImageView: View {
         // 2. Fall back to external artist image URL (Last.fm / MusicBrainz)
         if let artistImageURL,
            let img = await fetchImage(from: artistImageURL) {
-            let key = "artist_ext_\(Self.stableKey(artistImageURL.absoluteString))_\(requestSize)"
-            ArtworkCache.shared.store(img, for: key)
-            await MainActor.run { self.image = img }
+            let externalKey = "artist_ext_\(Self.stableKey(artistImageURL.absoluteString))_\(requestSize)"
+            ArtworkCache.shared.store(img, for: externalKey)
+            await MainActor.run { show(img, for: key) }
             return
         }
 

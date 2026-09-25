@@ -58,3 +58,8 @@ tools/
 
 # Xcode's legacy build location, used by command-line builds of the Mac target
 Aura/build/
+
+# Archivo (the editorial covers' face), SIL OFL 1.1 — static instances cut from the
+# variable font; redistributable, so it ships in the repo like Vavin.
+!Aura/Aura/Archivo*.ttf
+!Aura/Aura/Archivo-OFL.txt

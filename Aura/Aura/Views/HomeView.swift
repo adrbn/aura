@@ -386,7 +386,7 @@ struct HomeView: View {
                     ForEach(mixGenerator.mixes) { mix in
                         NavigationLink(value: mix) {
                             VStack(alignment: .leading, spacing: 6) {
-                                MixCoverView(mix: mix, size: 150, cornerRadius: 12)
+                                EditorialMixCover(mix: mix, size: 150, cornerRadius: 12)
                                 Text(mix.title)
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(.primary)

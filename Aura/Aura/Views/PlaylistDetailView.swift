@@ -147,7 +147,7 @@ struct PlaylistDetailView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
-                .background(Color.themeBg)
+                .background(ArtworkCanvas(coverArt: playlist.coverArt))
                 .scrollIndicators(.hidden)
             } else if isLoading {
                 List {

@@ -76,6 +76,9 @@ struct SongRowView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(song.title), \(song.artist ?? "Unknown Artist"), \(song.durationFormatted)")
         .accessibilityHint("Double tap to play")
+        // A plain List paints its rows `systemBackground`, pure black, below the page's
+        // own canvas; clear, the row sits on whatever the page is.
+        .listRowBackground(Color.clear)
         .modifier(SongRowSwipeModifier(song: song, player: player, disabled: disableSwipeActions))
         .contextMenu {
             Button { player.playNext(song) } label: {

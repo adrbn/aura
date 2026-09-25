@@ -172,14 +172,18 @@ struct SettingsView: View {
                 lastfmSection
                 wrappedSection
             }
+            // The system's grouped rows are the canvas's own shade in dark mode; lift them.
+            .listRowBackground(Color.themeGroupedBg)
             Group {
                 downloadsSection
                 storageCacheSection
             }
+            .listRowBackground(Color.themeGroupedBg)
             Group {
                 musicFolderSection
                 libraryScanSection
             }
+            .listRowBackground(Color.themeGroupedBg)
             Group {
                 #if !APPSTORE_BUILD
                 betaFeaturesSection
@@ -190,8 +194,9 @@ struct SettingsView: View {
                 serverStatsSection
                 aboutSection
                 logOutSection
-                versionFooter
             }
+            .listRowBackground(Color.themeGroupedBg)
+            versionFooter
         }
         .listSectionSpacing(.compact)
         .scrollIndicators(.hidden)

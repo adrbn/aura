@@ -101,6 +101,12 @@
 		E10000010000000000000031 /* AlbumCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000031 /* AlbumCardView.swift */; };
 		E10000010000000000000032 /* ImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000032 /* ImageLoader.swift */; };
 		E10000010000000000000033 /* ArtistDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000033 /* ArtistDetailView.swift */; };
+		E100000100000000000000F9 /* FaceFraming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F9 /* FaceFraming.swift */; };
+		E100000100000000000000FA /* CoverKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FA /* CoverKit.swift */; };
+		E100000100000000000000FB /* CoverPortrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FB /* CoverPortrait.swift */; };
+		E100000100000000000000FC /* CoverTemplates.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FC /* CoverTemplates.swift */; };
+		E100000100000000000000FD /* EditorialCovers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FD /* EditorialCovers.swift */; };
+		E100000100000000000000FE /* PageTint.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FE /* PageTint.swift */; };
 		E10000010000000000000034 /* SongsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000034 /* SongsListView.swift */; };
 		E10000010000000000000040 /* MusicPlaybackAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000040 /* MusicPlaybackAttributes.swift */; };
 		E10000010000000000000041 /* MusicPlaybackAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000040 /* MusicPlaybackAttributes.swift */; };
@@ -269,6 +275,12 @@
 		E10000020000000000000031 /* AlbumCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumCardView.swift; sourceTree = "<group>"; };
 		E10000020000000000000032 /* ImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageLoader.swift; sourceTree = "<group>"; };
 		E10000020000000000000033 /* ArtistDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtistDetailView.swift; sourceTree = "<group>"; };
+		E100000200000000000000F9 /* FaceFraming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceFraming.swift; sourceTree = "<group>"; };
+		E100000200000000000000FA /* CoverKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverKit.swift; sourceTree = "<group>"; };
+		E100000200000000000000FB /* CoverPortrait.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverPortrait.swift; sourceTree = "<group>"; };
+		E100000200000000000000FC /* CoverTemplates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverTemplates.swift; sourceTree = "<group>"; };
+		E100000200000000000000FD /* EditorialCovers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorialCovers.swift; sourceTree = "<group>"; };
+		E100000200000000000000FE /* PageTint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageTint.swift; sourceTree = "<group>"; };
 		E10000020000000000000034 /* SongsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongsListView.swift; sourceTree = "<group>"; };
 		E10000020000000000000040 /* MusicPlaybackAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlaybackAttributes.swift; sourceTree = "<group>"; };
 		E10000020000000000000041 /* MusicLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicLiveActivity.swift; sourceTree = "<group>"; };
@@ -521,6 +533,7 @@
 				BEB587064D721AA775E21C53 /* SlskdClient.swift */,
 				A747572DB3C445E463CCE4D8 /* Platform.swift */,
 				E789F4384A074A1B5C0CC509 /* PinSync.swift */,
+				E100000200000000000000F9 /* FaceFraming.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -563,6 +576,18 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		E100000500000000000000FA /* Covers */ = {
+			isa = PBXGroup;
+			children = (
+				E100000200000000000000FA /* CoverKit.swift */,
+				E100000200000000000000FB /* CoverPortrait.swift */,
+				E100000200000000000000FC /* CoverTemplates.swift */,
+				E100000200000000000000FD /* EditorialCovers.swift */,
+				E100000200000000000000FE /* PageTint.swift */,
+			);
+			path = Covers;
+			sourceTree = "<group>";
+		};
 		E10000050000000000000006 /* Components */ = {
 			isa = PBXGroup;
 			children = (
@@ -571,6 +596,7 @@
 				E100000200000000000000B1 /* SkeletonView.swift */,
 				E10000020000000000000031 /* AlbumCardView.swift */,
 				E10000020000000000000099 /* GeneratedCoverView.swift */,
+				E100000500000000000000FA /* Covers */,
 				E100000200000000000000F1 /* FullScreenImageViewer.swift */,
 				E10000020000000000000086 /* CircularProgressView.swift */,
 				E10000020000000000000088 /* TappableArtistText.swift */,
@@ -799,16 +825,24 @@
 				"$(SRCROOT)/Aura/VavinCondensed-Regular-Latin.ttf",
 				"$(SRCROOT)/Aura/VavinCondensed-Bold-Latin.ttf",
 				"$(SRCROOT)/Aura/Vavin-OFL.txt",
+				"$(SRCROOT)/Aura/ArchivoXCondBlack.ttf",
+				"$(SRCROOT)/Aura/ArchivoExpBlack.ttf",
+				"$(SRCROOT)/Aura/ArchivoExpBold.ttf",
+				"$(SRCROOT)/Aura/Archivo-OFL.txt",
 			);
 			name = "Embed display fonts if present";
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Regular-Latin.ttf",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Bold-Latin.ttf",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Vavin-OFL.txt",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ArchivoXCondBlack.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ArchivoExpBlack.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ArchivoExpBold.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Archivo-OFL.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Fonts are licensed files kept OUT of git (.gitignore covers *.otf), so they are copied\n# in here rather than being project resources — a checkout without them still builds.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\n\nembed() {\n  # Hard-fail on a failed copy: a silent failure would ship a release that claims\n  # success while rendering in the system font.\n  cp \"$1\" \"$DEST/\" || { echo \"error: found $1 but could not embed it\"; exit 1; }\n  echo \"note: embedded $(basename \"$1\")\"\n}\n\n# Vavin: our own typeface, SIL OFL 1.1. Unlike the two above it may be redistributed,\n# so it lives in the repo and ships in every configuration, App Store included. The\n# licence travels with it, as the OFL requires.\nfor VAVIN in \"$SRCROOT/Aura/VavinCondensed-Regular-Latin.ttf\" \"$SRCROOT/Aura/VavinCondensed-Bold-Latin.ttf\" \"$SRCROOT/Aura/Vavin-OFL.txt\"; do\n  [ -f \"$VAVIN\" ] && embed \"$VAVIN\"\ndone\n";
+			shellScript = "# Fonts are licensed files kept OUT of git (.gitignore covers *.otf), so they are copied\n# in here rather than being project resources — a checkout without them still builds.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\n\nembed() {\n  # Hard-fail on a failed copy: a silent failure would ship a release that claims\n  # success while rendering in the system font.\n  cp \"$1\" \"$DEST/\" || { echo \"error: found $1 but could not embed it\"; exit 1; }\n  echo \"note: embedded $(basename \"$1\")\"\n}\n\n# Vavin: our own typeface, SIL OFL 1.1. Unlike the two above it may be redistributed,\n# so it lives in the repo and ships in every configuration, App Store included. The\n# licence travels with it, as the OFL requires.\nfor VAVIN in \"$SRCROOT/Aura/VavinCondensed-Regular-Latin.ttf\" \"$SRCROOT/Aura/VavinCondensed-Bold-Latin.ttf\" \"$SRCROOT/Aura/Vavin-OFL.txt\"; do\n  [ -f \"$VAVIN\" ] && embed \"$VAVIN\"\ndone\n\n# Archivo: the editorial covers' face, SIL OFL 1.1 — redistributable like Vavin, so it\n# lives in the repo and ships everywhere, its licence alongside.\nfor ARCHIVO in \"$SRCROOT/Aura/ArchivoXCondBlack.ttf\" \"$SRCROOT/Aura/ArchivoExpBlack.ttf\" \"$SRCROOT/Aura/ArchivoExpBold.ttf\" \"$SRCROOT/Aura/Archivo-OFL.txt\"; do\n  [ -f \"$ARCHIVO\" ] && embed \"$ARCHIVO\"\ndone\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -922,6 +956,12 @@
 				E100000100000000000000F3 /* AppTypography.swift in Sources */,
 				E100000100000000000000F8 /* LyricWordTiming.swift in Sources */,
 				E10000010000000000000033 /* ArtistDetailView.swift in Sources */,
+				E100000100000000000000F9 /* FaceFraming.swift in Sources */,
+				E100000100000000000000FA /* CoverKit.swift in Sources */,
+				E100000100000000000000FB /* CoverPortrait.swift in Sources */,
+				E100000100000000000000FC /* CoverTemplates.swift in Sources */,
+				E100000100000000000000FD /* EditorialCovers.swift in Sources */,
+				E100000100000000000000FE /* PageTint.swift in Sources */,
 				E10000010000000000000034 /* SongsListView.swift in Sources */,
 				E10000010000000000000040 /* MusicPlaybackAttributes.swift in Sources */,
 				E10000010000000000000050 /* DownloadManager.swift in Sources */,
