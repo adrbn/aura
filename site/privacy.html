@@ -59,7 +59,7 @@
 <main>
   <header>
     <h1>Aura Privacy Policy</h1>
-    <p class="muted"><strong>Last updated:</strong> 2026-07-02 &nbsp;·&nbsp; <strong>Effective:</strong> same as above</p>
+    <p class="muted"><strong>Last updated:</strong> 2026-09-25 &nbsp;·&nbsp; <strong>Effective:</strong> same as above</p>
   </header>
 
   <p>Aura (“the app”) is a music playback client for Subsonic-API-compatible servers (Navidrome, Airsonic, Gonic, and others) that <strong>you</strong> host or have legitimate access to. This policy explains what information Aura handles and what it does not.</p>
@@ -70,7 +70,7 @@
       <li>Aura collects <strong>no</strong> personal data.</li>
       <li>Aura sends <strong>nothing</strong> to any server owned by the developer.</li>
       <li>All data (server URLs, credentials, playback state, cached audio) stays on your device.</li>
-      <li>The only network traffic Aura makes is to the servers you explicitly configure (your Subsonic/Navidrome server, and optionally LRCLIB for community lyrics).</li>
+      <li>Aura talks to the servers you configure. To find lyrics, share links, song credits, artist photos and new releases, it also looks up a track&#8217;s or an artist&#8217;s name on a few public services, listed below &#8212; never on a server run by the developer.</li>
     </ul>
   </div>
 
@@ -118,12 +118,13 @@
   <ul>
     <li><strong>Apple iTunes Search API</strong> — <code>itunes.apple.com</code></li>
     <li><strong>Deezer API</strong> — <code>api.deezer.com</code></li>
-    <li><strong>Odesli / song.link</strong> — <code>song.link</code></li>
   </ul>
+  <p>The share sheet can also offer a song.link address, which Aura builds from the Apple track ID it found; Aura does not contact song.link itself.</p>
   <p>This lookup runs when a song starts playing (so the links are ready instantly) and the result is cached. No account, device identifier, or audio is sent — only the track name to find matching links — and none of it goes to a developer-owned server.</p>
 
-  <h3>To Deezer (artist photos for mix covers)</h3>
+  <h3>To Deezer (artist photos and Release Radar)</h3>
   <p>To put an artist's photo on a “Made For You” mix or radio cover, Aura looks the artist up in Deezer's public, free, keyless catalogue (<code>api.deezer.com</code>) and downloads the photo from Deezer's image servers. Only the <strong>artist's name</strong> is sent — no account, device identifier, or listening history. Each photo is fetched once and kept in the app's cache.</p>
+  <p>For the <strong>Release Radar</strong> mix, Aura asks the same catalogue, about once a day, for the recent releases of the artists you play most on your server — up to 80 of them — and downloads the covers of the releases it lists. Deezer receives each artist's <strong>name</strong> the first time, and their Deezer ID after that; it receives no account, device identifier, play counts, or song you played. Taken together, those requests do say whose music you listen to: if you'd rather Deezer didn't see that, switch the Radar off in <strong>Settings → Release Radar</strong> and Aura makes none of them.</p>
 
   <h3>To MusicBrainz (for song credits)</h3>
   <p>When you open a song's credits/info, Aura queries the public <strong>MusicBrainz</strong> database (<code>musicbrainz.org</code>) with the artist and title to fetch writer/producer/label credits. No account or identifier is sent.</p>

@@ -5,7 +5,7 @@ description: How Aura handles your data. Short version — it doesn't leave your
 
 # Aura Privacy Policy
 
-**Last updated:** 2026-07-02
+**Last updated:** 2026-09-25
 **Effective date:** same as above
 
 Aura ("the app") is a music playback client for Subsonic-API-compatible servers (Navidrome, Airsonic, Gonic, and others) that **you** host or have legitimate access to. This policy explains what information Aura handles and what it does not.
@@ -15,7 +15,7 @@ Aura ("the app") is a music playback client for Subsonic-API-compatible servers 
 - Aura collects **no** personal data.
 - Aura sends **nothing** to any server owned by the developer.
 - All data (server URLs, credentials, playback state, cached audio) stays on your device.
-- The only network traffic Aura makes is to the servers you explicitly configure (your Subsonic/Navidrome server, and optionally LRCLIB for community lyrics).
+- Aura talks to the servers you configure. To find lyrics, share links, song credits, artist photos and new releases, it also looks up a track's or an artist's name on a few public services, listed below — never on a server run by the developer.
 
 ## Data Aura stores on your device
 
@@ -64,13 +64,16 @@ So that the Share sheet can offer "open on Spotify / Apple Music / Deezer / YouT
 
 - **Apple iTunes Search API** — `itunes.apple.com`
 - **Deezer API** — `api.deezer.com`
-- **Odesli / song.link** — `song.link`
+
+The share sheet can also offer a song.link address, which Aura builds from the Apple track ID it found; Aura does not contact song.link itself.
 
 This lookup runs when a song starts playing (so the links are ready instantly) and the result is cached. No account, device identifier, or audio is sent — only the track name to find matching links — and none of it goes to a developer-owned server.
 
-### To Deezer (artist photos for mix covers)
+### To Deezer (artist photos and Release Radar)
 
 To put an artist's photo on a "Made For You" mix or radio cover, Aura looks the artist up in Deezer's public, free, keyless catalogue (`api.deezer.com`) and downloads the photo from Deezer's image servers. Only the **artist's name** is sent — no account, device identifier, or listening history. Each photo is fetched once and kept in the app's cache.
+
+For the **Release Radar** mix, Aura asks the same catalogue, about once a day, for the recent releases of the artists you play most on your server — up to 80 of them — and downloads the covers of the releases it lists. Deezer receives each artist's **name** the first time, and their Deezer ID after that; it receives no account, device identifier, play counts, or song you played. Taken together, those requests do say whose music you listen to: if you'd rather Deezer didn't see that, switch the Radar off in **Settings → Release Radar** and Aura makes none of them.
 
 ### To MusicBrainz (for song credits)
 

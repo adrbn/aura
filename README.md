@@ -61,6 +61,8 @@ Each word lights as it is sung. The lines around it fall away in size, blur and 
 
 **Instant Mix** builds a station from any song or artist. Above it, Aura generates mixes from what's actually in your library — by genre, by mood, by time of day — and a **Year Wrapped** retrospective from what you really played, counted on the device.
 
+**Radar** gathers what the artists you play most released in the last 30 days. The releases already on your server play as a mix; the rest are listed beneath it, a tap away from Deezer — or, in the sideload build, from a Soulseek search. Add one to your server and it joins the mix within the hour.
+
 Each mix gets an **editorial cover**, the way a streaming service would design one: the photo of the artist you play most in it, framed on the face with Apple Vision, under a type-set title — a duotone for genre mixes, a figure cut out over the year for Wrapped, and for a radio the seed artist between two of the artists it found around them.
 
 ## Your library, the way you left it
@@ -92,7 +94,7 @@ Five bands, 15 presets, and a curve you can drag. It runs in the audio graph, no
 ## Private by design
 
 - **Your credentials live in the Keychain**, never in preferences or a file, and never leave the device except to your own server.
-- **No account, no analytics, no telemetry.** Aura talks to your server, to LRCLIB when a song has no lyrics of its own, and to Deezer's public catalogue for the artist photos on mix covers — sending an artist's name, nothing else.
+- **No account, no analytics, no telemetry.** Aura talks to your server, to LRCLIB when a song has no lyrics of its own, and to Deezer's public catalogue for the artist photos on mix covers and the Radar's new releases — sending artist names, nothing else. The Radar can be switched off.
 - **Play counts and history stay on the device** unless you point Aura at your own scrobbler.
 - **Open source**, so none of this has to be taken on trust.
 

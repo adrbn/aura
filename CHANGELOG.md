@@ -6,6 +6,9 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added — Made For You
+- Radar: this month's releases from the artists you play most, found in Deezer's public catalogue and matched against your server. The releases the server has play as a mix; the others are listed beneath it, opening in Deezer — or in a Soulseek search, in the sideload build. The catalogue is checked once a day and the server hourly, so a release you add joins the mix within the hour. Off in Settings → Release Radar
+
 ### Added — Covers & pages
 - Editorial covers for "Made For You" mixes and radios: the most-played artist's photo framed on the face (Apple Vision), a type-set title band in Archivo, a duotone for genre mixes, a cut-out figure over the period for Year Wrapped, and a three-artist layout for radios. Falls back to the lead artist's album cover, then to a flat colour field
 - Album, playlist, mix and radio pages open in their artwork's colour, fading into the canvas
