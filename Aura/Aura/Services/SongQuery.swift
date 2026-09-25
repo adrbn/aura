@@ -138,6 +138,48 @@ enum SongQuery {
         return 0
     }
 
+    // MARK: - Credits
+
+    /// The artists a credit names, one by one: "Dua Lipa • Pierre de Maere" is two, as is
+    /// "Calvin Harris x Dua Lipa". Split on features and bullets first, then on commas and
+    /// ampersands.
+    static func artistNames(_ credit: String) -> [String] {
+        var seen = Set<String>()
+        return featureParts(credit).flatMap(nameParts).filter { seen.insert(fold($0)).inserted }
+    }
+
+    /// Every way to read a credit as a name: whole, then its parts, then theirs — so
+    /// "Tyler, The Creator feat. X" still yields "Tyler, The Creator" whole.
+    static func creditedNames(_ credit: String) -> [String] {
+        let features = featureParts(credit)
+        return [credit] + features + features.flatMap(nameParts)
+    }
+
+    private static func featureParts(_ credit: String) -> [String] {
+        split(credit, #"\s*(•|;)\s*|\s+(feat\.?|ft\.?|featuring|with)\s+"#)
+    }
+
+    private static func nameParts(_ credit: String) -> [String] {
+        split(credit, #"\s*,\s+|\s+(&|x|vs\.?|/)\s+"#)
+    }
+
+    private static func split(_ s: String, _ pattern: String) -> [String] {
+        s.replacingOccurrences(of: pattern, with: "\u{1F}", options: [.regularExpression, .caseInsensitive])
+            .split(separator: "\u{1F}")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
+    /// Text reduced to its words, lowercased: accents, ligatures and punctuation gone.
+    static func plainWords(_ s: String) -> String {
+        let folded = fold(s)
+            .replacingOccurrences(of: "œ", with: "oe")
+            .replacingOccurrences(of: "æ", with: "ae")
+            .replacingOccurrences(of: "ß", with: "ss")
+        let words = folded.unicodeScalars.map { CharacterSet.alphanumerics.contains($0) ? Character($0) : " " }
+        return String(words).split(separator: " ").joined(separator: " ")
+    }
+
     // MARK: - Search-URL fallbacks
 
     /// De-bulleted free-text query for the search-URL fallbacks.

@@ -67,6 +67,11 @@ final class AudioPlayer {
     /// True while lyrics are being fetched. The empty-state ("No lyrics available") must
     /// wait on this being false — otherwise it flashes before any source has been tried.
     var isLoadingLyrics = false
+    /// Which lyrics fetch is the current one. Bumped by every `loadLyrics`, so a fetch still
+    /// running for the song before — a slow server, a retry — can neither put its words on
+    /// this song nor end this song's spinner when it lands.
+    private var lyricsGeneration = 0
+    private var lyricsTask: Task<Void, Never>?
     var isShowingQueue = false
     var radioPlaylistSongs: [Song] = []
     var radioPlaylistName: String = ""
@@ -1867,13 +1872,16 @@ final class AudioPlayer {
     // MARK: - Lyrics
 
     func loadLyrics(for song: Song) {
+        lyricsTask?.cancel()
+        lyricsGeneration += 1
+        let generation = lyricsGeneration
         lyrics = []
         lyricsStatus = "Loading lyrics..."
         isLoadingLyrics = true
         AppLogger.shared.log("🎤 loadLyrics: \(song.title) by \(song.artist ?? "?")")
-        Task {
-            let found = await resolveLyrics(for: song)
-            await MainActor.run {
+        lyricsTask = Task {
+            let found = await resolveLyrics(for: song, generation: generation)
+            await publishLyrics(generation) {
                 if !found {
                     self.lyrics = []
                     self.lyricsStatus = "No lyrics found"
@@ -1883,16 +1891,66 @@ final class AudioPlayer {
         }
     }
 
+    /// Applies a lyrics update on the main actor — unless another fetch has started since
+    /// `generation`, in which case the update belongs to a song no longer on screen.
+    private func publishLyrics(_ generation: Int, _ update: @escaping () -> Void) async {
+        await MainActor.run {
+            guard self.lyricsGeneration == generation else { return }
+            update()
+        }
+    }
+
+    /// Finds the song's lyrics, then makes sure they are this version's: a duet or a remix
+    /// named as such gets its own words even when every source hands back the original's.
+    /// A verdict already reached for the song applies at once, network or not.
+    private func resolveLyrics(for song: Song, generation: Int) async -> Bool {
+        if case .replaced(let synced, let plain)? = LyricsVersion.verdict(for: song.id) {
+            if await applyLRCLIBResult(["syncedLyrics": synced ?? "", "plainLyrics": plain ?? ""],
+                                       generation: generation) {
+                return true
+            }
+            // A verdict that can't be shown would otherwise stop the song from being checked again.
+            LyricsVersion.forget(song.id)
+        }
+        guard await findLyrics(for: song, generation: generation) else { return false }
+        if !isEffectivelyOffline, LyricsVersion.verdict(for: song.id) == nil,
+           !LyricsVersion.markers(title: song.title, artist: song.artist).isEmpty {
+            await checkVersion(of: song, generation: generation)
+        }
+        return true
+    }
+
+    /// Asks LRCLIB for the version's own sheets and, when most of them disagree with the
+    /// lyrics on screen, shows theirs instead. The verdict is kept, so this runs once a song.
+    private func checkVersion(of song: Song, generation: Int) async {
+        let current = await MainActor.run { () -> [String]? in
+            self.lyricsGeneration == generation ? self.lyrics.map(\.text) : nil
+        }
+        guard let current, !current.isEmpty,
+              let candidates = await LyricsVersion.candidates(title: song.title, artist: song.artist,
+                                                              duration: song.duration)
+        else { return }
+        guard let pick = LyricsVersion.replacement(among: candidates, for: current, duration: song.duration) else {
+            LyricsVersion.store(.kept, for: song.id)
+            return
+        }
+        AppLogger.shared.log("🎵 Lyrics version: \(song.title) — the lyrics found are another version's; "
+                             + "LRCLIB \(pick.id) (\(pick.artistName ?? "?")) replaces them")
+        LyricsVersion.store(.replaced(synced: pick.syncedLyrics, plain: pick.plainLyrics), for: song.id)
+        _ = await applyLRCLIBResult(["syncedLyrics": pick.syncedLyrics ?? "", "plainLyrics": pick.plainLyrics ?? ""],
+                                    generation: generation)
+    }
+
     /// Runs every lyrics source in order and reports whether ANY matched. Each `tryX`
     /// publishes its lyrics on success, so this only exists to let `loadLyrics` settle
     /// `isLoadingLyrics` on a single, well-defined completion point (the early `return`s
     /// used to make that impossible).
-    private func resolveLyrics(for song: Song) async -> Bool {
+    private func findLyrics(for song: Song, generation: Int) async -> Bool {
         // 0. The copy already on this device, saved when the song was downloaded.
         //    It costs nothing, it cannot fail, and it is the only source that works with
         //    the network off — which is the whole point of having downloaded the song.
         //    Until now it was written at download time and never read again.
-        if await tryLocalLyrics(for: song) { return true }
+        if await tryLocalLyrics(for: song, generation: generation) { return true }
         // 1. Prefer the user's OWN server. This matches the privacy policy ("Aura
         //    queries LRCLIB only when your server does not provide lyrics") and avoids
         //    reaching a third-party, largely-unlicensed lyrics DB whenever the server
@@ -1905,27 +1963,27 @@ final class AudioPlayer {
         //    is the honest signal, and the loading spinner covers the rare unreachable-server wait.
         if let server = ServerManager.shared.currentServer, !isEffectivelyOffline {
             if lyricsSource == .structured {
-                if await tryStructuredLyrics(server: server, song: song) { return true }
-                if await tryLegacyLyrics(server: server, song: song) { return true }
+                if await tryStructuredLyrics(server: server, song: song, generation: generation) { return true }
+                if await tryLegacyLyrics(server: server, song: song, generation: generation) { return true }
             } else {
-                if await tryLegacyLyrics(server: server, song: song) { return true }
-                if await tryStructuredLyrics(server: server, song: song) { return true }
+                if await tryLegacyLyrics(server: server, song: song, generation: generation) { return true }
+                if await tryStructuredLyrics(server: server, song: song, generation: generation) { return true }
             }
         }
         // 2. Fall back to LRCLIB community lyrics when the server has none / is offline.
-        if await tryLRCLIB(song: song) { return true }
+        if await tryLRCLIB(song: song, generation: generation) { return true }
         return false
     }
 
 
     /// Reads the `.lrc` saved next to a downloaded song.
-    private func tryLocalLyrics(for song: Song) async -> Bool {
+    private func tryLocalLyrics(for song: Song, generation: Int) async -> Bool {
         guard let text = await MainActor.run(body: { DownloadManager.shared.localLyrics(for: song.id) })
         else { return false }
         let parsed = parseLRC(text)
         guard !parsed.isEmpty else { return false }
         AppLogger.shared.log("🎵 Lyrics from the downloaded copy: \(parsed.count) lines")
-        await MainActor.run {
+        await publishLyrics(generation) {
             self.lyrics = parsed
             // A `.lrc` carrying timestamps follows the song; one without them is a plain
             // sheet, and `legacy` is what this app calls that.
@@ -1935,32 +1993,35 @@ final class AudioPlayer {
         return true
     }
 
-    private func tryLRCLIB(song: Song) async -> Bool {
-        await MainActor.run { self.lyricsStatus = "Trying LRCLIB..." }
+    private func tryLRCLIB(song: Song, generation: Int) async -> Bool {
+        await publishLyrics(generation) { self.lyricsStatus = "Trying LRCLIB..." }
         guard let artist = song.artist, !artist.isEmpty else { return false }
 
         // 1. Try exact match first via /api/get
         if let result = await lrclibExactMatch(artist: artist, title: song.title, album: song.album ?? "", duration: song.duration ?? 0) {
-            return await applyLRCLIBResult(result)
+            return await applyLRCLIBResult(result, generation: generation)
         }
 
         // 2. Fall back to search endpoint with original terms
-        if let result = await lrclibSearch(artist: artist, title: song.title, duration: song.duration) {
-            return await applyLRCLIBResult(result)
+        if let result = await lrclibSearch(artist: artist, title: song.title, duration: song.duration,
+                                           generation: generation) {
+            return await applyLRCLIBResult(result, generation: generation)
         }
 
         // 3. Try with cleaned terms (strip feat., parenthetical, brackets)
         let cleanedArtist = cleanSearchTerm(artist)
         let cleanedTitle = cleanSearchTerm(song.title)
         if cleanedArtist != artist || cleanedTitle != song.title {
-            if let result = await lrclibSearch(artist: cleanedArtist, title: cleanedTitle, duration: song.duration) {
-                return await applyLRCLIBResult(result)
+            if let result = await lrclibSearch(artist: cleanedArtist, title: cleanedTitle, duration: song.duration,
+                                               generation: generation) {
+                return await applyLRCLIBResult(result, generation: generation)
             }
         }
 
         // 4. Free-text search as final fallback
-        if let result = await lrclibFreeTextSearch(query: "\(cleanedArtist) \(cleanedTitle)", duration: song.duration) {
-            return await applyLRCLIBResult(result)
+        if let result = await lrclibFreeTextSearch(query: "\(cleanedArtist) \(cleanedTitle)", duration: song.duration,
+                                                   generation: generation) {
+            return await applyLRCLIBResult(result, generation: generation)
         }
 
         return false
@@ -2047,8 +2108,8 @@ final class AudioPlayer {
         return candidates.first(where: isSynced) ?? candidates.first
     }
 
-    private func lrclibSearch(artist: String, title: String, duration: Int?) async -> [String: Any]? {
-        await MainActor.run { self.lyricsStatus = "Searching LRCLIB..." }
+    private func lrclibSearch(artist: String, title: String, duration: Int?, generation: Int) async -> [String: Any]? {
+        await publishLyrics(generation) { self.lyricsStatus = "Searching LRCLIB..." }
         var components = URLComponents(string: "https://lrclib.net/api/search")
         components?.queryItems = [
             URLQueryItem(name: "track_name", value: title),
@@ -2071,8 +2132,8 @@ final class AudioPlayer {
         return nil
     }
 
-    private func lrclibFreeTextSearch(query: String, duration: Int?) async -> [String: Any]? {
-        await MainActor.run { self.lyricsStatus = "Searching LRCLIB (broad)..." }
+    private func lrclibFreeTextSearch(query: String, duration: Int?, generation: Int) async -> [String: Any]? {
+        await publishLyrics(generation) { self.lyricsStatus = "Searching LRCLIB (broad)..." }
         var components = URLComponents(string: "https://lrclib.net/api/search")
         components?.queryItems = [
             URLQueryItem(name: "q", value: query)
@@ -2094,13 +2155,13 @@ final class AudioPlayer {
         return nil
     }
 
-    private func applyLRCLIBResult(_ json: [String: Any]) async -> Bool {
+    private func applyLRCLIBResult(_ json: [String: Any], generation: Int) async -> Bool {
         // Prefer synced lyrics
         if let syncedLyrics = json["syncedLyrics"] as? String, !syncedLyrics.isEmpty {
             let parsed = parseLRC(syncedLyrics)
             if !parsed.isEmpty {
                 AppLogger.shared.log("🎵 LRCLIB: Got \(parsed.count) synced lyrics lines")
-                await MainActor.run {
+                await publishLyrics(generation) {
                     self.lyrics = parsed
                     self.lyricsSource = .structured
                     self.lyricsStatus = ""
@@ -2115,7 +2176,7 @@ final class AudioPlayer {
                 .filter { !$0.isEmpty }
                 .map { LyricsLine(time: nil, text: $0) }
             if !lines.isEmpty {
-                await MainActor.run {
+                await publishLyrics(generation) {
                     self.lyrics = lines
                     self.lyricsSource = .legacy
                     self.lyricsStatus = ""
@@ -2126,9 +2187,9 @@ final class AudioPlayer {
         return false
     }
 
-    private func tryStructuredLyrics(server: ServerConfig, song: Song) async -> Bool {
+    private func tryStructuredLyrics(server: ServerConfig, song: Song, generation: Int) async -> Bool {
         do {
-            await MainActor.run { self.lyricsStatus = "Trying synced lyrics..." }
+            await publishLyrics(generation) { self.lyricsStatus = "Trying synced lyrics..." }
             let structured = try await SubsonicClient.shared.getLyricsBySongId(server: server, id: song.id)
             let synced = structured.first(where: { $0.synced == true }) ?? structured.first
             if let synced = synced, let lines = synced.line, !lines.isEmpty {
@@ -2160,23 +2221,23 @@ final class AudioPlayer {
                     AppLogger.shared.log("🎤 Lyrics: server supplied word-level timing for \(cuesByIndex.count) line(s)")
                 }
                 if !parsed.isEmpty {
-                    await MainActor.run {
+                    await publishLyrics(generation) {
                         self.lyrics = parsed
                         self.lyricsStatus = ""
                     }
                     return true
                 }
             }
-            await MainActor.run { self.lyricsStatus = "Synced lyrics empty" }
+            await publishLyrics(generation) { self.lyricsStatus = "Synced lyrics empty" }
         } catch {
-            await MainActor.run { self.lyricsStatus = "Synced: \(error.localizedDescription)" }
+            await publishLyrics(generation) { self.lyricsStatus = "Synced: \(error.localizedDescription)" }
         }
         return false
     }
 
-    private func tryLegacyLyrics(server: ServerConfig, song: Song) async -> Bool {
+    private func tryLegacyLyrics(server: ServerConfig, song: Song, generation: Int) async -> Bool {
         do {
-            await MainActor.run { self.lyricsStatus = "Trying legacy lyrics..." }
+            await publishLyrics(generation) { self.lyricsStatus = "Trying legacy lyrics..." }
             let lrcText = try await SubsonicClient.shared.getLyrics(
                 server: server, artist: song.artist ?? "", title: song.title
             )
@@ -2187,27 +2248,29 @@ final class AudioPlayer {
                         .map { $0.trimmingCharacters(in: .whitespaces) }
                         .filter { !$0.isEmpty }
                         .map { LyricsLine(time: nil, text: $0) }
-                    await MainActor.run {
+                    await publishLyrics(generation) {
                         self.lyrics = plainLines
                         self.lyricsStatus = ""
                     }
                 } else {
-                    await MainActor.run {
+                    await publishLyrics(generation) {
                         self.lyrics = parsed
                         self.lyricsStatus = ""
                     }
                 }
                 return true
             }
-            await MainActor.run { self.lyricsStatus = "Legacy lyrics empty" }
+            await publishLyrics(generation) { self.lyricsStatus = "Legacy lyrics empty" }
         } catch {
-            await MainActor.run { self.lyricsStatus = "Legacy: \(error.localizedDescription)" }
+            await publishLyrics(generation) { self.lyricsStatus = "Legacy: \(error.localizedDescription)" }
         }
         return false
     }
 
     func refetchLyrics() {
         guard let song = currentSong else { return }
+        // A refetch asked for by hand checks the version afresh too.
+        LyricsVersion.forget(song.id)
         loadLyrics(for: song)
     }
 

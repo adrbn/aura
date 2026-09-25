@@ -110,14 +110,10 @@ enum RadarRules {
     /// " - Single" / " - EP" suffixes don't stop a release matching the album on the server.
     static func normalized(_ title: String) -> String {
         var s = SongQuery.fold(title).trimmingCharacters(in: .whitespaces)
-            .replacingOccurrences(of: "œ", with: "oe")
-            .replacingOccurrences(of: "æ", with: "ae")
-            .replacingOccurrences(of: "ß", with: "ss")
         for suffix in [" - single", " - ep"] where s.hasSuffix(suffix) {
             s = String(s.dropLast(suffix.count))
         }
-        let words = s.unicodeScalars.map { CharacterSet.alphanumerics.contains($0) ? Character($0) : " " }
-        return String(words).split(separator: " ").joined(separator: " ")
+        return SongQuery.plainWords(s)
     }
 
     static func sameTitle(_ a: String, _ b: String) -> Bool {
@@ -130,21 +126,7 @@ enum RadarRules {
     static func credits(_ credit: String?, _ artist: String) -> Bool {
         let name = normalized(artist)
         guard let credit, !name.isEmpty else { return false }
-        return creditNames(credit).contains { normalized($0) == name }
-    }
-
-    /// The credit, then its parts: split on features and bullets first, so "Tyler, The
-    /// Creator feat. X" keeps "Tyler, The Creator" whole, then on commas and ampersands.
-    static func creditNames(_ credit: String) -> [String] {
-        let features = split(credit, #"\s*(•|;)\s*|\s+(feat\.?|ft\.?|featuring|with)\s+"#)
-        return [credit] + features + features.flatMap { split($0, #"\s*,\s+|\s+(&|x|vs\.?|/)\s+"#) }
-    }
-
-    private static func split(_ s: String, _ pattern: String) -> [String] {
-        s.replacingOccurrences(of: pattern, with: "\u{1F}", options: [.regularExpression, .caseInsensitive])
-            .split(separator: "\u{1F}")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+        return SongQuery.creditedNames(credit).contains { normalized($0) == name }
     }
 
     /// Everything each release lends to the playlist, newest release first, no song twice.
