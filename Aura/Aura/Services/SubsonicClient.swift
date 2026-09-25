@@ -509,6 +509,8 @@ struct EmptyContent: Decodable {}
 /// image cache; they are API calls, and belong with the rest of the client.
 extension SubsonicClient {
     nonisolated func coverArtURL(server: ServerConfig, id: String, size: Int = 300) -> URL? {
+        // A song from outside the server — a release's preview — names its cover by address.
+        if id.hasPrefix("https://") { return URL(string: id) }
         let urlString = "\(server.baseURL)/rest/getCoverArt?\(SubsonicClient.authQuery(for: server))&id=\(id)&size=\(size)"
         return URL(string: urlString)
     }

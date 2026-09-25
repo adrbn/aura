@@ -25,6 +25,11 @@ struct RadarRelease: Codable, Hashable, Identifiable {
     }
 
     var releaseDate: Date? { RadarWindow.formatter.date(from: released) }
+
+    /// Deezer's medium cover is 250 px, soft full-screen; the same picture comes larger.
+    var largeCover: String? {
+        cover.map { $0.replacingOccurrences(of: "/250x250-", with: "/1000x1000-") }
+    }
 }
 
 // MARK: - Pure rules
@@ -97,13 +102,43 @@ enum RadarRules {
         return !["various artists", "[unknown artist]", "unknown artist"].contains(folded)
     }
 
-    /// An artist's releases inside the window, newest first, at most `perArtist`.
+    /// How long before a release the server may have its songs and they still count as new:
+    /// an album leaks a week or two early; one on the server for months is an older release.
+    static let earlyDays = 14
+
+    /// An artist's releases inside the window, newest first, at most `perArtist` — less the
+    /// re-issues, which Deezer dates as new.
     static func fresh(_ albums: [DeezerAlbum], in window: ClosedRange<String>,
                       perArtist: Int = perArtist) -> [DeezerAlbum] {
         Array(albums
             .filter { $0.release_date.map(window.contains) ?? false }
+            .filter { !isReissue($0, in: albums) }
             .sorted { ($0.release_date ?? "") > ($1.release_date ?? "") }
             .prefix(perArtist))
+    }
+
+    /// Whether the discography has this title out before — or the same day, listed first, as
+    /// with an explicit and a clean copy. A single out ahead of the album named after it
+    /// announces the album; it doesn't make it old.
+    static func isReissue(_ album: DeezerAlbum, in discography: [DeezerAlbum]) -> Bool {
+        guard let date = album.release_date else { return false }
+        return discography.contains { other in
+            guard other.id != album.id, let otherDate = other.release_date,
+                  sameTitle(other.title, album.title),
+                  other.record_type != "single" || album.record_type == "single" else { return false }
+            return otherDate < date || (otherDate == date && other.id < album.id)
+        }
+    }
+
+    /// The songs of a release that came to the server with it: one added long before is from
+    /// an older release of the same name, or an earlier single — already heard.
+    static func newSongs(_ songs: [Song], of release: RadarRelease, earlyDays: Int = earlyDays) -> [Song] {
+        guard let date = release.releaseDate,
+              let start = Calendar(identifier: .gregorian).date(byAdding: .day, value: -earlyDays, to: date)
+        else { return songs }
+        let cutoff = RadarWindow.formatter.string(from: start)
+        // ISO 8601 begins with the day, so the two compare as text.
+        return songs.filter { song in song.created.map { String($0.prefix(10)) >= cutoff } ?? true }
     }
 
     /// A title reduced to its words: case, accents, ligatures, punctuation and the store's
@@ -151,6 +186,42 @@ struct DeezerAlbum: Decodable, Hashable {
     let link: String?
 }
 
+/// A track of a Deezer release, with its thirty-second preview.
+struct DeezerTrack: Decodable, Hashable, Identifiable {
+    struct Credit: Decodable, Hashable {
+        let name: String
+    }
+
+    let id: Int
+    let title: String
+    let duration: Int?
+    /// An MP3 of thirty seconds on Deezer's CDN; empty when the rights holder allows none.
+    let preview: String?
+    let track_position: Int?
+    let artist: Credit?
+
+    var previewURL: URL? {
+        guard let preview, !preview.isEmpty, let url = URL(string: preview), url.scheme == "https" else { return nil }
+        return url
+    }
+
+    /// The track as a song the player can queue: its preview for a stream, the release's
+    /// cover, and the artist as the library knows them, so Now Playing can go to them.
+    func previewSong(of release: RadarRelease) -> Song? {
+        guard let previewURL else { return nil }
+        return Song(id: "deezer-\(id)", title: title, album: release.title,
+                    artist: artist?.name ?? release.artist.name, albumId: nil, artistId: release.artist.id,
+                    artists: nil, track: track_position, year: Int(release.released.prefix(4)), genre: nil,
+                    coverArt: release.largeCover, duration: Self.previewLength, bitRate: nil, suffix: "mp3",
+                    contentType: "audio/mpeg", isDir: false, starred: nil, size: nil, path: nil, playCount: nil,
+                    mediaType: "song", explicit: nil, created: nil, replayGain: nil,
+                    preview: previewURL.absoluteString)
+    }
+
+    /// Deezer's previews all run thirty seconds.
+    static let previewLength = 30
+}
+
 /// Deezer's public catalogue, for the artists' discographies. Keyless, and paced by
 /// `DeezerPacer` with the covers' artist photos.
 enum RadarCatalog {
@@ -172,6 +243,10 @@ enum RadarCatalog {
 
     private struct Albums: Decodable {
         let data: [DeezerAlbum]?
+    }
+
+    private struct Tracks: Decodable {
+        let data: [DeezerTrack]?
     }
 
     /// Answers kept between launches: a name either has a Deezer id or is known to have none.
@@ -209,6 +284,15 @@ enum RadarCatalog {
         guard let url = URL(string: "https://api.deezer.com/artist/\(artistId)/albums?limit=300"),
               let albums: Albums = await fetch(url) else { return nil }
         return albums.data
+    }
+
+    /// A release's tracks in order. Asked when the release is opened: the previews' links
+    /// carry a token that expires, so they are never kept.
+    static func tracks(albumId: String) async -> [DeezerTrack]? {
+        guard Int(albumId) != nil,
+              let url = URL(string: "https://api.deezer.com/album/\(albumId)/tracks?limit=200"),
+              let tracks: Tracks = await fetch(url) else { return nil }
+        return tracks.data ?? []
     }
 
     /// Over quota, Deezer answers 200 with an error object and no `data`; that gets one retry

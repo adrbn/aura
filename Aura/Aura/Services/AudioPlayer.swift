@@ -336,7 +336,9 @@ final class AudioPlayer {
     }
 
     private func saveLastPlayback() {
-        guard let song = currentSong else { return }
+        // A preview's address expires within the hour: the session to come back to is the
+        // last one played from the server.
+        guard let song = currentSong, !song.isPreview else { return }
         let state = LastPlayback(currentSong: song, queue: queue, queueIndex: queueIndex, userQueue: userQueue, playbackSource: playbackSource, repeatMode: repeatMode, position: currentTime)
         if let data = try? JSONEncoder().encode(state) {
             UserDefaults.standard.set(data, forKey: lastPlaybackKey)
@@ -401,9 +403,19 @@ final class AudioPlayer {
         restoreLastPlayback()
     }
 
+    /// The item for a song: its preview's address for a release not on the server, else the
+    /// download, the cache or the server's stream.
+    private func makePlayerItem(for song: Song, server: ServerConfig, bitRate: Int?) -> AVPlayerItem {
+        if let preview = song.preview, let url = URL(string: preview) {
+            return AVPlayerItem(url: url)
+        }
+        return AudioCacheManager.shared.playerItem(songId: song.id, server: server, bitRate: bitRate,
+                                                  songSuffix: song.suffix, songContentType: song.contentType)
+    }
+
     /// Load the stream URL and set up AVPlayer without starting playback
     private func preparePlayback(_ song: Song) {
-        AudioCacheManager.shared.saveMetadata(song)
+        if !song.isPreview { AudioCacheManager.shared.saveMetadata(song) }
         // Restored session (launch / server switch): warm its art too, so opening Now
         // Playing straight after launch is instant.
         ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId)
@@ -423,7 +435,7 @@ final class AudioPlayer {
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: nil)
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemNewErrorLogEntry, object: nil)
 
-        let playerItem = AudioCacheManager.shared.playerItem(songId: song.id, server: server, bitRate: bitRate, songSuffix: song.suffix, songContentType: song.contentType)
+        let playerItem = makePlayerItem(for: song, server: server, bitRate: bitRate)
         observePlayerItem(playerItem, song: song)
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem)
@@ -507,8 +519,9 @@ final class AudioPlayer {
             originalQueue = [song]
             queue = [song]
             queueIndex = 0
-            // Single song or no queue — fill with random songs for autoplay
-            Task { await fillQueueWithRandomSongs(around: song) }
+            // Single song or no queue — fill with random songs for autoplay. Not after a
+            // preview: the release is what was asked for, not the library around it.
+            if !song.isPreview { Task { await fillQueueWithRandomSongs(around: song) } }
         }
         if isShuffled { shuffleQueue() }
         currentSong = song
@@ -777,7 +790,7 @@ final class AudioPlayer {
     }
 
     private func startPlayback(_ song: Song) {
-        AudioCacheManager.shared.saveMetadata(song)
+        if !song.isPreview { AudioCacheManager.shared.saveMetadata(song) }
         // Warm the Now Playing artwork as soon as the track starts, not when the screen
         // opens — by the time the user swipes up, it's already there.
         ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId)
@@ -818,7 +831,7 @@ final class AudioPlayer {
         resetScrobbleProgress()
         isSeeking = false
         bufferProgress = 0
-        let playerItem = AudioCacheManager.shared.playerItem(songId: song.id, server: server, bitRate: bitRate, songSuffix: song.suffix, songContentType: song.contentType)
+        let playerItem = makePlayerItem(for: song, server: server, bitRate: bitRate)
         observePlayerItem(playerItem, song: song)
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem)
@@ -886,7 +899,7 @@ final class AudioPlayer {
             let songDuration = Double(song.duration ?? 0)
             let delay = songDuration > 0 ? min(30.0, songDuration / 2) : 30.0
             try? await Task.sleep(for: .seconds(delay))
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, !song.isPreview else { return }
             PlayHistory.shared.record(song: song)
         }
 
@@ -932,6 +945,10 @@ final class AudioPlayer {
                 next()
             } else if isRadioMode {
                 next()
+            } else if currentSong?.isPreview == true {
+                // The release's previews have all played: nothing on the server follows them.
+                pause()
+                seek(to: 0)
             } else {
                 // Auto-start radio when single song ends with nothing next.
                 // Radio needs the server — never kick it off while offline.
@@ -1126,7 +1143,7 @@ final class AudioPlayer {
         scrobbleProgress = fraction
         let threshold = AppSettings.shared.scrobbleThreshold
         guard !hasScrobbledCurrent, let previous, previous < threshold, fraction >= threshold,
-              let song = currentSong else { return }
+              let song = currentSong, !song.isPreview else { return }
         hasScrobbledCurrent = true
         guard AppSettings.shared.scrobbleEnabled,
               let server = ServerManager.shared.currentServer else { return }
@@ -1244,7 +1261,7 @@ final class AudioPlayer {
             nextSong = nil
         }
 
-        guard let song = nextSong else { return }
+        guard let song = nextSong, !song.isPreview else { return }
         AudioCacheManager.shared.prefetch(songId: song.id, server: server, bitRate: bitRate, songSuffix: song.suffix, songContentType: song.contentType)
     }
 
@@ -1482,7 +1499,7 @@ final class AudioPlayer {
     // MARK: - Favorite Toggle
 
     func toggleFavorite() {
-        guard var song = currentSong,
+        guard var song = currentSong, !song.isPreview,
               let server = ServerManager.shared.currentServer else { return }
         guard !isTogglingFavorite else { return }
         isTogglingFavorite = true
@@ -1876,6 +1893,13 @@ final class AudioPlayer {
         lyricsGeneration += 1
         let generation = lyricsGeneration
         lyrics = []
+        // A preview is thirty seconds from somewhere in the song: synced lines would be
+        // out of step, and the server has none for a song it doesn't hold.
+        if song.isPreview {
+            lyricsStatus = "No lyrics for previews"
+            isLoadingLyrics = false
+            return
+        }
         lyricsStatus = "Loading lyrics..."
         isLoadingLyrics = true
         AppLogger.shared.log("🎤 loadLyrics: \(song.title) by \(song.artist ?? "?")")

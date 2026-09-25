@@ -700,8 +700,13 @@ struct Song: Identifiable, Codable, Hashable {
     /// OpenSubsonic loudness data. Absent on servers below the extension and on songs
     /// whose files carry no ReplayGain tags — see `AudioPlayer.replayGainFactor`.
     var replayGain: ReplayGainInfo? = nil
+    /// A song not on the server — a new release's track, from the radar — carries the
+    /// address of its thirty-second preview here. Nothing about it can be asked of the
+    /// server or told to it: no stream, no star, no scrobble, no lyrics by id.
+    var preview: String? = nil
 
     var isExplicit: Bool { explicit == true }
+    var isPreview: Bool { preview != nil }
 
     /// Cover art to display for this song. Songs without embedded art get
     /// `coverArt: nil` from the server — fall back to the album's art

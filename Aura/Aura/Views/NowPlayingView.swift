@@ -117,7 +117,7 @@ struct NowPlayingView: View {
                 AppDelegate.allowLandscape = AppSettings.shared.landscapeClockEnabled
                 // Start preloading playlist membership and song links for current song
                 if let song = player.currentSong {
-                    PlaylistMembershipCache.shared.preloadMembership(for: song.id)
+                    if !song.isPreview { PlaylistMembershipCache.shared.preloadMembership(for: song.id) }
                     SongLinkService.shared.preloadLinks(title: song.title, artist: song.artist ?? "")
                 }
             }
@@ -143,7 +143,7 @@ struct NowPlayingView: View {
             }
             // Pre-fetch playlist membership and song links for the new song in background
             if let newId, let song = player.currentSong {
-                PlaylistMembershipCache.shared.preloadMembership(for: newId)
+                if !song.isPreview { PlaylistMembershipCache.shared.preloadMembership(for: newId) }
                 PlaylistMembershipCache.shared.trimCache(keeping: newId)
                 SongLinkService.shared.preloadLinks(title: song.title, artist: song.artist ?? "")
                 SongLinkService.shared.trimCache(keeping: song.title, artist: song.artist ?? "")
@@ -492,6 +492,11 @@ struct NowPlayingView: View {
         }
     }
 
+    /// A radio grows from the server's knowledge of the song: none offline, none for a preview.
+    private var radioUnavailable: Bool {
+        isEffectivelyOffline || player.currentSong?.isPreview == true
+    }
+
     private var optionsBar: some View {
             HStack {
                 Spacer()
@@ -520,9 +525,9 @@ struct NowPlayingView: View {
                 } label: {
                     Image(systemName: "antenna.radiowaves.left.and.right")
                         .font(.title2)
-                        .foregroundStyle(.white.opacity(isEffectivelyOffline ? 0.25 : 0.6))
+                        .foregroundStyle(.white.opacity(radioUnavailable ? 0.25 : 0.6))
                 }
-                .disabled(isEffectivelyOffline)
+                .disabled(radioUnavailable)
                 .accessibilityLabel("Start radio from this song")
                 Spacer()
                 Button { player.isShowingQueue = true } label: {
@@ -1519,6 +1524,25 @@ struct SongActionsRow: View {
     }
 
     var body: some View {
+        if song.isPreview {
+            previewBadge
+        } else {
+            actions
+        }
+    }
+
+    /// A release not on the server yet: nothing to star, queue or download — only heard.
+    private var previewBadge: some View {
+        Text("Preview")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.white.opacity(0.85))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(.white.opacity(0.15), in: Capsule())
+            .accessibilityLabel("Thirty-second preview")
+    }
+
+    private var actions: some View {
         HStack(spacing: 2) {
             favoriteButton
             Menu {

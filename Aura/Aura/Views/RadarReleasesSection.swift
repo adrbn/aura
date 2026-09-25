@@ -19,7 +19,7 @@ struct RadarMissingRows: View {
                 .listRowBackground(Color.clear)
         }
 
-        Text("Found in Deezer's catalogue. A release joins the playlist above once it's on your server.")
+        Text("Found in Deezer's catalogue — tap one to hear it. A release joins the playlist above once it's on your server.")
             .font(.caption)
             .foregroundStyle(.secondary)
             .listRowSeparator(.hidden)
@@ -33,6 +33,7 @@ struct RadarReleaseRow: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(\.openURL) private var openURL
     @State private var showSoulseek = false
+    @State private var isLoadingPreview = false
 
     private var deezerURL: URL? { release.link.flatMap(URL.init(string:)) }
 
@@ -65,19 +66,23 @@ struct RadarReleaseRow: View {
                     .lineLimit(1)
             }
             Spacer()
-            Image(systemName: canSearchSoulseek ? "magnifyingglass" : "arrow.up.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.tertiary)
+            Group {
+                if isLoadingPreview {
+                    ProgressView()
+                } else {
+                    Image(systemName: "play.circle")
+                        .font(.title3)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(width: 28)
         }
         .contentShape(Rectangle())
-        .onTapGesture {
-            if canSearchSoulseek {
-                showSoulseek = true
-            } else if let deezerURL {
-                openURL(deezerURL)
-            }
-        }
+        .onTapGesture { Task { await playPreviews() } }
         .contextMenu {
+            Button { Task { await playPreviews() } } label: {
+                Label("Preview", systemImage: "play.circle")
+            }
             if let deezerURL {
                 Button { openURL(deezerURL) } label: {
                     Label("Open in Deezer", systemImage: "arrow.up.right")
@@ -94,7 +99,27 @@ struct RadarReleaseRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(release.title), \(release.typeLabel) by \(release.artist.name), \(dateLabel)")
+        .accessibilityHint("Plays thirty-second previews")
+        .accessibilityAddTraits(.isButton)
         .sheet(isPresented: $showSoulseek) { soulseekSheet }
+    }
+
+    /// The release's tracks as Deezer previews, played like any other queue.
+    private func playPreviews() async {
+        guard !isLoadingPreview else { return }
+        isLoadingPreview = true
+        defer { isLoadingPreview = false }
+        guard let tracks = await RadarCatalog.tracks(albumId: release.id) else {
+            ToastManager.shared.show(String(localized: "Deezer couldn't be reached"), icon: "wifi.exclamationmark")
+            return
+        }
+        let songs = tracks.compactMap { $0.previewSong(of: release) }
+        guard let first = songs.first else {
+            ToastManager.shared.show(String(localized: "No previews for this release"), icon: "speaker.slash")
+            return
+        }
+        player.playSong(first, fromQueue: songs, source: .mix(id: "radar", name: String(localized: "Radar")))
+        player.isShowingNowPlaying = true
     }
 
     private var dateLabel: String {
