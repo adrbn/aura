@@ -17,8 +17,10 @@ struct ReleaseFetch: Codable, Identifiable, Equatable {
     var stage: Stage = .searching
     /// Copies of it Soulseek turned up.
     var found = 0
-    /// What was picked: "FLAC · 4 tracks".
-    var source: String?
+    /// The picked copy's format: "FLAC", "MP3 320".
+    var format: String?
+    /// Of the picked copy's files, how many are in — optional so fetches saved before it still load.
+    var tracksDone: Int?
     var progress: Double = 0
     var bytesPerSecond: Double = 0
     var queuePlace: Int?
@@ -240,11 +242,11 @@ final class ReleaseFetcher {
                           id: String, isLast: Bool) async -> Set<Int> {
         let wanted = Dictionary(uniqueKeysWithValues: files.map { ($0.value.filename, $0.key) })
         let total = files.values.reduce(Int64(0)) { $0 + $1.size }
-        let source = "\(pick.format) · \(String(localized: "\(files.count) tracks"))"
         update(id) {
             $0.stage = .downloading
             $0.tried.append(pick.username)
-            $0.source = source
+            $0.format = pick.format
+            $0.tracksDone = 0
             $0.progress = 0
             $0.bytesPerSecond = 0
             $0.queuePlace = nil
@@ -274,14 +276,15 @@ final class ReleaseFetcher {
             let bytes = transfers.reduce(Int64(0)) { $0 + ($1.bytesTransferred ?? 0) }
             let speed = transfers.filter(\.isInProgress).reduce(0) { $0 + ($1.averageSpeed ?? 0) }
             let place = transfers.compactMap(\.placeInQueue).filter { $0 > 0 }.min()
+            let arrived = Set(transfers.filter(\.isCompleted).compactMap { wanted[$0.filename] })
             update(id) {
                 $0.progress = Double(bytes) / Double(max(total, 1))
                 $0.bytesPerSecond = speed
                 $0.queuePlace = bytes > 0 ? nil : place
+                $0.tracksDone = arrived.count
             }
             if bytes > moved { moved = bytes; lastMove = Date() }
 
-            let arrived = Set(transfers.filter(\.isCompleted).compactMap { wanted[$0.filename] })
             let settled = transfers.count == wanted.count && transfers.allSatisfy { $0.isCompleted || $0.isFailed }
             if settled { return arrived }
             if Date().timeIntervalSince(lastMove) > limit {
@@ -401,7 +404,9 @@ extension ReleaseFetch {
             return found > 0 ? String(localized: "\(found) copies found") : ""
         case .downloading:
             if let queuePlace { return String(localized: "Place \(queuePlace) in their queue") }
-            let parts = [source,
+            // "3/12 tracks": how far through the copy, not how many copies there were.
+            let tracks = wanted.isEmpty ? nil : String(localized: "\(tracksDone ?? 0)/\(wanted.count) tracks")
+            let parts = [format, tracks,
                          progress > 0 ? progress.formatted(.percent.precision(.fractionLength(0))) : nil,
                          bytesPerSecond > 0 ? "\(Int64(bytesPerSecond).formatted(.byteCount(style: .file)))/s" : nil]
             return parts.compactMap { $0 }.joined(separator: " · ")

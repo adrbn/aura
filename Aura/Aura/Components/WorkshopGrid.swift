@@ -31,8 +31,8 @@ struct WorkshopGrid: View {
                 if index % major == 0 { firm.addPath(line) } else { fine.addPath(line) }
             }
             let ink: Color = scheme == .dark ? .white : .black
-            context.stroke(fine, with: .color(ink.opacity(0.045)), lineWidth: hair)
-            context.stroke(firm, with: .color(ink.opacity(0.085)), lineWidth: hair)
+            context.stroke(fine, with: .color(ink.opacity(0.022)), lineWidth: hair)
+            context.stroke(firm, with: .color(ink.opacity(0.045)), lineWidth: hair)
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
