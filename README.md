@@ -57,7 +57,7 @@ Each word lights as it is sung. The lines around it fall away in size, blur and 
 
 ## Made for you
 
-<img src="docs/assets/made-for-you.webp" width="640" alt="Three generated mixes side by side: Afternoon Mix labelled FOR RIGHT NOW, Chill Mix and Focus Mix labelled MOOD, each on its own gradient cover" />
+<img src="docs/assets/made-for-you.webp" width="640" alt="Three generated mixes side by side — Afternoon, Chill and Focus — each with an editorial cover: the most-played artist's photo, or their album art, under a bold title band in the mix's colour, with the mix's artists listed beneath" />
 
 **Instant Mix** builds a station from any song or artist. Above it, Aura generates mixes from what's actually in your library — by genre, by mood, by time of day — and a **Year Wrapped** retrospective from what you really played, counted on the device.
 
