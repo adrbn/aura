@@ -94,7 +94,7 @@ Five bands, 15 presets, and a curve you can drag. It runs in the audio graph, no
 ## Private by design
 
 - **Your credentials live in the Keychain**, never in preferences or a file, and never leave the device except to your own server.
-- **No account, no analytics, no telemetry.** Aura talks to your server, to LRCLIB when a song has no lyrics of its own, and to Deezer's public catalogue for the artist photos on mix covers and the Radar's new releases — sending artist names, nothing else. The Radar can be switched off.
+- **No account, no analytics, no telemetry.** Aura talks to your server, to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking, and to Deezer's public catalogue for the artist photos on mix covers and the Radar's new releases — sending artist names, nothing else. The Radar can be switched off.
 - **Play counts and history stay on the device** unless you point Aura at your own scrobbler.
 - **Open source**, so none of this has to be taken on trust.
 
@@ -146,6 +146,8 @@ Not yet. Aura had a gapless switch that was wired to nothing; it was removed rat
 <br/>
 
 Your server first, through the OpenSubsonic lyrics extension — so lyrics you embedded in your own files win. When a song has none, Aura asks LRCLIB, a community database, using the title and artist only.
+
+A duet, a remix or a translated version keeps the original's title, and lyrics sources often hand back the original's words. When a song names its version — a featured artist, a tag in brackets — Aura asks LRCLIB for that version's sheets, once, and switches to them when most of them disagree with what was found.
 </details>
 
 <details>

@@ -111,7 +111,7 @@
   <p>These go <strong>only</strong> to the server URL(s) you explicitly configure in Settings. Aura does not bypass this or contact any other endpoint on your behalf.</p>
 
   <h3>To LRCLIB (optional, on-demand)</h3>
-  <p>Song metadata (artist, title, album, duration) used solely to look up community-contributed time-synced lyrics. <a href="https://lrclib.net">LRCLIB</a> is a public free service. Aura queries it only when your own server does not provide lyrics. Can be disabled in Settings.</p>
+  <p>Song metadata (artist, title, album, duration) used solely to look up community-contributed time-synced lyrics. <a href="https://lrclib.net">LRCLIB</a> is a public free service. Aura queries it when your own server does not provide lyrics, and once per song when a song names a version &mdash; a featured artist, a remix, a translation &mdash; to check that the lyrics found are that version&rsquo;s.</p>
 
   <h3>To streaming-link services (for the song share sheet)</h3>
   <p>So that the Share sheet can offer “open on Spotify / Apple Music / Deezer / YouTube Music” links, Aura looks up the currently playing track on other platforms. The track's <strong>artist and title</strong>, plus your device's <strong>country/region code</strong>, are sent to these public, free, keyless APIs:</p>

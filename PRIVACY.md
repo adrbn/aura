@@ -56,7 +56,7 @@ These go **only** to the server URL(s) you explicitly configure in Settings. Aur
 
 - Song metadata (artist, title, album, duration) used solely to look up community-contributed time-synced lyrics
 
-LRCLIB ([lrclib.net](https://lrclib.net)) is a public free service. Aura queries it only when your own server does not provide lyrics. Can be disabled in Settings.
+LRCLIB ([lrclib.net](https://lrclib.net)) is a public free service. Aura queries it when your own server does not provide lyrics, and once per song when a song names a version — a featured artist, a remix, a translation — to check that the lyrics found are that version's.
 
 ### To streaming-link services (for the song share sheet)
 

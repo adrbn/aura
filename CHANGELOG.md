@@ -15,12 +15,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Artist headers frame the photo on the face, even for photos stored rotated
 
 ### Changed — Appearance
-- The dark canvas is #121212 instead of pure black, and song rows sit on it instead of painting their own black
+- The dark canvas is #121212 instead of pure black, and song rows sit on it instead of painting their own black — the Library menu, recent searches, search results and loading placeholders included
+- Artist headers drop the dark fade across the top of the photo; only a photo bright enough to hide the clock gets a light veil, the status bar's height
 - Artist photos for covers come from Deezer's public catalogue: the server's artist-image queue stalled every cover in the app whenever a shelf asked for a dozen artists at once
 
 ### Fixed — Search
 - A song no longer loses its place to an album of the same name: an exact hit on a title now leads the results, and an artist still outranks both
 - The search field is tappable across its whole width, and the cross that cleared it is now a full-size **Clear** button
+- The search field keeps one height: it no longer grows when the first letter brings up **Clear**
+
+### Fixed — Lyrics
+- A duet, a remix or a translated version shows its own words: when a song names its version, the lyrics found are checked against that version's sheets on LRCLIB, once per song, and replaced when most of them disagree — *These Walls* with Pierre de Maere gets its French verse
+- Lyrics can no longer be left over from the previous song: a fetch still running when the track changes is cancelled, and can neither put its words on the new song nor end its spinner
 
 ### Fixed — Playback
 - A new radio can no longer be filled, or have its loader switched off, by a fetch still running for the one before it
