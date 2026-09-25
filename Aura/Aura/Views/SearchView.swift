@@ -295,7 +295,7 @@ struct SearchResultsContainer: View {
             }
         }
 
-        Color.clear.frame(height: 140)
+        ListEndSpacer(height: 140)
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
     }

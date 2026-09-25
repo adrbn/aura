@@ -35,7 +35,9 @@ final class EqualizerManager: @unchecked Sendable {
 
     // MARK: - MTAudioProcessingTap
 
-    func attachToPlayerItem(_ item: AVPlayerItem) {
+    /// Puts the EQ's tap on an item — and, for a clip that stops mid-song, a fade over its
+    /// last `fadeOut` seconds rather than a cut.
+    func attachToPlayerItem(_ item: AVPlayerItem, fadeOut: TimeInterval? = nil) {
         lock.lock()
         delayBuffers = [
             [Float](repeating: 0, count: 12),
@@ -79,6 +81,12 @@ final class EqualizerManager: @unchecked Sendable {
 
             let params = AVMutableAudioMixInputParameters(track: track)
             params.audioTapProcessor = audioTap
+            if let fadeOut, let length = try? await item.asset.load(.duration),
+               length.isNumeric, length.seconds > fadeOut * 2 {
+                let fade = CMTime(seconds: fadeOut, preferredTimescale: 600)
+                params.setVolumeRamp(fromStartVolume: 1, toEndVolume: 0,
+                                     timeRange: CMTimeRange(start: length - fade, duration: fade))
+            }
 
             let audioMix = AVMutableAudioMix()
             audioMix.inputParameters = [params]

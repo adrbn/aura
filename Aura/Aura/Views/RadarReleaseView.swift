@@ -61,7 +61,7 @@ struct RadarReleaseView: View {
                     .listRowBackground(Color.clear)
             }
 
-            Color.clear.frame(height: 80)
+            ListEndSpacer()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }
@@ -209,22 +209,33 @@ struct RadarReleaseView: View {
         onServer.first { RadarRules.sameTitle($0.title, track.title) }
     }
 
-    /// From the top, or from one song: the server's copy when it has it, else the previews.
+    /// From the top, or from one song: the server's copy when it has it, else the previews —
+    /// then on into the rest of the radar, as its playlist would.
     private func play(_ track: DeezerTrack?) {
         if let track, let song = librarySong(for: track) {
-            let index = onServer.firstIndex { $0.id == song.id } ?? 0
-            player.playSong(song, fromQueue: onServer, startIndex: index, source: source)
+            start(song, of: onServer)
             return
         }
         let songs = previews
-        let start = track.map { track in songs.firstIndex { $0.id == "deezer-\(track.id)" } } ?? 0
-        guard let start, songs.indices.contains(start) else {
+        let song: Song?
+        if let track {
+            song = songs.first { $0.id == "deezer-\(track.id)" }
+        } else {
+            song = songs.first
+        }
+        guard let song else {
             ToastManager.shared.show(track == nil ? String(localized: "No previews for this release")
                                                   : String(localized: "No preview for this song"),
                                      icon: "speaker.slash")
             return
         }
-        player.playSong(songs[start], fromQueue: songs, startIndex: start, source: source)
+        start(song, of: songs)
+    }
+
+    private func start(_ song: Song, of songs: [Song]) {
+        let queue = radarService.queue(playing: songs, of: release)
+        let index = queue.firstIndex { $0.id == song.id } ?? 0
+        player.playSong(song, fromQueue: queue, startIndex: index, source: source)
     }
 
     private func load() async {

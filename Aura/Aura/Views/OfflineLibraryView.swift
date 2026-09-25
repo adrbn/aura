@@ -174,7 +174,7 @@ struct OfflineLibraryView: View {
                     .padding(.top, 20)
                     .clearRow()
 
-                Color.clear.frame(height: 100).clearRow()
+                ListEndSpacer(height: 100).clearRow()
             }
         }
         .listStyle(.plain)
@@ -382,7 +382,7 @@ struct OfflineAlbumDetailView: View {
                         .padding(.vertical, AppSettings.shared.listDensity.verticalPadding)
                     }
                 }
-                Color.clear.frame(height: 100)
+                ListEndSpacer(height: 100)
             }
             .padding(.top, 12)
         }
@@ -448,7 +448,7 @@ struct OfflinePlaylistDetailView: View {
                         .padding(.vertical, AppSettings.shared.listDensity.verticalPadding)
                     }
                 }
-                Color.clear.frame(height: 100)
+                ListEndSpacer(height: 100)
             }
             .padding(.top, 12)
         }
@@ -515,7 +515,7 @@ struct OfflineArtistDetailView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                Color.clear.frame(height: 100)
+                ListEndSpacer(height: 100)
             }
             .padding(.top, 12)
         }

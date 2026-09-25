@@ -165,4 +165,15 @@ struct RadarRulesTests {
                       (release: new, songs: try ["3", "4", "5", "1"].map(song))]
         #expect(RadarRules.playlist(tracks, perRelease: 3).map(\.id) == ["3", "4", "5", "2"])
     }
+
+    // MARK: Preview addresses
+
+    @Test("A preview address runs out at its exp stamp, with a margin to spare")
+    func previewExpiry() {
+        let address = "https://cdnt-preview.dzcdn.net/api/1/1/a/b.mp3?hdnea=exp=1000~acl=/api/1/1/a/b.mp3*~hmac=ff"
+        #expect(!RadarRules.previewExpired(address, now: Date(timeIntervalSince1970: 900), margin: 45))
+        #expect(RadarRules.previewExpired(address, now: Date(timeIntervalSince1970: 960), margin: 45))
+        #expect(RadarRules.previewExpired(address, now: Date(timeIntervalSince1970: 2000)))
+        #expect(!RadarRules.previewExpired("https://example.com/preview.mp3", now: Date(timeIntervalSince1970: 2000)))
+    }
 }

@@ -4,7 +4,7 @@ import SwiftUI
 /// of the page's own List, so they scroll with it and sit on its tinted canvas.
 struct RadarMissingRows: View {
     let releases: [RadarRelease]
-    /// Opens a release's own page, a level down.
+    /// Opens a release's own page, a level down — for a release of more than one song.
     let open: (RadarRelease) -> Void
 
     var body: some View {
@@ -72,7 +72,7 @@ struct RadarReleaseRow: View {
             .frame(width: 32)
         }
         .contentShape(Rectangle())
-        .onTapGesture(perform: open)
+        .onTapGesture { Task { await tap() } }
         .contextMenu {
             Button { Task { await playPreviews() } } label: {
                 Label("Play Previews", systemImage: "play.circle")
@@ -98,13 +98,25 @@ struct RadarReleaseRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(release.title), \(release.typeLabel) by \(release.artist.name), \(dateLabel)")
-        .accessibilityHint("Opens its songs")
+        .accessibilityHint(isOneSong ? "Plays its preview" : "Opens its songs")
         .accessibilityAddTraits(.isButton)
         .sheet(isPresented: $showSoulseek) { soulseekSheet }
     }
 
-    /// The release's tracks as Deezer previews, played like any other queue.
-    private func playPreviews() async {
+    /// A single of one song has no page worth opening.
+    private var isOneSong: Bool { RadarService.shared.trackLists[release.id]?.tracks.count == 1 }
+
+    /// Opens the release — or, when it's a single of one song, plays it like a row of the
+    /// radar's playlist, on into the next releases.
+    private func tap() async {
+        let known = RadarService.shared.trackLists[release.id]
+        guard known?.tracks.count == 1 || (known == nil && release.type == "single") else { return open() }
+        await playPreviews(fromRow: true)
+    }
+
+    /// The release's tracks as Deezer previews, then on into the rest of the radar's.
+    /// `fromRow`: a tap on the row, which opens the release after all if it has more songs.
+    private func playPreviews(fromRow: Bool = false) async {
         guard !isLoadingPreview else { return }
         isLoadingPreview = true
         defer { isLoadingPreview = false }
@@ -112,13 +124,17 @@ struct RadarReleaseRow: View {
             ToastManager.shared.show(String(localized: "Deezer couldn't be reached"), icon: "wifi.exclamationmark")
             return
         }
+        if fromRow, tracks.count > 1 { return open() }
         let songs = tracks.compactMap { $0.previewSong(of: release) }
         guard let first = songs.first else {
             ToastManager.shared.show(String(localized: "No previews for this release"), icon: "speaker.slash")
             return
         }
-        player.playSong(first, fromQueue: songs, source: .mix(id: "radar", name: String(localized: "Radar")))
-        player.isShowingNowPlaying = true
+        let queue = RadarService.shared.queue(playing: songs, of: release)
+        let index = queue.firstIndex { $0.id == first.id } ?? 0
+        player.playSong(first, fromQueue: queue, startIndex: index,
+                        source: .mix(id: "radar", name: String(localized: "Radar")))
+        if !fromRow { player.isShowingNowPlaying = true }
     }
 
     /// Gets the release in one tap, then shows how far along it is.

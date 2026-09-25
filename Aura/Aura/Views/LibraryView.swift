@@ -230,7 +230,7 @@ struct LibraryCategoriesEditor: View {
         .environment(\.editMode, .constant(.active))
         .scrollIndicators(.hidden)
         .safeAreaInset(edge: .bottom) {
-            Color.clear.frame(height: 80)
+            ListEndSpacer()
         }
         .navigationTitle("library categories")
         .navigationBarTitleDisplayMode(.inline)
@@ -271,7 +271,7 @@ struct AlbumsGridView: View {
                 .padding()
             }
 
-            Color.clear.frame(height: 80)
+            ListEndSpacer()
         }
         .scrollIndicators(.hidden)
         .navigationTitle("albums")

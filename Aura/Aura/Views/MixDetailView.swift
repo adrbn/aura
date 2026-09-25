@@ -105,7 +105,7 @@ struct MixDetailView: View {
                 RadarMissingRows(releases: listedReleases) { openedRelease = $0 }
             }
 
-            Color.clear.frame(height: 80)
+            ListEndSpacer()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }

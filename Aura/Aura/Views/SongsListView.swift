@@ -366,7 +366,7 @@ struct SongsListView: View {
                         .listRowSeparator(.hidden)
                     }
 
-                    Color.clear.frame(height: 60)
+                    ListEndSpacer(height: 60)
                         .listRowSeparator(.hidden)
                 }
                 .listStyle(.plain)

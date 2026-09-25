@@ -34,6 +34,25 @@ enum TabChrome {
     static var contentTop: CGFloat { windowSafeTop + bannerInset }
 }
 
+/// The fetch card's room above the mini player, 0 while it's hidden. Pages ignore a bottom
+/// inset set around the tabs just as they ignore a top one, so each list ends this much
+/// higher by itself, through `ListEndSpacer`.
+@MainActor
+@Observable
+final class BottomChrome {
+    static let shared = BottomChrome()
+    var cardInset: CGFloat = 0
+}
+
+/// The end of a page's list: room for the mini player, and for the fetch card while it shows.
+struct ListEndSpacer: View {
+    var height: CGFloat = 80
+
+    var body: some View {
+        Color.clear.frame(height: height + BottomChrome.shared.cardInset)
+    }
+}
+
 /// What every pull-to-refresh in the app does, so the gesture means the same thing on
 /// every screen: re-check the server, let stuck artwork try again, reload the content,
 /// then confirm with a haptic.

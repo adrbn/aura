@@ -186,7 +186,7 @@ struct PlaylistsView: View {
                         }
                         .padding(.top, 8)
                     }
-                    Color.clear.frame(height: 80)
+                    ListEndSpacer()
                 }
                 .scrollIndicators(.hidden)
                 .background(Color.themeBg)

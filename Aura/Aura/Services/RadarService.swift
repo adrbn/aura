@@ -131,9 +131,21 @@ final class RadarService {
 
     /// Everything the radar plays: the server's tracks for what it has, Deezer's previews —
     /// the releases' most-played tracks — for the rest, newest release first.
-    var queue: [Song] {
+    var queue: [Song] { playlist(of: current?.releases ?? []) }
+
+    /// The radar's queue with one release's songs — all of them, in their own order — where
+    /// the release falls among the others, so they run on into the next releases'.
+    func queue(playing songs: [Song], of release: RadarRelease) -> [Song] {
+        let others = current?.releases.filter { $0.id != release.id } ?? []
+        let newer = playlist(of: others.filter { $0.released > release.released })
+        let older = playlist(of: others.filter { $0.released <= release.released })
+        var seen = Set<String>()
+        return (newer + songs + older).filter { seen.insert($0.id).inserted }
+    }
+
+    private func playlist(of releases: [RadarRelease]) -> [Song] {
         guard let radar = current else { return [] }
-        return RadarRules.playlist(radar.releases.compactMap { release in
+        return RadarRules.playlist(releases.compactMap { release in
             if let songs = radar.inLibrary[release.id] { return (release: release, songs: songs) }
             guard let list = trackLists[release.id] else { return nil }
             let ranked = list.tracks.sorted { ($0.rank ?? 0) > ($1.rank ?? 0) }

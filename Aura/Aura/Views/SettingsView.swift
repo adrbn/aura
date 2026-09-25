@@ -204,7 +204,7 @@ struct SettingsView: View {
         .scrollContentBackground(.hidden)
         // Reserve room for the floating mini-player so the bottom version footer isn't
         // hidden behind it (matches LibraryView's convention).
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
+        .safeAreaInset(edge: .bottom) { ListEndSpacer() }
         // Grouped-list page: grey in light so the white section cards stand out.
         .background(Color.themeGroupedPageBg)
         .id("\(appSettings.appAccentColor.rawValue)-\(appSettings.activeTheme.rawValue)") // Force full re-render on accent/theme change

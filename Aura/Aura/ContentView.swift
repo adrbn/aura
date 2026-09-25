@@ -30,11 +30,11 @@ struct ContentView: View {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
                     Tab(tab.title, systemImage: tab.icon, value: index) {
                         tabContent(for: tab)
-                            .safeAreaPadding(.bottom, fetchCardInset)
                     }
                 }
             }
             .tint(appSettings.activeTheme.accentColor)
+            .onChange(of: fetchCardInset, initial: true) { BottomChrome.shared.cardInset = $1 }
 
             VStack(spacing: 0) {
                 Spacer()
@@ -158,7 +158,8 @@ struct ContentView: View {
         }
     }
 
-    /// Room the fetch card takes above the mini player, so the pages behind it end above it.
+    /// Room the fetch card takes above the mini player, so the pages behind it end above it
+    /// (`ListEndSpacer`).
     private var fetchCardInset: CGFloat {
         #if APPSTORE_BUILD
         return 0

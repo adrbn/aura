@@ -228,7 +228,7 @@ struct ArtistDetailView: View {
                 .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
             }
 
-            Color.clear.frame(height: 80)
+            ListEndSpacer()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }
@@ -404,7 +404,7 @@ struct ArtistAllSongsView: View {
                                           bottom: AppSettings.shared.listDensity.verticalPadding,
                                           trailing: 16))
             }
-            Color.clear.frame(height: 80)
+            ListEndSpacer()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }

@@ -9,6 +9,9 @@ import ActivityKit
 @Observable
 final class AudioPlayer {
     static let shared = AudioPlayer()
+    /// A preview is thirty seconds cut from the middle of a song: it fades out over its last
+    /// few rather than stopping dead.
+    private static let previewFade: TimeInterval = 3
 
     var currentSong: Song?
     var queue: [Song] = []
@@ -438,7 +441,7 @@ final class AudioPlayer {
         let playerItem = makePlayerItem(for: song, server: server, bitRate: bitRate)
         observePlayerItem(playerItem, song: song)
         observeBuffer(playerItem, songId: song.id)
-        EqualizerManager.shared.attachToPlayerItem(playerItem)
+        EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVPlayer(playerItem: playerItem)
         applyOutputVolume(for: song)
         resetScrobbleProgress()
@@ -789,7 +792,15 @@ final class AudioPlayer {
         }
     }
 
-    private func startPlayback(_ song: Song) {
+    private func startPlayback(_ song: Song, renewing: Bool = true) {
+        // A preview's address runs out a quarter of an hour after Deezer hands it out, and a
+        // radar queue plays for longer than that: an expired one is asked for again first.
+        #if os(iOS)
+        if renewing, let preview = song.preview, RadarRules.previewExpired(preview) {
+            renewPreview(song)
+            return
+        }
+        #endif
         if !song.isPreview { AudioCacheManager.shared.saveMetadata(song) }
         // Warm the Now Playing artwork as soon as the track starts, not when the screen
         // opens — by the time the user swipes up, it's already there.
@@ -834,7 +845,7 @@ final class AudioPlayer {
         let playerItem = makePlayerItem(for: song, server: server, bitRate: bitRate)
         observePlayerItem(playerItem, song: song)
         observeBuffer(playerItem, songId: song.id)
-        EqualizerManager.shared.attachToPlayerItem(playerItem)
+        EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVPlayer(playerItem: playerItem)
         // This path never applied the fader: every song started from here played at full
         // level until the fader was next touched.
@@ -1100,6 +1111,28 @@ final class AudioPlayer {
         AppLogger.shared.log("⚠️ Stream ended early at \(Int(currentTime))s/\(Int(duration))s — treating as end of track")
         if repeatMode == .one { next() } else { handlePlayerDidFinish() }
     }
+
+    #if os(iOS)
+    /// Plays a preview from a freshly signed address, put in its place in the queue too. If
+    /// Deezer can't be reached, the old address is tried anyway and fails like any stream.
+    private func renewPreview(_ song: Song) {
+        let trackId = String(song.id.dropFirst("deezer-".count))
+        Task { @MainActor [weak self] in
+            let address = await RadarCatalog.previewAddress(trackId: trackId)
+            guard let self, self.currentSong?.id == song.id else { return }
+            guard let address else {
+                self.startPlayback(song, renewing: false)
+                return
+            }
+            var renewed = song
+            renewed.preview = address
+            self.queue = self.queue.map { $0.id == song.id ? renewed : $0 }
+            self.originalQueue = self.originalQueue.map { $0.id == song.id ? renewed : $0 }
+            self.currentSong = renewed
+            self.startPlayback(renewed, renewing: false)
+        }
+    }
+    #endif
 
     // MARK: - Output level
 

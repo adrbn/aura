@@ -55,6 +55,15 @@ enum RadarWindow {
 }
 
 enum RadarRules {
+    /// Whether a Deezer preview address has run out, or will within `margin` — read from the
+    /// `exp=` stamp Deezer signs it with, a quarter of an hour after handing it out. An
+    /// address without one doesn't expire.
+    static func previewExpired(_ address: String, now: Date = Date(), margin: TimeInterval = 45) -> Bool {
+        guard let range = address.range(of: #"exp=\d+"#, options: .regularExpression),
+              let stamp = TimeInterval(address[range].dropFirst(4)) else { return false }
+        return now.timeIntervalSince1970 + margin >= stamp
+    }
+
     /// Artists followed, most-played first.
     static let artistLimit = 80
     /// Of which at least this many come from plays, whatever the favourites.
@@ -295,6 +304,13 @@ enum RadarCatalog {
               let url = URL(string: "https://api.deezer.com/album/\(albumId)/tracks?limit=200"),
               let tracks: Tracks = await fetch(url) else { return nil }
         return tracks.data ?? []
+    }
+
+    /// One track's preview address, freshly signed.
+    static func previewAddress(trackId: String) async -> String? {
+        guard Int(trackId) != nil, let url = URL(string: "https://api.deezer.com/track/\(trackId)"),
+              let track: DeezerTrack = await fetch(url) else { return nil }
+        return track.previewURL?.absoluteString
     }
 
     /// Over quota, Deezer answers 200 with an error object and no `data`; that gets one retry

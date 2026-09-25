@@ -20,7 +20,7 @@ struct RecentlyPlayedSongsView: View {
                                           bottom: appSettings.listDensity.verticalPadding,
                                           trailing: 16))
             }
-            Color.clear.frame(height: 80)
+            ListEndSpacer()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }

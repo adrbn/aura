@@ -160,7 +160,7 @@ struct AlbumDetailView: View {
                         }
                     }
 
-                    Color.clear.frame(height: 80)
+                    ListEndSpacer()
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
                 }

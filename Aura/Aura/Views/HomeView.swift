@@ -347,7 +347,7 @@ struct HomeView: View {
                 }
             }
 
-            Color.clear.frame(height: 80)
+            ListEndSpacer()
         }
         .padding(.top, 2)
     }
