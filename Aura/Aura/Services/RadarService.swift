@@ -118,6 +118,17 @@ final class RadarService {
         await task.value
     }
 
+    /// One release's track list: the one at hand while its previews still play, else fetched
+    /// again. Nil when Deezer can't be reached.
+    func tracks(of release: RadarRelease) async -> [DeezerTrack]? {
+        if let list = trackLists[release.id], Date().timeIntervalSince(list.fetched) < Self.previewAge {
+            return list.tracks
+        }
+        guard let tracks = await RadarCatalog.tracks(albumId: release.id) else { return nil }
+        trackLists[release.id] = TrackList(tracks: tracks, fetched: Date())
+        return tracks
+    }
+
     /// Everything the radar plays: the server's tracks for what it has, Deezer's previews —
     /// the releases' most-played tracks — for the rest, newest release first.
     var queue: [Song] {
@@ -153,6 +164,18 @@ final class RadarService {
             self.radar = updated
         }
         return songs
+    }
+
+    /// One of a release's songs on the server, when only that was fetched. Leaves the radar
+    /// as it is: the rest of the release is still to be had.
+    func lookUp(song title: String, of release: RadarRelease) async -> [Song]? {
+        guard let server = ServerManager.shared.currentServer,
+              let hits = try? await SubsonicClient.shared.search3(server: server, query: title, artistCount: 0,
+                                                                  albumCount: 0, songCount: 20) else { return nil }
+        let song = (hits.song ?? []).first {
+            RadarRules.sameTitle($0.title, title) && RadarRules.credits($0.artist, release.artist.name)
+        }
+        return song.map { [$0] }
     }
 
     private func refresh(server: ServerConfig, catalogue staleCatalogue: Bool) async {

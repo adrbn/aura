@@ -57,7 +57,13 @@ struct ReleaseFetchLiveActivity: Widget {
                     Text(context.state.headline)
                         .font(.caption.weight(.medium))
                         .lineLimit(1)
-                    if !context.state.detail.isEmpty {
+                    // Frozen figures once the app sleeps; the countdown beside them runs on.
+                    if context.isStale {
+                        Text("Open Aura for the latest")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    } else if !context.state.detail.isEmpty {
                         Text(context.state.detail)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -65,6 +71,13 @@ struct ReleaseFetchLiveActivity: Widget {
                     }
                 }
                 Spacer(minLength: 0)
+                if let end = context.state.waitEnd, end > .now {
+                    Text(timerInterval: Date.now...end, countsDown: true)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 56, alignment: .trailing)
+                }
             }
             steps(context.state)
         }
@@ -107,15 +120,17 @@ struct ReleaseFetchLiveActivity: Widget {
         }
     }
 
+    /// Time left while there's an estimate, since it keeps running with the app asleep; the
+    /// download's share when there isn't one yet.
     @ViewBuilder
     private func compactValue(_ state: ReleaseFetchAttributes.ContentState) -> some View {
-        if state.step == 1, let value = state.progress {
-            Text(value, format: .percent.precision(.fractionLength(0)))
-                .font(.caption2.monospacedDigit())
-        } else if state.step == 2, let end = state.waitEnd, end > .now {
+        if state.step == 1 || state.step == 2, let end = state.waitEnd, end > .now {
             Text(timerInterval: Date.now...end, countsDown: true)
                 .font(.caption2.monospacedDigit())
                 .frame(maxWidth: 44)
+        } else if state.step == 1, let value = state.progress {
+            Text(value, format: .percent.precision(.fractionLength(0)))
+                .font(.caption2.monospacedDigit())
         } else {
             Image(systemName: state.step == 3 ? "checkmark" : "ellipsis")
                 .font(.caption2)

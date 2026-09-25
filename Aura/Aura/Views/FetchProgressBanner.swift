@@ -7,12 +7,15 @@ import SwiftUI
 struct FetchProgressBanner: View {
     /// Room below it: a gap above the mini player, or the tab bar's height without one.
     let bottomGap: CGFloat
+    /// The card's own height, so the pages behind it can end above it.
+    @Binding var height: CGFloat
     @State private var fetcher = ReleaseFetcher.shared
 
     var body: some View {
         if let fetch = fetcher.visible.first {
             FetchCard(fetch: fetch, others: fetcher.visible.count - 1)
                 .id(fetch.id)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
                 .padding(.bottom, bottomGap)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
@@ -42,7 +45,7 @@ private struct FetchCard: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Text(fetch.release.title)
+                    Text(fetch.title)
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
                     if others > 0 {
@@ -81,7 +84,7 @@ private struct FetchCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 22))
         .padding(.horizontal, 16)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(fetch.release.title), \(fetch.headline). \(fetch.detail)")
+        .accessibilityLabel("\(fetch.title), \(fetch.headline). \(fetch.detail)")
     }
 
     @ViewBuilder
@@ -121,12 +124,12 @@ private struct FetchCard: View {
         }
     }
 
-    /// The release from the library, from its first track.
+    /// The release from the library, from its first track — or the one song fetched.
     private func play() async {
         guard !isOpening else { return }
         isOpening = true
         defer { isOpening = false }
-        guard let songs = await RadarService.shared.lookUp(fetch.release), let first = songs.first else { return }
+        guard let songs = await fetcher.songs(of: fetch), let first = songs.first else { return }
         player.playSong(first, fromQueue: songs, source: .album(id: first.albumId ?? "", name: fetch.release.title))
         fetcher.dismiss(fetch.id)
     }

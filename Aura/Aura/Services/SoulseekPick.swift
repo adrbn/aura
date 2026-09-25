@@ -9,7 +9,7 @@ import Foundation
 enum SoulseekPick {
 
     /// A track of the release, as Deezer lists it.
-    struct Track: Hashable {
+    struct Track: Codable, Hashable {
         let id: Int
         let title: String
         let seconds: Int?

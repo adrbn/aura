@@ -9,6 +9,8 @@ struct ContentView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var showDownloadManager = false
     @State private var keyboardVisible = false
+    /// The fetch card's height, measured, for the room the pages leave under them.
+    @State private var fetchCardHeight: CGFloat = 0
 
     var body: some View {
         if serverManager.hasServer {
@@ -28,6 +30,7 @@ struct ContentView: View {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
                     Tab(tab.title, systemImage: tab.icon, value: index) {
                         tabContent(for: tab)
+                            .safeAreaPadding(.bottom, fetchCardInset)
                     }
                 }
             }
@@ -44,7 +47,7 @@ struct ContentView: View {
                 }
 
                 #if !APPSTORE_BUILD
-                FetchProgressBanner(bottomGap: audioPlayer.hasQueue ? 6 : 57)
+                FetchProgressBanner(bottomGap: audioPlayer.hasQueue ? 6 : 57, height: $fetchCardHeight)
                     .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.visible.first?.id)
                 #endif
 
@@ -153,6 +156,15 @@ struct ContentView: View {
             await serverManager.testConnection()
             serverManager.startMonitoring()
         }
+    }
+
+    /// Room the fetch card takes above the mini player, so the pages behind it end above it.
+    private var fetchCardInset: CGFloat {
+        #if APPSTORE_BUILD
+        return 0
+        #else
+        return ReleaseFetcher.shared.visible.isEmpty ? 0 : fetchCardHeight + 6
+        #endif
     }
 
     @ViewBuilder

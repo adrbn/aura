@@ -110,6 +110,7 @@
 		E1000001000000000000A001 /* RadarCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A001 /* RadarCatalog.swift */; };
 		E1000001000000000000A002 /* RadarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A002 /* RadarService.swift */; };
 		E1000001000000000000A003 /* RadarReleasesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A003 /* RadarReleasesSection.swift */; };
+		E1000001000000000000A010 /* RadarReleaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A010 /* RadarReleaseView.swift */; };
 		E1000001000000000000A004 /* RadarRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A004 /* RadarRulesTests.swift */; };
 		E1000001000000000000A005 /* LyricsVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A005 /* LyricsVersion.swift */; };
 		E1000001000000000000A006 /* LyricsVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A005 /* LyricsVersion.swift */; };
@@ -299,6 +300,7 @@
 		E1000002000000000000A001 /* RadarCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarCatalog.swift; sourceTree = "<group>"; };
 		E1000002000000000000A002 /* RadarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarService.swift; sourceTree = "<group>"; };
 		E1000002000000000000A003 /* RadarReleasesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarReleasesSection.swift; sourceTree = "<group>"; };
+		E1000002000000000000A010 /* RadarReleaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarReleaseView.swift; sourceTree = "<group>"; };
 		E1000002000000000000A004 /* RadarRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarRulesTests.swift; sourceTree = "<group>"; };
 		E1000002000000000000A005 /* LyricsVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsVersion.swift; sourceTree = "<group>"; };
 		E1000002000000000000A007 /* LyricsVersionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsVersionTests.swift; sourceTree = "<group>"; };
@@ -610,6 +612,7 @@
 				E100000200000000000000DC /* HomeFullLists.swift */,
 				E100000200000000000000DD /* RecentlyPlayedSongsView.swift */,
 				E1000002000000000000A003 /* RadarReleasesSection.swift */,
+				E1000002000000000000A010 /* RadarReleaseView.swift */,
 				E1000002000000000000A00D /* FetchProgressBanner.swift */,
 			);
 			path = Views;
@@ -1072,6 +1075,7 @@
 				E1000001000000000000A001 /* RadarCatalog.swift in Sources */,
 				E1000001000000000000A002 /* RadarService.swift in Sources */,
 				E1000001000000000000A003 /* RadarReleasesSection.swift in Sources */,
+				E1000001000000000000A010 /* RadarReleaseView.swift in Sources */,
 				E1000001000000000000A005 /* LyricsVersion.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

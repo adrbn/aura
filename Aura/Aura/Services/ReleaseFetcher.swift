@@ -5,13 +5,15 @@ import UIKit
 
 #if !APPSTORE_BUILD
 
-/// A release on its way from Soulseek into the library.
+/// A release on its way from Soulseek into the library — or one of its songs.
 struct ReleaseFetch: Codable, Identifiable, Equatable {
     enum Stage: String, Codable {
         case searching, downloading, importing, ready, failed
     }
 
     let release: RadarRelease
+    /// The one song asked for, when it isn't the whole release.
+    let track: SoulseekPick.Track?
     /// The preview whose heart started it: starred once the song is in the library.
     let liked: String?
     var stage: Stage = .searching
@@ -35,8 +37,13 @@ struct ReleaseFetch: Codable, Identifiable, Equatable {
     var total: Int64 = 0
     var trackCount = 0
 
-    var id: String { release.id }
+    var id: String { Self.id(release.id, track: track?.id) }
+    var title: String { track?.title ?? release.title }
     var isActive: Bool { stage != .ready && stage != .failed }
+
+    static func id(_ releaseId: String, track trackId: Int?) -> String {
+        trackId.map { "\(releaseId)/\($0)" } ?? releaseId
+    }
 }
 
 /// Gets a radar release onto the server without anyone choosing files: searches Soulseek,
@@ -52,10 +59,14 @@ final class ReleaseFetcher {
     static let shared = ReleaseFetcher()
 
     private(set) var fetches: [ReleaseFetch] = []
+    /// Releases some of whose songs were fetched one by one: once those land, the server has
+    /// the release in part, and the radar keeps listing it so the rest can be had.
+    private(set) var picked: Set<String> = []
     @ObservationIgnored private var tasks: [String: Task<Void, Never>] = [:]
     @ObservationIgnored private let activities = ReleaseFetchActivities()
 
     private static let storeKey = "release_fetches_v1"
+    private static let pickedKey = "release_fetch_picked_v1"
     /// Stop listening for more answers once a complete copy from a free peer is in hand.
     private static let searchWindow: TimeInterval = 25
     private static let earlyPick: TimeInterval = 6
@@ -83,31 +94,59 @@ final class ReleaseFetcher {
         let now = Date()
         fetches = Self.load().filter { $0.isActive || $0.stage == .failed
             || now.timeIntervalSince($0.downloaded ?? now) < Self.readyKept }
+        picked = Set(UserDefaults.standard.stringArray(forKey: Self.pickedKey) ?? [])
         // Whatever was under way when the app last quit picks up where it was.
         for fetch in fetches where fetch.isActive { start(fetch.id) }
+        NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
+                                               object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { ReleaseFetcher.shared.leaving() }
+        }
     }
 
     func fetch(for id: String) -> ReleaseFetch? { fetches.first { $0.id == id } }
 
     // MARK: Commands
 
-    /// Starts fetching a release, or does nothing if it is already on its way.
-    func get(_ release: RadarRelease, liking title: String? = nil) {
+    /// Starts fetching a release, or one of its songs — or does nothing if it is already on
+    /// its way, the song included when the whole release is.
+    func get(_ release: RadarRelease, track: SoulseekPick.Track? = nil, liking title: String? = nil) {
         guard isAvailable else { return }
-        if let existing = fetch(for: release.id), existing.stage != .failed { return }
-        fetches.removeAll { $0.id == release.id }
-        fetches.insert(ReleaseFetch(release: release, liked: title), at: 0)
+        let fetch = ReleaseFetch(release: release, track: track, liked: title)
+        if let existing = self.fetch(for: fetch.id), existing.stage != .failed { return }
+        if track != nil, let whole = self.fetch(for: release.id), whole.stage != .failed { return }
+        fetches.removeAll { $0.id == fetch.id }
+        fetches.insert(fetch, at: 0)
+        if track != nil { picked.insert(release.id) }
         save()
-        start(release.id)
+        start(fetch.id)
     }
 
-    /// The release a preview comes from, fetched, and the preview starred once it's in.
+    /// The song a preview plays, fetched, and starred once it's in.
     func get(preview song: Song) {
         guard let release = RadarService.shared.release(of: song) else {
             ToastManager.shared.show(String(localized: "This release is no longer on the radar"), icon: "exclamationmark.triangle")
             return
         }
-        get(release, liking: song.title)
+        get(release, track: Self.track(of: song, in: release), liking: song.title)
+    }
+
+    /// What's under way for a preview's song: its own fetch, or its whole release's.
+    func fetch(covering song: Song) -> ReleaseFetch? {
+        guard let release = RadarService.shared.release(of: song) else { return nil }
+        let own = Self.track(of: song, in: release).flatMap { fetch(for: ReleaseFetch.id(release.id, track: $0.id)) }
+        let whole = fetch(for: release.id)
+        if let whole, whole.stage != .failed { return whole }
+        return own ?? whole
+    }
+
+    /// A preview's song as Deezer lists it — with its real length, when the release's track
+    /// list is at hand, since the preview only runs thirty seconds.
+    private static func track(of song: Song, in release: RadarRelease) -> SoulseekPick.Track? {
+        guard let id = Int(song.id.replacingOccurrences(of: "deezer-", with: "")) else { return nil }
+        if let listed = RadarService.shared.trackLists[release.id]?.tracks.first(where: { $0.id == id }) {
+            return SoulseekPick.Track(listed)
+        }
+        return SoulseekPick.Track(id: id, title: song.title, seconds: nil, position: song.track)
     }
 
     func retry(_ id: String) {
@@ -160,11 +199,16 @@ final class ReleaseFetcher {
         }
 
         update(id) { $0.stage = .searching; $0.progress = 0; $0.found = 0; $0.peer = nil; $0.wanted = [:] }
-        guard let deezer = await RadarCatalog.tracks(albumId: fetch.release.id) else {
-            fail(id, String(localized: "Deezer couldn't be reached"))
-            return false
+        let tracks: [SoulseekPick.Track]
+        if let track = fetch.track {
+            tracks = [track]
+        } else {
+            guard let deezer = await RadarService.shared.tracks(of: fetch.release) else {
+                fail(id, String(localized: "Deezer couldn't be reached"))
+                return false
+            }
+            tracks = deezer.map(SoulseekPick.Track.init)
         }
-        let tracks = deezer.map(SoulseekPick.Track.init)
         guard !tracks.isEmpty else {
             fail(id, String(localized: "Deezer lists no tracks for it"))
             return false
@@ -172,7 +216,7 @@ final class ReleaseFetcher {
         update(id) { $0.trackCount = tracks.count }
         let candidates: [SoulseekPick.Candidate]
         do {
-            candidates = try await search(fetch.release, tracks: tracks, id: id)
+            candidates = try await search(fetch.release, title: fetch.title, tracks: tracks, id: id)
         } catch {
             if !Task.isCancelled {
                 fail(id, String(localized: "Soulseek isn't reachable — check it in Settings"))
@@ -210,11 +254,12 @@ final class ReleaseFetcher {
         return true
     }
 
-    /// Asks Soulseek, one query after another, until a query turns up a copy.
-    private func search(_ release: RadarRelease, tracks: [SoulseekPick.Track],
+    /// Asks Soulseek, one query after another, until a query turns up a copy. `title` is the
+    /// release's, or the song's when only that is wanted.
+    private func search(_ release: RadarRelease, title: String, tracks: [SoulseekPick.Track],
                         id: String) async throws -> [SoulseekPick.Candidate] {
         let client = SlskdClient.shared
-        for query in SoulseekPick.queries(artist: release.artist.name, title: release.title) {
+        for query in SoulseekPick.queries(artist: release.artist.name, title: title) {
             let search = try await client.search(query: query)
             defer { Task { try? await client.deleteSearch(id: search.id) } }
             let began = Date()
@@ -312,11 +357,11 @@ final class ReleaseFetcher {
     /// Waits for the server to have the release, asking it to scan once its import has had
     /// time to run, rather than leaving it to the hourly scan.
     private func awaitImport(_ id: String) async {
-        guard let release = fetch(for: id)?.release else { return }
-        let downloaded = fetch(for: id)?.downloaded ?? Date()
+        guard let fetch = fetch(for: id) else { return }
+        let downloaded = fetch.downloaded ?? Date()
         var lastScan: Date?
         while !Task.isCancelled {
-            if let songs = await RadarService.shared.lookUp(release) {
+            if let songs = await songs(of: fetch) {
                 await finish(id, songs: songs)
                 return
             }
@@ -335,8 +380,15 @@ final class ReleaseFetcher {
         }
     }
 
+    /// What the server has of a fetch: the release, or the one song. Nil until it's there.
+    func songs(of fetch: ReleaseFetch) async -> [Song]? {
+        guard let track = fetch.track else { return await RadarService.shared.lookUp(fetch.release) }
+        return await RadarService.shared.lookUp(song: track.title, of: fetch.release)
+    }
+
     private func finish(_ id: String, songs: [Song]) async {
         update(id) { $0.stage = .ready; $0.downloaded = $0.downloaded ?? Date() }
+        if let fetch = fetch(for: id), fetch.track == nil, picked.remove(fetch.release.id) != nil { savePicked() }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         // The banner lets it go after a while; the Lock Screen keeps it a little longer.
         Task { [weak self] in
@@ -370,6 +422,21 @@ final class ReleaseFetcher {
     private func save() {
         guard let data = try? JSONEncoder().encode(fetches) else { return }
         UserDefaults.standard.set(data, forKey: Self.storeKey)
+        savePicked()
+    }
+
+    private func savePicked() {
+        UserDefaults.standard.set(Array(picked), forKey: Self.pickedKey)
+    }
+
+    /// The app going to the background: the Lock Screen gets the latest — the download's
+    /// expected end included, which its bar runs to on its own once the app is asleep — and
+    /// the fetch a few more seconds to move before iOS suspends it.
+    private func leaving() {
+        let running = fetches.filter(\.isActive)
+        guard !running.isEmpty else { return }
+        for fetch in running { activities.show(fetch, force: true) }
+        BackgroundGrace().hold(for: 25)
     }
 
     private static func load() -> [ReleaseFetch] {
@@ -405,7 +472,7 @@ extension ReleaseFetch {
         case .downloading:
             if let queuePlace { return String(localized: "Place \(queuePlace) in their queue") }
             // "3/12 tracks": how far through the copy, not how many copies there were.
-            let tracks = wanted.isEmpty ? nil : String(localized: "\(tracksDone ?? 0)/\(wanted.count) tracks")
+            let tracks = wanted.count < 2 ? nil : String(localized: "\(tracksDone ?? 0)/\(wanted.count) tracks")
             let parts = [format, tracks,
                          progress > 0 ? progress.formatted(.percent.precision(.fractionLength(0))) : nil,
                          bytesPerSecond > 0 ? "\(Int64(bytesPerSecond).formatted(.byteCount(style: .file)))/s" : nil]
@@ -434,6 +501,39 @@ extension ReleaseFetch {
 
     /// When the server's import should be done.
     var importEnd: Date? { downloaded.map { $0.addingTimeInterval(ReleaseFetcher.importEstimate) } }
+
+    /// The download's expected run, from its share so far and its speed, placed so that the
+    /// bar stands where the download is now: the Lock Screen runs it to the end on its own
+    /// while the app sleeps.
+    var downloadWindow: ClosedRange<Date>? {
+        guard stage == .downloading, queuePlace == nil, bytesPerSecond > 0, progress > 0.01, progress < 1 else { return nil }
+        let left = Double(total) * (1 - progress) / bytesPerSecond
+        let now = Date()
+        return now.addingTimeInterval(-left * progress / (1 - progress))...now.addingTimeInterval(left)
+    }
+}
+
+/// A few seconds of background time, ended once — when they run out, or when iOS wants them
+/// back, whichever comes first.
+@MainActor
+private final class BackgroundGrace {
+    private var id = UIBackgroundTaskIdentifier.invalid
+
+    func hold(for seconds: Double) {
+        id = UIApplication.shared.beginBackgroundTask(withName: "Release fetch") {
+            MainActor.assumeIsolated { self.end() }
+        }
+        Task {
+            try? await Task.sleep(for: .seconds(seconds))
+            end()
+        }
+    }
+
+    private func end() {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
+    }
 }
 
 // MARK: - Live Activity
@@ -444,20 +544,23 @@ private final class ReleaseFetchActivities {
     private var running: [String: Activity<ReleaseFetchAttributes>] = [:]
     private var shown: [String: (state: ReleaseFetchAttributes.ContentState, at: Date)] = [:]
 
-    func show(_ fetch: ReleaseFetch) {
+    func show(_ fetch: ReleaseFetch, force: Bool = false) {
+        let window = fetch.downloadWindow
         let state = ReleaseFetchAttributes.ContentState(
             step: fetch.step, headline: fetch.headline, detail: fetch.detail,
             progress: fetch.stage == .downloading ? fetch.progress : nil,
-            waitStart: fetch.stage == .importing ? fetch.downloaded : nil,
-            waitEnd: fetch.stage == .importing ? fetch.importEnd : nil)
+            waitStart: fetch.stage == .importing ? fetch.downloaded : window?.lowerBound,
+            waitEnd: fetch.stage == .importing ? fetch.importEnd : window?.upperBound)
         // The download ticks every two seconds; the Lock Screen needs far fewer.
-        if let last = shown[fetch.id], last.state.step == state.step,
+        if !force, let last = shown[fetch.id], last.state.step == state.step,
            last.state == state || Date().timeIntervalSince(last.at) < 5 { return }
         shown[fetch.id] = (state, Date())
 
         let activity = running[fetch.id] ?? Activity<ReleaseFetchAttributes>.activities
             .first { $0.attributes.releaseId == fetch.id }
-        let content = ActivityContent(state: state, staleDate: nil)
+        // Past its expected end with no word from the app, the card says it may be behind.
+        let stale = fetch.isActive ? state.waitEnd?.addingTimeInterval(5 * 60) : nil
+        let content = ActivityContent(state: state, staleDate: stale)
         if !fetch.isActive {
             if let activity {
                 let policy: ActivityUIDismissalPolicy = fetch.stage == .ready ? .after(.now + 15 * 60) : .default
@@ -471,7 +574,7 @@ private final class ReleaseFetchActivities {
             running[fetch.id] = activity
             Task { await activity.update(content) }
         } else if ActivityAuthorizationInfo().areActivitiesEnabled {
-            let attributes = ReleaseFetchAttributes(releaseId: fetch.id, title: fetch.release.title,
+            let attributes = ReleaseFetchAttributes(releaseId: fetch.id, title: fetch.title,
                                                     artist: fetch.release.artist.name)
             running[fetch.id] = try? Activity.request(attributes: attributes, content: content, pushType: nil)
         }

@@ -1570,12 +1570,10 @@ struct SongActionsRow: View {
     }
 
     #if !APPSTORE_BUILD
-    private var releaseFetch: ReleaseFetch? {
-        RadarService.shared.release(of: song).flatMap { ReleaseFetcher.shared.fetch(for: $0.id) }
-    }
+    private var releaseFetch: ReleaseFetch? { ReleaseFetcher.shared.fetch(covering: song) }
 
-    /// Liking a preview gets its release: found on Soulseek, downloaded, added to the
-    /// server — and the song starred once it's there.
+    /// Liking a preview gets the song: found on Soulseek, downloaded, added to the server —
+    /// and starred once it's there. The whole release is had from its page.
     private var getButton: some View {
         let fetch = releaseFetch
         let isOn = fetch != nil && fetch?.stage != .failed
@@ -1596,7 +1594,7 @@ struct SongActionsRow: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { heartPop = false }
                 }
             }
-            .accessibilityLabel(isOn ? "Getting this release" : "Like, and get this release")
+            .accessibilityLabel(isOn ? "Getting this song" : "Like, and get this song")
     }
     #endif
 

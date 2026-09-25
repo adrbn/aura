@@ -11,6 +11,8 @@ struct MixDetailView: View {
     /// The cover's colour, once its photo is in.
     @State private var tint: UIColor?
     @State private var radarService = RadarService.shared
+    /// A radar release opened on its own page.
+    @State private var openedRelease: RadarRelease?
 
     /// The radar keeps changing while its page is open — a release lands on the server, the
     /// day's catalogue comes in — so it is read live rather than from the value pushed.
@@ -99,8 +101,8 @@ struct MixDetailView: View {
                                           trailing: 16))
             }
 
-            if let missing = radar?.missing, !missing.isEmpty {
-                RadarMissingRows(releases: missing)
+            if !listedReleases.isEmpty {
+                RadarMissingRows(releases: listedReleases) { openedRelease = $0 }
             }
 
             Color.clear.frame(height: 80)
@@ -114,6 +116,7 @@ struct MixDetailView: View {
         // Title is shown under the cover already — keep the nav bar title empty to avoid a duplicate.
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $openedRelease) { RadarReleaseView(release: $0) }
         .task(id: shown.songs.map(\.id)) { isSaved = MixGenerator.shared.isSavedAsPlaylist(shown) }
         .task {
             guard mix.kind == .radar else { return }
@@ -150,6 +153,18 @@ struct MixDetailView: View {
             AppLogger.shared.log("❌ Failed to save mix: \(error.localizedDescription)")
             ToastManager.shared.show("Couldn’t save mix", icon: "exclamationmark.triangle.fill")
         }
+    }
+
+    /// The releases listed under the playlist: those the server lacks, and those it has only
+    /// the songs of that were fetched one by one, so the rest can still be had.
+    private var listedReleases: [RadarRelease] {
+        guard let radar else { return [] }
+        #if APPSTORE_BUILD
+        return radar.missing
+        #else
+        let picked = ReleaseFetcher.shared.picked
+        return radar.releases.filter { radar.inLibrary[$0.id] == nil || picked.contains($0.id) }
+        #endif
     }
 
     private var countLabel: String {

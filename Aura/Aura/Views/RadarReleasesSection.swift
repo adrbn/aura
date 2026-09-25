@@ -4,10 +4,12 @@ import SwiftUI
 /// of the page's own List, so they scroll with it and sit on its tinted canvas.
 struct RadarMissingRows: View {
     let releases: [RadarRelease]
+    /// Opens a release's own page, a level down.
+    let open: (RadarRelease) -> Void
 
     var body: some View {
         ForEach(releases) { release in
-            RadarReleaseRow(release: release)
+            RadarReleaseRow(release: release) { open(release) }
                 .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
                                           bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 16))
                 .listRowBackground(Color.clear)
@@ -17,6 +19,7 @@ struct RadarMissingRows: View {
 
 struct RadarReleaseRow: View {
     let release: RadarRelease
+    let open: () -> Void
 
     @Environment(AudioPlayer.self) private var player
     @Environment(\.openURL) private var openURL
@@ -69,10 +72,10 @@ struct RadarReleaseRow: View {
             .frame(width: 32)
         }
         .contentShape(Rectangle())
-        .onTapGesture { Task { await playPreviews() } }
+        .onTapGesture(perform: open)
         .contextMenu {
             Button { Task { await playPreviews() } } label: {
-                Label("Preview", systemImage: "play.circle")
+                Label("Play Previews", systemImage: "play.circle")
             }
             if let deezerURL {
                 Button { openURL(deezerURL) } label: {
@@ -95,7 +98,7 @@ struct RadarReleaseRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(release.title), \(release.typeLabel) by \(release.artist.name), \(dateLabel)")
-        .accessibilityHint("Plays thirty-second previews")
+        .accessibilityHint("Opens its songs")
         .accessibilityAddTraits(.isButton)
         .sheet(isPresented: $showSoulseek) { soulseekSheet }
     }
@@ -105,7 +108,7 @@ struct RadarReleaseRow: View {
         guard !isLoadingPreview else { return }
         isLoadingPreview = true
         defer { isLoadingPreview = false }
-        guard let tracks = await RadarCatalog.tracks(albumId: release.id) else {
+        guard let tracks = await RadarService.shared.tracks(of: release) else {
             ToastManager.shared.show(String(localized: "Deezer couldn't be reached"), icon: "wifi.exclamationmark")
             return
         }
@@ -169,7 +172,7 @@ struct RadarReleaseRow: View {
 #if !APPSTORE_BUILD
 /// A fetch's progress as a small ring: the download's share, or a spinning arc while it
 /// searches or waits for the server.
-private struct FetchRing: View {
+struct FetchRing: View {
     let fetch: ReleaseFetch
     @Environment(\.appAccentColor) private var accentColor
     @State private var spin = false
