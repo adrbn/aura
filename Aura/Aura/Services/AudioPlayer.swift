@@ -73,6 +73,10 @@ final class AudioPlayer {
     var radioPlaylistCoverArt: String?
     private var radioPlayedIds: Set<String> = []  // All song IDs played/queued in this radio session
     private(set) var isFetchingRadioSongs = false  // Guard against concurrent fetches
+    /// Which radio is the current one. Bumped whenever a new radio replaces the last, so a
+    /// fetch still running for the old one can neither add its songs to the new one nor
+    /// switch off the new one's loader when it lands.
+    private var radioGeneration = 0
     private var radioFetchTimestamp: Date?  // Cache: skip refetch if < 5 min old
     var sleepTimerRemaining: TimeInterval = 0
     var sleepTimerActive: Bool = false
@@ -895,7 +899,7 @@ final class AudioPlayer {
 
         if isRadioMode && queueIndex >= queue.count - 2 {
             // Evolving seed: use the current song as the new seed, not the original
-            Task { await fetchSmartRadioSongs(seed: song) }
+            startSmartRadioFetch(seed: song)
         }
     }
 
@@ -928,15 +932,19 @@ final class AudioPlayer {
                 // Radio needs the server — never kick it off while offline.
                 if let song = currentSong, !isEffectivelyOffline {
                     isRadioMode = true
-                    isFetchingRadioSongs = false  // Reset for fresh start
+                    beginNewRadio()
+                    isFetchingRadioSongs = true  // Claimed here: this path awaits the fetch itself
+                    let generation = radioGeneration
                     radioPlaylistName = "Radio: \(song.title)"
                     radioPlaylistSongs = [song]
                     radioPlayedIds = Set(queue.map { $0.id })
                     radioPlayedIds.insert(song.id)
                     playbackSource = .radio(name: radioPlaylistName)
                     Task {
-                        await fetchSmartRadioSongs(seed: song)
+                        await fetchSmartRadioSongs(seed: song, generation: generation)
                         await MainActor.run {
+                            // Another radio took over while this one loaded — not ours to advance.
+                            guard self.radioGeneration == generation else { return }
                             if self.queue.count > self.queueIndex + 1 {
                                 self.next()
                             } else {
@@ -1505,13 +1513,14 @@ final class AudioPlayer {
     func startRadioMode() {
         AppLogger.shared.log("📻 startRadioMode called")
         if let song = currentSong {
+            beginNewRadio()
             radioPlaylistName = "Radio: \(song.title)"
             radioPlaylistSongs = [song]
             radioPlaylistCoverArt = song.coverArt
             radioPlayedIds = [song.id]
             // Don't touch queue — user must explicitly play from RadioPlaylistView
             pendingRadioOpen = true
-            Task { await fetchSmartRadioSongs(seed: song) }
+            startSmartRadioFetch(seed: song)
         }
     }
 
@@ -1528,13 +1537,14 @@ final class AudioPlayer {
             return
         }
 
+        beginNewRadio()
         radioPlaylistName = expectedName
         radioPlaylistSongs = [song]
         radioPlaylistCoverArt = song.coverArt
         radioPlayedIds = [song.id]
         // Don't touch queue — user must explicitly play from RadioPlaylistView
         pendingRadioOpen = true
-        Task { await fetchSmartRadioSongs(seed: song) }
+        startSmartRadioFetch(seed: song)
     }
 
     /// Start an artist-based Instant Mix: blends artist's top songs with similar artists' top songs
@@ -1547,16 +1557,18 @@ final class AudioPlayer {
         let otherTopSongs = topSongs.filter { $0.id != seed.id }.shuffled()
         initialPlaylist.append(contentsOf: otherTopSongs)
 
+        beginNewRadio()
         radioPlaylistName = "Mix: \(artistName)"
         radioPlaylistSongs = initialPlaylist
         radioPlaylistCoverArt = seed.coverArt
         radioPlayedIds = Set(initialPlaylist.map { $0.id })
         isFetchingRadioSongs = true
+        let generation = radioGeneration
         // Don't touch queue — user must explicitly play from RadioPlaylistView
         pendingRadioOpen = true
 
         Task {
-            defer { Task { @MainActor in self.isFetchingRadioSongs = false } }
+            defer { Task { @MainActor in self.endRadioFetch(generation) } }
             guard let server = ServerManager.shared.currentServer else { return }
             var pool: [Song] = []
 
@@ -1598,6 +1610,7 @@ final class AudioPlayer {
             AppLogger.shared.log("📻 Instant Mix: adding \(toAdd.count) songs (pool had \(pool.count), \(unique.count) unique)")
 
             await MainActor.run {
+                guard radioGeneration == generation else { return }
                 radioPlaylistSongs.append(contentsOf: toAdd)
                 radioPlayedIds.formUnion(toAdd.map { $0.id })
             }
@@ -1611,16 +1624,18 @@ final class AudioPlayer {
         let otherAlbumSongs = songs.filter { $0.id != seed.id }
 
         // Start with just the seed song; album songs will be mixed in with similar songs
+        beginNewRadio()
         radioPlaylistName = "Radio: \(seed.album ?? "Album")"
         radioPlaylistSongs = [seed]
         radioPlaylistCoverArt = seed.coverArt
         radioPlayedIds = Set(songs.map { $0.id })
         isFetchingRadioSongs = true
+        let generation = radioGeneration
         // Don't touch queue — user must explicitly play from RadioPlaylistView
         pendingRadioOpen = true
 
         Task {
-            defer { Task { @MainActor in self.isFetchingRadioSongs = false } }
+            defer { Task { @MainActor in self.endRadioFetch(generation) } }
             guard let server = ServerManager.shared.currentServer else { return }
             var pool: [Song] = []
 
@@ -1667,6 +1682,7 @@ final class AudioPlayer {
             mixed.shuffle()
 
             await MainActor.run {
+                guard radioGeneration == generation else { return }
                 radioPlaylistSongs.append(contentsOf: mixed)
                 radioPlayedIds.formUnion(mixed.map { $0.id })
             }
@@ -1698,7 +1714,7 @@ final class AudioPlayer {
             return
         }
         AppLogger.shared.log("📻 refreshRadioQueue: seeding from \(seed.title)")
-        Task { await fetchSmartRadioSongs(seed: seed) }
+        startSmartRadioFetch(seed: seed)
     }
 
     /// Play from the radio temp playlist at a specific index
@@ -1710,20 +1726,41 @@ final class AudioPlayer {
         playSong(song, fromQueue: radioPlaylistSongs, startIndex: index, source: .radio(name: radioPlaylistName))
     }
 
-    /// Smart radio: multi-strategy song fetching with evolving seeds
-    private func fetchSmartRadioSongs(seed: Song) async {
-        // Prevent concurrent fetches — only one at a time
-        let alreadyFetching = await MainActor.run {
-            if isFetchingRadioSongs { return true }
-            isFetchingRadioSongs = true
-            return false
-        }
-        if alreadyFetching {
+    /// Starts a smart-radio fetch unless one is already running — only one at a time.
+    ///
+    /// The slot is claimed right here, before the task starts, not from inside it. A radio
+    /// that has just been opened has to read as loading from its very first frame: claimed
+    /// from the task, there was a gap in which the radio page showed the seed song on its
+    /// own, as if that were the whole radio, before the loader turned up.
+    private func startSmartRadioFetch(seed: Song) {
+        guard !isFetchingRadioSongs else {
             AppLogger.shared.log("📻 Skipping fetch — already in progress")
             return
         }
+        isFetchingRadioSongs = true
+        let generation = radioGeneration
+        Task { await fetchSmartRadioSongs(seed: seed, generation: generation) }
+    }
+
+    /// Makes way for a new radio: whatever the previous one is still fetching goes stale,
+    /// and the fetch slot is free for the new one.
+    private func beginNewRadio() {
+        radioGeneration += 1
+        isFetchingRadioSongs = false
+    }
+
+    /// Releases the fetch slot — unless a newer radio has claimed it since.
+    private func endRadioFetch(_ generation: Int) {
+        guard radioGeneration == generation else { return }
+        isFetchingRadioSongs = false
+    }
+
+    /// Smart radio: multi-strategy song fetching with evolving seeds.
+    /// The caller claims `isFetchingRadioSongs` first; this releases it when done. Songs
+    /// fetched for a radio that has since been replaced are dropped.
+    private func fetchSmartRadioSongs(seed: Song, generation: Int) async {
         guard let server = ServerManager.shared.currentServer else {
-            await MainActor.run { isFetchingRadioSongs = false }
+            await MainActor.run { endRadioFetch(generation) }
             return
         }
         AppLogger.shared.log("📻 fetchSmartRadioSongs for: \(seed.title) by \(seed.artist ?? "?")")
@@ -1811,6 +1848,10 @@ final class AudioPlayer {
         AppLogger.shared.log("📻 Smart radio: adding \(toAdd.count) new songs (pool had \(pool.count), \(unique.count) unique)")
 
         await MainActor.run {
+            guard radioGeneration == generation else {
+                AppLogger.shared.log("📻 Dropping \(toAdd.count) songs fetched for a radio that was replaced")
+                return
+            }
             radioPlaylistSongs.append(contentsOf: toAdd)
             radioPlayedIds.formUnion(toAdd.map { $0.id })
             radioFetchTimestamp = Date()  // Cache timestamp for 5-min reuse
