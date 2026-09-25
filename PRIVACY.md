@@ -75,6 +75,8 @@ To put an artist's photo on a "Made For You" mix or radio cover, Aura looks the 
 
 For the **Release Radar** mix, Aura asks the same catalogue, about once a day, for the recent releases of the artists you play most on your server — up to 80 of them — and downloads the covers of the releases it lists. Deezer receives each artist's **name** the first time, and their Deezer ID after that; it receives no account, device identifier, play counts, or song you played. Taken together, those requests do say whose music you listen to: if you'd rather Deezer didn't see that, switch the Radar off in **Settings → Release Radar** and Aura makes none of them.
 
+When you tap a release the radar lists, Aura asks Deezer for that release's **track list** and streams the tracks' **thirty-second previews** from Deezer's audio servers. Deezer sees which release was opened and which previews were played — nothing else about you or your library.
+
 ### To MusicBrainz (for song credits)
 
 When you open a song's credits/info, Aura queries the public **MusicBrainz** database (`musicbrainz.org`) with the artist and title to fetch writer/producer/label credits. No account or identifier is sent.
