@@ -151,11 +151,12 @@ final class ReleaseFetcher {
 
     func retry(_ id: String) {
         guard let fetch = fetch(for: id), fetch.stage == .failed else { return }
-        // Failed after the download: only the wait for the server needs doing again.
+        // Failed after the download: only the wait for the server needs doing again. Before
+        // it, every peer gets asked afresh — the one that couldn't send may be back.
         update(id) {
             $0.stage = $0.downloaded == nil ? .searching : .importing
             $0.failure = nil
-            if $0.downloaded != nil { $0.downloaded = Date() }
+            if $0.downloaded != nil { $0.downloaded = Date() } else { $0.tried = [] }
         }
         start(id)
     }
@@ -214,35 +215,46 @@ final class ReleaseFetcher {
             return false
         }
         update(id) { $0.trackCount = tracks.count }
-        let candidates: [SoulseekPick.Candidate]
-        do {
-            candidates = try await search(fetch.release, title: fetch.title, tracks: tracks, id: id)
-        } catch {
-            if !Task.isCancelled {
-                fail(id, String(localized: "Soulseek isn't reachable — check it in Settings"))
-            }
-            return false
-        }
-        guard !candidates.isEmpty else {
-            if !Task.isCancelled { fail(id, String(localized: "Nobody on Soulseek shares it yet")) }
-            return false
-        }
+        var queries = SoulseekPick.queries(artist: fetch.release.artist.name, title: fetch.title)[...]
+        var candidates: [SoulseekPick.Candidate] = []
+        var reachable = false
 
         for attempt in 0..<Self.maxAttempts {
             let tried = Set(self.fetch(for: id)?.tried ?? [])
-            guard let pick = candidates.first(where: { candidate in
-                !tried.contains(candidate.username)
-                    && candidate.files.keys.contains { !arrived.contains($0) }
-            }) else { break }
+            let isOpen = { (candidate: SoulseekPick.Candidate) in
+                !tried.contains(candidate.username) && candidate.files.keys.contains { !arrived.contains($0) }
+            }
+            // Down to one peer left to ask, or none: the queries not asked yet may turn up
+            // others — and whether anyone's left decides how long the next one is waited on.
+            while candidates.filter(isOpen).count < 2, !queries.isEmpty {
+                do {
+                    let result = try await search(fetch.release, queries: queries, tracks: tracks,
+                                                  besides: Set(candidates.map(\.username)), id: id)
+                    candidates += result.found
+                    queries = result.rest
+                    reachable = true
+                } catch {
+                    if Task.isCancelled { return false }
+                    guard reachable else {
+                        fail(id, String(localized: "Soulseek isn't reachable — check it in Settings"))
+                        return false
+                    }
+                    queries = []
+                }
+            }
+            if Task.isCancelled { return false }
+            let open = candidates.filter(isOpen)
+            guard let pick = open.first else { break }
             let files = pick.files.filter { !arrived.contains($0.key) }
-            let isLast = attempt == Self.maxAttempts - 1
-                || !candidates.contains { $0.username != pick.username && !tried.contains($0.username) }
+            let isLast = attempt == Self.maxAttempts - 1 || open.count == 1
             arrived.formUnion(await download(files, from: pick, id: id, isLast: isLast))
             if Task.isCancelled { return false }
             if arrived.count >= SoulseekPick.required(of: tracks.count) { break }
         }
         guard !arrived.isEmpty else {
-            fail(id, String(localized: "No one could send it — try again later"))
+            fail(id, candidates.isEmpty
+                 ? String(localized: "Nobody on Soulseek shares it yet")
+                 : String(localized: "No one could send it — try again later"))
             return false
         }
         return imported(id)
@@ -254,12 +266,15 @@ final class ReleaseFetcher {
         return true
     }
 
-    /// Asks Soulseek, one query after another, until a query turns up a copy. `title` is the
-    /// release's, or the song's when only that is wanted.
-    private func search(_ release: RadarRelease, title: String, tracks: [SoulseekPick.Track],
-                        id: String) async throws -> [SoulseekPick.Candidate] {
+    /// Asks Soulseek, one query after another, until a query turns up a copy from someone not
+    /// among `known` — returning those copies and the queries left to ask.
+    private func search(_ release: RadarRelease, queries: ArraySlice<String>, tracks: [SoulseekPick.Track],
+                        besides known: Set<String>,
+                        id: String) async throws -> (found: [SoulseekPick.Candidate], rest: ArraySlice<String>) {
         let client = SlskdClient.shared
-        for query in SoulseekPick.queries(artist: release.artist.name, title: title) {
+        var rest = queries
+        update(id) { $0.stage = .searching }
+        while let query = rest.popFirst() {
             let search = try await client.search(query: query)
             defer { Task { try? await client.deleteSearch(id: search.id) } }
             let began = Date()
@@ -270,15 +285,16 @@ final class ReleaseFetcher {
                       let responses = try? await client.getSearchResponses(id: search.id) else { continue }
                 best = SoulseekPick.candidates(for: tracks, artist: release.artist.name,
                                                album: release.title, in: responses)
-                let found = best.count
+                    .filter { !known.contains($0.username) }
+                let found = known.count + best.count
                 update(id) { $0.found = found }
                 if status.isFinished { break }
                 if let top = best.first, top.files.count == tracks.count, top.hasFreeSlot,
                    Date().timeIntervalSince(began) > Self.earlyPick { break }
             }
-            if !best.isEmpty { return best }
+            if !best.isEmpty { return (best, rest) }
         }
-        return []
+        return ([], rest)
     }
 
     /// Downloads a pick's files and follows them until they settle or stall. Returns the
