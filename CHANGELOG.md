@@ -17,6 +17,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 ### Changed — Appearance
 - The dark canvas is #121212 instead of pure black, and song rows sit on it instead of painting their own black — the Library menu, recent searches, search results and loading placeholders included
 - Artist headers drop the dark fade across the top of the photo; only a photo bright enough to hide the clock gets a light veil, the status bar's height
+- A face too high in an artist photo is brought down by zooming in on it (up to 1.7×), instead of sliding the photo down over a stretched, blurred copy of its top edge — pulling the page down zooms the same way
 - Artist photos for covers come from Deezer's public catalogue: the server's artist-image queue stalled every cover in the app whenever a shelf asked for a dozen artists at once
 
 ### Fixed — Search

@@ -451,8 +451,6 @@ struct ArtistHero: View {
     /// Where a face belongs: below the clock and the floating buttons, clear of the name.
     /// Press shots put the face in the top fifth; centred, it sat right behind the buttons.
     private static var faceCenterY: CGFloat { TabChrome.windowSafeTop + 135 }
-    /// The most the photo may come down to put its face there — about a third of the header.
-    private static let maxHeadroom: CGFloat = 130
 
     /// Band at the bottom where the picture fades into the page.
     private static let dissolve: CGFloat = 56
@@ -460,11 +458,10 @@ struct ArtistHero: View {
     var body: some View {
         let height = Self.height
         ZStack(alignment: .bottomLeading) {
-            // The pull grows the header upward, so the face target moves down with it and the
-            // face stays where it was on screen.
+            // The pull grows the header upward, so the face target moves down with it: the
+            // photo zooms in as it is pulled, the face riding down with the page.
             ArtistImageView(coverArt: coverArt, artistImageURL: artistImageURL, fillsFrame: true,
-                            faceTarget: .init(faceCenterY: stretch + Self.faceCenterY,
-                                              maxHeadroom: stretch + Self.maxHeadroom))
+                            faceTarget: .init(faceCenterY: stretch + Self.faceCenterY))
                 .frame(maxWidth: .infinity)
                 .frame(height: height + stretch)
                 .clipped()

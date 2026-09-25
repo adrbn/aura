@@ -7,23 +7,20 @@ import Vision
 /// Press shots are composed for a square, with the face high — often in the top fifth, and
 /// sometimes cropped through the forehead. Centred in a header that runs up under the clock
 /// and the floating buttons, that face ends up behind them, or cut by the top of the screen.
-/// Knowing where the face is lets the header bring the photo down until the face sits in the
-/// open part of the header, and grow the headroom that opens above it out of the photo's own
-/// top edge.
+/// Knowing where the face is lets the header zoom in on it until it sits in the open part of
+/// the header — the photo always fills the frame with its own pixels, nothing stretched or
+/// blurred in above it.
 enum FaceFraming {
     /// What Vision found in one photo.
     final class Analysis: Sendable {
         /// All the faces together — a band is framed as a group — normalised, with a top-left
         /// origin. Nil when there is no face to frame on (a logo, a drawing, an album cover).
         let face: CGRect?
-        /// The photo's top rows, stretched to fill any headroom the framing opens above it.
-        let topStrip: UIImage?
         /// Whether the top of the photo — what the clock sits on — is bright enough to lose it.
         let topIsBright: Bool
 
-        init(face: CGRect?, topStrip: UIImage?, topIsBright: Bool = false) {
+        init(face: CGRect?, topIsBright: Bool = false) {
             self.face = face
-            self.topStrip = topStrip
             self.topIsBright = topIsBright
         }
     }
@@ -31,14 +28,15 @@ enum FaceFraming {
     /// Where the face should land, in points from the top of the frame.
     struct Target: Equatable {
         let faceCenterY: CGFloat
-        /// How far the photo may come down to get it there.
-        let maxHeadroom: CGFloat
     }
 
     /// Faces smaller than this share of the biggest one are people in the background.
     private static let minFaceShare: CGFloat = 0.35
-    /// Height of the top strip grown into headroom, as a share of the photo.
-    private static let stripShare: CGFloat = 0.04
+    /// How far a photo may be enlarged to bring a high face down: past this a press shot,
+    /// often a thousand pixels wide, turns soft on a phone.
+    private static let maxZoom: CGFloat = 1.7
+    /// A face enlarged past this share of the frame's height is no longer a portrait.
+    private static let maxFaceShare: CGFloat = 0.5
     /// The band under the status bar, as a share of the photo, and the average luminance
     /// above which white text on it stops reading — a sky, a white studio wall.
     private static let clockShare: CGFloat = 0.12
@@ -63,14 +61,10 @@ enum FaceFraming {
     }
 
     private static func detect(in image: UIImage) -> Analysis {
-        guard let cg = upright(image) else { return Analysis(face: nil, topStrip: nil) }
-        let strip = cg.cropping(to: CGRect(x: 0, y: 0, width: cg.width,
-                                           height: max(1, Int(CGFloat(cg.height) * stripShare))))
-            .map { UIImage(cgImage: $0) }
-
+        guard let cg = upright(image) else { return Analysis(face: nil) }
         let band = cg.cropping(to: CGRect(x: 0, y: 0, width: cg.width,
                                           height: max(1, Int(CGFloat(cg.height) * clockShare))))
-        return Analysis(face: faces(in: cg), topStrip: strip,
+        return Analysis(face: faces(in: cg),
                         topIsBright: band.map(luminance).map { $0 > brightLuminance } ?? false)
     }
 
@@ -116,60 +110,45 @@ enum FaceFraming {
     }
 
     /// Size and top-left position of a photo of `imageSize` filling `box`: centred when there
-    /// is no face; otherwise moved so the face centre sits on `target` — as far as the photo
-    /// still covers the sides and the bottom, and opens at most `maxHeadroom` at the top.
+    /// is no face; otherwise enlarged until the face centre comes down to `target` — within
+    /// `maxZoom`, and short of the face filling the frame — and moved to put it there, as far
+    /// as the photo still covers every edge.
     static func placement(imageSize: CGSize, in box: CGSize, face: CGRect?,
                           target: Target) -> CGRect {
         guard imageSize.width > 0, imageSize.height > 0 else { return CGRect(origin: .zero, size: box) }
-        let scale = max(box.width / imageSize.width, box.height / imageSize.height)
-        let size = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
-        guard let face else {
-            return CGRect(origin: CGPoint(x: (box.width - size.width) / 2,
-                                          y: (box.height - size.height) / 2), size: size)
+        let cover = max(box.width / imageSize.width, box.height / imageSize.height)
+        let covered = CGSize(width: imageSize.width * cover, height: imageSize.height * cover)
+        guard let face, face.midY > 0, face.height > 0 else {
+            return CGRect(origin: CGPoint(x: (box.width - covered.width) / 2,
+                                          y: (box.height - covered.height) / 2), size: covered)
         }
+        // With the photo's top at the frame's top, the face centre sits at midY × height:
+        // the zoom that makes that the target, unless the face would grow too big first.
+        let wanted = target.faceCenterY / (face.midY * covered.height)
+        let faceRoom = maxFaceShare * box.height / (face.height * covered.height)
+        let zoom = max(1, min(wanted, maxZoom, faceRoom))
+        let size = CGSize(width: covered.width * zoom, height: covered.height * zoom)
         let x = min(0, max(box.width - size.width, box.width / 2 - face.midX * size.width))
-        let y = min(target.maxHeadroom,
-                    max(box.height - size.height, target.faceCenterY - face.midY * size.height))
+        let y = min(0, max(box.height - size.height, target.faceCenterY - face.midY * size.height))
         return CGRect(origin: CGPoint(x: x, y: y), size: size)
     }
 }
 
-/// A photo filling its frame, framed on the face. Headroom opened above the photo is its own
-/// top edge stretched upward and blurred, and the seam is feathered, so it reads as more of
-/// the backdrop rather than a band.
+/// A photo filling its frame, framed — and if need be enlarged — on the face.
 struct FaceFramedPhoto: View {
     let image: UIImage
     let analysis: FaceFraming.Analysis
     let target: FaceFraming.Target
 
-    /// Length of the feather where the photo's top edge melts into the headroom.
-    private static let seam: CGFloat = 44
-
     var body: some View {
         GeometryReader { geo in
             let place = FaceFraming.placement(imageSize: image.size, in: geo.size,
                                               face: analysis.face, target: target)
-            let headroom = max(0, place.minY)
-            ZStack(alignment: .topLeading) {
-                if headroom > 0, let strip = analysis.topStrip {
-                    Image(uiImage: strip)
-                        .resizable()
-                        .frame(width: place.width, height: headroom + Self.seam)
-                        .blur(radius: 18, opaque: true)
-                        .offset(x: place.minX)
-                }
-                Image(uiImage: image)
-                    .resizable()
-                    .frame(width: place.width, height: place.height)
-                    .mask {
-                        LinearGradient(stops: [
-                            .init(color: headroom > 0 ? .clear : .black, location: 0),
-                            .init(color: .black, location: min(1, Self.seam / place.height)),
-                        ], startPoint: .top, endPoint: .bottom)
-                    }
-                    .offset(x: place.minX, y: place.minY)
-            }
-            .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+            Image(uiImage: image)
+                .resizable()
+                .frame(width: place.width, height: place.height)
+                .offset(x: place.minX, y: place.minY)
+                .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
         }
     }
 }
