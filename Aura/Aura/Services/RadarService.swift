@@ -90,11 +90,15 @@ final class RadarService {
         }
         // Once a day everything is checked again; in between, only what was still missing.
         let known = staleCatalogue ? [:] : radar?.inLibrary ?? [:]
-        let inLibrary = await Self.match(releases, known: known, server: server)
-        let built = Radar(serverId: server.id, releases: releases, fetched: fetched,
-                          inLibrary: inLibrary, matched: Date())
+        let matched = await Self.match(releases, known: known, server: server)
+        // A release whose songs were all on the server long before it came out is one the
+        // listener already has under another date: nothing new, nothing missing.
+        let heard = Set(matched.filter(\.value.isEmpty).keys)
+        let inLibrary = matched.filter { !$0.value.isEmpty }
+        let built = Radar(serverId: server.id, releases: releases.filter { !heard.contains($0.id) },
+                          fetched: fetched, inLibrary: inLibrary, matched: Date())
         RadarStore.save(built)
-        AppLogger.shared.log("📡 Radar: \(releases.count) releases, \(inLibrary.count) on the server")
+        AppLogger.shared.log("📡 Radar: \(built.releases.count) releases, \(inLibrary.count) on the server, \(heard.count) already heard")
         if ServerManager.shared.currentServer?.id == server.id { radar = built }
     }
 
@@ -161,7 +165,7 @@ final class RadarService {
             }
             guard let found = await find(release, among: discographies[release.artist.id] ?? [], server: server)
             else { continue }
-            inLibrary[release.id] = Array(found.prefix(RadarRules.perRelease))
+            inLibrary[release.id] = Array(RadarRules.newSongs(found, of: release).prefix(RadarRules.perRelease))
         }
         return inLibrary
     }
@@ -196,9 +200,13 @@ final class RadarService {
 /// Where each server's radar lives between launches. Not tied to the main actor, so removing
 /// a server can clear it from wherever that happens.
 enum RadarStore {
-    private static func key(_ serverId: UUID) -> String { "radar_v1_\(serverId.uuidString)" }
+    /// v2: re-issues and songs already on the server no longer count as new, so a radar
+    /// built before is rebuilt rather than kept for the day.
+    private static func key(_ serverId: UUID) -> String { "radar_v2_\(serverId.uuidString)" }
+    private static func formerKey(_ serverId: UUID) -> String { "radar_v1_\(serverId.uuidString)" }
 
     static func load(for serverId: UUID) -> Radar? {
+        UserDefaults.standard.removeObject(forKey: formerKey(serverId))
         guard let data = UserDefaults.standard.data(forKey: key(serverId)) else { return nil }
         return try? JSONDecoder().decode(Radar.self, from: data)
     }
@@ -210,5 +218,6 @@ enum RadarStore {
 
     static func removeAll(for serverId: UUID) {
         UserDefaults.standard.removeObject(forKey: key(serverId))
+        UserDefaults.standard.removeObject(forKey: formerKey(serverId))
     }
 }

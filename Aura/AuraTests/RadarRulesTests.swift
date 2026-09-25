@@ -19,13 +19,17 @@ struct RadarRulesTests {
                artistImageUrl: nil, playCount: nil)
     }
 
-    private func deezer(_ id: Int, _ date: String?) -> DeezerAlbum {
-        DeezerAlbum(id: id, title: "R\(id)", release_date: date, record_type: "single",
+    private func deezer(_ id: Int, _ date: String?, title: String? = nil, type: String = "single") -> DeezerAlbum {
+        DeezerAlbum(id: id, title: title ?? "R\(id)", release_date: date, record_type: type,
                     cover_medium: nil, link: nil)
     }
 
     private func song(_ id: String) throws -> Song {
         try JSONDecoder().decode(Song.self, from: Data(#"{"id":"\#(id)","title":"Track \#(id)"}"#.utf8))
+    }
+
+    private func song(_ id: String, added: String) throws -> Song {
+        try JSONDecoder().decode(Song.self, from: Data(#"{"id":"\#(id)","title":"Track \#(id)","created":"\#(added)"}"#.utf8))
     }
 
     private func release(_ id: String, _ date: String) -> RadarRelease {
@@ -77,6 +81,34 @@ struct RadarRulesTests {
         #expect(RadarRules.fresh(albums, in: window, perArtist: 3).map(\.id) == [3, 6, 1])
     }
 
+    @Test("An album out again under the same title is not new")
+    func freshSkipsReissues() {
+        let window = "2026-08-26"..."2026-09-25"
+        // Ernia's album, dated anew by a re-issue months after the original.
+        let albums = [deezer(1, "2026-09-03", title: "PER SOLDI E PER AMORE", type: "album"),
+                      deezer(2, "2026-05-11", title: "PER SOLDI E PER AMORE", type: "album"),
+                      deezer(3, "2026-09-03", title: "DEDICA")]
+        #expect(RadarRules.fresh(albums, in: window).map(\.id) == [3])
+    }
+
+    @Test("An album named after the single that announced it is new")
+    func freshKeepsTheAlbumAfterItsSingle() {
+        let window = "2026-08-26"..."2026-09-25"
+        let albums = [deezer(1, "2026-09-10", title: "Roses", type: "album"), deezer(2, "2026-08-01", title: "Roses")]
+        #expect(RadarRules.fresh(albums, in: window).map(\.id) == [1])
+        // The title track put out as a single after the album is the album's song.
+        let late = [deezer(3, "2026-09-12", title: "Roses"), deezer(4, "2026-06-01", title: "Roses", type: "album")]
+        #expect(RadarRules.fresh(late, in: window).isEmpty)
+    }
+
+    @Test("Two copies out the same day count once")
+    func freshKeepsOneCopyPerDay() {
+        let window = "2026-08-26"..."2026-09-25"
+        let albums = [deezer(9, "2026-09-05", title: "Karaté Cœur", type: "album"),
+                      deezer(8, "2026-09-05", title: "Karaté Cœur", type: "album")]
+        #expect(RadarRules.fresh(albums, in: window).map(\.id) == [8])
+    }
+
     // MARK: Matching
 
     @Test("Titles match across case, accents, punctuation and store suffixes",
@@ -112,6 +144,15 @@ struct RadarRulesTests {
     func creditsNeedBothSides() {
         #expect(!RadarRules.credits(nil, "Air"))
         #expect(!RadarRules.credits("Air", ""))
+    }
+
+    @Test("Songs on the server long before the release are not new; a leak a week early is")
+    func newSongsDropWhatWasAlreadyThere() throws {
+        let album = release("per-soldi", "2026-09-03")
+        let songs = [try song("old", added: "2026-03-01T10:12:00.000Z"),
+                     try song("leak", added: "2026-08-25T21:00:00Z"),
+                     try song("new", added: "2026-09-04T08:00:00Z"), try song("undated")]
+        #expect(RadarRules.newSongs(songs, of: album).map(\.id) == ["leak", "new", "undated"])
     }
 
     // MARK: Playlist
