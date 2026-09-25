@@ -170,6 +170,8 @@ struct SearchResultsContainer: View {
             Section {
                 ForEach(history.entries) { entry in
                     recentEntryRow(entry)
+                        // A plain List paints unstyled rows pure black, under the canvas.
+                        .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets(top: appSettings.listDensity.verticalPadding + 2,
                                                   leading: 16, bottom: appSettings.listDensity.verticalPadding + 2, trailing: 16))
                         .swipeActions(edge: .trailing) {
@@ -375,6 +377,7 @@ struct SearchResultsContainer: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .listRowBackground(Color.clear)
         .listRowInsets(EdgeInsets(top: appSettings.listDensity.verticalPadding + 2,
                                   leading: 16, bottom: appSettings.listDensity.verticalPadding + 2, trailing: 16))
     }

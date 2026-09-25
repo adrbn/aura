@@ -39,6 +39,8 @@ struct RecentlyPlayedSongsView: View {
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             }
         }

@@ -59,6 +59,8 @@ struct SkeletonSongRow: View {
         .padding(.vertical, 4)
         .redacted(reason: .placeholder)
         .shimmering()
+        // In a plain List an unstyled row is painted pure black, under the canvas.
+        .listRowBackground(Color.clear)
     }
 }
 
@@ -145,6 +147,8 @@ struct SkeletonArtistRow: View {
         .padding(.vertical, 4)
         .redacted(reason: .placeholder)
         .shimmering()
+        // In a plain List an unstyled row is painted pure black, under the canvas.
+        .listRowBackground(Color.clear)
     }
 }
 
@@ -163,6 +167,8 @@ struct SkeletonGenreRow: View {
         .padding(.vertical, 8)
         .redacted(reason: .placeholder)
         .shimmering()
+        // In a plain List an unstyled row is painted pure black, under the canvas.
+        .listRowBackground(Color.clear)
     }
 }
 
@@ -189,6 +195,8 @@ struct SkeletonPlaylistRow: View {
         .padding(.vertical, 4)
         .redacted(reason: .placeholder)
         .shimmering()
+        // In a plain List an unstyled row is painted pure black, under the canvas.
+        .listRowBackground(Color.clear)
     }
 }
 

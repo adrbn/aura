@@ -159,6 +159,7 @@ struct PlaylistDetailView: View {
                     ForEach(0..<10, id: \.self) { _ in
                         SkeletonSongRow()
                             .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                            .listRowBackground(Color.clear)
                     }
                 }
                 .listStyle(.plain)

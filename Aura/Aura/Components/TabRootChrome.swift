@@ -149,6 +149,9 @@ struct SearchFieldBar: View {
     @Environment(\.appAccentColor) private var accentColor
     /// The whole box focuses the field, not just the glyphs in it — see `body`.
     @FocusState private var isFocused: Bool
+    /// One height, typing or not. Sized by padding, the box grew by a third as soon as the
+    /// Clear button — taller than a line of text — appeared with the first letter.
+    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 46
 
     var body: some View {
         HStack(spacing: 8) {
@@ -172,20 +175,21 @@ struct SearchFieldBar: View {
                     Text("Clear")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(accentColor)
-                        .padding(.vertical, 8)
                         .padding(.leading, 10)
+                        // The box's full height is its target, without making the box taller.
+                        .frame(maxHeight: .infinity)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear search")
             }
         }
-        .padding(.vertical, 12)
         .padding(.horizontal, 12)
+        .frame(height: height)
         .background(Color.themeSecondaryBg, in: RoundedRectangle(cornerRadius: 12))
         // Only the text itself used to take a tap: the magnifier, the padding and every
         // gap between them were dead, so aiming at the box could leave the keyboard shut.
-        // The whole box is one target now — and at 12pt of padding it clears 44pt tall.
+        // The whole box is one target, focused or not, and it clears 44pt tall.
         .contentShape(RoundedRectangle(cornerRadius: 12))
         .onTapGesture { isFocused = true }
         .padding(.horizontal, 16)

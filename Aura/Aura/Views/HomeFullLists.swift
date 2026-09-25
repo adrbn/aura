@@ -84,6 +84,8 @@ struct ArtistsListView: View {
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             } else {
                 List(artists) { artist in
@@ -98,8 +100,11 @@ struct ArtistsListView: View {
                             }
                         }
                     }
+                    .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             }
         }

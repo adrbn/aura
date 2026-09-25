@@ -139,6 +139,7 @@ struct AlbumDetailView: View {
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
                                 .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
                         }
                         let isSingle = songs.count <= 1

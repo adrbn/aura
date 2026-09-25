@@ -135,6 +135,7 @@ struct ArtistDetailView: View {
                     .padding(.vertical, 4)
                     .redacted(reason: .placeholder)
                     .shimmering()
+                    .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding,
                                               leading: 16,
                                               bottom: AppSettings.shared.listDensity.verticalPadding,
@@ -468,13 +469,6 @@ struct ArtistHero: View {
                 .frame(height: height + stretch)
                 .clipped()
 
-            // Keeps the clock and the floating buttons legible over a bright sky.
-            LinearGradient(colors: [.black.opacity(0.38), .clear],
-                           startPoint: .top, endPoint: .bottom)
-                .frame(height: 120)
-                .frame(maxHeight: .infinity, alignment: .top)
-                .allowsHitTesting(false)
-
             // Darkens the lower half so the name reads over any photograph — a white
             // press shot as much as a dark one. Not optional: without it, white type on a
             // bright portrait simply disappears.
@@ -637,6 +631,12 @@ struct ArtistImageView: View {
         if let faceTarget, let img = currentImage {
             if let analysis = currentAnalysis {
                 FaceFramedPhoto(image: img, analysis: analysis, target: faceTarget)
+                    .overlay(alignment: .top) {
+                        // No dark band across the top of every portrait: the floating buttons
+                        // carry their own glass. Only a photo whose top is bright enough to
+                        // swallow the white clock gets a veil, and just the clock's height.
+                        if analysis.topIsBright { ClockVeil() }
+                    }
             } else {
                 // Vision needs a few milliseconds. Showing the photo centred meanwhile would
                 // make it jump down once the face is found.
@@ -646,6 +646,21 @@ struct ArtistImageView: View {
             Image(uiImage: img).resizable().aspectRatio(contentMode: .fill)
         } else {
             wash
+        }
+    }
+
+    /// Just enough shade under the status bar for the clock to read on a bright photo,
+    /// eased out so it has no edge.
+    private struct ClockVeil: View {
+        var body: some View {
+            LinearGradient(stops: [
+                .init(color: .black.opacity(0.24), location: 0),
+                .init(color: .black.opacity(0.12), location: 0.45),
+                .init(color: .black.opacity(0.04), location: 0.75),
+                .init(color: .clear, location: 1),
+            ], startPoint: .top, endPoint: .bottom)
+                .frame(height: TabChrome.windowSafeTop + 12)
+                .allowsHitTesting(false)
         }
     }
 

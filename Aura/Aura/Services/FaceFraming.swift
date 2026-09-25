@@ -18,10 +18,13 @@ enum FaceFraming {
         let face: CGRect?
         /// The photo's top rows, stretched to fill any headroom the framing opens above it.
         let topStrip: UIImage?
+        /// Whether the top of the photo — what the clock sits on — is bright enough to lose it.
+        let topIsBright: Bool
 
-        init(face: CGRect?, topStrip: UIImage?) {
+        init(face: CGRect?, topStrip: UIImage?, topIsBright: Bool = false) {
             self.face = face
             self.topStrip = topStrip
+            self.topIsBright = topIsBright
         }
     }
 
@@ -36,6 +39,10 @@ enum FaceFraming {
     private static let minFaceShare: CGFloat = 0.35
     /// Height of the top strip grown into headroom, as a share of the photo.
     private static let stripShare: CGFloat = 0.04
+    /// The band under the status bar, as a share of the photo, and the average luminance
+    /// above which white text on it stops reading — a sky, a white studio wall.
+    private static let clockShare: CGFloat = 0.12
+    private static let brightLuminance: CGFloat = 0.62
 
     private static let cache: NSCache<NSString, Analysis> = {
         let cache = NSCache<NSString, Analysis>()
@@ -61,7 +68,21 @@ enum FaceFraming {
                                            height: max(1, Int(CGFloat(cg.height) * stripShare))))
             .map { UIImage(cgImage: $0) }
 
-        return Analysis(face: faces(in: cg), topStrip: strip)
+        let band = cg.cropping(to: CGRect(x: 0, y: 0, width: cg.width,
+                                          height: max(1, Int(CGFloat(cg.height) * clockShare))))
+        return Analysis(face: faces(in: cg), topStrip: strip,
+                        topIsBright: band.map(luminance).map { $0 > brightLuminance } ?? false)
+    }
+
+    /// Average luminance of a picture, 0 to 1: drawn into a single pixel, which averages it.
+    static func luminance(of cg: CGImage) -> CGFloat {
+        var pixel = [UInt8](repeating: 0, count: 4)
+        guard let context = CGContext(data: &pixel, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return 0 }
+        context.interpolationQuality = .medium
+        context.draw(cg, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+        return (0.2126 * CGFloat(pixel[0]) + 0.7152 * CGFloat(pixel[1]) + 0.0722 * CGFloat(pixel[2])) / 255
     }
 
     /// All the faces in an upright picture together, normalised with a top-left origin;

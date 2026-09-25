@@ -79,12 +79,14 @@ struct DownloadManagerView: View {
             .padding(.vertical, 16)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
 
             // Active downloads section
             if !activeItems.isEmpty {
                 Section {
                     ForEach(activeItems) { item in
                         downloadQueueRow(item)
+                            .listRowBackground(Color.clear)
                     }
                 } header: {
                     HStack {
@@ -112,6 +114,7 @@ struct DownloadManagerView: View {
                 Section {
                     ForEach(pausedItems) { item in
                         downloadQueueRow(item)
+                            .listRowBackground(Color.clear)
                     }
                 } header: {
                     HStack {
@@ -132,6 +135,7 @@ struct DownloadManagerView: View {
                 Section("Failed") {
                     ForEach(failedItems) { item in
                         downloadQueueRow(item)
+                            .listRowBackground(Color.clear)
                     }
                 }
             }
@@ -141,6 +145,7 @@ struct DownloadManagerView: View {
                 Section("Downloaded (\(dm.downloadedSongs.count) songs, \(dm.totalDownloadSize))") {
                     ForEach(filteredDownloads) { downloaded in
                         downloadedSongRow(downloaded)
+                            .listRowBackground(Color.clear)
                     }
                     .onDelete { offsets in
                         let toDelete = offsets.map { filteredDownloads[$0] }
@@ -155,9 +160,12 @@ struct DownloadManagerView: View {
                 ContentUnavailableView("No Downloads",
                     systemImage: "arrow.down.circle",
                     description: Text("Download songs or albums to listen offline."))
+                .listRowBackground(Color.clear)
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.themeBg)
         .scrollIndicators(.hidden)
         .searchable(text: $searchText, prompt: "Search downloads")
         .navigationTitle("downloaded")

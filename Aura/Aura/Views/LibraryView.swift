@@ -29,10 +29,8 @@ struct LibraryView: View {
                 // full-bleed rows: inset and rounded, the shape iOS gives this exact
                 // pattern everywhere else — Settings included, two screens away.
                 //
-                // The rows are the elevated layer and the page is the ground they sit on.
                 // Left alone a `List` paints each row with `systemBackground`, which is
-                // pure black: below the canvas rather than above it, a slab and not a
-                // surface. Square corners running edge to edge read the same way.
+                // pure black: a slab below the canvas rather than rows on it.
                 ForEach(appSettings.enabledLibraryCategories) { category in
                     NavigationLink(value: category) {
                         // The icon carries the accent, the label stays white. Colouring
@@ -45,6 +43,7 @@ struct LibraryView: View {
                             Image(systemName: category.icon).foregroundStyle(accentColor)
                         }
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
             .listStyle(.plain)
@@ -316,6 +315,8 @@ struct GenresListView: View {
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             } else if loadFailed && genres.isEmpty {
                 LoadErrorView {
@@ -336,8 +337,11 @@ struct GenresListView: View {
                             }
                         }
                     }
+                    .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             }
         }
@@ -382,6 +386,8 @@ struct GenreSongsView: View {
                         .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             } else {
                 List {
@@ -403,6 +409,8 @@ struct GenreSongsView: View {
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             }
         }
@@ -509,6 +517,8 @@ struct ArtistsFullListView: View {
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.themeBg)
                 .scrollIndicators(.hidden)
             } else if loadFailed && allArtists.isEmpty {
                 LoadErrorView {
@@ -534,6 +544,7 @@ struct ArtistsFullListView: View {
                             }
                         }
                     }
+                    .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
