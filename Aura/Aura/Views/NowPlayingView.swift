@@ -46,6 +46,11 @@ struct NowPlayingView: View {
     /// options bar — they must stay on the same vertical guides.
     private let horizontalPadding: CGFloat = 30
 
+    /// The artwork once it has shrunk into the lyrics header, and the gap to the title
+    /// beside it.
+    private static let lyricsArtSize: CGFloat = 44
+    private static let lyricsTitleGap: CGFloat = 12
+
     private enum CoverDragAxis { case undecided, horizontal, vertical }
 
     private var accentColor: Color { appSettings.activeTheme.accentColor }
@@ -266,31 +271,15 @@ struct NowPlayingView: View {
             // hands a view a new frame, and CoverArtAsyncImage fixes its own dimensions
             // internally — so the frame travelled while the picture stayed hero-sized, and
             // the already-small copy simply appeared at the destination. It read as a jump.
-            HStack(spacing: 0) {
-                artworkView(song: song, size: showLyrics ? 44 : artSize, slideWidth: w)
-                // The title's column is always in the tree and only its width changes, so
-                // it travels *with* the artwork: its leading edge rides the cover's
-                // trailing edge all the way to the corner, and it opens from nothing as
-                // the cover makes room.
-                //
-                // It used to be inserted with `if showLyrics`. An inserted view has no
-                // starting frame, so the title appeared straight at its final place —
-                // beside a 44pt cover — while the cover was still shrinking from full
-                // size, and for most of the animation it sat on top of the artwork. The
-                // text itself is still only built while lyrics are open, so a zero-width
-                // marquee is never left scrolling out of sight.
-                ZStack(alignment: .leading) {
-                    if showLyrics { lyricsHeaderText(song: song) }
-                }
-                .padding(.leading, 12)
-                .frame(maxWidth: showLyrics ? .infinity : 0, alignment: .leading)
-                .clipped()
-            }
-            .frame(maxWidth: .infinity, alignment: showLyrics ? .leading : .center)
-            .padding(.horizontal, horizontalPadding)
-            .padding(.bottom, showLyrics ? 14 : 0)
-            .offset(x: showLyrics ? 0 : coverDragOffset)
-            .gesture(showLyrics ? nil : coverDragGesture)
+            //
+            // The small title of the lyrics header lives inside artworkView, underneath the
+            // cover — see there for why.
+            artworkView(song: song, size: showLyrics ? Self.lyricsArtSize : artSize, slideWidth: w)
+                .frame(maxWidth: .infinity, alignment: showLyrics ? .leading : .center)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.bottom, showLyrics ? 14 : 0)
+                .offset(x: showLyrics ? 0 : coverDragOffset)
+                .gesture(showLyrics ? nil : coverDragGesture)
 
             if showLyrics {
                 lyricsScrollView
@@ -625,16 +614,14 @@ struct NowPlayingView: View {
     /// the frame animate between hero and header, and it also preserves the song-change
     /// slide, which a geometry match would have suppressed.
     private func artworkView(song: Song, size: CGFloat, slideWidth w: CGFloat) -> some View {
-        ZStack {
+        let heroSize = w - horizontalPadding * 2   // the full-size artwork, as in playerView
+
+        return ZStack {
             CoverArtAsyncImage(coverArt: song.coverArt ?? song.albumId, size: size,
                                fallbackCoverArt: song.albumId)
                 .shadow(color: .black.opacity(showLyrics ? 0.35 : 0.4),
                         radius: showLyrics ? 6 : 20,
                         y: showLyrics ? 3 : 10)
-                // The paused-state shrink is a hero gesture; at 44pt it would just look like
-                // a glitch, so it only applies at full size.
-                .scaleEffect(showLyrics || player.isPlaying ? 1.0 : 0.85)
-                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
                 .id(song.id)
                 // Only the INCOMING view is directional. `removal` belongs to the outgoing
                 // view, which SwiftUI built during an earlier body pass — so it carries the
@@ -648,6 +635,34 @@ struct NowPlayingView: View {
                 ))
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
+        // The lyrics header's title, drawn BEHIND the cover and pinned from its first frame
+        // to where it ends up. The cover's top-left corner never moves — it shrinks into
+        // it — so while the cover is large this spot is under it, and as the cover
+        // contracts its trailing edge sweeps left and uncovers the title, which reads as
+        // having been waiting underneath the whole time. Closing is the exact mirror.
+        //
+        // It used to be a column beside the cover whose width grew from zero, clipped. That
+        // made the title ride the cover's edge in from the right, cut off by an invisible
+        // line at the far edge of the screen — it read as a shutter opening, not as
+        // something the artwork had been hiding.
+        //
+        // Still only built while lyrics are open, so no marquee keeps scrolling out of sight.
+        .background(alignment: .topLeading) {
+            if showLyrics {
+                lyricsHeaderText(song: song)
+                    .frame(width: max(0, heroSize - Self.lyricsArtSize - Self.lyricsTitleGap),
+                           height: Self.lyricsArtSize, alignment: .leading)
+                    .padding(.leading, Self.lyricsArtSize + Self.lyricsTitleGap)
+                    .transition(UncoveredByArtwork(coveredEdge: heroSize,
+                                                   uncoveredEdge: Self.lyricsArtSize))
+            }
+        }
+        // The paused-state shrink is a hero gesture; at 44pt it would just look like a
+        // glitch, so it only applies at full size. It scales the title underneath too: the
+        // title only stays hidden if it shrinks with the cover. Opened while paused, the
+        // cover starts at 85% and an unscaled title would already poke out above it.
+        .scaleEffect(showLyrics || player.isPlaying ? 1.0 : 0.85)
+        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
     }
 
     /// Title and artist beside the shrunken artwork once lyrics are open, so the song stays
@@ -663,7 +678,6 @@ struct NowPlayingView: View {
                 .foregroundStyle(.white.opacity(0.6))
                 .lineLimit(1)
         }
-        .transition(.opacity)
     }
 
     /// Swipe the artwork to change track, or pull down to dismiss.
@@ -1410,6 +1424,30 @@ struct NowPlayingView: View {
         guard !time.isNaN && !time.isInfinite else { return "0:00" }
         let t = max(0, time)
         return String(format: "%d:%02d", Int(t) / 60, Int(t) % 60)
+    }
+}
+
+// MARK: - Lyrics header title reveal
+
+/// Shows the lyrics header's title only where the artwork has already moved off it.
+///
+/// The mask's edge travels with the cover's trailing edge — same start, same end, same
+/// animation, since both ride the transaction that toggles the lyrics — so each part of the
+/// title appears the instant the cover uncovers it, and goes the instant the cover slides
+/// back over it. It has to be a transition: a mask laid out inside a freshly inserted view
+/// has no earlier frame to animate from and would sit at its final size from the start.
+///
+/// Lying under the cover isn't enough on its own. A cover that isn't square is fitted with
+/// transparent bands above and below it, and the title would show through them.
+private struct UncoveredByArtwork: Transition {
+    /// The cover's trailing edge, from its leading edge: at full size, and in the header.
+    let coveredEdge: CGFloat
+    let uncoveredEdge: CGFloat
+
+    func body(content: Content, phase: TransitionPhase) -> some View {
+        content.mask(alignment: .leading) {
+            Rectangle().offset(x: phase.isIdentity ? uncoveredEdge : coveredEdge)
+        }
     }
 }
 
