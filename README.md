@@ -61,11 +61,15 @@ Each word lights as it is sung. The lines around it fall away in size, blur and 
 
 **Instant Mix** builds a station from any song or artist. Above it, Aura generates mixes from what's actually in your library — by genre, by mood, by time of day — and a **Year Wrapped** retrospective from what you really played, counted on the device.
 
+Each mix gets an **editorial cover**, the way a streaming service would design one: the photo of the artist you play most in it, framed on the face with Apple Vision, under a type-set title — a duotone for genre mixes, a figure cut out over the year for Wrapped, and for a radio the seed artist between two of the artists it found around them.
+
 ## Your library, the way you left it
 
 <img src="docs/assets/playlists.webp" width="300" align="right" alt="The Playlists tab: a grid of playlists with photographic custom covers, each marked with a download badge, above a search field" />
 
 Unified search across songs, albums, artists and playlists, ranked so the thing you typed comes first — with a Recently Searched list that remembers what you *played*, not everything you tapped.
+
+Album, playlist, mix and radio pages open in the colour of their artwork, fading into the page as you scroll; artist pages frame the photo on the face instead of cropping at the forehead.
 
 Custom playlist covers, an A–Z rail for scrolling long lists, content-based duplicate detection, multi-folder Navidrome libraries, and **several servers** you can switch between from the Home title.
 
@@ -88,7 +92,7 @@ Five bands, 15 presets, and a curve you can drag. It runs in the audio graph, no
 ## Private by design
 
 - **Your credentials live in the Keychain**, never in preferences or a file, and never leave the device except to your own server.
-- **No account, no analytics, no telemetry.** Aura talks to your server, and to LRCLIB when a song has no lyrics of its own.
+- **No account, no analytics, no telemetry.** Aura talks to your server, to LRCLIB when a song has no lyrics of its own, and to Deezer's public catalogue for the artist photos on mix covers — sending an artist's name, nothing else.
 - **Play counts and history stay on the device** unless you point Aura at your own scrobbler.
 - **Open source**, so none of this has to be taken on trust.
 
@@ -153,7 +157,7 @@ It builds and runs, and a macOS target exists, but the iPhone is what gets teste
 <summary><b>What about the typeface?</b></summary>
 <br/>
 
-Aura is set in **Vavin Condensed**, a Garamond-inspired face drawn for this app and released under the SIL Open Font License 1.1. It lives in this repository and ships in the build — nothing to buy, nothing to drop in. `Vavin-OFL.txt` travels in the bundle as the licence requires.
+Aura is set in **Vavin Condensed**, a Garamond-inspired face drawn for this app and released under the SIL Open Font License 1.1. It lives in this repository and ships in the build — nothing to buy, nothing to drop in. `Vavin-OFL.txt` travels in the bundle as the licence requires. The mix covers are set in [Archivo](https://github.com/Omnibus-Type/Archivo), also OFL, with `Archivo-OFL.txt` alongside.
 </details>
 
 ## More

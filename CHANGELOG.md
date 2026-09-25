@@ -6,11 +6,22 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added — Covers & pages
+- Editorial covers for "Made For You" mixes and radios: the most-played artist's photo framed on the face (Apple Vision), a type-set title band in Archivo, a duotone for genre mixes, a cut-out figure over the period for Year Wrapped, and a three-artist layout for radios. Falls back to the lead artist's album cover, then to a flat colour field
+- Album, playlist, mix and radio pages open in their artwork's colour, fading into the canvas
+- Artist headers frame the photo on the face, even for photos stored rotated
+
+### Changed — Appearance
+- The dark canvas is #121212 instead of pure black, and song rows sit on it instead of painting their own black
+- Artist photos for covers come from Deezer's public catalogue: the server's artist-image queue stalled every cover in the app whenever a shelf asked for a dozen artists at once
+
 ### Fixed — Search
 - A song no longer loses its place to an album of the same name: an exact hit on a title now leads the results, and an artist still outranks both
 - The search field is tappable across its whole width, and the cross that cleared it is now a full-size **Clear** button
 
 ### Fixed — Playback
+- A new radio can no longer be filled, or have its loader switched off, by a fetch still running for the one before it
+- Opening lyrics tucks the song title behind the shrinking artwork instead of laying it over
 - A stream that dies mid-song moves to the next track instead of stopping on a silent pause
 - The audio session is reclaimed at every track change, so the queue keeps playing after an interruption
 

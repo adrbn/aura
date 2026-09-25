@@ -68,6 +68,10 @@ So that the Share sheet can offer "open on Spotify / Apple Music / Deezer / YouT
 
 This lookup runs when a song starts playing (so the links are ready instantly) and the result is cached. No account, device identifier, or audio is sent — only the track name to find matching links — and none of it goes to a developer-owned server.
 
+### To Deezer (artist photos for mix covers)
+
+To put an artist's photo on a "Made For You" mix or radio cover, Aura looks the artist up in Deezer's public, free, keyless catalogue (`api.deezer.com`) and downloads the photo from Deezer's image servers. Only the **artist's name** is sent — no account, device identifier, or listening history. Each photo is fetched once and kept in the app's cache.
+
 ### To MusicBrainz (for song credits)
 
 When you open a song's credits/info, Aura queries the public **MusicBrainz** database (`musicbrainz.org`) with the artist and title to fetch writer/producer/label credits. No account or identifier is sent.
