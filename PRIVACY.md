@@ -5,7 +5,7 @@ description: How Aura handles your data. Short version — it doesn't leave your
 
 # Aura Privacy Policy
 
-**Last updated:** 2026-09-25
+**Last updated:** 2026-09-26
 **Effective date:** same as above
 
 Aura ("the app") is a music playback client for Subsonic-API-compatible servers (Navidrome, Airsonic, Gonic, and others) that **you** host or have legitimate access to. This policy explains what information Aura handles and what it does not.
@@ -67,7 +67,7 @@ So that the Share sheet can offer "open on Spotify / Apple Music / Deezer / YouT
 
 The share sheet can also offer a song.link address, which Aura builds from the Apple track ID it found; Aura does not contact song.link itself.
 
-This lookup runs when a song starts playing (so the links are ready instantly) and the result is cached. No account, device identifier, or audio is sent — only the track name to find matching links — and none of it goes to a developer-owned server.
+This lookup runs when a track appears in Now Playing (so the links are ready instantly) and the result is cached. No account, device identifier, or audio is sent — only the track name to find matching links — and none of it goes to a developer-owned server.
 
 ### To Deezer (artist photos and Release Radar)
 

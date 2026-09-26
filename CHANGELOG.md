@@ -49,7 +49,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Siri: "Play my favourites in Aura" — « Joue mes favoris sur Aura » — shuffles your favourite songs, with the app closed
 
 ### Changed — Appearance
-- The page's colour rises behind the tab bar and the mini player: over a bright cover the system's tab bar read lighter than the mini player, the one glass Aura draws itself — and the system's takes no tint
+- The page's colour rises behind the tab bar and the mini player: over a bright cover the system's tab bar read lighter than the mini player, the one glass Aura draws itself — and the system's takes no tint. It is eased from the foot of the screen, so it thickens behind the bars without drawing a band above the mini player
 - With the keyboard up, the mini player and the download and fetch cards stay where they are behind it, hidden, instead of riding up over the results
 - Every page's list ends above the mini player and the fetch card: a radio's songs, the genres, a genre's songs, the artists, the "see all" lists, the settings pages, About and Wrapped no longer end underneath them, and the A–Z index keeps its last letters clear of the card
 - Home's canvas carries a faint cutting-mat grid — hairlines every 16 points, a firmer one every fifth

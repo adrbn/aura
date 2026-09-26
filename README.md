@@ -21,7 +21,7 @@ Lossless streaming, lyrics that light up word by word, a real equalizer — and 
 
 <br/>
 
-<img src="docs/assets/home.webp" width="300" alt="Aura's Home: the server's name as the title, the library's counts beneath it, a row of generated Made For You mixes, then favourite artists as circular portraits and favourite songs, with the now-playing bar floating above the tab bar" />
+<img src="docs/assets/home.webp" width="300" alt="Aura's Home on a faint cutting-mat grid: the server's name as the title, the library's counts beneath it, a row of Made For You mixes with editorial covers — a photo of the artist under a bold title band — then favourite artists as circular portraits and favourite songs, with the now-playing bar floating above the tab bar" />
 
 </div>
 
@@ -37,15 +37,15 @@ Aura is built to that bar, on top of your server. It talks plain Subsonic API, i
 
 ## Playing
 
-<img src="docs/assets/now-playing.webp" width="300" align="right" alt="Now Playing: large square artwork, title and artist, a scrubber, shuffle and repeat, and a row of controls for lyrics, Instant Mix, the queue, the sleep timer, output device and sharing" />
+<img src="docs/assets/now-playing.webp" width="300" align="right" alt="Now Playing on a background drawn from the cover: large square artwork, title and artist, a favourite heart, a scrubber, shuffle and repeat, and a row of controls for lyrics, Instant Mix, the queue, the sleep timer, the output device and sharing" />
 
 Stream your files as they are — FLAC and ALAC stay lossless — or let Aura transcode on the way out when you're on cellular. Formats iOS can't open (OGG, Opus, WMA) are transcoded by the server automatically, so nothing in your library is unplayable.
 
-**A 5-band parametric equalizer** with 15 presets and a custom curve, **ReplayGain**, and a **sleep timer** that fades out rather than cutting.
+**A 5-band equalizer** you shape by dragging a curve, with 15 presets, **ReplayGain**, and a **sleep timer** that fades out rather than cutting.
 
 The queue is a real queue: play next, add to the end, drag to reorder, and an autoplay tail that keeps the music going when it runs out.
 
-Everything lands where iOS expects it — Lock Screen, Control Center, the Dynamic Island, CarPlay, AirPlay, the Share Sheet — and **Siri Shortcuts** cover play, pause, next, previous, shuffle, repeat, favourite, plus *"play &lt;playlist&gt;"* and *"play &lt;album&gt;"*.
+Everything lands where iOS expects it — Lock Screen, Control Center, the Dynamic Island, a Live Activity, AirPlay, the Share Sheet — and in the car, CarPlay's Now Playing screen, shuffle and repeat included. **Siri** covers play, pause, next, previous, shuffle, repeat and favourite, plus *"play &lt;playlist&gt;"*, *"play &lt;album&gt;"* and *"play my favourites"* — in English and in French (*« Joue mes favoris sur Aura »*), with the app closed.
 
 <br clear="right"/>
 
@@ -59,21 +59,21 @@ Each word lights as it is sung. The lines around it fall away in size, blur and 
 
 <img src="docs/assets/made-for-you.webp" width="640" alt="Three generated mixes side by side — Afternoon, Chill and Focus — each with an editorial cover: the most-played artist's photo, or their album art, under a bold title band in the mix's colour, with the mix's artists listed beneath" />
 
-**Instant Mix** builds a station from any song or artist. Above it, Aura generates mixes from what's actually in your library — by genre, by mood, by time of day — and a **Year Wrapped** retrospective from what you really played, counted on the device.
+**Instant Mix** builds a radio from any song or artist. Above it, Aura generates mixes from what's actually in your library — by genre, by mood, by time of day — and a **Year Wrapped** retrospective from what you really played, counted on the device.
 
-**Radar** gathers what the artists you play most released in the last 30 days. The releases already on your server play as a mix; the rest are listed beneath it, a tap away from Deezer — or, in the sideload build, from a Soulseek search. Add one to your server and it joins the mix within the hour.
+**Radar** gathers what the artists you play most released in the last 30 days, newest first. What your server already has plays whole; what it doesn't plays as thirty-second previews, so you can hear a release before you decide you want it. Each release opens its own page, songs the server holds marked. Add one to your server and it joins the mix within a quarter of an hour — a release you have only part of stays listed, with how many songs are left to get.
 
-Each mix gets an **editorial cover**, the way a streaming service would design one: the photo of the artist you play most in it, framed on the face with Apple Vision, under a type-set title — a duotone for genre mixes, a figure cut out over the year for Wrapped, and for a radio the seed artist between two of the artists it found around them.
+Each mix gets an **editorial cover**, the way a streaming service would design one: the photo of the artist you play most in it, framed on the face with Apple Vision, under a type-set title — a duotone for genre mixes, a figure cut out over the year for Wrapped, and for a radio the seed artist in a disc sending out rings, with two of the artists it found riding the first one. Save a radio or a mix as a playlist and the cover goes with it, onto your server.
 
 ## Your library, the way you left it
 
-<img src="docs/assets/playlists.webp" width="300" align="right" alt="The Playlists tab: a grid of playlists with photographic custom covers, each marked with a download badge, above a search field" />
+<img src="docs/assets/playlists.webp" width="300" align="right" alt="The Playlists tab: a grid of playlists with photographic custom covers, each marked with a download badge, under a search field" />
 
-Unified search across songs, albums, artists and playlists, ranked so the thing you typed comes first — with a Recently Searched list that remembers what you *played*, not everything you tapped.
+Unified search across songs, albums, artists and playlists, ranked so the thing you typed comes first — with a Recently Searched list that remembers what you *played*, not everything you tapped. With the Radar on, it also shows what your server doesn't have yet, with previews.
 
 Album, playlist, mix and radio pages open in the colour of their artwork, fading into the page as you scroll; artist pages frame the photo on the face instead of cropping at the forehead.
 
-Custom playlist covers, an A–Z rail for scrolling long lists, content-based duplicate detection, multi-folder Navidrome libraries, and **several servers** you can switch between from the Home title.
+Playlists as a grid of covers or a list, narrowed in a tap to the pinned ones, the saved radios, the mixes, yours, the shared ones or the downloaded ones. Custom playlist covers, an A–Z rail for scrolling long lists, content-based duplicate detection, multi-folder Navidrome libraries, and **several servers** you can switch between from the Home title.
 
 <br clear="right"/>
 
@@ -85,22 +85,22 @@ When the server is simply unreachable, Aura says so and falls back to what it ho
 
 ## The equalizer
 
-<img src="docs/assets/eq.webp" width="240" align="right" alt="The equalizer sheet: preset chips for Jazz, Electronic, Classical and Hip-Hop, and five vertical sliders from 60 Hz to 14 kHz with their gains in decibels" />
+<img src="docs/assets/eq.webp" width="240" align="right" alt="The equalizer sheet: a smooth response curve through five draggable points over a decibel grid, each band's frequency and gain beneath it, and a grid of preset capsules" />
 
-Five bands, 15 presets, and a curve you can drag. It runs in the audio graph, not as a gimmick — the gain is applied to the stream itself and survives backgrounding, AirPlay and CarPlay.
+Five bands from 60 Hz to 14 kHz, drawn as one curve over a decibel grid: drag anywhere on it and the nearest band follows. Fifteen presets sit beneath, and the curve glides to each one. It runs in the audio graph, not as a gimmick — the gain is applied to the stream itself and survives backgrounding, AirPlay and CarPlay.
 
 <br clear="right"/>
 
 ## Private by design
 
 - **Your credentials live in the Keychain**, never in preferences or a file, and never leave the device except to your own server.
-- **No account, no analytics, no telemetry.** Aura talks to your server, to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking, and to Deezer's public catalogue for the artist photos on mix covers and the Radar's new releases — sending artist names, nothing else. The Radar can be switched off.
+- **No account, no analytics, no telemetry.** Aura talks to your server; to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking; to Deezer's public catalogue for the artist photos on mix covers, the Radar's new releases and their previews — artist names and release ids, never your library; and to Apple's and Deezer's public search when you share a song, to find it on other services. Switch the Radar off and Deezer hears only about cover photos and the songs you share. The details are in the [privacy policy](PRIVACY.md).
 - **Play counts and history stay on the device** unless you point Aura at your own scrobbler.
 - **Open source**, so none of this has to be taken on trust.
 
 ## Install
 
-1. **Download the IPA** from [Releases](https://github.com/adrbn/aura/releases) and install it with AltStore or SideStore. *(App Store: in review.)*
+1. **Download the IPA** from [Releases](https://github.com/adrbn/aura/releases) and install it with AltStore or SideStore. *(An App Store release is on its way.)*
 2. Open Aura and enter your server's address, username and password.
 3. That's it — no account to create, nothing to configure.
 
@@ -113,6 +113,10 @@ open Aura/Aura.xcodeproj   # Xcode 26+, iOS 26 target — run the "Aura" scheme
 ```
 
 Two configurations ship: the App Store build, and a sideload build that additionally bundles an optional Soulseek/slskd integration, compiled out of the App Store version.
+
+### What the sideload build adds
+
+If you run [slskd](https://github.com/slskd/slskd) next to your server, the sideload build can fetch what you're missing. **Get It** on a Radar release, on a song found in Search, or the heart on a preview in Now Playing: Aura picks the copy with the most of the release's tracks, in the best quality, from a peer with a free slot, moves on if a download stalls, and waits for your server to add it. A card above the mini player and a Live Activity follow each step — looking, downloading, adding, ready — and a liked song is starred once it lands. You point it at your own slskd; nothing goes through anyone else's.
 
 ## Compatibility
 
