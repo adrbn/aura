@@ -61,7 +61,7 @@ Each word lights as it is sung. The lines around it fall away in size, blur and 
 
 **Instant Mix** builds a radio from any song or artist. Above it, Aura generates mixes from what's actually in your library — by genre, by mood, by time of day — and a **Year Wrapped** retrospective from what you really played, counted on the device.
 
-**Radar** gathers what the artists you play most released in the last 30 days, newest first. What your server already has plays whole; what it doesn't plays as thirty-second previews, so you can hear a release before you decide you want it. Each release opens its own page, songs the server holds marked. Add one to your server and it joins the mix within a quarter of an hour — a release you have only part of stays listed, with how many songs are left to get.
+**Radar** gathers what the artists you play most released in the last 30 days, newest first. What your server already has plays whole; what it doesn't plays as thirty-second previews, words included, so you can hear a release before you decide you want it. Each release opens its own page, songs the server holds marked. Add one to your server and it joins the mix within a quarter of an hour — a release you have only part of stays listed, with how many songs are left to get.
 
 Each mix gets an **editorial cover**, the way a streaming service would design one: the photo of the artist you play most in it, framed on the face with Apple Vision, under a type-set title — a duotone for genre mixes, a figure cut out over the year for Wrapped, and for a radio the seed artist in a disc sending out rings, with two of the artists it found riding the first one. Save a radio or a mix as a playlist and the cover goes with it, onto your server.
 
@@ -80,6 +80,8 @@ Playlists as a grid of covers or a list, narrowed in a tap to the pinned ones, t
 ## Offline, properly
 
 Download a song, an album, a playlist, or the entire library, and everything keeps working with the server switched off — including search. What you stream is cached as you go, with a size limit you set.
+
+Offline, the library is laid out like the tabs you know — songs, albums, artists and playlists, each searchable, with Play and Shuffle over whatever the filter leaves.
 
 When the server is simply unreachable, Aura says so and falls back to what it holds, instead of showing you a screen of empty squares.
 
@@ -116,7 +118,7 @@ Two configurations ship: the App Store build, and a sideload build that addition
 
 ### What the sideload build adds
 
-If you run [slskd](https://github.com/slskd/slskd) next to your server, the sideload build can fetch what you're missing. **Get It** on a Radar release, on a song found in Search, or the heart on a preview in Now Playing: Aura picks the copy with the most of the release's tracks, in the best quality, from a peer with a free slot, moves on if a download stalls, and waits for your server to add it. A card above the mini player and a Live Activity follow each step — looking, downloading, adding, ready — and a liked song is starred once it lands. You point it at your own slskd; nothing goes through anyone else's.
+If you run [slskd](https://github.com/slskd/slskd) next to your server, the sideload build can fetch what you're missing. **Get It** on a Radar release, on a song found in Search, or the heart on a preview in Now Playing: Aura picks the copy with the most of the release's tracks, in the best quality, from a peer with a free slot, moves on if a download stalls, and waits for your server to add it. A card above the mini player and a Live Activity follow each step — looking, downloading, adding, ready — with a countdown that learns how long your server takes, and a liked song is starred once it lands. If you're listening to its preview when it lands, the song takes over at the very point the preview had reached, without a seam: the two recordings are lined up and crossed over in a quarter of a second. You point it at your own slskd; nothing goes through anyone else's.
 
 ## Compatibility
 
