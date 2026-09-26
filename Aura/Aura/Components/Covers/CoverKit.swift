@@ -215,6 +215,17 @@ enum CoverImaging {
         return UIImage(cgImage: result, scale: image.scale, orientation: .up)
     }
 
+    /// Fine grey noise, made once. Laid over a cover it reads as print rather than as a flat
+    /// fill; stretched to the cover, so it grows finer on a small one and all but vanishes.
+    static let grain: UIImage? = {
+        let side: CGFloat = 512
+        guard let noise = CIFilter(name: "CIRandomGenerator")?.outputImage?
+            .cropped(to: CGRect(x: 0, y: 0, width: side, height: side))
+            .applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0]),
+              let cg = context.createCGImage(noise, from: noise.extent) else { return nil }
+        return UIImage(cgImage: cg)
+    }()
+
     /// Average colour of a horizontal strip of the picture, `from`…`to` as fractions from the top.
     static func average(of cg: CGImage, from: CGFloat, to: CGFloat) -> UIColor {
         let src = CIImage(cgImage: cg)
@@ -226,5 +237,21 @@ enum CoverImaging {
         context.render(avg, toBitmap: &px, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
                        format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
         return UIColor(red: CGFloat(px[0]) / 255, green: CGFloat(px[1]) / 255, blue: CGFloat(px[2]) / 255, alpha: 1)
+    }
+}
+
+/// The grain, blended into whatever the cover drew beneath it.
+struct CoverGrain: View {
+    var opacity: CGFloat = 0.16
+
+    var body: some View {
+        if let grain = CoverImaging.grain {
+            Image(uiImage: grain)
+                .resizable()
+                .interpolation(.none)
+                .blendMode(.overlay)
+                .opacity(opacity)
+                .allowsHitTesting(false)
+        }
     }
 }

@@ -163,6 +163,7 @@ struct DownloadManagerView: View {
                 .listRowBackground(Color.clear)
             }
         }
+        .endsAboveBottomChrome()
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(Color.themeBg)

@@ -168,45 +168,141 @@ struct YearCoverTemplate: View {
 
 // MARK: - Radio
 
-/// The seed artist in a large disc, two similar artists tucked behind it, on a field of the
-/// seed photo's own colour.
+/// The seed artist in a large disc broadcasting rings, two similar artists riding the first
+/// ring in the field's tone, on a field of the seed photo's own colour; the name in a black
+/// band, the similar artists on a strip under it — the mixes' lockup. The rings travel while
+/// the radio is still being put together, and every disc is drawn from the start, a tinted
+/// stand-in until its photo is in.
 struct RadioCoverTemplate: View {
     let lead: CoverPortrait?
     let left: CoverPortrait?
     let right: CoverPortrait?
     let name: String
+    /// The similar artists, for the strip under the name.
+    var artists: [String] = []
     let field: UIColor
+    var isLoading = false
     let s: CGFloat
+
+    /// The lead disc's centre, as fractions of the side; the rings spread from it.
+    private static let hub = CGPoint(x: 0.5, y: 0.40)
+    private static let leadSide: CGFloat = 0.62
+    private static let sideSide: CGFloat = 0.36
+    private static let ringGap: CGFloat = 0.12
+    private static let artistsSize: CGFloat = 0.032
+    /// Seconds for a ring to travel to the next one's place.
+    private static let broadcast: TimeInterval = 2.4
 
     var body: some View {
         let g = CoverGrid(s: s)
-        let size = CoverMetrics.fit(name.uppercased(), CoverFont.title, width: g.column, maxCap: s * 0.13)
+        let size = CoverMetrics.fit(name.uppercased(), CoverFont.title, width: g.column - s * 0.035,
+                                    maxCap: s * 0.14)
         let fieldColor = Color(uiColor: field)
         let ink = CoverPalette.ink(on: field)
         ZStack(alignment: .topLeading) {
-            fieldColor
-            ZStack {
-                if let left { disc(left, s * 0.36).offset(x: -s * 0.27, y: s * 0.02).transition(.opacity) }
-                if let right { disc(right, s * 0.36).offset(x: s * 0.27, y: s * 0.02).transition(.opacity) }
-                if let lead { disc(lead, s * 0.52) }
+            RadialGradient(stops: [.init(color: fieldColor, location: 0),
+                                   .init(color: fieldColor, location: 0.42),
+                                   .init(color: shade(field, toward: .black, 0.3), location: 1)],
+                           center: UnitPoint(x: Self.hub.x, y: Self.hub.y), startRadius: 0, endRadius: s * 0.9)
+            TimelineView(.animation(minimumInterval: 1 / 30, paused: !isLoading)) { timeline in
+                rings(ink, phase: isLoading ? phase(at: timeline.date) : 0)
             }
-            .frame(width: s, height: s * 0.86)
+            ZStack {
+                disc(left, Self.sideSide, tonal: true)
+                    .position(x: s * 0.11, y: s * 0.49)
+                disc(right, Self.sideSide, tonal: true)
+                    .position(x: s * 0.88, y: s * 0.25)
+                disc(lead, Self.leadSide, tonal: false)
+                    .padding(s * 0.014)
+                    .background(Circle().fill(fieldColor))
+                    .position(x: s * Self.hub.x, y: s * Self.hub.y)
+            }
+            .frame(width: s, height: s)
             CoverLockup(label: String(localized: "Radio"), s: s, color: ink).padding(g.margin)
-            CapText(text: name.uppercased(), font: CoverFont.title, size: size, color: ink)
-                .padding(g.margin)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            VStack(alignment: .leading, spacing: 0) {
+                CapText(text: name.uppercased(), font: CoverFont.title, size: size, color: fieldColor)
+                    .padding(.leading, g.margin).padding(.trailing, s * 0.035)
+                    .padding(.vertical, s * 0.032)
+                    .background(Color.black)
+                if let line = artistsLine(width: g.column - s * 0.04) {
+                    CapText(text: line, font: CoverFont.label, size: s * Self.artistsSize,
+                            color: .black, tracking: s * 0.002)
+                        .padding(.horizontal, s * 0.02).padding(.vertical, s * 0.017)
+                        .background(.white)
+                        .padding(.leading, g.margin)
+                        .transition(.opacity)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            .padding(.bottom, g.margin)
+            CoverGrain()
         }
         .frame(width: s, height: s)
+        .compositingGroup()
         .clipped()
     }
 
-    private func disc(_ p: CoverPortrait, _ d: CGFloat) -> some View {
+    /// A photo in a circle — the similar artists in the field's tone, so three unrelated press
+    /// shots read as one set and the seed stays in front — or its stand-in until it's in.
+    @ViewBuilder
+    private func disc(_ portrait: CoverPortrait?, _ side: CGFloat, tonal: Bool) -> some View {
+        let d = s * side
         let box = CGSize(width: d, height: d)
-        return FramedPortrait(image: p.image,
-                              framing: CoverFraming(p, box: box, target: CGPoint(x: 0.5, y: 0.45), zoom: 1.45),
-                              box: box)
-            .clipShape(Circle())
-            .padding(s * 0.012)
-            .background(Circle().fill(Color(uiColor: field)))
+        ZStack {
+            Circle().fill(shade(field, toward: .black, 0.16))
+            if let portrait {
+                FramedPortrait(image: portrait.image,
+                               framing: CoverFraming(portrait, box: box, target: CGPoint(x: 0.5, y: 0.45),
+                                                     zoom: 1.45),
+                               box: box)
+                    .grayscale(tonal ? 1 : 0)
+                    .contrast(tonal ? 1.15 : 1)
+                    .colorMultiply(tonal ? shade(field, toward: .white, 0.45) : .white)
+                    .clipShape(Circle())
+                    .transition(.opacity)
+            }
+        }
+        .frame(width: d, height: d)
+        .shadow(color: .black.opacity(0.28), radius: s * 0.03, y: s * 0.012)
+    }
+
+    /// Circles around the lead disc, fading towards the edges. `phase` 0…1 moves each one to
+    /// the next one's place, a new one coming out from under the disc.
+    private func rings(_ ink: Color, phase: CGFloat) -> some View {
+        Canvas { context, size in
+            let hub = CGPoint(x: size.width * Self.hub.x, y: size.height * Self.hub.y)
+            for index in -1..<5 {
+                let r = s * (0.40 + (CGFloat(index) + phase) * Self.ringGap)
+                guard r > s * Self.leadSide / 2 else { continue }
+                let fade = min(1, max(0, (s * 0.95 - r) / (s * 0.25)))
+                context.stroke(Path(ellipseIn: CGRect(x: hub.x - r, y: hub.y - r, width: 2 * r, height: 2 * r)),
+                               with: .color(ink.opacity(0.16 * fade)), lineWidth: max(0.5, s * 0.005))
+            }
+        }
+        .frame(width: s, height: s)
+    }
+
+    private func phase(at date: Date) -> CGFloat {
+        CGFloat(date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: Self.broadcast)
+                / Self.broadcast)
+    }
+
+    private func shade(_ color: UIColor, toward target: UIColor, _ amount: CGFloat) -> Color {
+        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
+        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
+        color.getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
+        target.getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
+        return Color(red: r1 + (r2 - r1) * amount, green: g1 + (g2 - g1) * amount, blue: b1 + (b2 - b1) * amount)
+    }
+
+    /// As many names as fit the column.
+    private func artistsLine(width: CGFloat) -> String? {
+        let size = s * Self.artistsSize
+        let tracking = s * 0.002
+        for count in stride(from: min(2, artists.count), through: 1, by: -1) {
+            let line = artists.prefix(count).joined(separator: " · ").uppercased()
+            if CoverMetrics.width(line, CoverFont.label, size, tracking: tracking) <= width { return line }
+        }
+        return nil
     }
 }

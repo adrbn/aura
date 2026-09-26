@@ -199,7 +199,7 @@ struct PlaylistsView: View {
                             proxy.scrollTo(target.id, anchor: .top)
                         }
                         .padding(.trailing, 2)
-                        .padding(.bottom, 64)
+                        .padding(.bottom, 64 + BottomChrome.shared.cardInset)
                     }
                 }
                 }

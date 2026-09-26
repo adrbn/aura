@@ -36,6 +36,7 @@ struct DevLogsView: View {
                 }
             }
         }
+        .endsAboveBottomChrome()
         .scrollIndicators(.hidden)
         .navigationTitle("dev logs (\(filteredEntries.count))")
         .navigationBarTitleDisplayMode(.inline)

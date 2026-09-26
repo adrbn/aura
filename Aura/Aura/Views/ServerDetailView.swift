@@ -59,6 +59,7 @@ struct ServerDetailView: View {
                 .foregroundStyle(accentColor)
             }
         }
+        .endsAboveBottomChrome()
         .scrollIndicators(.hidden)
         .navigationTitle("server details")
         .navigationBarTitleDisplayMode(.inline)

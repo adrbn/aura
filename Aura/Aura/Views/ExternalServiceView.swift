@@ -338,6 +338,7 @@ struct SlskdSearchView: View {
                 .listRowBackground(Color.clear)
                 .frame(height: 80)
         }
+        .endsAboveBottomChrome()
         .scrollIndicators(.hidden)
         .task {
             guard !initialQuery.isEmpty, searchQuery.isEmpty else { return }
@@ -722,6 +723,7 @@ struct SlskdDownloadsView: View {
                 .listRowBackground(Color.clear)
                 .frame(height: 80)
         }
+        .endsAboveBottomChrome()
         .scrollIndicators(.hidden)
         .refreshable { await loadDownloads() }
         .onChange(of: isVisible) { _, visible in

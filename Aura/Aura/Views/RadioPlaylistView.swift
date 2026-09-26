@@ -25,7 +25,7 @@ struct RadioPlaylistView: View {
 
     /// The empty stretch between the buttons and the mini player, where the list will go.
     private var loaderHeight: CGFloat {
-        let clearance = player.hasQueue ? miniPlayerClearance : 0
+        let clearance = (player.hasQueue ? miniPlayerClearance : 0) + BottomChrome.shared.cardInset
         return max(minLoaderHeight, listHeight - headerHeight - clearance)
     }
 
@@ -37,7 +37,8 @@ struct RadioPlaylistView: View {
                 EditorialRadioCover(songs: player.radioPlaylistSongs,
                                     fallbackName: player.radioPlaylistName
                                         .replacingOccurrences(of: "Radio: ", with: ""),
-                                    size: 200)
+                                    size: 200,
+                                    isLoading: player.isFetchingRadioSongs)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
 
                 VStack(spacing: 4) {
@@ -148,7 +149,9 @@ struct RadioPlaylistView: View {
                 }
             }
 
-            Color.clear.frame(height: miniPlayerClearance)
+            // The fetch card's room too, while it shows — a fixed clearance left the last
+            // songs under it.
+            ListEndSpacer(height: miniPlayerClearance)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }

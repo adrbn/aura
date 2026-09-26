@@ -25,13 +25,17 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - The Radar page lists releases, newest first, whether the server has them or not: an album is one row instead of its downloaded songs scattered above the rest, and a release on the server is marked — a single plays from it, on into the rest of the radar, previews included, instead of stopping at the last downloaded song. A release's page plays it in its own order, the server's copies and the previews between. Save as Playlist is gone from the radar: a day-to-day list, half previews
 - A release the server has only part of stays listed, with how many songs are still to get: an album named after a single already on the server, or whose songs came in one by one — in the app or outside it — no longer passes for held, nor leaves the radar as "already heard". Its page marks every song the server has, wherever it's filed, not only the few the mix plays. Radars stored before are matched again at once
 - A release you got a song of stays listed only while the server lacks some of its songs: a single got song by song, or finished outside the app, no longer stays among the missing for good — nor does one whose Get It failed. Once a fetched song completes its release, the release joins the mix at once instead of at the next check
+- A release the server has whole offers Shuffle on its page instead of a Get button that had nothing left to get
 
 ### Added — Covers & pages
 - Editorial covers for "Made For You" mixes and radios: the most-played artist's photo framed on the face (Apple Vision), a type-set title band in Archivo, a duotone for genre mixes, a cut-out figure over the period for Year Wrapped, and a three-artist layout for radios. Falls back to the lead artist's album cover, then to a flat colour field
 - Album, playlist, mix and radio pages open in their artwork's colour, fading into the canvas
 - Artist headers frame the photo on the face, even for photos stored rotated
+- Radio covers fill the square: the seed artist in a larger disc sending out rings, the two similar artists riding the first ring in the field's tone, the name in a black band with the similar artists on a strip beneath — the mixes' lockup — over a field that deepens towards its edges, with a fine grain. Every disc is drawn from the start, a tinted stand-in until its photo is in, and the rings travel while the radio is being put together
 
 ### Changed — Appearance
+- With the keyboard up, the mini player and the download and fetch cards stay where they are behind it, hidden, instead of riding up over the results
+- Every page's list ends above the mini player and the fetch card: a radio's songs, the genres, a genre's songs, the artists, the "see all" lists, the settings pages, About and Wrapped no longer end underneath them, and the A–Z index keeps its last letters clear of the card
 - Home's canvas carries a faint cutting-mat grid — hairlines every 16 points, a firmer one every fifth
 - The dark canvas is #121212 instead of pure black, and song rows sit on it instead of painting their own black — the Library menu, recent searches, search results and loading placeholders included
 - Artist headers drop the dark fade across the top of the photo; only a photo bright enough to hide the clock gets a light veil, the status bar's height
@@ -42,6 +46,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - A song no longer loses its place to an album of the same name: an exact hit on a title now leads the results, and an artist still outranks both
 - The search field is tappable across its whole width, and the cross that cleared it is now a full-size **Clear** button
 - The search field keeps one height: it no longer grows when the first letter brings up **Clear**
+- "Did you mean" and "Show more" sit on rows their own height: every row was held to 44 points, which opened a gap above the first section
 
 ### Fixed — Lyrics
 - A duet, a remix or a translated version shows its own words: when a song names its version, the lyrics found are checked against that version's sheets on LRCLIB, once per song, and replaced when most of them disagree — *These Walls* with Pierre de Maere gets its French verse

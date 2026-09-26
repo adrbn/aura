@@ -23,6 +23,7 @@ struct TabOrderView: View {
                 }
             }
         }
+        .endsAboveBottomChrome()
         .scrollIndicators(.hidden)
         .navigationTitle("tab bar order")
         .navigationBarTitleDisplayMode(.inline)
@@ -58,6 +59,7 @@ struct HomeSectionOrderView: View {
                 }
             }
         }
+        .endsAboveBottomChrome()
         .scrollIndicators(.hidden)
         .navigationTitle("section order")
         .navigationBarTitleDisplayMode(.inline)

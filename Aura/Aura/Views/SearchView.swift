@@ -112,6 +112,9 @@ struct SearchResultsContainer: View {
             }
         }
         .listStyle(.plain)
+        // A plain List holds every row to 44pt, so the one-line rows — "Did you mean", "Show
+        // more" — stood in tall empty boxes whatever their insets said.
+        .environment(\.defaultMinListRowHeight, 0)
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.never)

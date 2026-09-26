@@ -53,6 +53,14 @@ struct ListEndSpacer: View {
     }
 }
 
+extension View {
+    /// The same room as `ListEndSpacer`, for a page that can't end on a row of its own — a
+    /// `List(data)`, a grouped settings list, a scroll view of cards.
+    func endsAboveBottomChrome(_ height: CGFloat = 80) -> some View {
+        safeAreaInset(edge: .bottom, spacing: 0) { ListEndSpacer(height: height) }
+    }
+}
+
 /// What every pull-to-refresh in the app does, so the gesture means the same thing on
 /// every screen: re-check the server, let stuck artwork try again, reload the content,
 /// then confirm with a haptic.

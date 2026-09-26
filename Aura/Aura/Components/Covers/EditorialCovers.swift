@@ -214,10 +214,12 @@ struct EditorialRadioCover: View {
     var fallbackName: String = ""
     var size: CGFloat = 200
     var cornerRadius: CGFloat = 12
+    /// The radio is still being put together: its rings travel.
+    var isLoading = false
 
     /// Tagged with the seed / side artists they were loaded for.
     @State private var lead: (key: String, portrait: CoverPortrait)?
-    @State private var sides: (key: String, portraits: [CoverPortrait]) = ("", [])
+    @State private var sides: (key: String, portraits: [CoverPortrait], names: [String]) = ("", [], [])
 
     private static let sideCandidates = 6
 
@@ -236,11 +238,14 @@ struct EditorialRadioCover: View {
                            left: shownSides.first,
                            right: shownSides.dropFirst().first,
                            name: name,
+                           artists: sides.key == sidesKey ? sides.names : [],
                            field: current?.band ?? CoverPalette.hashed(name),
+                           isLoading: isLoading,
                            s: size)
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             .animation(.easeOut(duration: 0.3), value: shownSides.map(\.artistId))
+            .animation(.easeOut(duration: 0.3), value: current?.band)
             .animation(.easeOut(duration: 0.3), value: current?.artistId)
             .task(id: "\(seedKey)#\(ArtworkRetry.shared.generation)") {
                 guard let seed, lead?.key != seedKey else { return }
@@ -253,11 +258,17 @@ struct EditorialRadioCover: View {
             .task(id: "\(sidesKey)#\(ArtworkRetry.shared.generation)") {
                 guard sides.key != sidesKey || sides.portraits.count < 2 else { return }
                 var found: [CoverPortrait] = []
+                var names: [String] = []
                 for artist in others where found.count < 2 {
                     if Task.isCancelled { return }
-                    if let portrait = await CoverPortraits.load(artist, subject: false) { found.append(portrait) }
+                    if let portrait = await CoverPortraits.load(artist, subject: false) {
+                        found.append(portrait)
+                        names.append(artist.name)
+                    }
                 }
-                if !Task.isCancelled { sides = (sidesKey, found) }
+                // Without photos, the strip still names who the radio plays.
+                if names.isEmpty { names = others.prefix(2).map(\.name) }
+                if !Task.isCancelled { sides = (sidesKey, found, names) }
             }
             .accessibilityHidden(true)
     }

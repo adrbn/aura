@@ -31,7 +31,7 @@ struct AlbumsFullListView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 80)
+                .padding(.bottom, 80 + BottomChrome.shared.cardInset)
             }
         }
         .scrollIndicators(.hidden)
@@ -106,6 +106,7 @@ struct ArtistsListView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.themeBg)
                 .scrollIndicators(.hidden)
+                .endsAboveBottomChrome()
             }
         }
         .navigationTitle("Favorite Artists")

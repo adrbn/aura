@@ -27,7 +27,7 @@ struct AboutView: View {
             .padding(.horizontal, 20)
             // Clear the floating mini-player + tab bar so the footer can scroll fully
             // into view and be read — otherwise the last line sits under the now-playing bar.
-            .padding(.bottom, 150)
+            .padding(.bottom, 150 + BottomChrome.shared.cardInset)
         }
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)

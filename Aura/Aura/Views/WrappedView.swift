@@ -51,7 +51,7 @@ struct WrappedView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
-            .padding(.bottom, 90)
+            .padding(.bottom, 90 + BottomChrome.shared.cardInset)
             .animation(.easeInOut(duration: 0.25), value: isLoading)
         }
         .scrollIndicators(.hidden)

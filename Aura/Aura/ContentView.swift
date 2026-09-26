@@ -54,10 +54,15 @@ struct ContentView: View {
                 // Above the fetch card, which a stack otherwise draws on top while it leaves.
                 if audioPlayer.hasQueue {
                     MiniPlayerView()
-                        .padding(.bottom, keyboardVisible ? 4 : 57)
+                        .padding(.bottom, 57)
                         .zIndex(1)
                 }
             }
+            // The keyboard doesn't carry them up over what's being typed for: they stay put
+            // behind it, faded so they don't show through its glass.
+            .ignoresSafeArea(.keyboard)
+            .opacity(keyboardVisible ? 0 : 1)
+            .allowsHitTesting(!keyboardVisible)
 
             ToastOverlay()
         }

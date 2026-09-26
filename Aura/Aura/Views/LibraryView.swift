@@ -344,6 +344,7 @@ struct GenresListView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.themeBg)
                 .scrollIndicators(.hidden)
+                .endsAboveBottomChrome()
             }
         }
         .navigationTitle("Genres")
@@ -413,6 +414,7 @@ struct GenreSongsView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.themeBg)
                 .scrollIndicators(.hidden)
+                .endsAboveBottomChrome()
             }
         }
         .navigationTitle(genre.value)
@@ -551,6 +553,7 @@ struct ArtistsFullListView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.themeBg)
                 .scrollIndicators(.hidden)
+                .endsAboveBottomChrome()
                 .searchable(text: $searchText, prompt: "Search artists")
             }
         }

@@ -35,6 +35,12 @@ struct RadarReleaseView: View {
         #endif
     }
 
+    /// The server has every song of the release: there is nothing left to get.
+    private var isWhole: Bool {
+        guard let tracks, !tracks.isEmpty else { return false }
+        return tracks.allSatisfy { librarySong(for: $0) != nil }
+    }
+
     var body: some View {
         List {
             header
@@ -143,7 +149,7 @@ struct RadarReleaseView: View {
                 .buttonStyle(.borderless)
                 .disabled(songs.isEmpty)
 
-                if canFetch {
+                if canFetch && !isWhole {
                     getAllButton
                 } else {
                     Button { player.playShuffled(songs, source: source) } label: {

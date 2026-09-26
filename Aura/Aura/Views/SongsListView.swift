@@ -380,7 +380,7 @@ struct SongsListView: View {
                         }
                         .padding(.trailing, 2)
                         // Clear the floating mini-player so the last letters stay grabbable.
-                        .padding(.bottom, 64)
+                        .padding(.bottom, 64 + BottomChrome.shared.cardInset)
                     }
                 }
                 }
