@@ -707,6 +707,11 @@ struct SettingsView: View {
     /// both ship, so their controls belong where everyone can reach them.
     private var lyricsSection: some View {
         Section {
+            NavigationLink {
+                LyricsTranslationSettingsView()
+            } label: {
+                LabeledContent("Translation", value: GeminiLyricsTranslator.isConfigured ? "Gemini" : "iPhone")
+            }
             Toggle("Word-by-Word Highlight", isOn: $appSettings.betaKaraokeLyrics)
             VStack(alignment: .leading, spacing: 2) {
                 HStack {

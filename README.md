@@ -55,7 +55,7 @@ Aura reads per-word timings from the OpenSubsonic lyrics extension, falls back t
 
 Each word lights as it is sung. The lines around it fall away in size, blur and opacity, so the line being sung is the only one competing for your attention. Tap any line to jump there, nudge the timing if your headphones lag, and turn the phone for full screen.
 
-Lyrics in another language can carry **a translation under each line**, small and dimmed so the song keeps the eye. It is made on the iPhone: where Apple Intelligence is on, by its language model, which reads the song as a whole and writes what a native speaker would say — idioms by their sense, the singer's familiar "you" kept — rather than word for word; elsewhere by Apple's Translation framework, offline once the language is in. Free either way, and the words never leave the device. A song translated once comes back instantly.
+Lyrics in another language can carry **a translation under each line**, small and dimmed so the song keeps the eye. Add your own free Gemini key and Google's model translates it: the whole song at once, sentences carried across the line breaks and cut back under the lines they're sung on, idioms by their sense, the singer's familiar "you" kept, creoles read as themselves rather than as the language they resemble. Without a key it's made on the iPhone — by Apple Intelligence's small model, or Apple's Translation framework — and the words never leave the device. A song translated once comes back instantly.
 
 ## Made for you
 
@@ -98,7 +98,7 @@ Five bands from 60 Hz to 14 kHz, drawn as one curve over a decibel grid: drag an
 ## Private by design
 
 - **Your credentials live in the Keychain**, never in preferences or a file, and never leave the device except to your own server.
-- **No account, no analytics, no telemetry.** Aura talks to your server; to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking; to Deezer's public catalogue for the artist photos on mix covers, the covers your server is missing, the Radar's new releases and their previews — artist names, the titles of albums without artwork and release ids, never your library; and to Apple's and Deezer's public search when you share a song, to find it on other services. Switch the Radar off and Deezer hears only about cover photos and the songs you share. The details are in the [privacy policy](PRIVACY.md).
+- **No account, no analytics, no telemetry.** Aura talks to your server; to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking; to Deezer's public catalogue for the artist photos on mix covers, the covers your server is missing, the Radar's new releases and their previews — artist names, the titles of albums without artwork and release ids, never your library; and to Apple's and Deezer's public search when you share a song, to find it on other services. Switch the Radar off and Deezer hears only about cover photos and the songs you share. Google hears about the lyrics you translate only if you add a Gemini key of your own. The details are in the [privacy policy](PRIVACY.md).
 - **Play counts and history stay on the device** unless you point Aura at your own scrobbler.
 - **Open source**, so none of this has to be taken on trust.
 

@@ -21,6 +21,7 @@ struct NowPlayingView: View {
     @State private var dragOffset: CGFloat = 0
     @State private var isUserScrolling = false
     @State private var scrollReturnTask: Task<Void, Never>?
+    @State private var recenterTask: Task<Void, Never>?
     @State private var previousSongId: String?
     @State private var coverDragOffset: CGFloat = 0
     @State private var showSleepTimerSheet = false
@@ -139,6 +140,8 @@ struct NowPlayingView: View {
         // reader has asked for translations — whether or not the lyrics are open yet.
         .task(id: player.lyrics.map(\.text)) {
             await translator.show(songId: player.currentSong?.id,
+                                  song: LyricsSong(title: player.currentSong?.title,
+                                                   artist: player.currentSong?.artist),
                                   texts: player.lyrics.map(\.text),
                                   translating: appSettings.translateLyrics)
         }
@@ -1061,6 +1064,23 @@ struct NowPlayingView: View {
                     proxy.scrollTo(newId, anchor: .center)
                 }
             }
+            // Translations shown, hidden or arriving change every line's height, and the
+            // list keeps its offset: the line being sung drifted off the centre until the
+            // next one brought it back.
+            .onChange(of: appSettings.translateLyrics) { _, _ in recenterLyrics(proxy) }
+            .onChange(of: translator.lines.count) { _, _ in
+                if appSettings.translateLyrics { recenterLyrics(proxy) }
+            }
+        }
+    }
+
+    /// Centres the line being sung once the lines have finished changing height (0.3 s).
+    private func recenterLyrics(_ proxy: ScrollViewProxy) {
+        recenterTask?.cancel()
+        recenterTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(320))
+            guard !Task.isCancelled, !isUserScrolling, let id = currentLyricId else { return }
+            withAnimation(.easeInOut(duration: 0.35)) { proxy.scrollTo(id, anchor: .center) }
         }
     }
 

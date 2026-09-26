@@ -81,9 +81,11 @@ When you open the radar, Aura asks Deezer for the **track lists** of the release
 
 With the Radar on, what you type in **Search** is also sent to the same catalogue, so Search can show the songs and releases your server doesn't have, with their previews. Deezer receives the **search text** — no account, device identifier, or library. Switch the Radar off and Search asks only your server.
 
-### Lyrics translation (on the device)
+### Lyrics translation
 
-When you turn on translation in the lyrics, the lines are translated **on your device**: by Apple Intelligence's on-device language model where it is turned on, otherwise by Apple's Translation framework. The lyrics are not sent to Apple, to the developer, or to any translation service. The first time a pair of languages is used, iOS may offer to download it; that download is between your device and Apple, like any system language. Translations are kept in the app's cache.
+By default, when you turn on translation in the lyrics, the lines are translated **on your device**: by Apple Intelligence's on-device language model where it is turned on, otherwise by Apple's Translation framework. The lyrics are then not sent to Apple, to the developer, or to any translation service. The first time a pair of languages is used, iOS may offer to download it; that download is between your device and Apple, like any system language. Translations are kept in the app's cache.
+
+**Only if you add your own Google Gemini API key** (Settings → Lyrics → Translation), the lyrics you translate are sent to Google's Gemini API ([ai.google.dev](https://ai.google.dev)) instead, together with the song's title and artist — nothing else: not your server, your library or your listening history. The request is made with your key, under your own agreement with Google; on Google's free tier, Google may use it to improve its products. The key is stored in your device's Keychain and sent only to Google. Remove the key and translation is back on the device.
 
 ### To MusicBrainz (for song credits)
 

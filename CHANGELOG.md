@@ -41,6 +41,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Radio covers fill the square: the seed artist in a larger disc sending out rings, the two similar artists riding the first ring in the field's tone, the name in a black band with the similar artists on a strip beneath — the mixes' lockup — over a field that deepens towards its edges, with a fine grain. Every disc is drawn from the start, a tinted stand-in until its photo is in, and the rings travel while the radio is being put together
 
 ### Added — Lyrics
+- Translation by Gemini, with a key of your own (free from Google AI Studio, in Settings → Lyrics → Translation): the whole song goes in one request, so each line is read knowing the rest — a sentence running over several lines is translated as a sentence, then cut back at the line breaks, each line carrying the part sung on it. The iPhone's small model got the meaning backwards ("Nothing you can do that can't be done" as "nothing you can do can't be done") and read Cape Verdean Creole as Portuguese — Cesária Évora's "ta ba panha'l" became a banana. Every song is translated afresh once a key is in; the key stays in the Keychain, Settings checks it on the spot, and when Google can't answer the iPhone translates instead
+- Without a key, the on-device model is told the song's title and artist, and first asked which language the song is really in, so a creole isn't read as the language it resembles; lines it leaves out stay untranslated rather than going word for word through a translator that would read them as that language
 - Translation: lyrics in another language than the phone's show a translation under each line, small and dimmed. Where Apple Intelligence is on, its on-device language model writes it, reading the song as a whole as a subtitler would — idioms by their sense, the singer's familiar "tu" kept — instead of word for word ("sotto, sotto" is "au fond", not "en bas"). Elsewhere, and for any line the model leaves out, Apple's Translation framework does it line by line, offline once the language is downloaded. Free, nothing sent anywhere, and kept, so a song comes back translated at once. The button sits at the end of the lyrics header, facing the song's title, and only appears when there is something to translate
 - Lines already in the reader's language — a song switching languages — are left as they are
 
@@ -98,6 +100,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - The title and the search field scroll away with the results, as every other tab's title does, instead of the results sliding up in plain sight around them and under the clock
 
 ### Fixed — Lyrics
+- Turning the translation on or off, or translations arriving, no longer leaves the line being sung off the centre until the next line: the lyrics re-centre on it once the lines have changed height
 - A duet, a remix or a translated version shows its own words: when a song names its version, the lyrics found are checked against that version's sheets on LRCLIB, once per song, and replaced when most of them disagree — *These Walls* with Pierre de Maere gets its French verse
 - Lyrics can no longer be left over from the previous song: a fetch still running when the track changes is cancelled, and can neither put its words on the new song nor end its spinner
 
