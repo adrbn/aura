@@ -17,41 +17,43 @@ struct EqualizerView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header
-                EQCurveEditor(bands: bands, onChange: setBand, onEnd: { appSettings.save() })
-                    .frame(height: 236)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 22)
-                bandReadout
-                    .padding(.horizontal, 16)
-                    .padding(.top, 4)
-                presets
-                    .padding(.horizontal, 16)
-                    .padding(.top, 36)
-            }
-            .padding(.bottom, 24)
+        // The curve takes whatever height the sheet has left; only when there is none to
+        // spare — large text — does the page scroll instead.
+        ViewThatFits(in: .vertical) {
+            page(fillsHeight: true)
+            ScrollView { page(fillsHeight: false) }
+                .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
         .background(Color.themeBg)
         .presentationBackground(Color.themeBg)
         .presentationDragIndicator(.visible)
     }
 
+    private func page(fillsHeight: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+            EQCurveEditor(bands: bands, onChange: setBand, onEnd: { appSettings.save() })
+                .frame(minHeight: 240, maxHeight: fillsHeight ? .infinity : 240)
+                .padding(.horizontal, 16)
+                .padding(.top, 20)
+            bandReadout
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+            presets
+                .padding(.horizontal, 16)
+                .padding(.top, 32)
+        }
+        .padding(.bottom, 20)
+    }
+
     // MARK: - Header
 
+    /// The title alone: the chosen preset shows in the grid, and a curve is its own caption.
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("equalizer")
-                    .auraDisplay(40)
-                    .foregroundStyle(.primary)
-                Text(status)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .contentTransition(.opacity)
-            }
+            Text("equalizer")
+                .auraDisplay(40)
+                .foregroundStyle(.primary)
             Spacer()
             Button("Done") { dismiss() }
                 .font(.body.weight(.semibold))
@@ -59,14 +61,6 @@ struct EqualizerView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 22)
-    }
-
-    private var status: String {
-        switch appSettings.eqPreset {
-        case .flat: return "Off — every band at 0 dB"
-        case .custom: return bands.allSatisfy { $0 == 0 } ? "Custom — flat" : "Custom"
-        default: return appSettings.eqPreset.rawValue
-        }
     }
 
     // MARK: - Band values
@@ -79,7 +73,7 @@ struct EqualizerView: View {
                 VStack(spacing: 1) {
                     Text(Self.gain(bands[i]))
                         .font(.subheadline.weight(bands[i] == 0 ? .medium : .semibold).monospacedDigit())
-                        .foregroundStyle(bands[i] == 0 ? AnyShapeStyle(.tertiary) : AnyShapeStyle(accentColor))
+                        .foregroundStyle(bands[i] == 0 ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.primary))
                         .contentTransition(.numericText(value: Double(bands[i])))
                     Text(EQPreset.bandLabels[i] + " Hz")
                         .font(.caption)
@@ -177,7 +171,7 @@ private struct EQCurveEditor: View {
     /// The dB scale's column, left of the graph.
     static let axisGutter: CGFloat = 30
     /// How far in from each side the outer points sit, so they can be grabbed.
-    static let edgeInset: CGFloat = 22
+    static let edgeInset: CGFloat = 26
     static let range: ClosedRange<Float> = -12...12
     private static let scaleMarks: Set<Float> = [-12, 0, 12]
 
