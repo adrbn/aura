@@ -158,15 +158,16 @@ struct MixDetailView: View {
         }
     }
 
-    /// The releases listed under the playlist: those the server lacks, and those it has only
-    /// the songs of that were fetched one by one, so the rest can still be had.
+    /// The releases listed under the playlist: those the server lacks, whole or in part — and
+    /// those whose songs were just fetched one by one, until it's known whether the rest is in.
     private var listedReleases: [RadarRelease] {
         guard let radar else { return [] }
         #if APPSTORE_BUILD
-        return radar.missing
+        return radar.listed
         #else
         let picked = ReleaseFetcher.shared.picked
-        return radar.releases.filter { radar.inLibrary[$0.id] == nil || picked.contains($0.id) }
+        let listed = Set(radar.listed.map(\.id))
+        return radar.releases.filter { listed.contains($0.id) || picked.contains($0.id) }
         #endif
     }
 

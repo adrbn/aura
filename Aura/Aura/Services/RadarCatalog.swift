@@ -178,6 +178,13 @@ enum RadarRules {
         tracks.filter { track in !songs.contains { sameTitle($0.title, track.title) } }
     }
 
+    /// The artist's song for each title, among songs a search turned up — one a title, and
+    /// none for a title no song of theirs carries.
+    static func matching(_ titles: [String], in songs: [Song], by artist: String) -> [Song] {
+        let theirs = songs.filter { credits($0.artist, artist) }
+        return titles.compactMap { title in theirs.first { sameTitle($0.title, title) } }
+    }
+
     /// Everything each release lends to the playlist, newest release first, no song twice.
     static func playlist(_ tracks: [(release: RadarRelease, songs: [Song])],
                          perRelease: Int = perRelease) -> [Song] {

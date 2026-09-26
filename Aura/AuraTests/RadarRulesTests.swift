@@ -169,6 +169,18 @@ struct RadarRulesTests {
         #expect(RadarRules.unheld([], among: held).isEmpty)
     }
 
+    @Test("A search's songs match titles only when they're the artist's, one per title")
+    func matchingSongs() throws {
+        let songs = try [#"{"id":"1","title":"Roses","artist":"Other"}"#,
+                         #"{"id":"2","title":"roses","artist":"Zaoui • Loote"}"#,
+                         #"{"id":"3","title":"Roses","artist":"Zaoui"}"#,
+                         #"{"id":"4","title":"Pétals","artist":"Zaoui"}"#].map {
+            try JSONDecoder().decode(Song.self, from: Data($0.utf8))
+        }
+        #expect(RadarRules.matching(["Roses", "Petals", "Thorns"], in: songs, by: "Zaoui").map(\.id) == ["2", "4"])
+        #expect(RadarRules.matching(["Roses"], in: songs, by: "Nobody").isEmpty)
+    }
+
     // MARK: Playlist
 
     @Test("The playlist takes a few tracks per release, newest release first, no song twice")

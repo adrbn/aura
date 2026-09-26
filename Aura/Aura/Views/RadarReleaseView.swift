@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// A radar release the server doesn't have, opened like an album: its songs as Deezer lists
-/// them, each playing its preview — and, in the sideload build, to be had one by one or all
-/// at once.
+/// A radar release opened like an album: every song Deezer lists for it, those the server has
+/// marked and played from it, the rest playing their preview — and, in the sideload build, to
+/// be had one by one or all at once.
 struct RadarReleaseView: View {
     let release: RadarRelease
 
@@ -13,12 +13,15 @@ struct RadarReleaseView: View {
     @State private var tracks: [DeezerTrack]?
     @State private var unreachable = false
     @State private var tint: UIColor?
+    /// The release's songs on the server, looked up in full once the page opens.
+    @State private var held: [Song]?
 
     private var source: PlaybackSource { .mix(id: "radar", name: String(localized: "Radar")) }
     private var previews: [Song] { tracks?.compactMap { $0.previewSong(of: release) } ?? [] }
 
-    /// The release's songs the server has already — a single that came out ahead of it.
-    private var onServer: [Song] { radarService.current?.inLibrary[release.id] ?? [] }
+    /// The release's songs the server has, wherever they're filed — a single that came out
+    /// ahead of it, songs fetched one by one. The radar's few until the full look-up lands.
+    private var onServer: [Song] { held ?? radarService.current?.inLibrary[release.id] ?? [] }
 
     private var canFetch: Bool {
         #if APPSTORE_BUILD
@@ -250,6 +253,7 @@ struct RadarReleaseView: View {
         let loaded = await radarService.tracks(of: release)
         if let loaded { tracks = loaded }
         unreachable = loaded == nil && tracks == nil
+        held = await radarService.held(release)
     }
 }
 

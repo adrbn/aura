@@ -22,6 +22,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Songs the server had long before a release came out (more than two weeks) don't join the mix as new; a release made only of such songs leaves the radar. Radars built before are rebuilt at once
 - A preview shows its cover in Now Playing, and the background drawn from it — Deezer's artwork was taken for the server's "no cover" picture
 - The Radar page drops its "Not in your library yet" header and the note beneath the list
+- A release the server has only part of stays listed, with how many songs are still to get: an album named after a single already on the server, or whose songs came in one by one — in the app or outside it — no longer passes for held, nor leaves the radar as "already heard". Its page marks every song the server has, wherever it's filed, not only the few the mix plays. Radars stored before are matched again at once
 - A release you got a song of stays listed only while the server lacks some of its songs: a single got song by song, or finished outside the app, no longer stays among the missing for good — nor does one whose Get It failed. Once a fetched song completes its release, the release joins the mix at once instead of at the next check
 
 ### Added — Covers & pages

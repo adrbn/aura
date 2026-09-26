@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The radar's releases the server doesn't have yet, listed under its playlist. They are rows
+/// The radar's releases the server doesn't have yet, whole or in part, listed under its playlist. They are rows
 /// of the page's own List, so they scroll with it and sit on its tinted canvas.
 struct RadarMissingRows: View {
     let releases: [RadarRelease]
@@ -52,7 +52,7 @@ struct RadarReleaseRow: View {
                 Text(release.title)
                     .font(.subheadline.weight(.medium))
                     .lineLimit(1)
-                Text("\(release.artist.name) · \(release.typeLabel) · \(dateLabel)")
+                Text(details)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -162,6 +162,15 @@ struct RadarReleaseRow: View {
             .accessibilityLabel("Get It")
         }
         #endif
+    }
+
+    /// "Zaoui · Album · Sep 25", and how many songs are still to get when the server has some.
+    private var details: String {
+        var parts = [release.artist.name, release.typeLabel, dateLabel]
+        if let lacking = RadarService.shared.current?.lacking?[release.id] {
+            parts.append(String(localized: "\(lacking) to get"))
+        }
+        return parts.joined(separator: " · ")
     }
 
     private var dateLabel: String {

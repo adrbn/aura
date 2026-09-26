@@ -10,8 +10,15 @@ struct Radar: Codable {
     /// Release id → the tracks it lends the playlist, for each release the server has.
     let inLibrary: [String: [Song]]
     let matched: Date
+    /// Release id → how many of its songs the server still lacks, for each it has only part
+    /// of: an album named after the single already here, one whose songs came one by one.
+    /// Nil in a radar stored before this was kept, which is matched again in full.
+    let lacking: [String: Int]?
 
     var missing: [RadarRelease] { releases.filter { inLibrary[$0.id] == nil } }
+
+    /// The releases listed under the playlist: those the server lacks, whole or in part.
+    var listed: [RadarRelease] { releases.filter { inLibrary[$0.id] == nil || lacking?[$0.id] != nil } }
 
     /// The playlist: a few tracks from each release on the server, newest release first.
     var songs: [Song] {
@@ -84,7 +91,7 @@ final class RadarService {
         if radar?.serverId != server.id { radar = RadarStore.load(for: server.id) }
         let now = Date()
         let staleCatalogue = radar.map { now.timeIntervalSince($0.fetched) > Self.catalogueAge } ?? true
-        let staleLibrary = radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge } ?? true
+        let staleLibrary = radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge || $0.lacking == nil } ?? true
         guard staleCatalogue || staleLibrary else { return }
 
         // Clears itself before anyone waiting on it resumes, so they see the way clear.
@@ -98,13 +105,13 @@ final class RadarService {
 
     // MARK: Previews
 
-    /// Fetches the track lists of the missing releases that have none yet, or one too old to
+    /// Fetches the track lists of the listed releases that have none yet, or one too old to
     /// play from. Callers arriving meanwhile wait for the same run.
     func loadTrackLists() async {
         if let trackListTask { return await trackListTask.value }
         guard let radar = current else { return }
         let now = Date()
-        let due = radar.missing.filter { release in
+        let due = radar.listed.filter { release in
             trackLists[release.id].map { now.timeIntervalSince($0.fetched) > Self.previewAge } ?? true
         }
         guard !due.isEmpty else { return }
@@ -178,10 +185,29 @@ final class RadarService {
         guard let server = ServerManager.shared.currentServer else { return nil }
         guard let found = await Self.find(release, among: await Self.albums(of: release, server: server),
                                           server: server) else { return nil }
-        let songs = RadarRules.newSongs(found, of: release)
+        let held = await holdings(release, found: found, server: server)
+        let songs = RadarRules.newSongs(held.songs, of: release)
         guard !songs.isEmpty else { return nil }
-        take(release, songs: songs)
+        take(release, songs: songs, lacking: held.lacking)
         return songs
+    }
+
+    /// Every song of a release the server has, whatever album it's filed under and whenever
+    /// it came in — for its page to tell them from those still to get.
+    func held(_ release: RadarRelease) async -> [Song] {
+        guard let server = ServerManager.shared.currentServer else { return current?.inLibrary[release.id] ?? [] }
+        let found = await Self.find(release, among: await Self.albums(of: release, server: server),
+                                    server: server) ?? []
+        return await holdings(release, found: found, server: server).songs
+    }
+
+    /// The songs of a release the server has, from those found for it and the rest filed
+    /// elsewhere, and how many it still lacks. Deezer out of reach: what was found is taken
+    /// as the whole.
+    private func holdings(_ release: RadarRelease, found: [Song],
+                          server: ServerConfig) async -> (songs: [Song], lacking: Int) {
+        guard let tracks = await tracks(of: release), !tracks.isEmpty else { return (found, 0) }
+        return await Self.holdings(release, tracks: tracks, found: found, server: server)
     }
 
     /// Whether the server has every song of a release now — the album of its name, or its
@@ -190,24 +216,25 @@ final class RadarService {
     func settle(_ release: RadarRelease) async -> Bool {
         guard let server = ServerManager.shared.currentServer,
               let tracks = await tracks(of: release), !tracks.isEmpty else { return false }
-        var held = await Self.find(release, among: await Self.albums(of: release, server: server),
-                                   server: server) ?? []
-        for track in RadarRules.unheld(tracks, among: held) {
-            guard let song = await lookUp(song: track.title, of: release)?.first else { return false }
-            held.append(song)
-        }
-        take(release, songs: RadarRules.newSongs(held, of: release))
+        let found = await Self.find(release, among: await Self.albums(of: release, server: server),
+                                    server: server) ?? []
+        let held = await Self.holdings(release, tracks: tracks, found: found, server: server)
+        guard held.lacking == 0 else { return false }
+        take(release, songs: RadarRules.newSongs(held.songs, of: release), lacking: 0)
         return true
     }
 
-    /// A release the server has, into the playlist — while the radar still lists it.
-    private func take(_ release: RadarRelease, songs: [Song]) {
+    /// A release the server has, into the playlist — while the radar still lists it — and
+    /// still under it while `lacking` some of its songs.
+    private func take(_ release: RadarRelease, songs: [Song], lacking count: Int) {
         guard !songs.isEmpty, let radar = current, radar.releases.contains(where: { $0.id == release.id })
         else { return }
         var inLibrary = radar.inLibrary
         inLibrary[release.id] = Array(songs.prefix(RadarRules.perRelease))
+        var lacking = radar.lacking ?? [:]
+        lacking[release.id] = count > 0 ? count : nil
         let updated = Radar(serverId: radar.serverId, releases: radar.releases, fetched: radar.fetched,
-                            inLibrary: inLibrary, matched: radar.matched)
+                            inLibrary: inLibrary, matched: radar.matched, lacking: lacking)
         RadarStore.save(updated)
         self.radar = updated
     }
@@ -222,13 +249,40 @@ final class RadarService {
     /// One of a release's songs on the server, when only that was fetched. Leaves the radar
     /// as it is: the rest of the release is still to be had.
     func lookUp(song title: String, of release: RadarRelease) async -> [Song]? {
-        guard let server = ServerManager.shared.currentServer,
-              let hits = try? await SubsonicClient.shared.search3(server: server, query: title, artistCount: 0,
+        guard let server = ServerManager.shared.currentServer else { return nil }
+        return await Self.song(titled: title, by: release.artist.name, server: server).map { [$0] }
+    }
+
+    /// The artist's song of that title on the server, on whatever album.
+    private static func song(titled title: String, by artist: String, server: ServerConfig) async -> Song? {
+        guard let hits = try? await SubsonicClient.shared.search3(server: server, query: title, artistCount: 0,
                                                                   albumCount: 0, songCount: 20) else { return nil }
-        let song = (hits.song ?? []).first {
-            RadarRules.sameTitle($0.title, title) && RadarRules.credits($0.artist, release.artist.name)
+        return RadarRules.matching([title], in: hits.song ?? [], by: artist).first
+    }
+
+    /// The songs of a release the server has — those found for it, then the rest wherever
+    /// they're filed — and how many of its tracks it still lacks.
+    ///
+    /// A few missing songs are looked for by title; more at once, by the artist's name in one
+    /// search first, so a release that is mostly missing costs one call rather than one a song.
+    private static func holdings(_ release: RadarRelease, tracks: [DeezerTrack], found: [Song],
+                                 server: ServerConfig) async -> (songs: [Song], lacking: Int) {
+        let artist = release.artist.name
+        var held = found
+        var unheld = RadarRules.unheld(tracks, among: held)
+        if unheld.count > 3,
+           let hits = try? await SubsonicClient.shared.search3(server: server, query: artist, artistCount: 0,
+                                                               albumCount: 0, songCount: 500) {
+            held += RadarRules.matching(unheld.map(\.title), in: hits.song ?? [], by: artist)
+            unheld = RadarRules.unheld(unheld, among: held)
         }
-        return song.map { [$0] }
+        if unheld.count <= 3 {
+            for track in unheld {
+                if let song = await song(titled: track.title, by: artist, server: server) { held.append(song) }
+            }
+            unheld = RadarRules.unheld(unheld, among: held)
+        }
+        return (held, unheld.count)
     }
 
     private func refresh(server: ServerConfig, catalogue staleCatalogue: Bool) async {
@@ -242,17 +296,20 @@ final class RadarService {
         } else {
             (releases, fetched) = (radar?.releases ?? [], radar?.fetched ?? now)
         }
-        // Once a day everything is checked again; in between, only what was still missing.
-        let known = staleCatalogue ? [:] : radar?.inLibrary ?? [:]
-        let matched = await Self.match(releases, known: known, server: server)
+        // Once a day everything is checked again; in between, only what was still missing,
+        // whole or in part.
+        let lacked = radar?.lacking
+        let known = staleCatalogue || lacked == nil ? [:]
+            : (radar?.inLibrary ?? [:]).filter { lacked?[$0.key] == nil }
+        let (matched, lacking) = await match(releases, known: known, server: server)
         // A release whose songs were all on the server long before it came out is one the
         // listener already has under another date: nothing new, nothing missing.
         let heard = Set(matched.filter(\.value.isEmpty).keys)
         let inLibrary = matched.filter { !$0.value.isEmpty }
         let built = Radar(serverId: server.id, releases: releases.filter { !heard.contains($0.id) },
-                          fetched: fetched, inLibrary: inLibrary, matched: Date())
+                          fetched: fetched, inLibrary: inLibrary, matched: Date(), lacking: lacking)
         RadarStore.save(built)
-        AppLogger.shared.log("📡 Radar: \(built.releases.count) releases, \(inLibrary.count) on the server, \(heard.count) already heard")
+        AppLogger.shared.log("📡 Radar: \(built.releases.count) releases, \(inLibrary.count) on the server (\(lacking.count) in part), \(heard.count) already heard")
         if ServerManager.shared.currentServer?.id == server.id { radar = built }
     }
 
@@ -304,10 +361,14 @@ final class RadarService {
 
     // MARK: Library
 
-    private static func match(_ releases: [RadarRelease], known: [String: [Song]],
-                              server: ServerConfig) async -> [String: [Song]] {
+    /// Which releases the server has, and how many songs it lacks of those it has in part.
+    /// A release with no new song is "heard" (an empty entry) only when it's whole: an album
+    /// named after a single long on the server is still to get.
+    private func match(_ releases: [RadarRelease], known: [String: [Song]],
+                       server: ServerConfig) async -> (inLibrary: [String: [Song]], lacking: [String: Int]) {
         var discographies: [String: [Album]] = [:]
         var inLibrary: [String: [Song]] = [:]
+        var lacking: [String: Int] = [:]
         for release in releases {
             if let songs = known[release.id] {
                 inLibrary[release.id] = songs
@@ -317,11 +378,16 @@ final class RadarService {
                 discographies[release.artist.id] =
                     (try? await SubsonicClient.shared.getArtist(server: server, id: release.artist.id))?.album ?? []
             }
-            guard let found = await find(release, among: discographies[release.artist.id] ?? [], server: server)
+            guard let found = await Self.find(release, among: discographies[release.artist.id] ?? [],
+                                              server: server)
             else { continue }
-            inLibrary[release.id] = Array(RadarRules.newSongs(found, of: release).prefix(RadarRules.perRelease))
+            let held = await holdings(release, found: found, server: server)
+            let songs = RadarRules.newSongs(held.songs, of: release)
+            if held.lacking > 0 { lacking[release.id] = held.lacking }
+            guard !songs.isEmpty || held.lacking == 0 else { continue }
+            inLibrary[release.id] = Array(songs.prefix(RadarRules.perRelease))
         }
-        return inLibrary
+        return (inLibrary, lacking)
     }
 
     /// The release on the server: an album of the same name by the artist, else one filed
