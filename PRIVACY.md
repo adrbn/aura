@@ -15,7 +15,7 @@ Aura ("the app") is a music playback client for Subsonic-API-compatible servers 
 - Aura collects **no** personal data.
 - Aura sends **nothing** to any server owned by the developer.
 - All data (server URLs, credentials, playback state, cached audio) stays on your device.
-- Aura talks to the servers you configure. To find lyrics, share links, song credits, artist photos and new releases, it also looks up a track's or an artist's name on a few public services, listed below — never on a server run by the developer.
+- Aura talks to the servers you configure. To find lyrics, share links, song credits, artist photos, missing covers and new releases, it also looks up a track's, an album's or an artist's name on a few public services, listed below — never on a server run by the developer.
 
 ## Data Aura stores on your device
 
