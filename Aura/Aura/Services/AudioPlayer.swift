@@ -124,6 +124,10 @@ final class AudioPlayer {
     private var savedPlaybackSource: PlaybackSource?
     private var autoplayFromIndex: Int?  // Index where autoplay/random-fill songs begin
     private var isSeeking = false
+    /// Where the current item's stream begins in the song. Past zero once a jump ahead in a
+    /// stream the server converts as it sends has asked for it again from there (see
+    /// `reopen(at:)`): the player's own clock then counts from that point.
+    private var streamOffset: TimeInterval = 0
     /// Playback position used to sync lyrics.
     ///
     /// No automatic output-latency compensation, deliberately. Subtracting
@@ -147,7 +151,7 @@ final class AudioPlayer {
     var liveTime: TimeInterval {
         guard let player, !isSeeking else { return currentTime }
         let seconds = player.currentTime().seconds
-        return seconds.isFinite ? seconds : currentTime
+        return seconds.isFinite ? streamOffset + seconds : currentTime
     }
 
     /// `lyricsTime`, at whatever resolution the caller asks for it.
@@ -427,6 +431,8 @@ final class AudioPlayer {
 
         player?.pause()
         player?.replaceCurrentItem(with: nil)
+        streamOffset = 0
+        isSeeking = false
 
         if let observer = timeObserver {
             player?.removeTimeObserver(observer)
@@ -452,8 +458,9 @@ final class AudioPlayer {
             queue: .main
         ) { [weak self] time in
             guard let self = self, !self.isSeeking else { return }
-            self.currentTime = time.seconds
-            if let d = self.player?.currentItem?.duration.seconds, !d.isNaN {
+            self.currentTime = self.streamOffset + time.seconds
+            // A stream begun partway is only the rest of the song: its length isn't the song's.
+            if self.streamOffset == 0, let d = self.player?.currentItem?.duration.seconds, !d.isNaN {
                 self.duration = d
             }
             self.updateNowPlayingInfo()
@@ -841,6 +848,7 @@ final class AudioPlayer {
         hasPrefetchedNext = false
         resetScrobbleProgress()
         isSeeking = false
+        streamOffset = 0
         bufferProgress = 0
         let playerItem = makePlayerItem(for: song, server: server, bitRate: bitRate)
         observePlayerItem(playerItem, song: song)
@@ -856,8 +864,9 @@ final class AudioPlayer {
             queue: .main
         ) { [weak self] time in
             guard let self = self, !self.isSeeking else { return }
-            self.currentTime = time.seconds
-            if let d = self.player?.currentItem?.duration.seconds, !d.isNaN {
+            self.currentTime = self.streamOffset + time.seconds
+            // A stream begun partway is only the rest of the song: its length isn't the song's.
+            if self.streamOffset == 0, let d = self.player?.currentItem?.duration.seconds, !d.isNaN {
                 self.duration = d
             }
             self.updateNowPlayingInfo()
@@ -1000,10 +1009,12 @@ final class AudioPlayer {
             guard let range = item.loadedTimeRanges.first?.timeRangeValue else { return }
             let buffered = CMTimeGetSeconds(range.start) + CMTimeGetSeconds(range.duration)
             let dur = CMTimeGetSeconds(item.duration)
-            let progress = dur > 0 ? min(buffered / dur, 1.0) : 0
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.currentSong?.id == songId else { return }
-                self.bufferProgress = progress
+                // A stream the server converts as it sends states no length, and one begun
+                // partway counts from there: both are measured against the song's own.
+                let length = self.streamOffset == 0 && dur > 0 ? dur : self.duration
+                self.bufferProgress = length > 0 ? min((self.streamOffset + buffered) / length, 1.0) : 0
             }
         }
     }
@@ -1022,10 +1033,11 @@ final class AudioPlayer {
                     self.isBuffering = false
                     // Resume from the position saved at last quit (one-shot). Applied here
                     // because seeking before the item is ready is unreliable.
+                    // Through `seek(to:)`, so a stream that can't reach it yet is asked for
+                    // again from there rather than left at the start.
                     if let resume = self.pendingSeekTime {
                         self.pendingSeekTime = nil
-                        self.player?.seek(to: CMTime(seconds: resume, preferredTimescale: 600))
-                        self.currentTime = resume
+                        self.seek(to: resume)
                     }
                 }
             case .failed:
@@ -1383,10 +1395,11 @@ final class AudioPlayer {
         // recognised and ignored.
         seekGeneration &+= 1
         let generation = seekGeneration
+        if reopen(at: time) { return }
         isSeeking = true
         currentTime = time
         updateNowPlayingInfo()
-        let target = CMTime(seconds: time, preferredTimescale: 600)
+        let target = CMTime(seconds: time - streamOffset, preferredTimescale: 600)
         let tolerance = CMTime(seconds: 0.1, preferredTimescale: 600)
         player.seek(to: target, toleranceBefore: tolerance, toleranceAfter: tolerance) { [weak self] _ in
             DispatchQueue.main.async {
@@ -1394,6 +1407,81 @@ final class AudioPlayer {
                 self.isSeeking = false
             }
         }
+    }
+
+    /// Asks again for a stream the server converts as it sends, from `time`, when that part of
+    /// it hasn't arrived yet. False when the item can seek there itself.
+    ///
+    /// Such a stream states no length and answers no byte range, so the player can't seek
+    /// past what it has brought: it stayed where it was and the bar jumped back to it. Asked
+    /// to start converting at the moment wanted, the server plays from there after a moment's
+    /// loading, the bar staying on it meanwhile. A song the phone holds whole by now — the
+    /// cache fills alongside — reopens from there instead, where any seek works.
+    private func reopen(at time: TimeInterval) -> Bool {
+        guard playsLiveConversion, !hasLoaded(time), let song = currentSong,
+              let server = ServerManager.shared.currentServer else { return false }
+        let bitRate = AppSettings.shared.streamingQuality.bitRate
+        let offset = Int(max(0, time))
+        let item: AVPlayerItem
+        if let stream = AudioCacheManager.shared.streamItem(
+            songId: song.id, server: server, bitRate: bitRate, songSuffix: song.suffix,
+            songContentType: song.contentType, from: offset) {
+            item = stream
+            streamOffset = TimeInterval(offset)
+            isSeeking = false
+        } else {
+            item = makePlayerItem(for: song, server: server, bitRate: bitRate)
+            streamOffset = 0
+            // Held on the moment wanted until the item is ready and seeks there.
+            isSeeking = true
+            pendingSeekTime = time
+        }
+        AppLogger.shared.log("⏩ Reopening \(song.title) at \(offset)s: not loaded yet")
+        currentTime = time
+        updateNowPlayingInfo()
+        observePlayerItem(item, song: song)
+        observeBuffer(item, songId: song.id)
+        EqualizerManager.shared.attachToPlayerItem(item)
+        watchEnd(of: item)
+        player?.replaceCurrentItem(with: item)
+        if isPlaying { player?.play() }
+        return true
+    }
+
+    /// Whether the item plays a stream the server converts as it sends. Downloads play from
+    /// files and the cache through its own scheme, and a stream of the file itself ("raw",
+    /// or no format for a lossy file) answers byte ranges: all of those seek anywhere.
+    private var playsLiveConversion: Bool {
+        guard let url = (player?.currentItem?.asset as? AVURLAsset)?.url,
+              url.scheme == "http" || url.scheme == "https", url.path.hasSuffix("/rest/stream"),
+              let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+        else { return false }
+        return query.contains { $0.name == "format" && $0.value != "raw" }
+    }
+
+    /// Whether the item has already brought the part of the song at `time`.
+    private func hasLoaded(_ time: TimeInterval) -> Bool {
+        guard let item = player?.currentItem else { return false }
+        let local = time - streamOffset
+        guard local >= 0 else { return false }
+        return item.loadedTimeRanges.contains { value in
+            let range = value.timeRangeValue
+            return local >= range.start.seconds && local <= range.end.seconds
+        }
+    }
+
+    /// Follows `item`'s end and failures, and no earlier item's.
+    private func watchEnd(of item: AVPlayerItem) {
+        let center = NotificationCenter.default
+        center.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        center.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: nil)
+        center.removeObserver(self, name: .AVPlayerItemNewErrorLogEntry, object: nil)
+        center.addObserver(self, selector: #selector(playerDidFinish),
+                           name: .AVPlayerItemDidPlayToEndTime, object: item)
+        center.addObserver(self, selector: #selector(playerItemFailedToPlayToEnd(_:)),
+                           name: .AVPlayerItemFailedToPlayToEndTime, object: item)
+        center.addObserver(self, selector: #selector(playerItemNewErrorLogEntry(_:)),
+                           name: .AVPlayerItemNewErrorLogEntry, object: item)
     }
 
     func toggleShuffle() {

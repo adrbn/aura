@@ -46,6 +46,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Lyrics can no longer be left over from the previous song: a fetch still running when the track changes is cancelled, and can neither put its words on the new song nor end its spinner
 
 ### Fixed — Playback
+- Seeking into a part of a song that hasn't loaded yet plays from there instead of snapping back: a song the server converts as it sends (lossless files at any quality short of Lossless) is asked for again from the moment picked, the bar staying on it while it loads — and one cached by then reopens from the cache. A session restored at a point past what has loaded resumes there too
 - A new radio can no longer be filled, or have its loader switched off, by a fetch still running for the one before it
 - Opening lyrics tucks the song title behind the shrinking artwork instead of laying it over
 - A stream that dies mid-song moves to the next track instead of stopping on a silent pause

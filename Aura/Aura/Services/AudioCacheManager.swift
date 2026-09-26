@@ -139,6 +139,25 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
     }
 
     /// Download audio in the background for caching (doesn't block playback)
+    /// The server's stream of a song it converts as it sends, begun `offset` seconds in.
+    ///
+    /// Such a stream carries no length and answers no byte range, so the player can't seek
+    /// past what has arrived; a jump further on asks the server to start converting from
+    /// there instead. Nil when the song plays from a download or the cache, or is streamed
+    /// as the file itself, all of which seek anywhere. No background cache starts: the one
+    /// begun with the song's first stream is still under way.
+    func streamItem(songId: String, server: ServerConfig, bitRate: Int?, songSuffix: String?,
+                    songContentType: String?, from offset: Int) -> AVPlayerItem? {
+        guard DownloadManager.shared.localURL(for: songId) == nil,
+              shouldTranscodeStream(songSuffix: songSuffix, songContentType: songContentType),
+              !isCached(songId: songId, bitRate: bitRate, transcoded: true),
+              let url = SubsonicClient.shared.streamURL(server: server, id: songId, maxBitRate: bitRate,
+                                                        songSuffix: songSuffix, songContentType: songContentType)
+        else { return nil }
+        guard offset > 0 else { return AVPlayerItem(url: url) }
+        return URL(string: url.absoluteString + "&timeOffset=\(offset)").map(AVPlayerItem.init(url:))
+    }
+
     private func backgroundCache(songId: String, realURL: URL, bitRate: Int?, transcoded: Bool) {
         lock.lock()
         let alreadyActive = activeTasks[songId] != nil
