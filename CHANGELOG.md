@@ -64,7 +64,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - The card explaining why Aura is offline carries the one action that applies — Retry, or Go Online — in place of a Wi-Fi button in the title
 
 ### Changed — Appearance
-- The tab roots — Home, Library, Playlists, Search, Settings — open in colour, as album and playlist pages do: a glow at the top in three neighbouring hues drawn from the cover that's playing (the accent with nothing on), which slowly trade places and breathe, fading into the page before the middle of the screen. It scrolls away with the content, crossfades when the song changes, holds still under Reduce Motion and stops drawing when out of sight. Home's cutting mat runs through it
+- The tab roots — Home, Library, Playlists, Search, Settings — open in colour, as album and playlist pages do: a glow at the top in three neighbouring hues that slowly trade places and breathe, fading into the page before the middle of the screen. Its colour follows the time of day — violet at night, rose at dawn, amber through the morning and afternoon, orange and red towards sunset, magenta at dusk — drifting minute by minute, and never green. It scrolls away with the content, holds still under Reduce Motion and stops drawing when out of sight. Home's cutting mat runs through it
+- Home is lighter: section titles at 20 points semibold instead of 28 bold, the Made For You covers without a caption beneath them — each already prints its name — Favorite Artists as 110-point circles instead of 140, and the counts under the title as a quiet line of words — "22,563 songs · 18,804 albums · 304 playlists" — without icons
+- Now Playing keeps four controls along the bottom — lyrics, radio, queue, output; the sleep timer and Share move to the "…" menu beside the heart, whose dots fill while a timer runs
+- The Get It card is a slim pill: a smaller cover, the title over where it's at, and the four steps as a hairline along its bottom edge — about two thirds of its former height
 - Playlists open as a list by default
 - The pin on pinned playlists is a quiet mark — a small white pin on a dark disc over a cover, a grey one in the list — instead of a bright accent dot
 - The playlist filters span the row when they fit on one line, each keeping its proportions, and scroll when they don't
@@ -92,7 +95,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - "Did you mean" sits on a row its own height: every row was held to 44 points, which opened a gap above the first section
 - A section's **See All** sits on its title, at the same place in every section, instead of on a row under its last result — sections run to different lengths, so those rows landed at scattered heights, between one section and the next. It turns into **Show Less** once the section is open
 - Deezer's finds come in two titled sections, **Songs on Deezer** and **Albums on Deezer**: under one "On Deezer" the albums ran straight on from the songs
-- Rows scrolling up go behind the pinned search field, faded out beneath it, instead of sliding up in plain sight around it and under the clock
+- The title and the search field scroll away with the results, as every other tab's title does, instead of the results sliding up in plain sight around them and under the clock
 
 ### Fixed — Lyrics
 - A duet, a remix or a translated version shows its own words: when a song names its version, the lyrics found are checked against that version's sheets on LRCLIB, once per song, and replaced when most of them disagree — *These Walls* with Pierre de Maere gets its French verse

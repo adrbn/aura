@@ -446,7 +446,9 @@ struct NowPlayingView: View {
                     showAddToPlaylist: $showAddToPlaylist,
                     showFileInfo: $showFileInfo,
                     showCredits: $showCredits,
-                    showEqualizer: $showEqualizer
+                    showEqualizer: $showEqualizer,
+                    showSleepTimer: $showSleepTimerSheet,
+                    showShare: $showShareSheet
                 )
             }
             .padding(.horizontal, horizontalPadding)
@@ -518,6 +520,8 @@ struct NowPlayingView: View {
         isEffectivelyOffline || player.currentSong?.isPreview == true
     }
 
+    /// Four everyday controls — lyrics, radio, queue, output. The sleep timer and sharing
+    /// live in the "…" menu beside the heart: occasional actions, not a permanent row of icons.
     private var optionsBar: some View {
             HStack {
                 Spacer()
@@ -558,23 +562,7 @@ struct NowPlayingView: View {
                 }
                 .accessibilityLabel("Show queue")
                 Spacer()
-                Button {
-                    showSleepTimerSheet = true
-                } label: {
-                    Image(systemName: player.sleepTimerActive ? "moon.fill" : "moon.zzz")
-                        .font(.title2)
-                        .foregroundStyle(player.sleepTimerActive ? accentColor : .white.opacity(0.6))
-                }
-                .accessibilityLabel(player.sleepTimerActive ? "Sleep timer active" : "Sleep timer")
-                Spacer()
                 AudioOutputButtonWrapper(accentColor: accentColor)
-                Spacer()
-                Button { showShareSheet = true } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.title2)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                .accessibilityLabel("Share song")
                 Spacer()
             }
             .padding(.horizontal, horizontalPadding)
@@ -1526,6 +1514,8 @@ struct SongActionsRow: View {
     @Binding var showFileInfo: Bool
     @Binding var showCredits: Bool
     @Binding var showEqualizer: Bool
+    @Binding var showSleepTimer: Bool
+    @Binding var showShare: Bool
 
     @Environment(AudioPlayer.self) private var player
     @State private var heartPop = false
@@ -1696,8 +1686,16 @@ struct SongActionsRow: View {
                           systemImage: DownloadManager.shared.isDownloaded(song.id) ? "checkmark.circle.fill" : "arrow.down.circle")
                 }
                 .disabled(DownloadManager.shared.isDownloaded(song.id))
+                Divider()
+                Button { showSleepTimer = true } label: {
+                    Label(player.sleepTimerActive ? "Sleep Timer (On)" : "Sleep Timer",
+                          systemImage: player.sleepTimerActive ? "moon.fill" : "moon.zzz")
+                }
+                Button { showShare = true } label: {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
             } label: {
-                Image(systemName: "ellipsis")
+                Image(systemName: player.sleepTimerActive ? "ellipsis.circle.fill" : "ellipsis")
                     .font(.title3)
                     .foregroundStyle(.white.opacity(0.7))
                     .frame(width: 36, height: 36)

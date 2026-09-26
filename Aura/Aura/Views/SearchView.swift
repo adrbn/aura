@@ -12,14 +12,10 @@ struct SearchView: View {
     private let titleHeight: CGFloat = 52
     private let searchBarHeight: CGFloat = 56
 
-    private var titleOpacity: Double {
-        Double(1 - min(max(scrollY / titleHeight, CGFloat(0)), CGFloat(1)))
-    }
-    /// Header slides up by the title's height as you scroll, so the title disappears and
-    /// the search field comes to rest pinned just under the top glass strip.
-    private var headerOffset: CGFloat {
-        -min(max(scrollY, CGFloat(0)), titleHeight)
-    }
+    /// The title and the field go up with the rows, all the way, as every other tab's title
+    /// does — and come down with them on a pull. The field used to stop pinned under the
+    /// clock, a bar the results had to slide beneath; back at the top, it's there again.
+    private var headerOffset: CGFloat { -scrollY }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -28,16 +24,7 @@ struct SearchView: View {
                 .ignoresSafeArea(.container, edges: .top)
                 .contentMargins(.top, TabChrome.contentTop + titleHeight + 8 + searchBarHeight, for: .scrollContent)
                 .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
-                // Until the field pins, it rises with the rows and nothing passes under it.
-                // Once it has, the rows do: dense down to its foot, they go behind it rather
-                // than slide up around it. Faded in only then, so the glow keeps the top of
-                // the page for the first stretch of scroll.
-                .overlay(alignment: .top) {
-                    TopEdgeVeil(scrollY: scrollY - titleHeight,
-                                holdsTo: TabChrome.contentTop + 8 + searchBarHeight)
-                }
-                // Big-left title (fades + slides away) above the search field (stays, pinning
-                // under the glass) — drawn on top of the glass so the field stays sharp.
+                // Big-left title above the search field, both scrolling away with the rows.
                 .overlay(alignment: .top) {
                     VStack(spacing: 8) {
                         Text("search")
@@ -46,7 +33,6 @@ struct SearchView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: titleHeight)
                             .padding(.horizontal, 16)
-                            .opacity(titleOpacity)
                         SearchFieldBar(text: $query, prompt: "Search your library…")
                             .frame(height: searchBarHeight)
                     }

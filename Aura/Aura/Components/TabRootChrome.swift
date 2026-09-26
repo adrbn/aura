@@ -101,45 +101,20 @@ func refreshTabContent(_ reload: () async -> Void) async {
 /// glass band.
 struct TopEdgeVeil: View {
     let scrollY: CGFloat
-    /// How far down, from the top of the screen, the page colour holds before it fades.
-    /// Zero leaves only the status bar veiled. Search passes the foot of its pinned field:
-    /// the rows otherwise slid up in plain sight around the field and between it and the
-    /// clock, and read as if they ran on under it.
-    var holdsTo: CGFloat = 0
-
-    /// How far the fade runs below `holdsTo`.
-    private static let fade: CGFloat = 28
-    private static let fadeStops = 8
 
     var body: some View {
-        gradient
-            .frame(height: holdsTo > 0 ? holdsTo + Self.fade : TabChrome.windowSafeTop + 34)
-            .opacity(min(max(scrollY / 16, 0), 1))
-            .allowsHitTesting(false)
-            .ignoresSafeArea(.container, edges: .top)
-    }
-
-    private var gradient: LinearGradient {
-        guard holdsTo > 0 else {
-            return LinearGradient(
-                stops: [
-                    .init(color: Color.themeBg.opacity(0.92), location: 0),
-                    .init(color: Color.themeBg.opacity(0.6), location: 0.5),
-                    .init(color: Color.themeBg.opacity(0), location: 1),
-                ],
-                startPoint: .top, endPoint: .bottom
-            )
-        }
-        // Dense to the foot of what it holds, then eased out, so no line shows where it ends.
-        let height = holdsTo + Self.fade
-        let hold = holdsTo / height
-        let fade = (0...Self.fadeStops).map { index -> Gradient.Stop in
-            let t = CGFloat(index) / CGFloat(Self.fadeStops)
-            let eased = 1 - t * t * (3 - 2 * t)
-            return .init(color: Color.themeBg.opacity(0.95 * eased), location: hold + (1 - hold) * t)
-        }
-        return LinearGradient(stops: [.init(color: Color.themeBg.opacity(0.95), location: 0)] + fade,
-                              startPoint: .top, endPoint: .bottom)
+        LinearGradient(
+            stops: [
+                .init(color: Color.themeBg.opacity(0.92), location: 0),
+                .init(color: Color.themeBg.opacity(0.6), location: 0.5),
+                .init(color: Color.themeBg.opacity(0), location: 1),
+            ],
+            startPoint: .top, endPoint: .bottom
+        )
+        .frame(height: TabChrome.windowSafeTop + 34)
+        .opacity(min(max(scrollY / 16, 0), 1))
+        .allowsHitTesting(false)
+        .ignoresSafeArea(.container, edges: .top)
     }
 }
 
@@ -216,10 +191,12 @@ struct BottomEdgeVeil: View {
 /// neighbouring hues that slowly trade places and breathe, so the page reads as lit
 /// rather than switched off.
 ///
-/// The hues come from what's playing, read from its cover exactly as a playlist page reads
-/// its own (`PageTint`), so the tabs take on the colour of the music. With nothing playing,
-/// or a cover with no colour to give, they come from the accent instead. A new song
-/// crossfades the field to its colour rather than cutting to it.
+/// The hues follow the time of day (`DayHue`): violet in the small hours, rose at dawn,
+/// amber through the morning, orange into a red sunset, magenta at dusk, back to violet.
+/// They used to come from the cover playing, which could turn the front doors green or
+/// brown on a song's say; the warm end was the one worth keeping, so the day keeps to it
+/// and never passes through green. The colour moves with the clock, a few degrees an
+/// hour, so nothing is ever seen changing.
 ///
 /// Kept quiet on purpose: dark and only moderately saturated behind white text, a pale
 /// wash in light mode, one slow swing every eighteen seconds, nothing that flashes. It
@@ -236,40 +213,19 @@ struct TabRootGlow: View {
     /// Thirty frames a second. The motion is measured in seconds, so sixty would spend power
     /// on a difference nobody can see.
     private static let frameInterval = 1.0 / 30
-    /// Pink, should the accent ever fail to give a hue.
-    private static let fallbackHue = 0.95
 
-    @Environment(\.appAccentColor) private var accentColor
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// The now-playing cover's hue once read, keyed by that cover; a nil hue is a grey cover.
-    @State private var coverHue: (key: String, hue: Double?)?
-    @State private var shift: HueShift?
     @State private var isOnScreen = false
 
     private var player: AudioPlayer { AudioPlayer.shared }
 
-    /// The cover the mini player shows: the song's own art, else its album's.
-    private var coverKey: String? {
-        player.currentSong.flatMap { $0.coverArt ?? $0.albumId }
-    }
-
-    private var targetHue: Double {
-        let fromCover: Double? = coverKey.flatMap { key in
-            if let coverHue, coverHue.key == key { return coverHue.hue }
-            return PageTint.cached(key).flatMap(Self.hue(of:))
-        }
-        return fromCover ?? Self.hue(of: UIColor(accentColor)) ?? Self.fallbackHue
-    }
-
     var body: some View {
-        let target = targetHue
         let paused = reduceMotion || !isOnScreen || player.isShowingNowPlaying || scrolled >= Self.height
         TimelineView(.animation(minimumInterval: Self.frameInterval, paused: paused)) { context in
-            // A paused timeline keeps handing back the moment it stopped, so a crossfade that
-            // began while paused would never finish: it lands at once instead.
-            let hue = shift.map { paused ? $0.to : $0.hue(at: context.date) } ?? target
-            GlowField(hue: hue,
+            // Paused, the timeline hands back the moment it stopped; the hour is read afresh.
+            let now = paused ? Date() : context.date
+            GlowField(hue: DayHue.hue(at: now),
                       time: reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate,
                       isDark: scheme == .dark)
         }
@@ -279,43 +235,38 @@ struct TabRootGlow: View {
         .accessibilityHidden(true)
         .onAppear { isOnScreen = true }
         .onDisappear { isOnScreen = false }
-        .onChange(of: target, initial: true) { _, hue in
-            let now = Date()
-            let current = shift?.hue(at: now) ?? hue
-            // Whole turns added or taken away, so the crossfade goes the short way round the
-            // wheel instead of sweeping through every colour in between.
-            shift = HueShift(from: current, to: hue + (current - hue).rounded(), start: now)
-        }
-        .task(id: coverKey) {
-            guard let key = coverKey, coverHue?.key != key,
-                  let color = await PageTint.load(key), !Task.isCancelled else { return }
-            coverHue = (key, Self.hue(of: color))
-        }
-    }
-
-    /// A colour's hue, read from its dark side; nil for a grey, which has no hue worth
-    /// spreading into three and would only give the field an invented one.
-    private static func hue(of color: UIColor) -> Double? {
-        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-            .getHue(&h, saturation: &s, brightness: &b, alpha: &a)
-        return s < 0.12 ? nil : Double(h)
     }
 }
 
-/// The glow's base hue on its way from one song's colour to the next.
-private struct HueShift {
-    static let duration: TimeInterval = 1.6
+/// The glow's base hue for a moment of the day, on the local clock.
+///
+/// Anchored at a few hours and eased between them the short way round the wheel. All of it
+/// sits between violet and amber, through red: with the glow's swing of forty degrees
+/// either side, the warmest hour still stops short of yellow-green.
+enum DayHue {
+    /// (hour, hue as a fraction of the wheel). Hues past 1 are the reds and pinks just
+    /// before it wraps, so neighbours differ by less than half a turn.
+    private static let anchors: [(hour: Double, hue: Double)] = [
+        (0, 0.74),     // violet
+        (5, 0.80),     // purple before dawn
+        (7, 0.96),     // rose
+        (10, 1.06),    // amber
+        (14, 1.04),    // orange
+        (18, 1.01),    // red sunset
+        (20.5, 0.93),  // magenta dusk
+        (23, 0.78),    // violet
+        (24, 0.74),
+    ]
 
-    let from: Double
-    let to: Double
-    let start: Date
-
-    /// Eased at both ends, so the colour leaves the old hue and settles on the new one
-    /// without a visible start or stop.
-    func hue(at date: Date) -> Double {
-        let t = min(max(date.timeIntervalSince(start) / Self.duration, 0), 1)
-        return from + (to - from) * t * t * (3 - 2 * t)
+    static func hue(at date: Date, calendar: Calendar = .current) -> Double {
+        let parts = calendar.dateComponents([.hour, .minute], from: date)
+        let hour = Double(parts.hour ?? 0) + Double(parts.minute ?? 0) / 60
+        guard let after = anchors.firstIndex(where: { $0.hour > hour }), after > 0 else { return anchors[0].hue }
+        let (from, to) = (anchors[after - 1], anchors[after])
+        let t = (hour - from.hour) / (to.hour - from.hour)
+        let eased = t * t * (3 - 2 * t)
+        let hue = from.hue + (to.hue - from.hue) * eased
+        return hue - hue.rounded(.down)
     }
 }
 

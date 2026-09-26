@@ -5,6 +5,9 @@ import SwiftUI
 /// The releases being fetched, above the mini player: which of the four steps each is at,
 /// and how far into it — then Play once it's in the library, or Retry if it didn't make it.
 ///
+/// A slim pill: the cover, the title with where it's at, and the four steps as a hairline
+/// along the bottom edge — present without weighing on the screen.
+///
 /// With several on their way they sit side by side, one on screen at a time: a swipe
 /// slides the next one in, and it lands with a small bounce. Past either end the row
 /// gives a little, then springs back.
@@ -122,19 +125,19 @@ private struct FetchCard: View {
     private var fetcher: ReleaseFetcher { .shared }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             AsyncImage(url: fetch.release.cover.flatMap(URL.init(string:))) { image in
                 image.resizable().scaledToFill()
             } placeholder: {
                 Color.primary.opacity(0.08)
             }
-            .frame(width: 40, height: 40)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .frame(width: 30, height: 30)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
                     Text(fetch.title)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.footnote.weight(.semibold))
                         .lineLimit(1)
                     if let position {
                         Text(position)
@@ -145,18 +148,24 @@ private struct FetchCard: View {
                 // The import's countdown moves with the clock, not with any update.
                 TimelineView(.periodic(from: .now, by: 20)) { _ in
                     Text(fetch.detail.isEmpty ? fetch.headline : "\(fetch.headline) · \(fetch.detail)")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(fetch.stage == .failed ? .orange : .secondary)
                         .lineLimit(1)
                 }
-                FetchSteps(fetch: fetch, tint: accentColor)
             }
 
             Spacer(minLength: 0)
             trailing
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.leading, 9)
+        .padding(.trailing, 12)
+        .padding(.vertical, 7)
+        .overlay(alignment: .bottom) {
+            // Kept clear of the pill's rounded ends so it never gets clipped.
+            FetchSteps(fetch: fetch, tint: accentColor, thickness: 2)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 3)
+        }
         .contentShape(Rectangle())
         .onTapGesture { if fetch.stage == .ready { Task { await play() } } }
         .contextMenu {
@@ -168,8 +177,8 @@ private struct FetchCard: View {
             }
         }
         .foregroundStyle(.primary)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22))
-        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .glassEffect(.regular, in: Capsule())
+        .clipShape(Capsule())
         .padding(.horizontal, 16)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(fetch.title), \(fetch.headline). \(fetch.detail)")
@@ -183,9 +192,9 @@ private struct FetchCard: View {
                 Group {
                     if isOpening { ProgressView().tint(.white) } else { Image(systemName: "play.fill") }
                 }
-                .font(.subheadline.weight(.bold))
+                .font(.footnote.weight(.bold))
                 .foregroundStyle(.white)
-                .frame(width: 36, height: 36)
+                .frame(width: 30, height: 30)
                 .background(accentColor, in: Circle())
             }
             .buttonStyle(.plain)
@@ -194,15 +203,15 @@ private struct FetchCard: View {
             HStack(spacing: 4) {
                 Button { fetcher.retry(fetch.id) } label: {
                     Image(systemName: "arrow.clockwise")
-                        .font(.subheadline.weight(.semibold))
-                        .frame(width: 32, height: 32)
+                        .font(.footnote.weight(.semibold))
+                        .frame(width: 30, height: 30)
                 }
                 .accessibilityLabel("Retry")
                 Button { fetcher.dismiss(fetch.id) } label: {
                     Image(systemName: "xmark")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.secondary)
-                        .frame(width: 28, height: 32)
+                        .frame(width: 26, height: 30)
                 }
                 .accessibilityLabel("Dismiss")
             }
@@ -227,6 +236,7 @@ private struct FetchCard: View {
 struct FetchSteps: View {
     let fetch: ReleaseFetch
     let tint: Color
+    var thickness: CGFloat = 4
 
     var body: some View {
         HStack(spacing: 3) {
@@ -239,7 +249,7 @@ struct FetchSteps: View {
                             .frame(width: geo.size.width * fill(index))
                     }
                 }
-                .frame(height: 4)
+                .frame(height: thickness)
             }
         }
         .animation(.easeInOut(duration: 0.4), value: fetch.progress)

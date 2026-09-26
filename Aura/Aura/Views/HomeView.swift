@@ -268,6 +268,21 @@ struct HomeView: View {
     /// used twice — once as the stack's spacing, once to compensate the section spacing.
     private static let statsGap: CGFloat = 15
 
+    /// Section titles at 20 pt semibold: they name a row, they don't shout over it.
+    private static let sectionFont = Font.title3.weight(.semibold)
+
+    /// Favourite artists as 110 pt circles: a glance at who, not a wall of faces.
+    private static let artistCircle: CGFloat = 110
+
+    /// The stats line's words, only for the counts the server reported.
+    private var statsParts: [Text] {
+        var parts: [Text] = []
+        if songCount > 0 { parts.append(Text("\(songCount) songs")) }
+        if albumCount > 0 { parts.append(Text("\(albumCount) albums")) }
+        if playlistCount > 0 { parts.append(Text("\(playlistCount) playlists")) }
+        return parts
+    }
+
     private var homeContent: some View {
         VStack(alignment: .leading, spacing: 24) {
             // The stats line gets the same gap above and below — 15pt — so it reads as its
@@ -288,19 +303,15 @@ struct HomeView: View {
 
                 // Server stats bar (configurable) — stays at the very top.
                 if appSettings.showStatsOnHome, songCount > 0 || albumCount > 0 || playlistCount > 0 {
-                    HStack(spacing: 16) {
-                        if songCount > 0 {
-                            Label("\(songCount) songs", systemImage: "music.note")
-                        }
-                        if albumCount > 0 {
-                            Label("\(albumCount) albums", systemImage: "square.stack")
-                        }
-                        if playlistCount > 0 {
-                            Label("\(playlistCount) playlists", systemImage: "music.note.list")
+                    // Plain words, no icons: a quiet line of facts, not a row of badges.
+                    HStack(spacing: 6) {
+                        ForEach(Array(statsParts.enumerated()), id: \.offset) { index, part in
+                            if index > 0 { Text(verbatim: "·") }
+                            part
                         }
                     }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
                     .padding(.horizontal)
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
                     .animation(.easeInOut(duration: 0.3), value: songCount)
@@ -377,7 +388,7 @@ struct HomeView: View {
     private var madeForYouSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Made For You").font(.title3.bold())
+                Text("Made For You").font(Self.sectionFont)
                 Spacer()
                 if mixGenerator.isGenerating {
                     ProgressView().controlSize(.small)
@@ -388,22 +399,13 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 14) {
                     ForEach(shelf) { mix in
+                        // The cover already prints the mix's name, so no caption beneath it:
+                        // the shelf reads as a row of covers, not covers plus their labels.
                         NavigationLink(value: mix) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                EditorialMixCover(mix: mix, size: 150, cornerRadius: 12)
-                                Text(mix.title)
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                                    .lineLimit(1)
-                                Text(mix.subtitle)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
-                                    .frame(height: 28, alignment: .top)
-                            }
-                            .frame(width: 150)
+                            EditorialMixCover(mix: mix, size: 150, cornerRadius: 12)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(Text("\(mix.title), \(mix.subtitle)"))
                     }
                 }
                 .padding(.horizontal)
@@ -517,7 +519,7 @@ struct HomeView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         LazyHStack(spacing: 16) {
                             ForEach(Array(starredArtists.prefix(25).enumerated()), id: \.element.id) { index, artist in
-                                ArtistCardView(artist: artist)
+                                ArtistCardView(artist: artist, size: Self.artistCircle)
                                     .transition(.asymmetric(
                                         insertion: .move(edge: .trailing).combined(with: .opacity),
                                         removal: .opacity
@@ -573,8 +575,8 @@ struct HomeView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         HStack {
-            Text(title).font(.title2.bold())
-            Image(systemName: "chevron.right").font(.subheadline.bold()).foregroundStyle(.secondary)
+            Text(title).font(Self.sectionFont)
+            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             Spacer()
         }.padding(.horizontal)
     }
