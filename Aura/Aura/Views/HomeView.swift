@@ -380,11 +380,14 @@ struct HomeView: View {
 
     // MARK: - Made For You (auto-mixes)
 
-    /// The generated mixes, led by the radar once it has found something.
+    /// The generated mixes, led by the radar once it has found something — no two covers on
+    /// the same artist's face.
     private var shelf: [Mix] {
         let mixes = mixGenerator.mixes
-        guard appSettings.radarEnabled, let radar = radarService.current, !radar.releases.isEmpty else { return mixes }
-        return [radar.mix] + mixes
+        guard appSettings.radarEnabled, let radar = radarService.current, !radar.releases.isEmpty else {
+            return CoverArtists.distinctLeads(mixes)
+        }
+        return CoverArtists.distinctLeads([radar.mix] + mixes)
     }
 
     private var madeForYouSection: some View {

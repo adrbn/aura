@@ -32,6 +32,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Editorial covers for "Made For You" mixes and radios: the most-played artist's photo framed on the face (Apple Vision), a type-set title band in Archivo, a duotone for genre mixes, a cut-out figure over the period for Year Wrapped, and a three-artist layout for radios. Falls back to the lead artist's album cover, then to a flat colour field
 - Album, playlist, mix and radio pages open in their artwork's colour, fading into the canvas
 - Artist headers frame the photo on the face, even for photos stored rotated
+- Made For You never puts two covers on the same face: each mix is led by an artist none of the covers before it shows — the radar and the evening mix both went to whoever played most. Search shows the same covers
 - Radio covers fill the square: the seed artist in a larger disc sending out rings, the two similar artists riding the first ring in the field's tone, the name in a black band with the similar artists on a strip beneath — the mixes' lockup — over a field that deepens towards its edges, with a fine grain. Every disc is drawn from the start, a tinted stand-in until its photo is in, and the rings travel while the radio is being put together
 
 ### Added — Playlists

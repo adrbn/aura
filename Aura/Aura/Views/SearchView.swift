@@ -345,7 +345,8 @@ struct SearchResultsContainer: View {
         if appSettings.radarEnabled {
             mixes.insert(RadarService.shared.current?.mix ?? Radar.emptyMix, at: 0)
         }
-        return mixes.filter { mix in
+        // The shelf's covers, as Home draws them.
+        return CoverArtists.distinctLeads(mixes).filter { mix in
             var names = [mix.title]
             if mix.kind == .radar {
                 names += [String(localized: "New releases"), "release radar", "nouveautés", "sorties"]

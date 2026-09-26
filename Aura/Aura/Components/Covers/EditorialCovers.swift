@@ -21,6 +21,22 @@ enum CoverArtists {
             .map(\.element)
     }
 
+    /// Mixes shown side by side, each led by an artist none of the ones before it leads. Led
+    /// by whoever plays most, the radar and an evening mix both went to the same face. The
+    /// artists already leading move to the back rather than out, so a mix made only of them
+    /// keeps a cover — and the strip under its title still names them.
+    static func distinctLeads(_ mixes: [Mix]) -> [Mix] {
+        var leading = Set<String>()
+        return mixes.map { mix in
+            let order = mix.coverArtists ?? ranked(mix.songs)
+            let reordered = order.filter { !leading.contains($0.id) } + order.filter { leading.contains($0.id) }
+            if let lead = reordered.first { leading.insert(lead.id) }
+            guard reordered.map(\.id) != order.map(\.id) else { return mix }
+            return Mix(id: mix.id, title: mix.title, subtitle: mix.subtitle, songs: mix.songs,
+                       kind: mix.kind, templateSeed: mix.templateSeed, coverArtists: reordered)
+        }
+    }
+
     /// The song's main artist. `artists` credits each name on its own; `artist` runs every
     /// name together, so it only stands in when the server predates the credits.
     static func lead(of song: Song) -> ArtistRef? {
