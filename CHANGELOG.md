@@ -7,7 +7,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 ## [Unreleased]
 
 ### Added — Made For You
-- Radar: this month's releases from the artists you play most, found in Deezer's public catalogue and matched against your server. The releases the server has play as a mix; the others are listed beneath it, opening in Deezer — or in a Soulseek search, in the sideload build. The catalogue is checked once a day and the server hourly, so a release you add joins the mix within the hour. Off in Settings → Release Radar
+- Radar: this month's releases from the artists you play most, found in Deezer's public catalogue and matched against your server. The releases the server has play as a mix; the others are listed beneath it, opening in Deezer — or in a Soulseek search, in the sideload build. The catalogue is checked once a day and the server every quarter hour, so a release you add joins the mix soon after the server lists it. Off in Settings → Release Radar
 - Radar previews: tapping a release that isn't on the server plays its tracks' thirty-second Deezer previews in the player, as a queue — Now Playing, the lock screen and the queue included. A preview is marked as such and asks nothing of the server: no star, no scrobble, no history, no radio when it ends
 - Radar leads "Made For You" wherever the mixes are listed, is a Library category of its own (**Radar**, added at the top of the Library once), and comes up in Search — by its name, or as "new releases", "nouveautés", "sorties"
 - Play and Shuffle on the Radar play all of it: the server's new songs, then the previews of the releases it doesn't have yet, each release's most popular tracks first. The page counts those songs, instead of showing "0 songs" while nothing was on the server
@@ -22,6 +22,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Songs the server had long before a release came out (more than two weeks) don't join the mix as new; a release made only of such songs leaves the radar. Radars built before are rebuilt at once
 - A preview shows its cover in Now Playing, and the background drawn from it — Deezer's artwork was taken for the server's "no cover" picture
 - The Radar page drops its "Not in your library yet" header and the note beneath the list
+- A release you got a song of stays listed only while the server lacks some of its songs: a single got song by song, or finished outside the app, no longer stays among the missing for good — nor does one whose Get It failed. Once a fetched song completes its release, the release joins the mix at once instead of at the next check
 
 ### Added — Covers & pages
 - Editorial covers for "Made For You" mixes and radios: the most-played artist's photo framed on the face (Apple Vision), a type-set title band in Archivo, a duotone for genre mixes, a cut-out figure over the period for Year Wrapped, and a three-artist layout for radios. Falls back to the lead artist's album cover, then to a flat colour field

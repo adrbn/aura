@@ -59,9 +59,10 @@ final class ReleaseFetcher {
     static let shared = ReleaseFetcher()
 
     private(set) var fetches: [ReleaseFetch] = []
-    /// Releases some of whose songs were fetched one by one: once those land, the server has
-    /// the release in part, and the radar keeps listing it so the rest can be had.
+    /// Releases the server has in part, from songs fetched one by one: the radar keeps
+    /// listing them so the rest can be had, until the server has them whole.
     private(set) var picked: Set<String> = []
+    @ObservationIgnored private var isSettling = false
     @ObservationIgnored private var tasks: [String: Task<Void, Never>] = [:]
     @ObservationIgnored private let activities = ReleaseFetchActivities()
 
@@ -116,9 +117,25 @@ final class ReleaseFetcher {
         if track != nil, let whole = self.fetch(for: release.id), whole.stage != .failed { return }
         fetches.removeAll { $0.id == fetch.id }
         fetches.insert(fetch, at: 0)
-        if track != nil { picked.insert(release.id) }
         save()
         start(fetch.id)
+    }
+
+    /// Lets go of the picked releases the server now has whole — however the rest came —
+    /// and of those the radar no longer lists. A song fetched on its own used to keep its
+    /// release listed as missing for good, a one-song single included.
+    func settlePicked() async {
+        guard !isSettling, !picked.isEmpty, let radar = RadarService.shared.current else { return }
+        isSettling = true
+        defer { isSettling = false }
+        for id in picked where !fetches.contains(where: { $0.release.id == id && $0.isActive }) {
+            guard let release = radar.releases.first(where: { $0.id == id }) else {
+                picked.remove(id)
+                continue
+            }
+            if await RadarService.shared.settle(release) { picked.remove(id) }
+        }
+        savePicked()
     }
 
     /// The song a preview plays, fetched, and starred once it's in.
@@ -404,8 +421,17 @@ final class ReleaseFetcher {
 
     private func finish(_ id: String, songs: [Song]) async {
         update(id) { $0.stage = .ready; $0.downloaded = $0.downloaded ?? Date() }
-        if let fetch = fetch(for: id), fetch.track == nil, picked.remove(fetch.release.id) != nil { savePicked() }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        // A song leaves its release in part on the server — unless it was the last one
+        // missing, when the release moves into the radar's playlist whole.
+        if let fetch = fetch(for: id) {
+            if fetch.track != nil, !(await RadarService.shared.settle(fetch.release)) {
+                picked.insert(fetch.release.id)
+            } else {
+                picked.remove(fetch.release.id)
+            }
+            savePicked()
+        }
         // The banner lets it go after a while; the Lock Screen keeps it a little longer.
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(Self.readyShown))

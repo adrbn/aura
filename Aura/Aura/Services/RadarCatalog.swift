@@ -173,6 +173,11 @@ enum RadarRules {
         return SongQuery.creditedNames(credit).contains { normalized($0) == name }
     }
 
+    /// The tracks of a release no song on the server is titled after: what's still to get.
+    static func unheld(_ tracks: [DeezerTrack], among songs: [Song]) -> [DeezerTrack] {
+        tracks.filter { track in !songs.contains { sameTitle($0.title, track.title) } }
+    }
+
     /// Everything each release lends to the playlist, newest release first, no song twice.
     static func playlist(_ tracks: [(release: RadarRelease, songs: [Song])],
                          perRelease: Int = perRelease) -> [Song] {

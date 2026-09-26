@@ -121,6 +121,9 @@ struct MixDetailView: View {
         .task {
             guard mix.kind == .radar else { return }
             await radarService.refreshIfNeeded()
+            #if !APPSTORE_BUILD
+            await ReleaseFetcher.shared.settlePicked()
+            #endif
             await radarService.loadTrackLists()
         }
         .task(id: spec.taskKey) {

@@ -37,8 +37,8 @@ struct Radar: Codable {
 ///
 /// Deezer's catalogue says what was released; the server says what is already here. The
 /// catalogue part is the heavy one — a discography per artist — so it runs at most once a
-/// day. Matching against the server is a handful of calls and reruns hourly, so a release
-/// fetched in the meantime moves from "missing" into the playlist.
+/// day. Matching against the server is a handful of calls and reruns every quarter hour, so
+/// a release fetched in the meantime moves from "missing" into the playlist.
 @MainActor
 @Observable
 final class RadarService {
@@ -50,7 +50,9 @@ final class RadarService {
     private var refreshTask: Task<Void, Never>?
 
     private static let catalogueAge: TimeInterval = 20 * 3600
-    private static let libraryAge: TimeInterval = 3600
+    /// Only the releases still missing are looked for again, so this can be short: a song
+    /// fetched outside the app shows up a quarter of an hour after the server lists it.
+    private static let libraryAge: TimeInterval = 15 * 60
 
     /// Deezer's track lists for the releases the server lacks, for their previews. Held for
     /// the session only: a preview's address stops working after a quarter of an hour.
@@ -170,23 +172,51 @@ final class RadarService {
         for release in releases { elsewhere[release.id] = release }
     }
 
-    /// Looks for one release on the server now, rather than at the next hourly match, and
-    /// moves it into the playlist when it's there. Nil while it isn't.
+    /// Looks for one release on the server now, rather than at the next match, and moves it
+    /// into the playlist when it's there. Nil while it isn't.
     func lookUp(_ release: RadarRelease) async -> [Song]? {
         guard let server = ServerManager.shared.currentServer else { return nil }
-        let albums = (try? await SubsonicClient.shared.getArtist(server: server, id: release.artist.id))?.album ?? []
-        guard let found = await Self.find(release, among: albums, server: server) else { return nil }
+        guard let found = await Self.find(release, among: await Self.albums(of: release, server: server),
+                                          server: server) else { return nil }
         let songs = RadarRules.newSongs(found, of: release)
         guard !songs.isEmpty else { return nil }
-        if let radar = current, radar.releases.contains(where: { $0.id == release.id }) {
-            var inLibrary = radar.inLibrary
-            inLibrary[release.id] = Array(songs.prefix(RadarRules.perRelease))
-            let updated = Radar(serverId: radar.serverId, releases: radar.releases, fetched: radar.fetched,
-                                inLibrary: inLibrary, matched: radar.matched)
-            RadarStore.save(updated)
-            self.radar = updated
-        }
+        take(release, songs: songs)
         return songs
+    }
+
+    /// Whether the server has every song of a release now — the album of its name, or its
+    /// songs filed under others, as songs fetched one by one are. If so, the release moves
+    /// into the playlist rather than waiting for the next match.
+    func settle(_ release: RadarRelease) async -> Bool {
+        guard let server = ServerManager.shared.currentServer,
+              let tracks = await tracks(of: release), !tracks.isEmpty else { return false }
+        var held = await Self.find(release, among: await Self.albums(of: release, server: server),
+                                   server: server) ?? []
+        for track in RadarRules.unheld(tracks, among: held) {
+            guard let song = await lookUp(song: track.title, of: release)?.first else { return false }
+            held.append(song)
+        }
+        take(release, songs: RadarRules.newSongs(held, of: release))
+        return true
+    }
+
+    /// A release the server has, into the playlist — while the radar still lists it.
+    private func take(_ release: RadarRelease, songs: [Song]) {
+        guard !songs.isEmpty, let radar = current, radar.releases.contains(where: { $0.id == release.id })
+        else { return }
+        var inLibrary = radar.inLibrary
+        inLibrary[release.id] = Array(songs.prefix(RadarRules.perRelease))
+        let updated = Radar(serverId: radar.serverId, releases: radar.releases, fetched: radar.fetched,
+                            inLibrary: inLibrary, matched: radar.matched)
+        RadarStore.save(updated)
+        self.radar = updated
+    }
+
+    /// The artist's albums on the server — none for an artist it doesn't know, as with a
+    /// release Search turned up.
+    private static func albums(of release: RadarRelease, server: ServerConfig) async -> [Album] {
+        guard let id = release.artist.libraryId else { return [] }
+        return (try? await SubsonicClient.shared.getArtist(server: server, id: id))?.album ?? []
     }
 
     /// One of a release's songs on the server, when only that was fetched. Leaves the radar

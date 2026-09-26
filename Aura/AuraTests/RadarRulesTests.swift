@@ -155,6 +155,20 @@ struct RadarRulesTests {
         #expect(RadarRules.newSongs(songs, of: album).map(\.id) == ["leak", "new", "undated"])
     }
 
+    @Test("A release's tracks the server has no song titled after are the ones still to get")
+    func unheldTracks() throws {
+        let tracks = ["Roses", "Roses (Remix)", "Petals"].enumerated().map { index, title in
+            DeezerTrack(id: index, title: title, duration: nil, preview: nil, track_position: index + 1,
+                        rank: nil, artist: nil)
+        }
+        let held = try [#"{"id":"1","title":"roses"}"#, #"{"id":"2","title":"Pétals"}"#].map {
+            try JSONDecoder().decode(Song.self, from: Data($0.utf8))
+        }
+        #expect(RadarRules.unheld(tracks, among: held).map(\.title) == ["Roses (Remix)"])
+        #expect(RadarRules.unheld(tracks, among: []).count == 3)
+        #expect(RadarRules.unheld([], among: held).isEmpty)
+    }
+
     // MARK: Playlist
 
     @Test("The playlist takes a few tracks per release, newest release first, no song twice")
