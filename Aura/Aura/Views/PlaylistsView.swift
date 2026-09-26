@@ -24,7 +24,10 @@ struct PlaylistsView: View {
     @State private var scrollY: CGFloat = 0
     @State private var filter: PlaylistFilter = .all
     @State private var downloadedIds: Set<String> = []
-    @AppStorage("musika_playlists_layout") private var layout: PlaylistLayout = .grid
+    /// The list is the default. The key is new with that change: the grid was the default
+    /// before, and anyone still on it under the old key never chose it, so everyone starts
+    /// on the list once and what they pick from here on is kept.
+    @AppStorage("musika_playlists_layout_v2") private var layout: PlaylistLayout = .list
     let columns = [GridItem(.adaptive(minimum: 160), spacing: 16)]
 
     private var filterContext: PlaylistFilterContext {
@@ -118,12 +121,15 @@ struct PlaylistsView: View {
                 // without scrolling back up to the title.
             } else {
                 // Beside the menu rather than at the end of the filters, where the chips
-                // scrolled under it.
+                // scrolled under it. Both in the secondary colour, as Library's options
+                // button is: the accent made two utility icons the loudest thing on the page.
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { layout = layout.toggled }
                 } label: {
                     Image(systemName: layout.toggleIcon)
+                        .foregroundStyle(.secondary)
                 }
+                .buttonStyle(.plain)
                 .accessibilityLabel(layout == .grid ? "Show as List" : "Show as Grid")
                 Menu {
                     Button { showCreatePlaylist = true } label: {
@@ -148,6 +154,7 @@ struct PlaylistsView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .rotationEffect(.degrees(90))
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -204,7 +211,7 @@ struct PlaylistsView: View {
                     ListEndSpacer()
                 }
                 .scrollIndicators(.hidden)
-                .background(Color.themeBg)
+                // No page colour here: `tabRootGlass` paints it, with the glow at its top.
                 .overlay(alignment: .trailing) {
                     if !indexTitles.isEmpty {
                         AlphabetIndexBar(titles: indexTitles, tint: accentColor) { letter in
@@ -692,7 +699,6 @@ struct PlaylistCardView: View {
     let playlist: Playlist
     var isPinned: Bool = false
     var showSongCount: Bool = false
-    @Environment(\.appAccentColor) private var accentColor
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -700,12 +706,14 @@ struct PlaylistCardView: View {
                 PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
                                   cacheToken: playlist.changed, size: 180, cornerRadius: 12)
                 if isPinned {
+                    // A quiet badge, not a sticker: in the accent, every pinned cover carried a
+                    // bright dot that outshouted the artwork. A small white pin on a dark,
+                    // see-through disc reads on any cover and says no more than it has to.
                     Image(systemName: "pin.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.white)
-                        .padding(6)
-                        .background(accentColor.opacity(0.8))
-                        .clipShape(Circle())
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(Color.white.opacity(0.85))
+                        .padding(5)
+                        .background(Color.black.opacity(0.35), in: Circle())
                         .padding(6)
                 }
             }

@@ -133,15 +133,6 @@ struct AlbumDetailView: View {
 
                     // Song list
                     if let songs = album.song {
-                        if let songCount = album.songCount {
-                            Text("\(songCount) \(songCount == 1 ? "Song" : "Songs")")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
-                        }
                         let isSingle = songs.count <= 1
                         ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
                             SongRowView(
@@ -158,6 +149,17 @@ struct AlbumDetailView: View {
                                                       bottom: AppSettings.shared.listDensity.verticalPadding,
                                                       trailing: 16))
                         }
+
+                        // The count closes the list, as a record sleeve does, rather than
+                        // heading it: alone on a row above the first song it sat in a
+                        // full-height list row, a caption adrift in empty space.
+                        Text(summary(of: album, songs: songs))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 0, trailing: 16))
                     }
 
                     ListEndSpacer()
@@ -190,6 +192,18 @@ struct AlbumDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadAlbum() }
+    }
+
+    /// "2024 · 12 songs · 48 min" — whichever of them the server knows.
+    private func summary(of album: AlbumWithSongs, songs: [Song]) -> String {
+        let seconds = album.duration ?? songs.compactMap(\.duration).reduce(0, +)
+        let parts = [
+            album.year.map(String.init),
+            "\(songs.count) \(songs.count == 1 ? "song" : "songs")",
+            seconds > 0 ? Duration.seconds(max(seconds, 60))
+                .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)) : nil,
+        ]
+        return parts.compactMap { $0 }.joined(separator: " · ")
     }
 
     /// Shown when the album couldn't be loaded (e.g. the server is unreachable)

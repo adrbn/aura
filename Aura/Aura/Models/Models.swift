@@ -144,6 +144,8 @@ final class AppSettings {
     var radarEnabled: Bool = true
     /// Whether the Library has been given its Radar row once. Remove it, and it stays gone.
     var radarInLibraryOffered: Bool = false
+    /// Lyrics in another language show a translation under each line, made on the device.
+    var translateLyrics: Bool = false
 
     private let settingsKey = "musika_app_settings"
     private static let slskdKeychainAccount = "slskd-external-service"
@@ -217,6 +219,7 @@ final class AppSettings {
             wrappedShowOnHome = decoded.wrappedShowOnHome ?? false
             radarEnabled = decoded.radarEnabled ?? true
             radarInLibraryOffered = decoded.radarInLibraryOffered ?? false
+            translateLyrics = decoded.translateLyrics ?? false
         }
         // The Radar joined the Library's rows after they were set up: offered once, on top.
         if !radarInLibraryOffered {
@@ -261,7 +264,8 @@ final class AppSettings {
             lastfmUsername: lastfmUsername,
             wrappedShowOnHome: wrappedShowOnHome,
             radarEnabled: radarEnabled,
-            radarInLibraryOffered: radarInLibraryOffered
+            radarInLibraryOffered: radarInLibraryOffered,
+            translateLyrics: translateLyrics
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: settingsKey)
@@ -348,6 +352,7 @@ struct SettingsData: Codable {
     var wrappedShowOnHome: Bool?
     var radarEnabled: Bool?
     var radarInLibraryOffered: Bool?
+    var translateLyrics: Bool?
 }
 
 enum AppAccentColor: String, Codable, CaseIterable {

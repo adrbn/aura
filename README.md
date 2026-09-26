@@ -55,6 +55,8 @@ Aura reads per-word timings from the OpenSubsonic lyrics extension, falls back t
 
 Each word lights as it is sung. The lines around it fall away in size, blur and opacity, so the line being sung is the only one competing for your attention. Tap any line to jump there, nudge the timing if your headphones lag, and turn the phone for full screen.
 
+Lyrics in another language can carry **a translation under each line**, small and dimmed so the song keeps the eye. It is made on the iPhone by Apple's Translation framework — free, offline once the language is in, and the words never leave the device. A song translated once comes back instantly.
+
 ## Made for you
 
 <img src="docs/assets/made-for-you.webp" width="640" alt="Three generated mixes side by side — Afternoon, Chill and Focus — each with an editorial cover: the most-played artist's photo, or their album art, under a bold title band in the mix's colour, with the mix's artists listed beneath" />
@@ -96,7 +98,7 @@ Five bands from 60 Hz to 14 kHz, drawn as one curve over a decibel grid: drag an
 ## Private by design
 
 - **Your credentials live in the Keychain**, never in preferences or a file, and never leave the device except to your own server.
-- **No account, no analytics, no telemetry.** Aura talks to your server; to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking; to Deezer's public catalogue for the artist photos on mix covers, the Radar's new releases and their previews — artist names and release ids, never your library; and to Apple's and Deezer's public search when you share a song, to find it on other services. Switch the Radar off and Deezer hears only about cover photos and the songs you share. The details are in the [privacy policy](PRIVACY.md).
+- **No account, no analytics, no telemetry.** Aura talks to your server; to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking; to Deezer's public catalogue for the artist photos on mix covers, the covers your server is missing, the Radar's new releases and their previews — artist names, the titles of albums without artwork and release ids, never your library; and to Apple's and Deezer's public search when you share a song, to find it on other services. Switch the Radar off and Deezer hears only about cover photos and the songs you share. The details are in the [privacy policy](PRIVACY.md).
 - **Play counts and history stay on the device** unless you point Aura at your own scrobbler.
 - **Open source**, so none of this has to be taken on trust.
 
@@ -134,10 +136,10 @@ Yes. Aura plays a library you already host — most people run [Navidrome](https
 </details>
 
 <details>
-<summary><b>Some albums show a generated cover instead of artwork.</b></summary>
+<summary><b>Some albums have no artwork on my server.</b></summary>
 <br/>
 
-That's Aura telling you the truth: the server has no artwork for that album. Rather than display the server's own "no cover" picture — a vinyl record with someone else's branding on it — Aura draws its own. Embed the artwork in the files and rescan, and the real cover appears.
+The server has no artwork for that album — its files carry none — and answers with its own "no cover" picture, a vinyl record with someone else's branding on it. Aura never shows that one: it recognises it at any size, looks the album up in Deezer's public catalogue by artist and title, and shows the real cover. Only when the catalogue doesn't have it either does Aura draw its own. Embed the artwork in the files and rescan, and the server's cover takes over.
 </details>
 
 <details>

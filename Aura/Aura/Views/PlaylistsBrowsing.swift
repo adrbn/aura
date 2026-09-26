@@ -82,17 +82,30 @@ struct PlaylistFilterBar: View {
 
     private var chips: [PlaylistFilter] { filters.filter { $0 != .all } }
 
+    private static let spacing: CGFloat = 6
+
     var body: some View {
         if !chips.isEmpty {
-            // The full width, so the row scrolls out under the screen's edge rather than
-            // being cut off short of it.
-            ScrollView(.horizontal) {
-                HStack(spacing: 6) {
+            // Sized to their labels, a few chips stopped short and left the right of the row
+            // empty, which read as unfinished. When they all fit on one line they now span
+            // it, margin to margin; when they don't, the row scrolls instead — out under the
+            // screen's edge rather than cut off short of it. `ViewThatFits` measures each
+            // at its natural width, so the choice follows the labels, their language and
+            // how many filters there are.
+            ViewThatFits(in: .horizontal) {
+                FillingRow(spacing: Self.spacing) {
                     ForEach(chips) { filter in chip(filter) }
                 }
                 .padding(.horizontal, 16)
+
+                ScrollView(.horizontal) {
+                    HStack(spacing: Self.spacing) {
+                        ForEach(chips) { filter in chip(filter) }
+                    }
+                    .padding(.horizontal, 16)
+                }
+                .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
         }
     }
 
@@ -105,7 +118,45 @@ struct PlaylistFilterBar: View {
     }
 }
 
+/// One line of views that spans the width it's given: each keeps its natural width and
+/// takes an equal share of what's left, so a longer label still makes a longer chip and
+/// every chip gains the same room around its label. A lone chip keeps its own width at the
+/// start of the line: stretched across the row it would read as a button, not a filter.
+///
+/// Asked for its ideal size it answers with the natural widths alone, which is how
+/// `ViewThatFits` learns whether the line fits at all.
+struct FillingRow: Layout {
+    var spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let natural = sizes.reduce(0) { $0 + $1.width } + gaps(subviews.count)
+        let offered = proposal.width.flatMap { $0.isFinite ? $0 : nil } ?? natural
+        return CGSize(width: max(natural, offered), height: sizes.map(\.height).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard !subviews.isEmpty else { return }
+        let widths = subviews.map { $0.sizeThatFits(.unspecified).width }
+        let spare = max(0, bounds.width - widths.reduce(0, +) - gaps(subviews.count))
+        let share = subviews.count > 1 ? spare / CGFloat(subviews.count) : 0
+        var x = bounds.minX
+        for (subview, width) in zip(subviews, widths) {
+            subview.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading,
+                          proposal: ProposedViewSize(width: width + share, height: bounds.height))
+            x += width + share + spacing
+        }
+    }
+
+    private func gaps(_ count: Int) -> CGFloat {
+        spacing * CGFloat(max(count - 1, 0))
+    }
+}
+
 /// A small capsule in a row of filters or modes: quiet until chosen, then in the accent.
+///
+/// It takes whatever width it's offered past its label's, so `FillingRow` can widen it; in
+/// a scrolling row, which offers no width, it keeps to its label.
 struct QuietChip: View {
     let title: String
     let isOn: Bool
@@ -125,6 +176,7 @@ struct QuietChip: View {
             }
             .font(.footnote.weight(isOn ? .semibold : .medium))
             .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity)
             .frame(height: 30)
             .foregroundStyle(isOn ? AnyShapeStyle(accentColor) : AnyShapeStyle(.secondary))
             .background(isOn ? AnyShapeStyle(accentColor.opacity(0.16)) : AnyShapeStyle(Color.primary.opacity(0.06)),
@@ -140,7 +192,6 @@ struct QuietChip: View {
 struct PlaylistRowView: View {
     let playlist: Playlist
     var isPinned: Bool = false
-    @Environment(\.appAccentColor) private var accentColor
 
     var body: some View {
         HStack(spacing: 12) {
@@ -160,9 +211,11 @@ struct PlaylistRowView: View {
             }
             Spacer(minLength: 8)
             if isPinned {
+                // A quiet mark, as on the grid's covers: in the accent it was the brightest
+                // thing in the row, louder than the name it belongs to.
                 Image(systemName: "pin.fill")
-                    .font(.caption2)
-                    .foregroundStyle(accentColor)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.tertiary)
             }
         }
         .contentShape(Rectangle())

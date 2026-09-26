@@ -1,12 +1,14 @@
 import SwiftUI
 import AVKit
 import AVFoundation
+import Translation
 
 struct NowPlayingView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(\.dismiss) private var dismiss
     @State private var appSettings = AppSettings.shared
     @State private var serverManager = ServerManager.shared
+    @State private var translator = LyricsTranslator.shared
     @State private var showLyrics = false
     @State private var backgroundImage: UIImage?
     @State private var vibrantOverlayColor: Color?
@@ -50,6 +52,8 @@ struct NowPlayingView: View {
     /// beside it.
     private static let lyricsArtSize: CGFloat = 44
     private static let lyricsTitleGap: CGFloat = 12
+    /// What the translate button takes from the end of the lyrics header.
+    private static let translateButtonRoom: CGFloat = 44
 
     private enum CoverDragAxis { case undecided, horizontal, vertical }
 
@@ -131,6 +135,16 @@ struct NowPlayingView: View {
             }
         }
         .presentationBackground(.clear)
+        // Every sheet that arrives is looked at for its language — and translated when the
+        // reader has asked for translations — whether or not the lyrics are open yet.
+        .task(id: player.lyrics.map(\.text)) {
+            await translator.show(songId: player.currentSong?.id,
+                                  texts: player.lyrics.map(\.text),
+                                  translating: appSettings.translateLyrics)
+        }
+        .translationTask(translator.configuration) { session in
+            await translator.translate(with: session)
+        }
         .onChange(of: player.currentSong?.id) { oldId, newId in
             previousSongId = oldId
             if showLyrics {
@@ -276,6 +290,13 @@ struct NowPlayingView: View {
             // cover — see there for why.
             artworkView(song: song, size: showLyrics ? Self.lyricsArtSize : artSize, slideWidth: w)
                 .frame(maxWidth: .infinity, alignment: showLyrics ? .leading : .center)
+                // Facing the small title, at the far end of the header.
+                .overlay(alignment: .trailing) {
+                    if showLyrics && translator.isAvailable {
+                        translateButton
+                            .transition(.opacity.animation(.easeOut(duration: 0.25).delay(0.15)))
+                    }
+                }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.bottom, showLyrics ? 14 : 0)
                 .offset(x: showLyrics ? 0 : coverDragOffset)
@@ -655,7 +676,8 @@ struct NowPlayingView: View {
         .background(alignment: .topLeading) {
             if showLyrics {
                 lyricsHeaderText(song: song)
-                    .frame(width: max(0, heroSize - Self.lyricsArtSize - Self.lyricsTitleGap),
+                    .frame(width: max(0, heroSize - Self.lyricsArtSize - Self.lyricsTitleGap
+                                          - (translator.isAvailable ? Self.translateButtonRoom : 0)),
                            height: Self.lyricsArtSize, alignment: .leading)
                     .padding(.leading, Self.lyricsArtSize + Self.lyricsTitleGap)
                     .transition(UncoveredByArtwork(coveredEdge: heroSize,
@@ -668,6 +690,28 @@ struct NowPlayingView: View {
         // cover starts at 85% and an unscaled title would already poke out above it.
         .scaleEffect(showLyrics || player.isPlaying ? 1.0 : 0.85)
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
+    }
+
+    /// Shows or hides a translation under each line. Only there when the lyrics are in
+    /// another language than the reader's, and one the device can translate.
+    private var translateButton: some View {
+        let on = appSettings.translateLyrics
+        return Button {
+            appSettings.translateLyrics.toggle()
+            appSettings.save()
+            if appSettings.translateLyrics { translator.translateMissing() }
+        } label: {
+            Image(systemName: "translate")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white.opacity(on ? 1 : 0.55))
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(.white.opacity(on ? 0.16 : 0)))
+                .symbolEffect(.pulse, isActive: on && translator.isWorking)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .animation(.easeOut(duration: 0.2), value: on)
+        .accessibilityLabel(on ? "Hide translation" : "Translate lyrics")
     }
 
     /// Title and artist beside the shrunken artwork once lyrics are open, so the song stays
@@ -950,11 +994,25 @@ struct NowPlayingView: View {
                             // only while the song is actually moving. Every other line is
                             // paused, so it draws once and costs nothing — which is what
                             // makes a per-frame fade affordable inside a scrolling list.
-                            TimelineView(.animation(minimumInterval: 1.0 / 60.0,
-                                                    paused: !isCurrent || !player.isPlaying)) { _ in
-                                lyricLineText(line: line, index: index, isCurrent: isCurrent)
-                                    .font(lyricFont(isCurrent: isCurrent))
+                            VStack(alignment: .leading, spacing: 6) {
+                                TimelineView(.animation(minimumInterval: 1.0 / 60.0,
+                                                        paused: !isCurrent || !player.isPlaying)) { _ in
+                                    lyricLineText(line: line, index: index, isCurrent: isCurrent)
+                                        .font(lyricFont(isCurrent: isCurrent))
+                                }
+                                // Small and dimmer than the words sung, so the eye stays on
+                                // the song and drops to the meaning when it wants it. It
+                                // takes the line's own fade, blur and scale.
+                                if appSettings.translateLyrics,
+                                   let translation = translator.lines[line.text], !translation.isEmpty {
+                                    Text(translation)
+                                        .font(.system(size: 17, weight: .semibold))
+                                        .opacity(0.6)
+                                        .transition(.opacity)
+                                }
                             }
+                                .animation(.easeOut(duration: 0.3), value: translator.lines[line.text])
+                                .animation(.easeOut(duration: 0.3), value: appSettings.translateLyrics)
                                 .foregroundStyle(.white.opacity(
                                     isUserScrolling ? 0.8
                                     : opacityForDistance(distance) * (isAnticipated ? 0.45 : 1)

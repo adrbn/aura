@@ -51,7 +51,7 @@ struct ContentView: View {
 
                 #if !APPSTORE_BUILD
                 FetchProgressBanner(bottomGap: audioPlayer.hasQueue ? 6 : 57, height: $fetchCardHeight)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.visible.first?.id)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.fetches.map(\.id))
                 #endif
 
                 // Above the fetch card, which a stack otherwise draws on top while it leaves.

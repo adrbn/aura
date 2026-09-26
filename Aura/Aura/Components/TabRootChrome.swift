@@ -180,8 +180,213 @@ struct BottomEdgeVeil: View {
     }
 }
 
+// MARK: - Tab-root glow
+
+/// The top of a tab root in colour, and alive.
+///
+/// Album, playlist and mix pages open in the light of their artwork (`TintedCanvas`); the
+/// tab roots have no artwork of their own and opened on the bare canvas, which made the
+/// app's front doors its dullest screens. This gives them the same wash — colour at the
+/// top, gone into the page well before the middle of the screen — made of three
+/// neighbouring hues that slowly trade places and breathe, so the page reads as lit
+/// rather than switched off.
+///
+/// The hues come from what's playing, read from its cover exactly as a playlist page reads
+/// its own (`PageTint`), so the tabs take on the colour of the music. With nothing playing,
+/// or a cover with no colour to give, they come from the accent instead. A new song
+/// crossfades the field to its colour rather than cutting to it.
+///
+/// Kept quiet on purpose: dark and only moderately saturated behind white text, a pale
+/// wash in light mode, one slow swing every eighteen seconds, nothing that flashes. It
+/// holds still under Reduce Motion, and stops drawing whenever nobody can see it — another
+/// tab, a page pushed over it, Now Playing on top, or scrolled out of sight.
+struct TabRootGlow: View {
+    /// How far the page has scrolled from rest. The glow travels up with the content, as
+    /// the title in front of it does, and leaves the top veil to darken whatever remains.
+    let scrolled: CGFloat
+
+    /// Behind the title, the search field and the first rows, and faded out well before the
+    /// middle of the screen: about the depth of a playlist page's tint.
+    static let height: CGFloat = 420
+    /// Thirty frames a second. The motion is measured in seconds, so sixty would spend power
+    /// on a difference nobody can see.
+    private static let frameInterval = 1.0 / 30
+    /// Pink, should the accent ever fail to give a hue.
+    private static let fallbackHue = 0.95
+
+    @Environment(\.appAccentColor) private var accentColor
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The now-playing cover's hue once read, keyed by that cover; a nil hue is a grey cover.
+    @State private var coverHue: (key: String, hue: Double?)?
+    @State private var shift: HueShift?
+    @State private var isOnScreen = false
+
+    private var player: AudioPlayer { AudioPlayer.shared }
+
+    /// The cover the mini player shows: the song's own art, else its album's.
+    private var coverKey: String? {
+        player.currentSong.flatMap { $0.coverArt ?? $0.albumId }
+    }
+
+    private var targetHue: Double {
+        let fromCover: Double? = coverKey.flatMap { key in
+            if let coverHue, coverHue.key == key { return coverHue.hue }
+            return PageTint.cached(key).flatMap(Self.hue(of:))
+        }
+        return fromCover ?? Self.hue(of: UIColor(accentColor)) ?? Self.fallbackHue
+    }
+
+    var body: some View {
+        let target = targetHue
+        let paused = reduceMotion || !isOnScreen || player.isShowingNowPlaying || scrolled >= Self.height
+        TimelineView(.animation(minimumInterval: Self.frameInterval, paused: paused)) { context in
+            // A paused timeline keeps handing back the moment it stopped, so a crossfade that
+            // began while paused would never finish: it lands at once instead.
+            let hue = shift.map { paused ? $0.to : $0.hue(at: context.date) } ?? target
+            GlowField(hue: hue,
+                      time: reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate,
+                      isDark: scheme == .dark)
+        }
+        .frame(height: Self.height)
+        .offset(y: -scrolled)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .onAppear { isOnScreen = true }
+        .onDisappear { isOnScreen = false }
+        .onChange(of: target, initial: true) { _, hue in
+            let now = Date()
+            let current = shift?.hue(at: now) ?? hue
+            // Whole turns added or taken away, so the crossfade goes the short way round the
+            // wheel instead of sweeping through every colour in between.
+            shift = HueShift(from: current, to: hue + (current - hue).rounded(), start: now)
+        }
+        .task(id: coverKey) {
+            guard let key = coverKey, coverHue?.key != key,
+                  let color = await PageTint.load(key), !Task.isCancelled else { return }
+            coverHue = (key, Self.hue(of: color))
+        }
+    }
+
+    /// A colour's hue, read from its dark side; nil for a grey, which has no hue worth
+    /// spreading into three and would only give the field an invented one.
+    private static func hue(of color: UIColor) -> Double? {
+        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+            .getHue(&h, saturation: &s, brightness: &b, alpha: &a)
+        return s < 0.12 ? nil : Double(h)
+    }
+}
+
+/// The glow's base hue on its way from one song's colour to the next.
+private struct HueShift {
+    static let duration: TimeInterval = 1.6
+
+    let from: Double
+    let to: Double
+    let start: Date
+
+    /// Eased at both ends, so the colour leaves the old hue and settles on the new one
+    /// without a visible start or stop.
+    func hue(at date: Date) -> Double {
+        let t = min(max(date.timeIntervalSince(start) / Self.duration, 0), 1)
+        return from + (to - from) * t * t * (3 - 2 * t)
+    }
+}
+
+/// One frame of the glow: a 3×3 mesh whose top row carries the colour, whose middle row
+/// carries about half of it and whose bottom row none, so it fades into the page the way a
+/// playlist page's tint does — but as a field of hues rather than a single one.
+private struct GlowField: View {
+    let hue: Double
+    let time: TimeInterval
+    let isDark: Bool
+
+    /// One full swing of the hues, in seconds.
+    private static let cycle = 18.0
+    /// How far each hue swings either side of the base: about forty degrees, enough to read
+    /// as three colours without leaving the base's family.
+    private static let spread = 0.11
+
+    var body: some View {
+        MeshGradient(width: 3, height: 3, points: points, colors: colors)
+    }
+
+    private func wave(_ period: Double, _ phase: Double) -> Double {
+        sin(time * 2 * .pi / period + phase)
+    }
+
+    /// Corners and edges stay pinned, or the field would slide rather than breathe; the top
+    /// edge's middle and the whole middle row wander, each on its own clock, so the glow
+    /// never settles into a loop you can see.
+    private var points: [SIMD2<Float>] {
+        func point(_ x: Double, _ y: Double) -> SIMD2<Float> { SIMD2(Float(x), Float(y)) }
+        return [
+            point(0, 0), point(0.5 + 0.18 * wave(17, 0), 0), point(1, 0),
+            point(0, 0.42 + 0.08 * wave(13, 1.1)),
+            point(0.5 + 0.15 * wave(19, 2.3), 0.5 + 0.07 * wave(11, 0.6)),
+            point(1, 0.42 + 0.08 * wave(15, 3.9)),
+            point(0, 1), point(0.5, 1), point(1, 1),
+        ]
+    }
+
+    /// The middle row runs half a swing behind the top, so the colours cross over one
+    /// another on their way down instead of pouring straight down in bands.
+    private var colors: [Color] {
+        let top = (0..<3).map { tone(slot: Double($0), strength: 1) }
+        let middle = (0..<3).map { tone(slot: Double($0) + 1.5, strength: 0.5) }
+        let bottom = (0..<3).map { tone(slot: Double($0) + 1.5, strength: 0) }
+        return top + middle + bottom
+    }
+
+    /// A point's colour now. Every point swings around the base on the same slow clock, each
+    /// a third of a turn behind its neighbour, so the hues travel across the field rather
+    /// than pulsing in place; brightness breathes a little on a clock of its own.
+    private func tone(slot: Double, strength: Double) -> Color {
+        let turned = hue + Self.spread * sin(time * 2 * .pi / Self.cycle + slot * 2 * .pi / 3)
+        let unit = turned - turned.rounded(.down)
+        let breath = 0.045 * wave(11 + slot, slot * 2.1)
+        // Dark and still coloured behind white text, as a page tint is; a pale wash in light.
+        return isDark
+            ? Color(hue: unit, saturation: 0.6, brightness: 0.42 + breath, opacity: strength * 0.95)
+            : Color(hue: unit, saturation: 0.26, brightness: 0.98, opacity: strength * (0.85 + breath))
+    }
+}
+
+/// The ground of a tab root: the page colour, `TabRootGlow` over its top and, on Home, the
+/// cutting mat over both, so the grid runs through the glow rather than being washed out.
+struct TabRootCanvas: ViewModifier {
+    let page: Color
+    let grid: Bool
+    /// How far the page has scrolled from rest, held between zero and the glow's height:
+    /// pulling down leaves the glow where it is, and once it has scrolled out of sight
+    /// further scrolling stops redrawing it.
+    @State private var scrolled: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            // Offset plus inset, as the artist hero reads it, so rest is zero whatever top
+            // margin the page keeps for the status bar, the banner or a pinned search field.
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                min(max(geometry.contentOffset.y + geometry.contentInsets.top, 0), TabRootGlow.height)
+            } action: { _, distance in
+                scrolled = distance
+            }
+            .background {
+                ZStack(alignment: .top) {
+                    page
+                    TabRootGlow(scrolled: scrolled)
+                    if grid { WorkshopGrid() }
+                }
+                .ignoresSafeArea()
+            }
+    }
+}
+
 struct TabRootGlass: ViewModifier {
     @Binding var scrollY: CGFloat
+    /// The page under the glow: the canvas, or Settings' grouped grey.
+    var page: Color = .themeBg
 
     func body(content: Content) -> some View {
         content
@@ -191,13 +396,22 @@ struct TabRootGlass: ViewModifier {
             .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                 scrollY = y
             }
-            .background(Color.themeBg)
+            .tabRootCanvas(page)
             .toolbar(.hidden, for: .navigationBar)
     }
 }
 
 extension View {
-    func tabRootGlass(scrollY: Binding<CGFloat>) -> some View { modifier(TabRootGlass(scrollY: scrollY)) }
+    func tabRootGlass(scrollY: Binding<CGFloat>, page: Color = .themeBg) -> some View {
+        modifier(TabRootGlass(scrollY: scrollY, page: page))
+    }
+
+    /// The page colour with the tab-root glow at its top, behind a tab root's scroll view.
+    /// For tab roots that draw their own chrome instead of using `tabRootGlass`; the view
+    /// it's applied to must not paint an opaque background of its own, or it hides the glow.
+    func tabRootCanvas(_ page: Color = .themeBg, grid: Bool = false) -> some View {
+        modifier(TabRootCanvas(page: page, grid: grid))
+    }
 
     /// A `List` row with no insets, no separator and a clear background — for custom
     /// rows (titles, search fields, grids, footnotes) inside a tab-root `List`.

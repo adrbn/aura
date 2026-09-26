@@ -69,15 +69,21 @@ The share sheet can also offer a song.link address, which Aura builds from the A
 
 This lookup runs when a track appears in Now Playing (so the links are ready instantly) and the result is cached. No account, device identifier, or audio is sent — only the track name to find matching links — and none of it goes to a developer-owned server.
 
-### To Deezer (artist photos and Release Radar)
+### To Deezer (artist photos, missing covers and Release Radar)
 
 To put an artist's photo on a "Made For You" mix or radio cover, Aura looks the artist up in Deezer's public, free, keyless catalogue (`api.deezer.com`) and downloads the photo from Deezer's image servers. Only the **artist's name** is sent — no account, device identifier, or listening history. Each photo is fetched once and kept in the app's cache.
+
+When your server has **no cover** for an album — its files carry no artwork, and the server answers with a generic picture — Aura looks that album up in the same catalogue by its **artist and title**, and shows the catalogue's cover instead. Only albums without artwork are looked up, each once (a miss is asked again after a week); nothing else about your library is sent, and nothing is written back to your server.
 
 For the **Release Radar** mix, Aura asks the same catalogue, about once a day, for the recent releases of the artists you play most on your server — up to 80 of them — and downloads the covers of the releases it lists. Deezer receives each artist's **name** the first time, and their Deezer ID after that; it receives no account, device identifier, play counts, or song you played. Taken together, those requests do say whose music you listen to: if you'd rather Deezer didn't see that, switch the Radar off in **Settings → Release Radar** and Aura makes none of them.
 
 When you open the radar, Aura asks Deezer for the **track lists** of the releases your server doesn't have yet — to count their songs, and to queue them when you press Play — and streams the tracks' **thirty-second previews** from Deezer's audio servers when they play. Deezer sees which releases were looked up and which previews were played — nothing else about you or your library.
 
 With the Radar on, what you type in **Search** is also sent to the same catalogue, so Search can show the songs and releases your server doesn't have, with their previews. Deezer receives the **search text** — no account, device identifier, or library. Switch the Radar off and Search asks only your server.
+
+### Lyrics translation (on the device)
+
+When you turn on translation in the lyrics, the lines are translated **on your device** by Apple's Translation framework. The lyrics are not sent to Apple, to the developer, or to any translation service. The first time a pair of languages is used, iOS may offer to download it; that download is between your device and Apple, like any system language. Translations are kept in the app's cache.
 
 ### To MusicBrainz (for song credits)
 

@@ -48,8 +48,8 @@ struct LibraryView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .background(Color.themeBg)
             .scrollIndicators(.hidden)
+            // Paints the page itself, with the glow at its top.
             .tabRootGlass(scrollY: $scrollY)
             .sheet(isPresented: $showCategoriesEditor) {
                 NavigationStack { LibraryCategoriesEditor() }

@@ -39,6 +39,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Made For You never puts two covers on the same face: each mix is led by an artist none of the covers before it shows — the radar and the evening mix both went to whoever played most. Search shows the same covers
 - Radio covers fill the square: the seed artist in a larger disc sending out rings, the two similar artists riding the first ring in the field's tone, the name in a black band with the similar artists on a strip beneath — the mixes' lockup — over a field that deepens towards its edges, with a fine grain. Every disc is drawn from the start, a tinted stand-in until its photo is in, and the rings travel while the radio is being put together
 
+### Added — Lyrics
+- Translation: lyrics in another language than the phone's show a translation under each line, small and dimmed. Made on the device by Apple's Translation framework — free, offline once the language is downloaded, nothing sent anywhere — and kept, so a song comes back translated at once. The button sits at the end of the lyrics header, facing the song's title, and only appears when there is something to translate
+- Lines already in the reader's language — a song switching languages — are left as they are
+
 ### Added — Playlists
 - Filters on the Playlists page — Pinned, Radios, Mixes, Mine, Shared, Downloaded — as a row of small, quiet capsules under the search field, each offered only when it would leave some playlists out. The chosen one takes the accent and a cross; tapping it again shows every playlist. They narrow the search too
 - A list view beside the grid: one row per playlist, cover, name, songs and length. The switch sits beside the menu at the top of the page, and the choice is remembered
@@ -59,6 +63,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - The card explaining why Aura is offline carries the one action that applies — Retry, or Go Online — in place of a Wi-Fi button in the title
 
 ### Changed — Appearance
+- The tab roots — Home, Library, Playlists, Search, Settings — open in colour, as album and playlist pages do: a glow at the top in three neighbouring hues drawn from the cover that's playing (the accent with nothing on), which slowly trade places and breathe, fading into the page before the middle of the screen. It scrolls away with the content, crossfades when the song changes, holds still under Reduce Motion and stops drawing when out of sight. Home's cutting mat runs through it
+- Playlists open as a list by default
+- The pin on pinned playlists is a quiet mark — a small white pin on a dark disc over a cover, a grey one in the list — instead of a bright accent dot
+- The playlist filters span the row when they fit on one line, each keeping its proportions, and scroll when they don't
+- The layout and options buttons at the top of Playlists are in the secondary colour, like Library's, instead of the accent
 - The page's colour rises behind the tab bar and the mini player: over a bright cover the system's tab bar read lighter than the mini player, the one glass Aura draws itself — and the system's takes no tint. It is eased from the foot of the screen, so it thickens behind the bars without drawing a band above the mini player
 - With the keyboard up, the mini player and the download and fetch cards stay where they are behind it, hidden, instead of riding up over the results
 - Every page's list ends above the mini player and the fetch card: a radio's songs, the genres, a genre's songs, the artists, the "see all" lists, the settings pages, About and Wrapped no longer end underneath them, and the A–Z index keeps its last letters clear of the card
@@ -70,6 +79,9 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Fixed — Appearance
 - The Add to Playlist sheet lists on the page's own dark background, like its header, instead of the system grey
+- The Get It card stacks when several fetches run: the one in front rests on the others, whose edges show beneath it, and a swipe deals it aside for the next — settling on each with a small bounce — instead of one card and a "+2"
+- Album pages close their song list with "2024 · 12 songs · 48 min", as a sleeve does, instead of a lone "12 Songs" adrift above the first song
+- Albums the server has no artwork for show their real cover: Navidrome's generic record — which it now resizes to order, so it slipped past the size test — is recognised by eye at any size, and the album is looked up in Deezer's catalogue by artist and title. Aura's own stand-in only appears when the catalogue has nothing either. Covers already cached as the record are cleared once
 
 ### Fixed — Search
 - A song no longer loses its place to an album of the same name: an exact hit on a title now leads the results, and an artist still outranks both

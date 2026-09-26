@@ -49,7 +49,7 @@ struct SearchView: View {
                 .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                     scrollY = y
                 }
-                .background(Color.themeBg)
+                .tabRootCanvas()
                 .toolbar(.hidden, for: .navigationBar)
                 .searchDestinations()
         }
@@ -118,7 +118,8 @@ struct SearchResultsContainer: View {
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.never)
-        .background(Color.themeBg)
+        // No page colour of its own: the host paints it, with the tab-root glow at its top
+        // (`tabRootCanvas`), which an opaque background here would hide.
         .task { SearchIndex.shared.prefetchIfNeeded() }
         .task(id: query) { await runSearch() }
         .task(id: query) { await runDeezerSearch() }

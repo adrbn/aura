@@ -196,17 +196,19 @@ final class ArtworkCache: @unchecked Sendable {
         migrateArtworkCacheIfNeeded()
     }
 
-    /// One-time migration: flush the thumbnail disk cache once to purge entries that
-    /// pinned freshly-added albums to Navidrome's "no art" placeholder (now prevented
-    /// by placeholder detection in `fetchImage`). The permanent offline/downloaded
-    /// masters live in a separate store (`offlineArtworkURL`) and are left untouched.
+    /// One-time migration: flush the thumbnail disk cache to purge entries that pinned
+    /// art-less albums to Navidrome's "no art" placeholder (now prevented by placeholder
+    /// detection in `fetchImage`). Version 3 purges the ones kept since Navidrome began
+    /// resizing its placeholder, which slipped past the size test. The permanent
+    /// offline/downloaded masters live in a separate store (`offlineArtworkURL`) and are
+    /// checked as they load instead.
     private func migrateArtworkCacheIfNeeded() {
         let key = "artworkCacheVersion"
-        guard UserDefaults.standard.integer(forKey: key) < 2 else { return }
+        guard UserDefaults.standard.integer(forKey: key) < 3 else { return }
         if let files = try? FileManager.default.contentsOfDirectory(at: diskCacheURL, includingPropertiesForKeys: nil) {
             for file in files { try? FileManager.default.removeItem(at: file) }
         }
-        UserDefaults.standard.set(2, forKey: key)
+        UserDefaults.standard.set(3, forKey: key)
         AppLogger.shared.log("🔄 Artwork thumbnail cache flushed (purge placeholder-poisoned entries)")
     }
 
@@ -229,6 +231,11 @@ final class ArtworkCache: @unchecked Sendable {
         if let img = memoryCache.object(forKey: memKey) { return img }
         let url = offlineFileURL(forCoverArt: coverArt)
         if let data = try? Data(contentsOf: url), let img = PlatformImage(data: data) {
+            // Saved with a download before the server's placeholder was recognised: let it go.
+            if GenericArtwork.isGeneric(img) {
+                try? FileManager.default.removeItem(at: url)
+                return nil
+            }
             memoryCache.setObject(img, forKey: memKey)
             return img
         }
@@ -253,7 +260,12 @@ final class ArtworkCache: @unchecked Sendable {
         guard let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: ArtworkCache.fullSize) else { return }
         do {
             let (data, _) = try await imageSession.data(from: url)
-            if let img = PlatformImage(data: data) {
+            if var img = PlatformImage(data: data) {
+                // The server has no picture: keep the one found for it, or none at all.
+                if GenericArtwork.isGeneric(img) {
+                    guard let found = await standIn(for: coverArt, requestSize: ArtworkCache.fullSize) else { return }
+                    img = found
+                }
                 storeOfflineArtwork(img, forCoverArt: coverArt)
                 AppLogger.shared.log("🖼 Cached offline artwork for \(coverArt)")
             }
@@ -398,7 +410,7 @@ final class ArtworkCache: @unchecked Sendable {
         if let cached = image(for: key) { return cached }
         // Already established that the server has nothing for this one. Asking again would
         // hold a download slot for seconds and come back with the same generic picture.
-        if hasNoArtwork(coverArt) { return nil }
+        if hasNoArtwork(coverArt) { return await standIn(for: coverArt, requestSize: requestSize, key: key) }
         // Fall back to the downloaded-only master ONLY when the server is genuinely out
         // of reach. Gating on `offlineMode` alone produced the worst possible state: every
         // JSON call (albums, favourites, songs) still went to the server and succeeded, so
@@ -456,6 +468,13 @@ final class ArtworkCache: @unchecked Sendable {
                     self.store(img, for: key)
                     return img
                 }
+                // Recognised by eye, whatever size it came at: Navidrome now resizes its
+                // placeholder to order like any cover, which the size test below can't see.
+                if GenericArtwork.isGeneric(img) {
+                    self.markMissing(coverArt, data: data)
+                    AppLogger.shared.log("🕳 Cover art id=\(coverArt): the server's placeholder — looking for the real one")
+                    return nil
+                }
                 let width = Int(img.size.width.rounded())
                 var verdict = self.classifyArtwork(data: data, width: width, coverArt: coverArt, size: requestSize)
                 if verdict == .undecided {
@@ -481,7 +500,34 @@ final class ArtworkCache: @unchecked Sendable {
         inFlightLock.lock()
         inFlight[key] = nil
         inFlightLock.unlock()
+        if result == nil, hasNoArtwork(coverArt) {
+            return await standIn(for: coverArt, requestSize: requestSize, key: key)
+        }
         return result
+    }
+
+    /// The real cover of an album the server has no picture for, found in the catalogue —
+    /// or nil, and Aura draws its own. Looked for outside the download gate: it asks
+    /// someone else, and must not hold up the server's covers while it waits.
+    private func standIn(for coverArt: String, requestSize: Int, key: String? = nil) async -> PlatformImage? {
+        #if os(iOS)
+        guard let server = ServerManager.shared.currentServer,
+              let url = await CoverFinder.shared.coverURL(for: coverArt, server: server, pixels: requestSize),
+              let (data, _) = try? await imageSession.data(from: url),
+              let image = PlatformImage(data: data)
+        else { return nil }
+        if let key { store(image, for: key) }
+        return image
+        #else
+        return nil
+        #endif
+    }
+
+    private func markMissing(_ coverArt: String, data: Data) {
+        let hash = Self.sha256Hex(data)
+        placeholderLock.lock(); defer { placeholderLock.unlock() }
+        genericHashes.insert(hash)
+        missingArtCovers.insert(coverArt)
     }
 
     /// Whether `coverArt` is already known to have no artwork on the server.
@@ -856,6 +902,67 @@ struct CoverArtAsyncImage: View {
                     self.loadedSize = requestSize
                 }
             }
+        }
+    }
+}
+
+/// The pictures a server shows for an album that has none, recognised by how they look.
+///
+/// Their bytes can't be trusted to repeat: Navidrome resizes its placeholder to whatever
+/// size is asked, as it does real covers. What survives any resize is the picture itself,
+/// so each image is reduced to a 16×16 grey thumbnail — averaged from a 128-pixel copy, so
+/// a small original doesn't alias — and compared with the known placeholders'. Copies of
+/// Navidrome's record, from 64 to 800 pixels, JPEG or PNG, differ from it by under 2 levels
+/// of 255 on average; real covers by 80 and more.
+enum GenericArtwork {
+    private static let side = 16
+    private static let drawn = 128
+    private static let tolerance: Double = 8
+
+    /// Navidrome's "no artwork" record (resources/album-placeholder.webp, 0.63), as
+    /// `thumbnail(of:)` reduces it. Only the thumbnail is kept, not the picture.
+    private static let known: [[UInt8]] = [
+        "//////////v8///////////////nnm5bXHKj6v////////+8XVpaW1xdYXjI///////AXVtZW1xdXm55bcf////tZF1dW1taW2N4a2Vt8f//rFxcXlxHM0NoZ2RlZrX//4BbXF5JRlJjV1RlZ2aM//9rWVtcNh8dJCA+Zmtnev//blhZWzspOyEeQ2VnZX3//4pVV1lVUzciL1tlZWOW///CVVVfcVxMTVtiY2Nhyv///HVccWlZWlxdX2Bggv3////odWxYVlhZWlxdcev//////+yIU1VWV1lai+///////////9yoj5Cq3v///////////////////////////w==",
+    ].compactMap { Data(base64Encoded: $0).map(Array.init) }
+
+    static func isGeneric(_ image: PlatformImage) -> Bool {
+        guard let thumbnail = thumbnail(of: image) else { return false }
+        return known.contains { reference in
+            let total = zip(reference, thumbnail).reduce(0.0) { $0 + abs(Double($1.0) - Double($1.1)) }
+            return total / Double(reference.count) < tolerance
+        }
+    }
+
+    /// The image in grey, flattened onto white — a placeholder may come with its
+    /// transparency or without — and averaged down to `side`×`side`.
+    private static func thumbnail(of image: PlatformImage) -> [UInt8]? {
+        #if os(iOS)
+        guard let picture = image.cgImage else { return nil }
+        #else
+        guard let picture = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        #endif
+        var pixels = [UInt8](repeating: 255, count: drawn * drawn)
+        let drew = pixels.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(data: buffer.baseAddress, width: drawn, height: drawn,
+                                          bitsPerComponent: 8, bytesPerRow: drawn,
+                                          space: CGColorSpaceCreateDeviceGray(),
+                                          bitmapInfo: CGImageAlphaInfo.none.rawValue)
+            else { return false }
+            context.interpolationQuality = .high
+            context.setFillColor(gray: 1, alpha: 1)
+            context.fill(CGRect(x: 0, y: 0, width: drawn, height: drawn))
+            context.draw(picture, in: CGRect(x: 0, y: 0, width: drawn, height: drawn))
+            return true
+        }
+        guard drew else { return nil }
+        let block = drawn / side
+        return (0..<(side * side)).map { cell in
+            let (row, column) = (cell / side, cell % side)
+            var sum = 0
+            for y in 0..<block {
+                for x in 0..<block { sum += Int(pixels[(row * block + y) * drawn + column * block + x]) }
+            }
+            return UInt8(sum / (block * block))
         }
     }
 }

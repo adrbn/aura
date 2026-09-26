@@ -55,7 +55,8 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             settingsList
-                .tabRootGlass(scrollY: $scrollY)
+                // Grouped-list page: grey in light so the white section cards stand out.
+                .tabRootGlass(scrollY: $scrollY, page: .themeGroupedPageBg)
                 .sheet(isPresented: $showAddServer) { AddServerView() }
                 .sheet(isPresented: $showDownloadManager) {
                     NavigationStack { DownloadManagerView() }
@@ -205,8 +206,7 @@ struct SettingsView: View {
         // Reserve room for the floating mini-player so the bottom version footer isn't
         // hidden behind it (matches LibraryView's convention).
         .safeAreaInset(edge: .bottom) { ListEndSpacer() }
-        // Grouped-list page: grey in light so the white section cards stand out.
-        .background(Color.themeGroupedPageBg)
+        // The page is painted by `tabRootGlass`, under its glow — see `body`.
         .id("\(appSettings.appAccentColor.rawValue)-\(appSettings.activeTheme.rawValue)") // Force full re-render on accent/theme change
         .sheet(isPresented: $showEqualizer) {
             EqualizerView()

@@ -125,13 +125,8 @@ struct HomeView: View {
                         }
                     }
                 }
-            .background {
-                ZStack {
-                    Color.themeBg
-                    WorkshopGrid()
-                }
-                .ignoresSafeArea()
-            }
+            // The page, the glow at its top, and the cutting mat drawn over both.
+            .tabRootCanvas(grid: true)
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Album.self) { AlbumDetailView(albumId: $0.id) }
             .navigationDestination(for: Artist.self) { ArtistDetailView(artistId: $0.id, artistName: $0.name, coverArt: $0.coverArt) }
