@@ -17,7 +17,11 @@ struct RadarReleaseView: View {
     @State private var held: [Song]?
 
     private var source: PlaybackSource { .mix(id: "radar", name: String(localized: "Radar")) }
-    private var previews: [Song] { tracks?.compactMap { $0.previewSong(of: release) } ?? [] }
+    /// The release in its own order: the server's copy of each song it has, the preview of
+    /// the rest.
+    private var songs: [Song] {
+        tracks?.compactMap { librarySong(for: $0) ?? $0.previewSong(of: release) } ?? []
+    }
 
     /// The release's songs the server has, wherever they're filed — a single that came out
     /// ahead of it, songs fetched one by one. The radar's few until the full look-up lands.
@@ -137,12 +141,12 @@ struct RadarReleaseView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.borderless)
-                .disabled(previews.isEmpty)
+                .disabled(songs.isEmpty)
 
                 if canFetch {
                     getAllButton
                 } else {
-                    Button { player.playShuffled(previews, source: source) } label: {
+                    Button { player.playShuffled(songs, source: source) } label: {
                         Label("Shuffle", systemImage: "shuffle")
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity).padding(.vertical, 11)
@@ -150,7 +154,7 @@ struct RadarReleaseView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.borderless)
-                    .disabled(previews.isEmpty)
+                    .disabled(songs.isEmpty)
                 }
             }
             .padding(.horizontal)
@@ -220,17 +224,15 @@ struct RadarReleaseView: View {
         onServer.first { RadarRules.sameTitle($0.title, track.title) }
     }
 
-    /// From the top, or from one song: the server's copy when it has it, else the previews —
-    /// then on into the rest of the radar, as its playlist would.
+    /// From the top, or from one song, through the release in its own order — the server's
+    /// copies and the previews of the rest — then on into the rest of the radar, as its
+    /// playlist would.
     private func play(_ track: DeezerTrack?) {
-        if let track, let song = librarySong(for: track) {
-            start(song, of: onServer)
-            return
-        }
-        let songs = previews
+        let songs = songs
         let song: Song?
         if let track {
-            song = songs.first { $0.id == "deezer-\(track.id)" }
+            let id = librarySong(for: track)?.id ?? "deezer-\(track.id)"
+            song = songs.first { $0.id == id }
         } else {
             song = songs.first
         }

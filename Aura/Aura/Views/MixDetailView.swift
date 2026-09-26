@@ -65,8 +65,10 @@ struct MixDetailView: View {
                     }
 
                     // Hidden once this exact version of the mix has been saved; reappears
-                    // automatically when the mix is regenerated with different songs.
-                    if !isSaved && !shown.songs.isEmpty {
+                    // automatically when the mix is regenerated with different songs. Not on
+                    // the radar: it changes by the day and half of it is previews, so a saved
+                    // copy would be a few songs of each downloaded release, frozen.
+                    if !isSaved && !shown.songs.isEmpty && mix.kind != .radar {
                         Button {
                             Task { await save() }
                         } label: {
@@ -89,20 +91,22 @@ struct MixDetailView: View {
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
 
-            // Song rows — full SongRowView (swipe actions + context menu) with
-            // List separators, exactly like a playlist.
-            ForEach(Array(shown.songs.enumerated()), id: \.element.id) { index, song in
-                SongRowView(song: song, tappableArtist: false) {
-                    player.playSong(song, fromQueue: shown.songs, startIndex: index, source: source)
+            if let radar {
+                // The radar lists releases, not songs: an album is one row whatever the server
+                // has of it, and the order is the releases', newest first.
+                RadarReleaseRows(releases: radar.releases, held: wholeOnServer) { openedRelease = $0 }
+            } else if mix.kind != .radar {
+                // Song rows — full SongRowView (swipe actions + context menu) with
+                // List separators, exactly like a playlist.
+                ForEach(Array(shown.songs.enumerated()), id: \.element.id) { index, song in
+                    SongRowView(song: song, tappableArtist: false) {
+                        player.playSong(song, fromQueue: shown.songs, startIndex: index, source: source)
+                    }
+                    .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding,
+                                              leading: 16,
+                                              bottom: AppSettings.shared.listDensity.verticalPadding,
+                                              trailing: 16))
                 }
-                .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding,
-                                          leading: 16,
-                                          bottom: AppSettings.shared.listDensity.verticalPadding,
-                                          trailing: 16))
-            }
-
-            if !listedReleases.isEmpty {
-                RadarMissingRows(releases: listedReleases) { openedRelease = $0 }
             }
 
             ListEndSpacer()
@@ -158,17 +162,15 @@ struct MixDetailView: View {
         }
     }
 
-    /// The releases listed under the playlist: those the server lacks, whole or in part — and
-    /// those whose songs were just fetched one by one, until it's known whether the rest is in.
-    private var listedReleases: [RadarRelease] {
+    /// The releases the server has whole, marked as such. The others are still to get, in full
+    /// or in part — or had songs fetched one by one, until it's known whether the rest is in.
+    private var wholeOnServer: Set<String> {
         guard let radar else { return [] }
-        #if APPSTORE_BUILD
-        return radar.listed
-        #else
-        let picked = ReleaseFetcher.shared.picked
-        let listed = Set(radar.listed.map(\.id))
-        return radar.releases.filter { listed.contains($0.id) || picked.contains($0.id) }
+        var toGet = Set(radar.listed.map(\.id))
+        #if !APPSTORE_BUILD
+        toGet.formUnion(ReleaseFetcher.shared.picked)
         #endif
+        return Set(radar.releases.map(\.id)).subtracting(toGet)
     }
 
     private var countLabel: String {

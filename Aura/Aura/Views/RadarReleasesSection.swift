@@ -1,15 +1,18 @@
 import SwiftUI
 
-/// The radar's releases the server doesn't have yet, whole or in part, listed under its playlist. They are rows
-/// of the page's own List, so they scroll with it and sit on its tinted canvas.
-struct RadarMissingRows: View {
+/// The radar's releases, newest first: those the server has whole marked and played from it,
+/// the rest previewed and, in the sideload build, to get. They are rows of the page's own List,
+/// so they scroll with it and sit on its tinted canvas.
+struct RadarReleaseRows: View {
     let releases: [RadarRelease]
+    /// The ids of the releases the server has whole.
+    let held: Set<String>
     /// Opens a release's own page, a level down — for a release of more than one song.
     let open: (RadarRelease) -> Void
 
     var body: some View {
         ForEach(releases) { release in
-            RadarReleaseRow(release: release) { open(release) }
+            RadarReleaseRow(release: release, isHeld: held.contains(release.id)) { open(release) }
                 .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
                                           bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 16))
                 .listRowBackground(Color.clear)
@@ -19,6 +22,8 @@ struct RadarMissingRows: View {
 
 struct RadarReleaseRow: View {
     let release: RadarRelease
+    /// On the server whole: marked, and played from it.
+    var isHeld = false
     let open: () -> Void
 
     @Environment(AudioPlayer.self) private var player
@@ -51,6 +56,7 @@ struct RadarReleaseRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(release.title)
                     .font(.subheadline.weight(.medium))
+                    .foregroundStyle(isCurrent ? AnyShapeStyle(accentColor) : AnyShapeStyle(.primary))
                     .lineLimit(1)
                 Text(details)
                     .font(.caption)
@@ -61,6 +67,11 @@ struct RadarReleaseRow: View {
             Group {
                 if isLoadingPreview {
                     ProgressView()
+                } else if isHeld {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(accentColor)
+                        .accessibilityLabel("In your library")
                 } else if canSearchSoulseek {
                     getControl
                 } else {
@@ -74,15 +85,21 @@ struct RadarReleaseRow: View {
         .contentShape(Rectangle())
         .onTapGesture { Task { await tap() } }
         .contextMenu {
-            Button { Task { await playPreviews() } } label: {
-                Label("Play Previews", systemImage: "play.circle")
+            if isHeld {
+                Button { Task { await tap() } } label: {
+                    Label(heldSingle == nil ? "Open" : "Play", systemImage: "play.circle")
+                }
+            } else {
+                Button { Task { await playPreviews() } } label: {
+                    Label("Play Previews", systemImage: "play.circle")
+                }
             }
             if let deezerURL {
                 Button { openURL(deezerURL) } label: {
                     Label("Open in Deezer", systemImage: "arrow.up.right")
                 }
             }
-            if canSearchSoulseek {
+            if canSearchSoulseek && !isHeld {
                 #if !APPSTORE_BUILD
                 Button { ReleaseFetcher.shared.get(release) } label: {
                     Label("Get It", systemImage: "arrow.down.circle")
@@ -98,7 +115,8 @@ struct RadarReleaseRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(release.title), \(release.typeLabel) by \(release.artist.name), \(dateLabel)")
-        .accessibilityHint(isOneSong ? "Plays its preview" : "Opens its songs")
+        .accessibilityHint(isHeld ? (heldSingle == nil ? "Opens its songs" : "Plays it from your library")
+                                  : isOneSong ? "Plays its preview" : "Opens its songs")
         .accessibilityAddTraits(.isButton)
         .sheet(isPresented: $showSoulseek) { soulseekSheet }
     }
@@ -106,9 +124,30 @@ struct RadarReleaseRow: View {
     /// A single of one song has no page worth opening.
     private var isOneSong: Bool { RadarService.shared.trackLists[release.id]?.tracks.count == 1 }
 
+    /// A single of one song the server has: its copy there.
+    private var heldSingle: Song? {
+        guard isHeld, release.type == "single",
+              let songs = RadarService.shared.current?.inLibrary[release.id], songs.count == 1 else { return nil }
+        return songs.first
+    }
+
+    /// Whether what's playing is one of this release's songs, its server copy or its preview.
+    private var isCurrent: Bool {
+        guard let current = player.currentSong else { return false }
+        if current.isPreview { return RadarService.shared.release(of: current)?.id == release.id }
+        return RadarService.shared.current?.inLibrary[release.id]?.contains { $0.id == current.id } == true
+    }
+
     /// Opens the release — or, when it's a single of one song, plays it like a row of the
-    /// radar's playlist, on into the next releases.
+    /// radar's playlist, on into the next releases: from the server when it's there.
     private func tap() async {
+        if let song = heldSingle {
+            let queue = RadarService.shared.queue(playing: [song], of: release)
+            player.playSong(song, fromQueue: queue, startIndex: queue.firstIndex { $0.id == song.id } ?? 0,
+                            source: .mix(id: "radar", name: String(localized: "Radar")))
+            return
+        }
+        if isHeld { return open() }
         let known = RadarService.shared.trackLists[release.id]
         guard known?.tracks.count == 1 || (known == nil && release.type == "single") else { return open() }
         await playPreviews(fromRow: true)
