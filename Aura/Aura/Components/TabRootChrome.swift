@@ -146,12 +146,18 @@ struct BottomEdgeVeil: View {
     var body: some View {
         let bottom = TabChrome.windowSafeBottom
         let height = bottom + (coversMiniPlayer ? Self.miniPlayerTop : Self.tabBarHeight) + Self.lead
-        LinearGradient(stops: Self.stops(height: height, rampEnd: height - bottom - Self.tabBarHeight),
-                       startPoint: .top, endPoint: .bottom)
-            .frame(height: height)
+        // Measured from the foot of the screen. Inside a tab the safe area ends at the top of
+        // the tab bar, and a fixed-height view only aligns to that; filling the whole screen
+        // first is what puts the fade where the bars actually are.
+        Color.clear
+            .overlay(alignment: .bottom) {
+                LinearGradient(stops: Self.stops(height: height, rampEnd: height - bottom - Self.tabBarHeight),
+                               startPoint: .top, endPoint: .bottom)
+                    .frame(height: height)
+            }
             .allowsHitTesting(false)
             // Keyboard included: it stays down behind the keyboard rather than riding up on it.
-            .ignoresSafeArea(edges: .bottom)
+            .ignoresSafeArea()
             .animation(.easeInOut(duration: 0.25), value: coversMiniPlayer)
     }
 
