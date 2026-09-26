@@ -55,7 +55,7 @@ Aura reads per-word timings from the OpenSubsonic lyrics extension, falls back t
 
 Each word lights as it is sung. The lines around it fall away in size, blur and opacity, so the line being sung is the only one competing for your attention. Tap any line to jump there, nudge the timing if your headphones lag, and turn the phone for full screen.
 
-Lyrics in another language can carry **a translation under each line**, small and dimmed so the song keeps the eye. It is made on the iPhone by Apple's Translation framework — free, offline once the language is in, and the words never leave the device. A song translated once comes back instantly.
+Lyrics in another language can carry **a translation under each line**, small and dimmed so the song keeps the eye. It is made on the iPhone: where Apple Intelligence is on, by its language model, which reads the song as a whole and writes what a native speaker would say — idioms by their sense, the singer's familiar "you" kept — rather than word for word; elsewhere by Apple's Translation framework, offline once the language is in. Free either way, and the words never leave the device. A song translated once comes back instantly.
 
 ## Made for you
 

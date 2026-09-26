@@ -28,6 +28,14 @@ struct SearchView: View {
                 .ignoresSafeArea(.container, edges: .top)
                 .contentMargins(.top, TabChrome.contentTop + titleHeight + 8 + searchBarHeight, for: .scrollContent)
                 .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
+                // Until the field pins, it rises with the rows and nothing passes under it.
+                // Once it has, the rows do: dense down to its foot, they go behind it rather
+                // than slide up around it. Faded in only then, so the glow keeps the top of
+                // the page for the first stretch of scroll.
+                .overlay(alignment: .top) {
+                    TopEdgeVeil(scrollY: scrollY - titleHeight,
+                                holdsTo: TabChrome.contentTop + 8 + searchBarHeight)
+                }
                 // Big-left title (fades + slides away) above the search field (stays, pinning
                 // under the glass) — drawn on top of the glass so the field stays sharp.
                 .overlay(alignment: .top) {
@@ -379,7 +387,7 @@ struct SearchResultsContainer: View {
             if !results.artists.isEmpty {
                 let isExpanded = expandedSections.contains("artists")
                 let visible = isExpanded ? results.artists : Array(results.artists.prefix(collapsedLimit))
-                sectionHeader("Artists")
+                sectionHeader("Artists", section: "artists", total: results.artists.count)
                 ForEach(visible) { artist in
                     entityRow(value: artist, coverArt: artist.coverArt, circular: true,
                               title: artist.name, subtitle: nil) {
@@ -388,25 +396,19 @@ struct SearchResultsContainer: View {
                         history.arm(.artist(artist))
                     }
                 }
-                if !isExpanded && results.artists.count > collapsedLimit {
-                    showMoreButton(section: "artists", total: results.artists.count)
-                }
             }
         case "songs":
             if !results.songs.isEmpty {
                 let isExpanded = expandedSections.contains("songs")
                 let visible = isExpanded ? results.songs : Array(results.songs.prefix(collapsedLimit))
-                sectionHeader("Songs")
+                sectionHeader("Songs", section: "songs", total: results.songs.count)
                 ForEach(visible) { song in songRow(song) }
-                if !isExpanded && results.songs.count > collapsedLimit {
-                    showMoreButton(section: "songs", total: results.songs.count)
-                }
             }
         case "albums":
             if !results.albums.isEmpty {
                 let isExpanded = expandedSections.contains("albums")
                 let visible = isExpanded ? results.albums : Array(results.albums.prefix(collapsedLimit))
-                sectionHeader("Albums")
+                sectionHeader("Albums", section: "albums", total: results.albums.count)
                 ForEach(visible) { album in
                     entityRow(value: album, coverArt: album.coverArt, circular: false,
                               title: album.name, subtitle: album.artist ?? "Unknown") {
@@ -414,24 +416,18 @@ struct SearchResultsContainer: View {
                         history.arm(.album(album))
                     }
                 }
-                if !isExpanded && results.albums.count > collapsedLimit {
-                    showMoreButton(section: "albums", total: results.albums.count)
-                }
             }
         case "playlists":
             if !results.playlists.isEmpty {
                 let isExpanded = expandedSections.contains("playlists")
                 let visible = isExpanded ? results.playlists : Array(results.playlists.prefix(collapsedLimit))
-                sectionHeader("Playlists")
+                sectionHeader("Playlists", section: "playlists", total: results.playlists.count)
                 ForEach(visible) { playlist in
                     entityRow(value: playlist, coverArt: playlist.coverArt, circular: false,
                               title: playlist.name, subtitle: playlist.songCount.map { "\($0) songs" }) {
                         SearchRanking.shared.recordTap(query: trimmedQuery, resultId: playlist.id)
                         history.arm(.playlist(playlist))
                     }
-                }
-                if !isExpanded && results.playlists.count > collapsedLimit {
-                    showMoreButton(section: "playlists", total: results.playlists.count)
                 }
             }
         default:
@@ -481,34 +477,21 @@ struct SearchResultsContainer: View {
                                   leading: 16, bottom: appSettings.listDensity.verticalPadding, trailing: 16))
     }
 
-    private func sectionHeader(_ title: String, systemImage: String? = nil, tint: Color? = nil) -> some View {
-        HStack(spacing: 6) {
-            if let systemImage { Image(systemName: systemImage).font(.subheadline.weight(.bold)) }
-            Text(title).font(.title3.bold())
+    /// A section's title, with its See All on the right while it holds more than it shows.
+    ///
+    /// The See All used to be a row of its own under the section's last result. Sections
+    /// run to different lengths, so those rows landed at scattered heights down the page,
+    /// and between a section and the next they read as belonging to either. On the title
+    /// it sits where the eye already is, at the same place in every section.
+    private func sectionHeader(_ title: String, section: String, total: Int) -> some View {
+        SearchSectionHeader(title: LocalizedStringKey(title), hidden: total - collapsedLimit,
+                            isExpanded: expandedSections.contains(section)) {
+            if expandedSections.contains(section) {
+                expandedSections.remove(section)
+            } else {
+                expandedSections.insert(section)
+            }
         }
-        .foregroundStyle(tint ?? Color.primary)
-        .listRowSeparator(.hidden)
-        .listRowBackground(Color.clear)
-        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
-    }
-
-    private func showMoreButton(section: String, total: Int) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.25)) { _ = expandedSections.insert(section) }
-        } label: {
-            Text("Show more (\(total - collapsedLimit) more)")
-                .font(.subheadline).foregroundStyle(accentColor)
-                // Left-aligned on the same 16pt guide as the rows above it: it belongs to
-                // the section it follows, and centring made it read as a divider between
-                // two sections instead.
-                .frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
-        }
-        .buttonStyle(.plain)
-        .listRowSeparator(.hidden)
-        .listRowBackground(Color.clear)
-        // Was inheriting the List defaults — ~11pt above and below plus a 20pt leading
-        // edge — which pushed the next section well down the page.
-        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
     }
 
     // MARK: Section ordering
@@ -519,5 +502,42 @@ struct SearchResultsContainer: View {
                                     albumNames: results.albums.map(\.name),
                                     artistNames: results.artists.map(\.name),
                                     playlistNames: results.playlists.map(\.name))
+    }
+}
+
+/// A search section's title, and its See All / Show Less on the right when it holds more
+/// than it shows. Shared by the library's sections and Deezer's.
+struct SearchSectionHeader: View {
+    let title: LocalizedStringKey
+    /// How many results the collapsed section leaves out; no button when none.
+    let hidden: Int
+    let isExpanded: Bool
+    let toggle: () -> Void
+
+    @Environment(\.appAccentColor) private var accentColor
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title).font(.title3.bold())
+            Spacer(minLength: 12)
+            if hidden > 0 {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.25)) { toggle() }
+                } label: {
+                    Text(isExpanded ? "Show Less" : "See All")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(accentColor)
+                        // A word is a small target: it reaches past its letters without
+                        // making the header any taller than the ones without it.
+                        .contentShape(Rectangle().inset(by: -12))
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint(isExpanded ? Text("Shows the first results only") : Text("Shows \(hidden) more"))
+            }
+        }
+        .foregroundStyle(Color.primary)
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
     }
 }

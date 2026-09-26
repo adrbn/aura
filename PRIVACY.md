@@ -83,7 +83,7 @@ With the Radar on, what you type in **Search** is also sent to the same catalogu
 
 ### Lyrics translation (on the device)
 
-When you turn on translation in the lyrics, the lines are translated **on your device** by Apple's Translation framework. The lyrics are not sent to Apple, to the developer, or to any translation service. The first time a pair of languages is used, iOS may offer to download it; that download is between your device and Apple, like any system language. Translations are kept in the app's cache.
+When you turn on translation in the lyrics, the lines are translated **on your device**: by Apple Intelligence's on-device language model where it is turned on, otherwise by Apple's Translation framework. The lyrics are not sent to Apple, to the developer, or to any translation service. The first time a pair of languages is used, iOS may offer to download it; that download is between your device and Apple, like any system language. Translations are kept in the app's cache.
 
 ### To MusicBrainz (for song credits)
 

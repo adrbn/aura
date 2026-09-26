@@ -5,9 +5,9 @@ import SwiftUI
 /// The releases being fetched, above the mini player: which of the four steps each is at,
 /// and how far into it — then Play once it's in the library, or Retry if it didn't make it.
 ///
-/// With several on their way they stack, the one in front resting on the others, whose
-/// edges show beneath it. A swipe deals the front one off to the left and brings up the
-/// next; the other way brings it back. Each one settles in front with a small bounce.
+/// With several on their way they sit side by side, one on screen at a time: a swipe
+/// slides the next one in, and it lands with a small bounce. Past either end the row
+/// gives a little, then springs back.
 struct FetchProgressBanner: View {
     /// Room below it: a gap above the mini player, or the tab bar's height without one.
     let bottomGap: CGFloat
@@ -18,7 +18,7 @@ struct FetchProgressBanner: View {
 
     var body: some View {
         // In the order they were asked for, newest first — not running-first like
-        // `visible`, which would reshuffle the stack under the finger as fetches finish.
+        // `visible`, which would reshuffle the row under the finger as fetches finish.
         let fetches = fetcher.fetches
         FetchDeck(fetches: fetches, selected: $selected)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
@@ -44,36 +44,24 @@ private struct FetchDeck: View {
     @State private var drag: CGFloat = 0
     @State private var width: CGFloat = 1
 
-    /// How much of each card beneath shows, and how much smaller each one is.
-    private static let tuck: CGFloat = 7
-    private static let shrink: CGFloat = 0.05
-    /// Cards beneath the front one that show at all.
-    private static let depth = 2
-    static let settle = Animation.spring(response: 0.42, dampingFraction: 0.7)
+    static let settle = Animation.spring(response: 0.42, dampingFraction: 0.72)
 
     private var index: Int { fetches.firstIndex { $0.id == selected } ?? 0 }
 
     var body: some View {
-        // How far the swipe has carried the stack, in cards: past 0.5 the next one is closer.
-        let progress = -drag / max(width, 1)
         ZStack(alignment: .top) {
             ForEach(Array(fetches.enumerated()), id: \.element.id) { offset, fetch in
-                // 0 in front, 1 and 2 tucked beneath it, -1 dealt off to the left.
-                let place = CGFloat(offset - index) - progress
-                let tucked = min(max(place, 0), CGFloat(Self.depth))
-                let inFront = offset == index
+                // 0 on screen, -1 off to the left, 1 waiting off to the right; a swipe
+                // carries the whole row with the finger.
+                let place = CGFloat(offset - index) + drag / max(width, 1)
+                let onScreen = offset == index
                 FetchCard(fetch: fetch,
-                          position: fetches.count > 1 ? "\(offset + 1)/\(fetches.count)" : nil,
-                          // A card beneath shows only its edge; its words would read through
-                          // the glass of the one on top.
-                          reveal: place > 0 ? max(0, 1 - Double(place) * 1.6) : 1)
-                    .scaleEffect(1 - Self.shrink * tucked, anchor: .bottom)
-                    .offset(x: min(place, 0) * width, y: tucked * Self.tuck)
-                    .opacity(place < -1 ? 0 : max(0, min(1, Double(Self.depth) + 1 - Double(place))))
-                    // Dealt-off cards come back over the stack, not from under it.
-                    .zIndex(-Double(place))
-                    .allowsHitTesting(inFront)
-                    .accessibilityHidden(!inFront)
+                          position: fetches.count > 1 ? "\(offset + 1)/\(fetches.count)" : nil)
+                    .offset(x: place * width)
+                    // Only a neighbour ever slides into view; the rest keep out of the way.
+                    .opacity(abs(place) < 1.5 ? 1 : 0)
+                    .allowsHitTesting(onScreen)
+                    .accessibilityHidden(!onScreen)
                     .accessibilityAdjustableAction { direction in
                         switch direction {
                         case .increment: settle(on: index + 1)
@@ -89,9 +77,6 @@ private struct FetchDeck: View {
                             with: .opacity.animation(.easeIn(duration: 0.2).delay(0.18)))))
             }
         }
-        // The edges beneath are part of the card's height, so the veil and the pages behind
-        // it make room for them too.
-        .padding(.bottom, Self.tuck * CGFloat(min(max(fetches.count - 1, 0), Self.depth)))
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = max($0, 1) }
         .gesture(swipe, including: fetches.count > 1 ? .all : .subviews)
     }
@@ -102,7 +87,7 @@ private struct FetchDeck: View {
                 let x = value.translation.width
                 // Sideways only: a mostly vertical drag is left alone.
                 guard drag != 0 || abs(x) > abs(value.translation.height) else { return }
-                // Past either end the stack gives a little, then springs back.
+                // Past either end the row gives a little, then springs back.
                 let pastEnd = (index == 0 && x > 0) || (index == fetches.count - 1 && x < 0)
                 drag = pastEnd ? x / (1 + abs(x) / 90) : x
             }
@@ -126,10 +111,8 @@ private struct FetchDeck: View {
 
 private struct FetchCard: View {
     let fetch: ReleaseFetch
-    /// Where it sits in the stack, as "2/3" — nil when it's alone.
+    /// Where it sits in the row, as "2/3" — nil when it's alone.
     let position: String?
-    /// How much of what it says shows: nothing while it's tucked beneath another.
-    var reveal: Double = 1
 
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
@@ -172,7 +155,6 @@ private struct FetchCard: View {
             Spacer(minLength: 0)
             trailing
         }
-        .opacity(reveal)
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .contentShape(Rectangle())

@@ -68,23 +68,27 @@ struct DeezerSearchRows: View {
     private var density: CGFloat { AppSettings.shared.listDensity.verticalPadding }
 
     var body: some View {
-        header("On Deezer")
-        ForEach(showsAllSongs ? finds.songs : Array(finds.songs.prefix(collapsedLimit))) { find in
-            DeezerSongRow(find: find) { play(find) }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: density, leading: 16, bottom: density, trailing: 16))
+        // Two sections, each under its own title, as the library's are: under one "On
+        // Deezer" the albums ran straight on from the songs, and the songs' See All sat
+        // between the two as if it belonged to either.
+        if !finds.songs.isEmpty {
+            SearchSectionHeader(title: "Songs on Deezer", hidden: finds.songs.count - collapsedLimit,
+                                isExpanded: showsAllSongs) { showsAllSongs.toggle() }
+            ForEach(showsAllSongs ? finds.songs : Array(finds.songs.prefix(collapsedLimit))) { find in
+                DeezerSongRow(find: find) { play(find) }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: density, leading: 16, bottom: density, trailing: 16))
+            }
         }
-        if !showsAllSongs && finds.songs.count > collapsedLimit {
-            showMore(finds.songs.count) { showsAllSongs = true }
-        }
-        ForEach(showsAllReleases ? finds.releases : Array(finds.releases.prefix(collapsedLimit))) { release in
-            Button { navPath.append(release) } label: { DeezerReleaseRow(release: release) }
-                .buttonStyle(.plain)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: density + 2, leading: 16, bottom: density + 2, trailing: 16))
-        }
-        if !showsAllReleases && finds.releases.count > collapsedLimit {
-            showMore(finds.releases.count) { showsAllReleases = true }
+        if !finds.releases.isEmpty {
+            SearchSectionHeader(title: "Albums on Deezer", hidden: finds.releases.count - collapsedLimit,
+                                isExpanded: showsAllReleases) { showsAllReleases.toggle() }
+            ForEach(showsAllReleases ? finds.releases : Array(finds.releases.prefix(collapsedLimit))) { release in
+                Button { navPath.append(release) } label: { DeezerReleaseRow(release: release) }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: density + 2, leading: 16, bottom: density + 2, trailing: 16))
+            }
         }
     }
 
@@ -95,28 +99,6 @@ struct DeezerSearchRows: View {
             return
         }
         player.playSong(song, fromQueue: queue, startIndex: index, source: .search(query: finds.query))
-    }
-
-    private func header(_ title: LocalizedStringKey) -> some View {
-        Text(title)
-            .font(.title3.bold())
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
-    }
-
-    private func showMore(_ total: Int, _ action: @escaping () -> Void) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.25)) { action() }
-        } label: {
-            Text("Show more (\(total - collapsedLimit) more)")
-                .font(.subheadline).foregroundStyle(.tint)
-                .frame(maxWidth: .infinity, minHeight: 26, alignment: .leading)
-        }
-        .buttonStyle(.plain)
-        .listRowSeparator(.hidden)
-        .listRowBackground(Color.clear)
-        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 2, trailing: 16))
     }
 }
 

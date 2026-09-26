@@ -278,23 +278,12 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: Self.statsGap) {
                 // Big, left-aligned title — scrolls away with the content and returns at the
                 // top on bounce, so it doesn't keep a fixed black bar that breaks the top glass fade.
+                // The logs live in Settings → Beta, not on the title: a debugging tool
+                // doesn't belong on the app's front door.
                 if !homeTitle.isEmpty {
-                    ZStack(alignment: .trailing) {
-                        homeTitleLabel
-                        #if !APPSTORE_BUILD
-                        if appSettings.betaFeaturesEnabled {
-                            NavigationLink {
-                                DevLogsView()
-                            } label: {
-                                Image(systemName: "doc.text.magnifyingglass")
-                                    .font(.title3)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        #endif
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 4)
+                    homeTitleLabel
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
                 }
 
                 // Server stats bar (configurable) — stays at the very top.

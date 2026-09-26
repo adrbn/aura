@@ -14,10 +14,12 @@ actor SubsonicClient {
     }
 
     /// Query-value character set: urlQueryAllowed minus characters that are
-    /// structural in query strings ("&=+") or ambiguous ("@").
+    /// structural in query strings ("&=+"), ambiguous ("@"), or refused outright:
+    /// Navidrome (Go) fails a whole request whose query holds a bare ";", so a title
+    /// like "You and I, Pt. II (Full Version; 2017 Remaster)" could never be searched.
     static let queryValueAllowed: CharacterSet = {
         var set = CharacterSet.urlQueryAllowed
-        set.remove(charactersIn: "&=+@")
+        set.remove(charactersIn: "&=+@;")
         return set
     }()
 

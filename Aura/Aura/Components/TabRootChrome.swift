@@ -101,20 +101,45 @@ func refreshTabContent(_ reload: () async -> Void) async {
 /// glass band.
 struct TopEdgeVeil: View {
     let scrollY: CGFloat
+    /// How far down, from the top of the screen, the page colour holds before it fades.
+    /// Zero leaves only the status bar veiled. Search passes the foot of its pinned field:
+    /// the rows otherwise slid up in plain sight around the field and between it and the
+    /// clock, and read as if they ran on under it.
+    var holdsTo: CGFloat = 0
+
+    /// How far the fade runs below `holdsTo`.
+    private static let fade: CGFloat = 28
+    private static let fadeStops = 8
 
     var body: some View {
-        LinearGradient(
-            stops: [
-                .init(color: Color.themeBg.opacity(0.92), location: 0),
-                .init(color: Color.themeBg.opacity(0.6), location: 0.5),
-                .init(color: Color.themeBg.opacity(0), location: 1),
-            ],
-            startPoint: .top, endPoint: .bottom
-        )
-        .frame(height: TabChrome.windowSafeTop + 34)
-        .opacity(min(max(scrollY / 16, 0), 1))
-        .allowsHitTesting(false)
-        .ignoresSafeArea(.container, edges: .top)
+        gradient
+            .frame(height: holdsTo > 0 ? holdsTo + Self.fade : TabChrome.windowSafeTop + 34)
+            .opacity(min(max(scrollY / 16, 0), 1))
+            .allowsHitTesting(false)
+            .ignoresSafeArea(.container, edges: .top)
+    }
+
+    private var gradient: LinearGradient {
+        guard holdsTo > 0 else {
+            return LinearGradient(
+                stops: [
+                    .init(color: Color.themeBg.opacity(0.92), location: 0),
+                    .init(color: Color.themeBg.opacity(0.6), location: 0.5),
+                    .init(color: Color.themeBg.opacity(0), location: 1),
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+        }
+        // Dense to the foot of what it holds, then eased out, so no line shows where it ends.
+        let height = holdsTo + Self.fade
+        let hold = holdsTo / height
+        let fade = (0...Self.fadeStops).map { index -> Gradient.Stop in
+            let t = CGFloat(index) / CGFloat(Self.fadeStops)
+            let eased = 1 - t * t * (3 - 2 * t)
+            return .init(color: Color.themeBg.opacity(0.95 * eased), location: hold + (1 - hold) * t)
+        }
+        return LinearGradient(stops: [.init(color: Color.themeBg.opacity(0.95), location: 0)] + fade,
+                              startPoint: .top, endPoint: .bottom)
     }
 }
 

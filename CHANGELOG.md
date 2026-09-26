@@ -22,6 +22,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - The veil behind the tab bar and the mini player rises behind the Get It card too, so its glass reads the same dark page as the mini player's
 
 ### Fixed — Radar
+- Get It no longer waits forever for a song whose title holds a semicolon — "You and I, Pt. II (Full Version; 2017 Remaster)": Navidrome refuses a whole request with a bare ";" in it, so the song, already in the library, was never found. Every query sent to the server now spells it out
 - A re-issue is no longer a new release: an album Deezer dates anew under a title the artist had already put out stays off the radar — the same day's explicit and clean copies count once, and an album named after the single that announced it still counts
 - Songs the server had long before a release came out (more than two weeks) don't join the mix as new; a release made only of such songs leaves the radar. Radars built before are rebuilt at once
 - A preview shows its cover in Now Playing, and the background drawn from it — Deezer's artwork was taken for the server's "no cover" picture
@@ -40,7 +41,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Radio covers fill the square: the seed artist in a larger disc sending out rings, the two similar artists riding the first ring in the field's tone, the name in a black band with the similar artists on a strip beneath — the mixes' lockup — over a field that deepens towards its edges, with a fine grain. Every disc is drawn from the start, a tinted stand-in until its photo is in, and the rings travel while the radio is being put together
 
 ### Added — Lyrics
-- Translation: lyrics in another language than the phone's show a translation under each line, small and dimmed. Made on the device by Apple's Translation framework — free, offline once the language is downloaded, nothing sent anywhere — and kept, so a song comes back translated at once. The button sits at the end of the lyrics header, facing the song's title, and only appears when there is something to translate
+- Translation: lyrics in another language than the phone's show a translation under each line, small and dimmed. Where Apple Intelligence is on, its on-device language model writes it, reading the song as a whole as a subtitler would — idioms by their sense, the singer's familiar "tu" kept — instead of word for word ("sotto, sotto" is "au fond", not "en bas"). Elsewhere, and for any line the model leaves out, Apple's Translation framework does it line by line, offline once the language is downloaded. Free, nothing sent anywhere, and kept, so a song comes back translated at once. The button sits at the end of the lyrics header, facing the song's title, and only appears when there is something to translate
 - Lines already in the reader's language — a song switching languages — are left as they are
 
 ### Added — Playlists
@@ -79,7 +80,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Fixed — Appearance
 - The Add to Playlist sheet lists on the page's own dark background, like its header, instead of the system grey
-- The Get It card stacks when several fetches run: the one in front rests on the others, whose edges show beneath it, and a swipe deals it aside for the next — settling on each with a small bounce — instead of one card and a "+2"
+- With several Get It fetches running, their cards sit side by side, one on screen at a time: a swipe slides the next one in, settling with a small bounce and giving a little past either end, and the card says which it is (2/3) — instead of one card and a "+2"
+- Home's title no longer carries the logs button: the logs are in Settings → Beta Features, under View Logs
 - Album pages close their song list with "2024 · 12 songs · 48 min", as a sleeve does, instead of a lone "12 Songs" adrift above the first song
 - Albums the server has no artwork for show their real cover: Navidrome's generic record — which it now resizes to order, so it slipped past the size test — is recognised by eye at any size, and the album is looked up in Deezer's catalogue by artist and title. Aura's own stand-in only appears when the catalogue has nothing either. Covers already cached as the record are cleared once
 
@@ -87,7 +89,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - A song no longer loses its place to an album of the same name: an exact hit on a title now leads the results, and an artist still outranks both
 - The search field is tappable across its whole width, and the cross that cleared it is now a full-size **Clear** button
 - The search field keeps one height: it no longer grows when the first letter brings up **Clear**
-- "Did you mean" and "Show more" sit on rows their own height: every row was held to 44 points, which opened a gap above the first section
+- "Did you mean" sits on a row its own height: every row was held to 44 points, which opened a gap above the first section
+- A section's **See All** sits on its title, at the same place in every section, instead of on a row under its last result — sections run to different lengths, so those rows landed at scattered heights, between one section and the next. It turns into **Show Less** once the section is open
+- Deezer's finds come in two titled sections, **Songs on Deezer** and **Albums on Deezer**: under one "On Deezer" the albums ran straight on from the songs
+- Rows scrolling up go behind the pinned search field, faded out beneath it, instead of sliding up in plain sight around it and under the clock
 
 ### Fixed — Lyrics
 - A duet, a remix or a translated version shows its own words: when a song names its version, the lyrics found are checked against that version's sheets on LRCLIB, once per song, and replaced when most of them disagree — *These Walls* with Pierre de Maere gets its French verse
