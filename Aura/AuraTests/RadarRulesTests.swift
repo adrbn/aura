@@ -183,13 +183,13 @@ struct RadarRulesTests {
 
     // MARK: Playlist
 
-    @Test("The playlist takes a few tracks per release, newest release first, no song twice")
-    func playlistOrdersAndCaps() throws {
+    @Test("The playlist takes every song each release lends, newest release first, no song twice")
+    func playlistOrders() throws {
         let old = release("old", "2026-09-01")
         let new = release("new", "2026-09-20")
         let tracks = [(release: old, songs: try ["3", "2"].map(song)),
                       (release: new, songs: try ["3", "4", "5", "1"].map(song))]
-        #expect(RadarRules.playlist(tracks, perRelease: 3).map(\.id) == ["3", "4", "5", "2"])
+        #expect(RadarRules.playlist(tracks).map(\.id) == ["3", "4", "5", "1", "2"])
     }
 
     // MARK: Preview addresses

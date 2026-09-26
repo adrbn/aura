@@ -14,13 +14,16 @@ struct Radar: Codable {
     /// of: an album named after the single already here, one whose songs came one by one.
     /// Nil in a radar stored before this was kept, which is matched again in full.
     let lacking: [String: Int]?
+    /// Whether a release on the server keeps all its new songs. Nil in a radar stored when it
+    /// kept three, which is matched again in full.
+    var whole: Bool? = true
 
     var missing: [RadarRelease] { releases.filter { inLibrary[$0.id] == nil } }
 
     /// The releases listed under the playlist: those the server lacks, whole or in part.
     var listed: [RadarRelease] { releases.filter { inLibrary[$0.id] == nil || lacking?[$0.id] != nil } }
 
-    /// The playlist: a few tracks from each release on the server, newest release first.
+    /// The playlist: every new song of each release on the server, newest release first.
     var songs: [Song] {
         RadarRules.playlist(releases.compactMap { release in inLibrary[release.id].map { (release: release, songs: $0) } })
     }
@@ -91,7 +94,7 @@ final class RadarService {
         if radar?.serverId != server.id { radar = RadarStore.load(for: server.id) }
         let now = Date()
         let staleCatalogue = radar.map { now.timeIntervalSince($0.fetched) > Self.catalogueAge } ?? true
-        let staleLibrary = radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge || $0.lacking == nil } ?? true
+        let staleLibrary = radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge || $0.lacking == nil || $0.whole == nil } ?? true
         guard staleCatalogue || staleLibrary else { return }
 
         // Clears itself before anyone waiting on it resumes, so they see the way clear.
@@ -138,8 +141,8 @@ final class RadarService {
         return tracks
     }
 
-    /// Everything the radar plays: the server's tracks for what it has, Deezer's previews —
-    /// the releases' most-played tracks — for the rest, newest release first.
+    /// Everything the radar plays: all the server's new songs of what it has, a few of
+    /// Deezer's previews — the releases' most-played tracks — for the rest, newest release first.
     var queue: [Song] { playlist(of: current?.releases ?? []) }
 
     /// The radar's queue with one release's songs — all of them, in their own order — where
@@ -158,7 +161,8 @@ final class RadarService {
             if let songs = radar.inLibrary[release.id] { return (release: release, songs: songs) }
             guard let list = trackLists[release.id] else { return nil }
             let ranked = list.tracks.sorted { ($0.rank ?? 0) > ($1.rank ?? 0) }
-            return (release: release, songs: ranked.compactMap { $0.previewSong(of: release) })
+            return (release: release, songs: Array(ranked.compactMap { $0.previewSong(of: release) }
+                .prefix(RadarRules.previewsPerRelease)))
         })
     }
 
@@ -230,11 +234,11 @@ final class RadarService {
         guard !songs.isEmpty, let radar = current, radar.releases.contains(where: { $0.id == release.id })
         else { return }
         var inLibrary = radar.inLibrary
-        inLibrary[release.id] = Array(songs.prefix(RadarRules.perRelease))
+        inLibrary[release.id] = songs
         var lacking = radar.lacking ?? [:]
         lacking[release.id] = count > 0 ? count : nil
         let updated = Radar(serverId: radar.serverId, releases: radar.releases, fetched: radar.fetched,
-                            inLibrary: inLibrary, matched: radar.matched, lacking: lacking)
+                            inLibrary: inLibrary, matched: radar.matched, lacking: lacking, whole: radar.whole)
         RadarStore.save(updated)
         self.radar = updated
     }
@@ -299,7 +303,7 @@ final class RadarService {
         // Once a day everything is checked again; in between, only what was still missing,
         // whole or in part.
         let lacked = radar?.lacking
-        let known = staleCatalogue || lacked == nil ? [:]
+        let known = staleCatalogue || lacked == nil || radar?.whole == nil ? [:]
             : (radar?.inLibrary ?? [:]).filter { lacked?[$0.key] == nil }
         let (matched, lacking) = await match(releases, known: known, server: server)
         // A release whose songs were all on the server long before it came out is one the
@@ -385,7 +389,7 @@ final class RadarService {
             let songs = RadarRules.newSongs(held.songs, of: release)
             if held.lacking > 0 { lacking[release.id] = held.lacking }
             guard !songs.isEmpty || held.lacking == 0 else { continue }
-            inLibrary[release.id] = Array(songs.prefix(RadarRules.perRelease))
+            inLibrary[release.id] = songs
         }
         return (inLibrary, lacking)
     }

@@ -70,8 +70,9 @@ enum RadarRules {
     static let playedFloor = 60
     /// Newest releases kept per artist, so a remix spree doesn't bury everyone else.
     static let perArtist = 3
-    /// Tracks each release lends to the playlist.
-    static let perRelease = 3
+    /// Previews a release the server lacks lends to the playlist — a taste of it. One on the
+    /// server plays whole.
+    static let previewsPerRelease = 3
 
     /// The artists to follow: the most-played album artists, then favourites, then more of
     /// the most-played. Credits that run several artists together, and "Various Artists",
@@ -186,12 +187,11 @@ enum RadarRules {
     }
 
     /// Everything each release lends to the playlist, newest release first, no song twice.
-    static func playlist(_ tracks: [(release: RadarRelease, songs: [Song])],
-                         perRelease: Int = perRelease) -> [Song] {
+    static func playlist(_ tracks: [(release: RadarRelease, songs: [Song])]) -> [Song] {
         var seen = Set<String>()
         return tracks
             .sorted { $0.release.released > $1.release.released }
-            .flatMap { $0.songs.prefix(perRelease) }
+            .flatMap(\.songs)
             .filter { seen.insert($0.id).inserted }
     }
 }
