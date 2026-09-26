@@ -35,18 +35,23 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Radio covers fill the square: the seed artist in a larger disc sending out rings, the two similar artists riding the first ring in the field's tone, the name in a black band with the similar artists on a strip beneath — the mixes' lockup — over a field that deepens towards its edges, with a fine grain. Every disc is drawn from the start, a tinted stand-in until its photo is in, and the rings travel while the radio is being put together
 
 ### Added — Playlists
-- Filters on the Playlists page — Pinned, Radios, Mixes, Mine, Shared, Downloaded — as a row of capsules under the search field, each offered only when it would leave some playlists out. They narrow the search too
-- A list view beside the grid: one row per playlist, cover, name, songs and length. The switch sits at the end of the filter row, and the choice is remembered
+- Filters on the Playlists page — Pinned, Radios, Mixes, Mine, Shared, Downloaded — as a row of small, quiet capsules under the search field, each offered only when it would leave some playlists out. The chosen one takes the accent and a cross; tapping it again shows every playlist. They narrow the search too
+- A list view beside the grid: one row per playlist, cover, name, songs and length. The switch sits beside the menu at the top of the page, and the choice is remembered
 - A saved radio or mix keeps its cover: saving it sends the cover Aura drew — photos, band and all — as the playlist's picture on the server, instead of the server's collage of its songs
 
 ### Changed — Equalizer
-- The equalizer is a response curve: the five bands as points on one smooth line over a decibel grid, dragged up or down from anywhere on the graph, with each band's frequency and gain beneath it. Presets sit in a grid of capsules under the curve, which glides to each one; Reset goes back to flat
+- The equalizer is a response curve: the five bands as points on one smooth line over a decibel grid with its scale beside it, dragged up or down from anywhere on the graph, with each band's gain and frequency beneath it. Presets sit in an even grid of capsules under the curve, which glides to each one; Reset goes back to flat
 - Equalizer changes are saved as they're made: opened from Now Playing, a change was lost at the next launch unless the Settings tab had been visited
 
 ### Added — In the car
 - Shuffle and repeat buttons on a car stereo or a remote now work; the system is told which modes are on
 - Now Playing reports the song's place in the queue ("4 of 20") where there is room for it, and the rate playback returns to, so a car's progress bar keeps moving between updates
 - Siri: "Play my favourites in Aura" — « Joue mes favoris sur Aura » — shuffles your favourite songs, with the app closed
+
+### Changed — Offline
+- The offline library is laid out like the online tabs: what's on the iPhone at a glance, with Shuffle and Play, the search field, and Songs, Albums, Artists and Playlists as a row of capsules instead of a segmented control. Albums are a grid of covers
+- Offline album, playlist and artist pages open in their artwork's colour, with the online pages' header — the cover, the name, Shuffle beside a wide Play — and say how much of each is on the iPhone
+- The card explaining why Aura is offline carries the one action that applies — Retry, or Go Online — in place of a Wi-Fi button in the title
 
 ### Changed — Appearance
 - The page's colour rises behind the tab bar and the mini player: over a bright cover the system's tab bar read lighter than the mini player, the one glass Aura draws itself — and the system's takes no tint. It is eased from the foot of the screen, so it thickens behind the bars without drawing a band above the mini player

@@ -456,64 +456,62 @@ struct OfflineStatusBar: View {
         return "icloud.slash"
     }
 
+    private var statusTint: Color { serverManager.isConnected ? .green : .orange }
+
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: statusIcon)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(serverManager.isConnected ? AnyShapeStyle(.green) : AnyShapeStyle(.orange))
+                .foregroundStyle(statusTint)
+                .frame(width: 36, height: 36)
+                .background(statusTint.opacity(0.15), in: Circle())
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(statusText)
-                    .font(.caption.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
                 Text(statusDetail)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             if !serverManager.isConnected && serverManager.hasNetwork {
-                Button {
+                action(isRetrying ? nil : "Retry") {
                     guard !isRetrying else { return }
                     isRetrying = true
                     Task {
                         await serverManager.testConnection()
                         isRetrying = false
                     }
-                } label: {
-                    if isRetrying {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Text("Retry")
-                            .font(.caption.weight(.bold))
-                    }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.secondary.opacity(0.2))
-                .clipShape(Capsule())
             } else if serverManager.isConnected {
-                // Server answers while we're offline — offer the way out right here.
-                // Previously this state had NO action at all: the bar said "go online
-                // anytime" but the only actual switch lived in Settings.
-                Button {
-                    serverManager.goBackOnline()
-                } label: {
-                    Text("Go Online")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(accentColor)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.secondary.opacity(0.2))
-                .clipShape(Capsule())
+                // Server answers while we're offline — the way out is right here, not in
+                // Settings.
+                action("Go Online") { serverManager.goBackOnline() }
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        // Rounded card instead of a full-bleed grey slab flush against the screen edges.
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(12)
+        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.horizontal, 16)
+    }
+
+    /// The card's one action, as a tinted capsule; a spinner while it runs.
+    private func action(_ title: String?, perform: @escaping () -> Void) -> some View {
+        Button(action: perform) {
+            Group {
+                if let title {
+                    Text(title).font(.footnote.weight(.semibold))
+                } else {
+                    ProgressView().controlSize(.small)
+                }
+            }
+            .foregroundStyle(accentColor)
+            .padding(.horizontal, 14)
+            .frame(height: 32)
+            .background(accentColor.opacity(0.16), in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }

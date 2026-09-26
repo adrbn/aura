@@ -8,7 +8,9 @@ struct EqualizerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appAccentColor) private var accentColor
 
-    private let presetColumns = [GridItem(.adaptive(minimum: 104), spacing: 8)]
+    private let presetColumns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
+    /// Flat isn't among them: it's what Reset goes back to, and the grid comes out even.
+    private let presetChoices = EQPreset.allCases.filter { $0 != .flat }
 
     private var bands: [Float] {
         appSettings.eqPreset == .custom ? appSettings.eqCustomBands : appSettings.eqPreset.bands
@@ -19,17 +21,17 @@ struct EqualizerView: View {
             VStack(alignment: .leading, spacing: 0) {
                 header
                 EQCurveEditor(bands: bands, onChange: setBand, onEnd: { appSettings.save() })
-                    .frame(height: 240)
+                    .frame(height: 236)
                     .padding(.horizontal, 16)
-                    .padding(.top, 12)
+                    .padding(.top, 22)
                 bandReadout
                     .padding(.horizontal, 16)
-                    .padding(.top, 10)
+                    .padding(.top, 4)
                 presets
                     .padding(.horizontal, 16)
-                    .padding(.top, 28)
+                    .padding(.top, 36)
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, 24)
         }
         .scrollIndicators(.hidden)
         .background(Color.themeBg)
@@ -41,7 +43,7 @@ struct EqualizerView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("equalizer")
                     .auraDisplay(40)
                     .foregroundStyle(.primary)
@@ -55,8 +57,8 @@ struct EqualizerView: View {
                 .font(.body.weight(.semibold))
                 .foregroundStyle(accentColor)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 24)
+        .padding(.horizontal, 20)
+        .padding(.top, 22)
     }
 
     private var status: String {
@@ -69,46 +71,52 @@ struct EqualizerView: View {
 
     // MARK: - Band values
 
-    /// Each band's frequency and gain, under its point on the curve.
+    /// Each band's gain, and its frequency beneath, under its point on the curve. The gain
+    /// is what moves, so it carries the weight; the frequency is only its axis label.
     private var bandReadout: some View {
         GeometryReader { geo in
             ForEach(0..<EQCurveEditor.bandCount, id: \.self) { i in
-                VStack(spacing: 3) {
-                    Text(EQPreset.bandLabels[i] + " Hz")
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 1) {
                     Text(Self.gain(bands[i]))
-                        .font(.caption.weight(.semibold).monospacedDigit())
+                        .font(.subheadline.weight(bands[i] == 0 ? .medium : .semibold).monospacedDigit())
                         .foregroundStyle(bands[i] == 0 ? AnyShapeStyle(.tertiary) : AnyShapeStyle(accentColor))
                         .contentTransition(.numericText(value: Double(bands[i])))
+                    Text(EQPreset.bandLabels[i] + " Hz")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 .fixedSize()
                 .position(x: EQCurveEditor.x(for: i, width: geo.size.width), y: geo.size.height / 2)
             }
         }
-        .frame(height: 36)
+        .frame(height: 40)
     }
 
+    /// Whole decibels without the ".0", and a true minus sign.
     private static func gain(_ value: Float) -> String {
-        value == 0 ? "0 dB" : String(format: "%+.1f dB", value).replacingOccurrences(of: ".0 ", with: " ")
+        guard value != 0 else { return "0 dB" }
+        return String(format: "%+.1f dB", value)
+            .replacingOccurrences(of: ".0 ", with: " ")
+            .replacingOccurrences(of: "-", with: "\u{2212}")
     }
 
     // MARK: - Presets
 
     private var presets: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
                 Text("Presets")
-                    .font(.title3.weight(.bold))
+                    .font(.title3.weight(.semibold))
                 Spacer()
                 if appSettings.eqPreset != .flat {
                     Button("Reset") { choose(.flat) }
-                        .font(.subheadline.weight(.semibold))
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(accentColor)
                 }
             }
+            .padding(.horizontal, 4)
             LazyVGrid(columns: presetColumns, spacing: 8) {
-                ForEach(EQPreset.allCases, id: \.self) { preset in
+                ForEach(presetChoices, id: \.self) { preset in
                     presetChip(preset)
                 }
             }
@@ -119,13 +127,15 @@ struct EqualizerView: View {
         let isOn = appSettings.eqPreset == preset
         return Button { choose(preset) } label: {
             Text(preset.rawValue)
-                .font(.subheadline.weight(.semibold))
+                .font(.subheadline.weight(isOn ? .semibold : .medium))
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.75)
+                // Kept off the capsule's ends, so a long name shrinks before it touches them.
+                .padding(.horizontal, 10)
                 .frame(maxWidth: .infinity)
-                .frame(height: 38)
-                .foregroundStyle(isOn ? Color.white : Color.primary)
-                .background(isOn ? AnyShapeStyle(accentColor) : AnyShapeStyle(Color.primary.opacity(0.08)),
+                .frame(height: 40)
+                .foregroundStyle(isOn ? Color.white : Color.primary.opacity(0.88))
+                .background(isOn ? AnyShapeStyle(accentColor) : AnyShapeStyle(Color.primary.opacity(0.07)),
                             in: Capsule())
         }
         .buttonStyle(.plain)
@@ -164,9 +174,12 @@ private struct EQCurveEditor: View {
     @Environment(\.appAccentColor) private var accentColor
 
     static let bandCount = 5
+    /// The dB scale's column, left of the graph.
+    static let axisGutter: CGFloat = 30
     /// How far in from each side the outer points sit, so they can be grabbed.
-    static let edgeInset: CGFloat = 28
+    static let edgeInset: CGFloat = 22
     static let range: ClosedRange<Float> = -12...12
+    private static let scaleMarks: Set<Float> = [-12, 0, 12]
 
     @State private var dragging: Int?
 
@@ -196,11 +209,18 @@ private struct EQCurveEditor: View {
             for db: Float in [-12, -6, 0, 6, 12] {
                 let y = Self.y(for: db, height: canvasSize.height)
                 var line = Path()
-                line.move(to: CGPoint(x: 0, y: y))
+                line.move(to: CGPoint(x: Self.axisGutter, y: y))
                 line.addLine(to: CGPoint(x: canvasSize.width, y: y))
                 let isZero = db == 0
-                context.stroke(line, with: .color(.primary.opacity(isZero ? 0.18 : 0.06)),
+                context.stroke(line, with: .color(.primary.opacity(isZero ? 0.2 : 0.07)),
                                style: StrokeStyle(lineWidth: 1, dash: isZero ? [4, 4] : []))
+                if Self.scaleMarks.contains(db) {
+                    let label = db == 0 ? "0" : String(format: "%+.0f", db).replacingOccurrences(of: "-", with: "\u{2212}")
+                    context.draw(Text(label)
+                                    .font(.caption2.weight(.medium).monospacedDigit())
+                                    .foregroundStyle(Color.primary.opacity(0.35)),
+                                 at: CGPoint(x: Self.axisGutter - 8, y: y), anchor: .trailing)
+                }
             }
         }
     }
@@ -249,7 +269,8 @@ private struct EQCurveEditor: View {
     }
 
     static func x(for index: Int, width: CGFloat) -> CGFloat {
-        edgeInset + (width - edgeInset * 2) * CGFloat(index) / CGFloat(bandCount - 1)
+        let start = axisGutter + edgeInset
+        return start + (width - start - edgeInset) * CGFloat(index) / CGFloat(bandCount - 1)
     }
 
     /// Kept clear of the frame by the node's radius, so the top and bottom points show whole.
@@ -275,7 +296,7 @@ private struct EQCurveEditor: View {
 // MARK: - Curve shape
 
 /// A smooth line through the five gains (Catmull-Rom, drawn as cubic Béziers), carried
-/// flat out to both edges. Closed, it runs down to the bottom so it can be filled.
+/// flat out to both edges of the graph. Closed, it runs down to the bottom so it can be filled.
 private struct EQCurveShape: Shape {
     var gains: EQGains
     let closed: Bool
@@ -293,7 +314,8 @@ private struct EQCurveShape: Shape {
         }
         guard let first = points.first, let last = points.last else { return Path() }
         var path = Path()
-        path.move(to: CGPoint(x: 0, y: first.y))
+        let left = EQCurveEditor.axisGutter
+        path.move(to: CGPoint(x: left, y: first.y))
         path.addLine(to: first)
         for i in 0..<(points.count - 1) {
             let p0 = points[max(i - 1, 0)], p1 = points[i]
@@ -305,7 +327,7 @@ private struct EQCurveShape: Shape {
         path.addLine(to: CGPoint(x: rect.width, y: last.y))
         if closed {
             path.addLine(to: CGPoint(x: rect.width, y: rect.height))
-            path.addLine(to: CGPoint(x: 0, y: rect.height))
+            path.addLine(to: CGPoint(x: left, y: rect.height))
             path.closeSubpath()
         }
         return path

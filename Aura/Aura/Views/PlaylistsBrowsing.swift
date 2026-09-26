@@ -12,18 +12,6 @@ enum PlaylistFilter: String, CaseIterable, Identifiable {
     case downloaded = "Downloaded"
 
     var id: Self { self }
-
-    var icon: String {
-        switch self {
-        case .all: return "square.stack"
-        case .pinned: return "pin.fill"
-        case .radios: return "dot.radiowaves.left.and.right"
-        case .mixes: return "wand.and.stars"
-        case .mine: return "person.fill"
-        case .shared: return "person.2.fill"
-        case .downloaded: return "arrow.down.circle.fill"
-        }
-    }
 }
 
 /// Grid of covers, or one row per playlist.
@@ -86,67 +74,65 @@ struct PlaylistFilterContext {
     }
 }
 
-/// The filters as a row of capsules, and the grid/list switch at its end.
+/// The filters as a row of small capsules, quiet until one is chosen. There is no "All":
+/// tapping the chosen filter again clears it, and it carries a cross to say so.
 struct PlaylistFilterBar: View {
     let filters: [PlaylistFilter]
     @Binding var selection: PlaylistFilter
-    @Binding var layout: PlaylistLayout
-    @Environment(\.appAccentColor) private var accentColor
+
+    private var chips: [PlaylistFilter] { filters.filter { $0 != .all } }
 
     var body: some View {
-        HStack(spacing: 8) {
+        if !chips.isEmpty {
+            // The full width, so the row scrolls out under the screen's edge rather than
+            // being cut off short of it.
             ScrollView(.horizontal) {
-                HStack(spacing: 8) {
-                    ForEach(filters) { filter in chip(filter) }
+                HStack(spacing: 6) {
+                    ForEach(chips) { filter in chip(filter) }
                 }
-                .padding(.leading, 16)
-                .padding(.trailing, 4)
+                .padding(.horizontal, 16)
             }
             .scrollIndicators(.hidden)
-
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) { layout = layout.toggled }
-            } label: {
-                Image(systemName: layout.toggleIcon)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(accentColor)
-                    .frame(width: 36, height: 32)
-                    .background(Color.primary.opacity(0.08), in: Capsule())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(layout == .grid ? "Show as List" : "Show as Grid")
-            .padding(.trailing, 16)
         }
     }
 
     private func chip(_ filter: PlaylistFilter) -> some View {
         let isOn = filter == selection
-        return Button {
+        return QuietChip(title: filter.rawValue, isOn: isOn, showsClear: true) {
             withAnimation(.easeInOut(duration: 0.2)) { selection = isOn ? .all : filter }
-        } label: {
-            Label(filter.rawValue, systemImage: filter.icon)
-                .labelStyle(ChipLabelStyle(showsIcon: filter != .all))
-                .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 14)
-                .frame(height: 32)
-                .foregroundStyle(isOn ? Color.white : Color.primary)
-                .background(isOn ? AnyShapeStyle(accentColor) : AnyShapeStyle(Color.primary.opacity(0.08)),
-                            in: Capsule())
         }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isOn ? .isSelected : [])
+        .accessibilityHint(isOn ? "Shows every playlist" : "Shows only these playlists")
     }
 }
 
-/// Icon then title, tight — the system label spaces them for a list row, not a capsule.
-private struct ChipLabelStyle: LabelStyle {
-    let showsIcon: Bool
+/// A small capsule in a row of filters or modes: quiet until chosen, then in the accent.
+struct QuietChip: View {
+    let title: String
+    let isOn: Bool
+    /// A cross on the chosen chip, for a filter that tapping again clears.
+    var showsClear = false
+    let action: () -> Void
+    @Environment(\.appAccentColor) private var accentColor
 
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 5) {
-            if showsIcon { configuration.icon.font(.caption.weight(.semibold)) }
-            configuration.title
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Text(title)
+                if isOn && showsClear {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                }
+            }
+            .font(.footnote.weight(isOn ? .semibold : .medium))
+            .padding(.horizontal, 12)
+            .frame(height: 30)
+            .foregroundStyle(isOn ? AnyShapeStyle(accentColor) : AnyShapeStyle(.secondary))
+            .background(isOn ? AnyShapeStyle(accentColor.opacity(0.16)) : AnyShapeStyle(Color.primary.opacity(0.06)),
+                        in: Capsule())
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }
 

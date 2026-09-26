@@ -117,6 +117,14 @@ struct PlaylistsView: View {
                 // Pin/Delete now live in the floating bottom bar so they're reachable
                 // without scrolling back up to the title.
             } else {
+                // Beside the menu rather than at the end of the filters, where the chips
+                // scrolled under it.
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { layout = layout.toggled }
+                } label: {
+                    Image(systemName: layout.toggleIcon)
+                }
+                .accessibilityLabel(layout == .grid ? "Show as List" : "Show as Grid")
                 Menu {
                     Button { showCreatePlaylist = true } label: {
                         Label("Create Playlist", systemImage: "plus")
@@ -164,8 +172,8 @@ struct PlaylistsView: View {
                         .padding(.bottom, 8)
                     if !isLoading && !playlists.isEmpty {
                         PlaylistFilterBar(filters: filterContext.offered(for: playlists, keeping: filter),
-                                          selection: $filter, layout: $layout)
-                            .padding(.bottom, 4)
+                                          selection: $filter)
+                            .padding(.bottom, 6)
                     }
                     if isLoading {
                         loadingPlaceholder
