@@ -51,8 +51,8 @@ struct ReleaseFetch: Codable, Identifiable, Equatable {
 /// for the server to import it and nudges its scan, so it plays from the library as soon as
 /// it can. Each step shows above the mini player and on the Lock Screen.
 ///
-/// The server's import sets the pace: its downloads folder is swept every ten minutes, for
-/// files at least ten minutes old, so a release lands 10–25 minutes after its download.
+/// The server's import sets the pace: however often it sweeps its downloads folder, and how
+/// old a file must be first. `ImportPace` learns it from the fetches that land.
 @MainActor
 @Observable
 final class ReleaseFetcher {
@@ -75,9 +75,8 @@ final class ReleaseFetcher {
     /// A peer that sends nothing for this long is passed over — unless it's the last one.
     private static let stallLimit: TimeInterval = 90
     private static let lastStallLimit: TimeInterval = 20 * 60
-    /// The server's sweep: files wait ten minutes, then the next ten-minute run takes them.
-    static let importEstimate: TimeInterval = 20 * 60
-    private static let firstScan: TimeInterval = 10.5 * 60
+    /// Halfway there with nothing yet: time to ask the server to look.
+    private static var firstScan: TimeInterval { ImportPace.estimate / 2 }
     private static let scanEvery: TimeInterval = 4 * 60
     private static let importLimit: TimeInterval = 90 * 60
     private static let readyKept: TimeInterval = 30 * 60
@@ -395,6 +394,7 @@ final class ReleaseFetcher {
         var lastScan: Date?
         while !Task.isCancelled {
             if let songs = await songs(of: fetch) {
+                ImportPace.note(Date().timeIntervalSince(downloaded))
                 await finish(id, songs: songs)
                 return
             }
@@ -409,7 +409,8 @@ final class ReleaseFetcher {
                 lastScan = Date()
             }
             update(id) { _ in }
-            try? await Task.sleep(for: .seconds(waited > Self.firstScan ? 30 : 60))
+            let quick = waited > Self.firstScan || ImportPace.estimate < 5 * 60
+            try? await Task.sleep(for: .seconds(quick ? 30 : 60))
         }
     }
 
@@ -422,6 +423,26 @@ final class ReleaseFetcher {
     private func finish(_ id: String, songs: [Song]) async {
         update(id) { $0.stage = .ready; $0.downloaded = $0.downloaded ?? Date() }
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        let liked = fetch(for: id)?.liked.flatMap { title in
+            songs.first(where: { RadarRules.sameTitle($0.title, title) }) ?? (songs.count == 1 ? songs.first : nil)
+        }
+        // The song is starred just below; the copy the player takes says so already.
+        let arrived = songs.map { song -> Song in
+            guard song.id == liked?.id else { return song }
+            var starred = song
+            starred.starred = ISO8601DateFormatter().string(from: Date())
+            return starred
+        }
+        // Its previews, queued or playing, become the song itself.
+        if let release = fetch(for: id)?.release {
+            let (album, artistId) = (release.title, release.artist.libraryId)
+            Task {
+                await AudioPlayer.shared.adoptLibrarySongs { preview in
+                    guard preview.album == album, preview.artistId == artistId else { return nil }
+                    return arrived.first { RadarRules.sameTitle($0.title, preview.title) }
+                }
+            }
+        }
         // A song leaves its release in part on the server — unless it was the last one
         // missing, when the release moves into the radar's playlist whole.
         if let fetch = fetch(for: id) {
@@ -439,9 +460,7 @@ final class ReleaseFetcher {
             self?.fetches.removeAll { $0.id == id }
             self?.save()
         }
-        guard let liked = fetch(for: id)?.liked,
-              let song = songs.first(where: { RadarRules.sameTitle($0.title, liked) }) ?? (songs.count == 1 ? songs.first : nil),
-              let server = ServerManager.shared.currentServer else { return }
+        guard let song = liked, let server = ServerManager.shared.currentServer else { return }
         try? await SubsonicClient.shared.star(server: server, id: song.id)
     }
 
@@ -542,7 +561,7 @@ extension ReleaseFetch {
     }
 
     /// When the server's import should be done.
-    var importEnd: Date? { downloaded.map { $0.addingTimeInterval(ReleaseFetcher.importEstimate) } }
+    var importEnd: Date? { downloaded.map { $0.addingTimeInterval(ImportPace.estimate) } }
 
     /// The download's expected run, from its share so far and its speed, placed so that the
     /// bar stands where the download is now: the Lock Screen runs it to the end on its own
@@ -628,6 +647,32 @@ private final class ReleaseFetchActivities {
         shown[id] = nil
         guard let activity else { return }
         Task { await activity.end(nil, dismissalPolicy: .immediate) }
+    }
+}
+
+/// How long the server takes to add a download to the library, from the last few measured.
+///
+/// It is the server's alone — how often its import runs, how old a file must be first — so
+/// any fixed figure was wrong for every server but one. The countdown on the card and the
+/// Lock Screen, and when the app first asks for a scan, follow what was measured instead.
+enum ImportPace {
+    private static let key = "release_fetch_import_pace_v1"
+    private static let kept = 5
+    /// Before anything is measured: a sweep every ten minutes, of files ten minutes old.
+    private static let assumed: TimeInterval = 20 * 60
+
+    static var estimate: TimeInterval {
+        let recent = UserDefaults.standard.array(forKey: key) as? [Double] ?? []
+        guard !recent.isEmpty else { return assumed }
+        return max(recent.sorted()[recent.count / 2], 60)
+    }
+
+    /// A release found on the server this long after its download finished. Anything under
+    /// half a minute was there already, and says nothing about the import.
+    static func note(_ seconds: TimeInterval) {
+        guard seconds >= 30, seconds < 3 * 60 * 60 else { return }
+        let recent = (UserDefaults.standard.array(forKey: key) as? [Double] ?? []) + [seconds]
+        UserDefaults.standard.set(Array(recent.suffix(kept)), forKey: key)
     }
 }
 

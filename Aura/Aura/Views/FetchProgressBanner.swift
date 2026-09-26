@@ -174,7 +174,7 @@ struct FetchSteps: View {
             return max(0.04, min(fetch.progress, 1))
         case .importing:
             guard let start = fetch.downloaded else { return 0.1 }
-            let share = Date().timeIntervalSince(start) / ReleaseFetcher.importEstimate
+            let share = Date().timeIntervalSince(start) / ImportPace.estimate
             return max(0.05, min(share, 0.95))
         default:
             return 0

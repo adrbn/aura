@@ -355,7 +355,7 @@ struct NowPlayingView: View {
             // parallax made them visibly drift apart mid-swipe.
             // Same reasoning as the artwork above: directional in, plain fade out.
             .transition(.asymmetric(
-                insertion: .offset(x: player.songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
+                insertion: .offset(x: CGFloat(player.songChangeDirection.signum()) * w).combined(with: .opacity),
                 removal: .opacity
             ))
             .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
@@ -635,7 +635,7 @@ struct NowPlayingView: View {
                 // arrived: both from the right, which read as the wrong direction. A plain
                 // fade out cannot contradict the slide in.
                 .transition(.asymmetric(
-                    insertion: .offset(x: player.songChangeDirection >= 0 ? w : -w).combined(with: .opacity),
+                    insertion: .offset(x: CGFloat(player.songChangeDirection.signum()) * w).combined(with: .opacity),
                     removal: .opacity
                 ))
         }

@@ -39,9 +39,11 @@ struct AddToPlaylistView: View {
                         ForEach(0..<8, id: \.self) { _ in
                             SkeletonPlaylistRow()
                                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                                .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     .scrollIndicators(.hidden)
                 } else {
                     List {
@@ -84,6 +86,7 @@ struct AddToPlaylistView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
 
                         ForEach(filteredPlaylists) { playlist in
                             let isInPlaylist = playlistsContainingSong.contains(playlist.id)
@@ -121,13 +124,18 @@ struct AddToPlaylistView: View {
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
+                            .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     .scrollIndicators(.hidden)
                     .searchable(text: $searchText, prompt: "Search playlists")
                 }
             }
+            // The page's own colour under the rows, the search field and the bar alike: the
+            // plain list used to sit on the system's grey below a darker header.
+            .background(Color.themeBg)
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -170,6 +178,7 @@ struct AddToPlaylistView: View {
                 }
             }
         }
+        .presentationBackground(Color.themeBg)
     }
 
     private func toggleFavorite() async {

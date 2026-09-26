@@ -206,6 +206,41 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
         task.resume()
     }
 
+    /// The song as the player will play it, on disk: the download, or the stream cache —
+    /// filled now if it isn't yet. Handed back under its format's own extension, which
+    /// decoders go by, as a link beside the cache's file. Nil when the server can't send it.
+    func localCopy(of song: Song, server: ServerConfig, bitRate: Int?) async -> URL? {
+        if let local = DownloadManager.shared.localURL(for: song.id) { return local }
+        let transcoded = shouldTranscodeStream(songSuffix: song.suffix, songContentType: song.contentType)
+        let file = cacheFileURL(songId: song.id, bitRate: bitRate, transcoded: transcoded)
+        if !FileManager.default.fileExists(atPath: file.path) {
+            guard let url = SubsonicClient.shared.streamURL(server: server, id: song.id, maxBitRate: bitRate,
+                                                            songSuffix: song.suffix, songContentType: song.contentType),
+                  let (data, response) = try? await URLSession.shared.data(from: url),
+                  let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+                  // Subsonic answers an error with 200 and a JSON or XML body.
+                  data.count > 1024, data.first != 0x7B, data.first != 0x3C
+            else { return nil }
+            do {
+                try data.write(to: file, options: .atomic)
+            } catch {
+                AppLogger.shared.log("❌ Local copy write failed for \(song.id): \(error.localizedDescription)")
+                return nil
+            }
+            touchFile(at: file)
+            enforceCacheLimit()
+        }
+        let ext = transcoded ? "mp3" : (song.suffix?.lowercased() ?? "mp3")
+        let named = FileManager.default.temporaryDirectory.appendingPathComponent("\(song.id)-copy.\(ext)")
+        try? FileManager.default.removeItem(at: named)
+        do {
+            try FileManager.default.linkItem(at: file, to: named)
+        } catch {
+            guard (try? FileManager.default.copyItem(at: file, to: named)) != nil else { return nil }
+        }
+        return named
+    }
+
     /// Prefetch a song into cache without playing it
     func prefetch(songId: String, server: ServerConfig, bitRate: Int?, songSuffix: String? = nil, songContentType: String? = nil) {
         guard AppSettings.shared.cacheEnabled else { return }

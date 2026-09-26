@@ -8,12 +8,8 @@ final class EqualizerManager: @unchecked Sendable {
     private(set) var gains: [Float] = [0, 0, 0, 0, 0]
     var isEnabled: Bool { !gains.allSatisfy { $0 == 0 } }
 
-    private var biquadSetup: vDSP_biquad_Setup?
-    private var delayBuffers: [[Float]] = [
-        [Float](repeating: 0, count: 12),
-        [Float](repeating: 0, count: 12)
-    ]
-    private var sampleRate: Float = 44100
+    /// Bumped with every change of gains, so each tap rebuilds its filters on its next buffer.
+    private var revision = 0
     private let lock = NSLock()
 
     init() {
@@ -29,7 +25,7 @@ final class EqualizerManager: @unchecked Sendable {
         guard newGains.count == 5 else { return }
         lock.lock()
         gains = newGains
-        rebuildSetup()
+        revision += 1
         lock.unlock()
     }
 
@@ -38,83 +34,135 @@ final class EqualizerManager: @unchecked Sendable {
     /// Puts the EQ's tap on an item — and, for a clip that stops mid-song, a fade over its
     /// last `fadeOut` seconds rather than a cut.
     func attachToPlayerItem(_ item: AVPlayerItem, fadeOut: TimeInterval? = nil) {
-        lock.lock()
-        delayBuffers = [
-            [Float](repeating: 0, count: 12),
-            [Float](repeating: 0, count: 12)
-        ]
-        lock.unlock()
+        Task { await attach(to: item, fadeOut: fadeOut) }
+    }
 
-        Task {
-            let tracks: [AVAssetTrack]
-            do {
-                tracks = try await item.asset.loadTracks(withMediaType: .audio)
-            } catch {
-                AppLogger.shared.log("⚠️ EQ: loadTracks error: \(error.localizedDescription)")
-                return
-            }
-            guard let track = tracks.first else {
-                AppLogger.shared.log("⚠️ EQ: no audio track found")
-                return
-            }
-
-            var callbacks = MTAudioProcessingTapCallbacks(
-                version: kMTAudioProcessingTapCallbacksVersion_0,
-                clientInfo: UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()),
-                `init`: eqTapInit,
-                finalize: eqTapFinalize,
-                prepare: eqTapPrepare,
-                unprepare: eqTapUnprepare,
-                process: eqTapProcess
-            )
-
-            var tap: MTAudioProcessingTap?
-            let status = MTAudioProcessingTapCreate(
-                kCFAllocatorDefault, &callbacks,
-                kMTAudioProcessingTapCreationFlag_PreEffects, &tap
-            )
-
-            guard status == noErr, let audioTap = tap else {
-                AppLogger.shared.log("❌ EQ: tap creation failed (\(status))")
-                return
-            }
-
-            let params = AVMutableAudioMixInputParameters(track: track)
-            params.audioTapProcessor = audioTap
-            if let fadeOut, let length = try? await item.asset.load(.duration),
-               length.isNumeric, length.seconds > fadeOut * 2 {
-                let fade = CMTime(seconds: fadeOut, preferredTimescale: 600)
-                params.setVolumeRamp(fromStartVolume: 1, toEndVolume: 0,
-                                     timeRange: CMTimeRange(start: length - fade, duration: fade))
-            }
-
-            let audioMix = AVMutableAudioMix()
-            audioMix.inputParameters = [params]
-
-            await MainActor.run {
-                item.audioMix = audioMix
-            }
-            AppLogger.shared.log("🎛️ EQ tap attached (sr=\(self.sampleRate))")
+    /// The same, finished when the tap is in place — for an item that must sound right from
+    /// its first sample, like a song taking over from its preview mid-phrase.
+    func attach(to item: AVPlayerItem, fadeOut: TimeInterval? = nil) async {
+        let tracks: [AVAssetTrack]
+        do {
+            tracks = try await item.asset.loadTracks(withMediaType: .audio)
+        } catch {
+            AppLogger.shared.log("⚠️ EQ: loadTracks error: \(error.localizedDescription)")
+            return
         }
+        guard let track = tracks.first else {
+            AppLogger.shared.log("⚠️ EQ: no audio track found")
+            return
+        }
+
+        // Each tap carries its own filter memory: two can run at once — a preview and its
+        // song, crossing over — and one shared set of delay lines garbles both.
+        let context = Unmanaged.passRetained(EQTapContext(manager: self)).toOpaque()
+        var callbacks = MTAudioProcessingTapCallbacks(
+            version: kMTAudioProcessingTapCallbacksVersion_0,
+            clientInfo: context,
+            `init`: eqTapInit,
+            finalize: eqTapFinalize,
+            prepare: eqTapPrepare,
+            unprepare: eqTapUnprepare,
+            process: eqTapProcess
+        )
+
+        var tap: MTAudioProcessingTap?
+        let status = MTAudioProcessingTapCreate(
+            kCFAllocatorDefault, &callbacks,
+            kMTAudioProcessingTapCreationFlag_PreEffects, &tap
+        )
+
+        guard status == noErr, let audioTap = tap else {
+            Unmanaged<EQTapContext>.fromOpaque(context).release()
+            AppLogger.shared.log("❌ EQ: tap creation failed (\(status))")
+            return
+        }
+
+        let params = AVMutableAudioMixInputParameters(track: track)
+        params.audioTapProcessor = audioTap
+        if let fadeOut, let length = try? await item.asset.load(.duration),
+           length.isNumeric, length.seconds > fadeOut * 2 {
+            let fade = CMTime(seconds: fadeOut, preferredTimescale: 600)
+            params.setVolumeRamp(fromStartVolume: 1, toEndVolume: 0,
+                                 timeRange: CMTimeRange(start: length - fade, duration: fade))
+        }
+
+        let audioMix = AVMutableAudioMix()
+        audioMix.inputParameters = [params]
+
+        await MainActor.run {
+            item.audioMix = audioMix
+        }
+        AppLogger.shared.log("🎛️ EQ tap attached")
     }
 
-    // MARK: - DSP
-
-    fileprivate func setSampleRate(_ sr: Float) {
-        lock.lock()
-        sampleRate = sr
-        delayBuffers = [
-            [Float](repeating: 0, count: 12),
-            [Float](repeating: 0, count: 12)
-        ]
-        rebuildSetup()
-        lock.unlock()
-    }
-
-    fileprivate func processAudio(_ bufferList: UnsafeMutablePointer<AudioBufferList>, frames: CMItemCount) {
+    /// The gains and their revision, read together.
+    fileprivate func snapshot() -> (gains: [Float], revision: Int) {
         lock.lock()
         defer { lock.unlock() }
-        guard let setup = biquadSetup else { return }
+        return (gains, revision)
+    }
+
+    // MARK: - Biquad
+
+    fileprivate static func makeSetup(gains: [Float], sampleRate: Float) -> vDSP_biquad_Setup? {
+        guard !gains.allSatisfy({ $0 == 0 }) else { return nil }
+        var coefficients = [Double]()
+        for (i, freq) in EQPreset.bandFrequencies.enumerated() {
+            coefficients.append(contentsOf: peakingEQ(freq: freq, gain: gains[i], Q: 1.0, sr: sampleRate))
+        }
+        return vDSP_biquad_CreateSetup(&coefficients, UInt(5))
+    }
+
+    private static func peakingEQ(freq: Float, gain: Float, Q: Float, sr: Float) -> [Double] {
+        guard gain != 0 else { return [1, 0, 0, 0, 0] }
+        let A = pow(10.0, Double(gain) / 40.0)
+        let w0 = 2.0 * Double.pi * Double(freq) / Double(sr)
+        let alpha = sin(w0) / (2.0 * Double(Q))
+        let cosW0 = cos(w0)
+        let a0 = 1.0 + alpha / A
+        return [
+            (1.0 + alpha * A) / a0,
+            (-2.0 * cosW0)    / a0,
+            (1.0 - alpha * A) / a0,
+            (-2.0 * cosW0)    / a0,
+            (1.0 - alpha / A) / a0
+        ]
+    }
+}
+
+// MARK: - One tap's state
+
+/// A tap's filters and their memory, rebuilt when the gains or the sample rate change.
+/// Only the audio thread of its own tap touches it, apart from creation and release.
+private final class EQTapContext {
+    let manager: EqualizerManager
+    private var setup: vDSP_biquad_Setup?
+    private var builtRevision = -1
+    private var sampleRate: Float = 44100
+    private var delayBuffers: [[Float]] = EQTapContext.freshDelays()
+
+    init(manager: EqualizerManager) { self.manager = manager }
+
+    deinit { if let setup { vDSP_biquad_DestroySetup(setup) } }
+
+    private static func freshDelays() -> [[Float]] {
+        [[Float](repeating: 0, count: 12), [Float](repeating: 0, count: 12)]
+    }
+
+    func prepare(sampleRate newRate: Float) {
+        sampleRate = newRate
+        delayBuffers = Self.freshDelays()
+        builtRevision = -1
+    }
+
+    func process(_ bufferList: UnsafeMutablePointer<AudioBufferList>, frames: CMItemCount) {
+        let current = manager.snapshot()
+        if current.revision != builtRevision {
+            if let old = setup { vDSP_biquad_DestroySetup(old) }
+            setup = EqualizerManager.makeSetup(gains: current.gains, sampleRate: sampleRate)
+            builtRevision = current.revision
+        }
+        guard let setup else { return }
 
         let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
         if buffers.count >= 2 {
@@ -134,38 +182,6 @@ final class EqualizerManager: @unchecked Sendable {
             }
         }
     }
-
-    // MARK: - Biquad
-
-    private func rebuildSetup() {
-        if let old = biquadSetup {
-            vDSP_biquad_DestroySetup(old)
-            biquadSetup = nil
-        }
-        guard isEnabled else { return }
-
-        var coefficients = [Double]()
-        for (i, freq) in EQPreset.bandFrequencies.enumerated() {
-            coefficients.append(contentsOf: peakingEQ(freq: freq, gain: gains[i], Q: 1.0, sr: sampleRate))
-        }
-        biquadSetup = vDSP_biquad_CreateSetup(&coefficients, UInt(5))
-    }
-
-    private func peakingEQ(freq: Float, gain: Float, Q: Float, sr: Float) -> [Double] {
-        guard gain != 0 else { return [1, 0, 0, 0, 0] }
-        let A = pow(10.0, Double(gain) / 40.0)
-        let w0 = 2.0 * Double.pi * Double(freq) / Double(sr)
-        let alpha = sin(w0) / (2.0 * Double(Q))
-        let cosW0 = cos(w0)
-        let a0 = 1.0 + alpha / A
-        return [
-            (1.0 + alpha * A) / a0,
-            (-2.0 * cosW0)    / a0,
-            (1.0 - alpha * A) / a0,
-            (-2.0 * cosW0)    / a0,
-            (1.0 - alpha / A) / a0
-        ]
-    }
 }
 
 // MARK: - Tap Callbacks
@@ -178,17 +194,18 @@ private func eqTapInit(
     tapStorageOut.pointee = clientInfo
 }
 
-private func eqTapFinalize(tap: MTAudioProcessingTap) {}
+/// The tap is gone: its context, retained when the tap was made, goes with it.
+private func eqTapFinalize(tap: MTAudioProcessingTap) {
+    Unmanaged<EQTapContext>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).release()
+}
 
 private func eqTapPrepare(
     tap: MTAudioProcessingTap,
     maxFrames: CMItemCount,
     processingFormat: UnsafePointer<AudioStreamBasicDescription>
 ) {
-    let manager = Unmanaged<EqualizerManager>.fromOpaque(
-        MTAudioProcessingTapGetStorage(tap)
-    ).takeUnretainedValue()
-    manager.setSampleRate(Float(processingFormat.pointee.mSampleRate))
+    let context = Unmanaged<EQTapContext>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).takeUnretainedValue()
+    context.prepare(sampleRate: Float(processingFormat.pointee.mSampleRate))
 }
 
 private func eqTapUnprepare(tap: MTAudioProcessingTap) {}
@@ -205,8 +222,6 @@ private func eqTapProcess(
         tap, numberFrames, bufferListInOut, flagsOut, nil, numberFramesOut
     )
     guard status == noErr else { return }
-    let manager = Unmanaged<EqualizerManager>.fromOpaque(
-        MTAudioProcessingTapGetStorage(tap)
-    ).takeUnretainedValue()
-    manager.processAudio(bufferListInOut, frames: numberFrames)
+    let context = Unmanaged<EQTapContext>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).takeUnretainedValue()
+    context.process(bufferListInOut, frames: numberFrames)
 }

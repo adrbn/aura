@@ -16,6 +16,10 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Search also shows what Deezer has and your server doesn't — songs that play their preview and, in the sideload build, can be had with Get It; releases that open their own page, like the radar's. With the Radar on only
 - Previews fade out over their last three seconds instead of stopping dead, and one whose Deezer address has run out — they last a quarter of an hour, less than a long radar queue — is asked for again before it plays
 - Every page's list ends above the Get It card, pushed pages included — an inset set around the tabs never reached them
+- A preview becomes its song the moment Get It brings it in: the preview playing hands over to the whole song at the very point it has reached — the two recordings lined up, started in step on the host clock and crossed over in a quarter of a second, so nothing is heard change — and Now Playing dissolves to the song, its length and its lyrics in time. A paused preview gives way at the same point; one that can't be lined up plays out, and its song follows from the top. Queued previews become their songs too
+- Previews show their lyrics, from LRCLIB, as a sheet: a preview is thirty seconds from somewhere in the song and nothing says where, so timed lines would run out of step
+- The Get It countdown follows the server's real pace, learnt from the last few releases it added, instead of a fixed twenty minutes
+- The veil behind the tab bar and the mini player rises behind the Get It card too, so its glass reads the same dark page as the mini player's
 
 ### Fixed — Radar
 - A re-issue is no longer a new release: an album Deezer dates anew under a title the artist had already put out stays off the radar — the same day's explicit and clean copies count once, and an album named after the single that announced it still counts
@@ -63,6 +67,9 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Artist headers drop the dark fade across the top of the photo; only a photo bright enough to hide the clock gets a light veil, the status bar's height
 - A face too high in an artist photo is brought down by zooming in on it (up to 1.7×), instead of sliding the photo down over a stretched, blurred copy of its top edge — pulling the page down zooms the same way
 - Artist photos for covers come from Deezer's public catalogue: the server's artist-image queue stalled every cover in the app whenever a shelf asked for a dozen artists at once
+
+### Fixed — Appearance
+- The Add to Playlist sheet lists on the page's own dark background, like its header, instead of the system grey
 
 ### Fixed — Search
 - A song no longer loses its place to an album of the same name: an exact hit on a title now leads the results, and an artist still outranks both

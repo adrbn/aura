@@ -128,8 +128,11 @@ struct TopEdgeVeil: View {
 ///
 /// Eased, not linear: a straight ramp starts on a visible line, which over a white cover
 /// reads as a grey band laid above the mini player. This one leaves the page at zero slope
-/// well above the mini player, climbs mostly behind its glass, and levels off at the top
-/// of the tab bar — no edge anywhere a cover can show it.
+/// well above the highest bar, climbs mostly behind its glass, and levels off at the foot
+/// of that bar — no edge anywhere a cover can show it.
+///
+/// The Get It card counts as a bar while it shows: it rises on top of the mini player, and
+/// the fade rises with it, so its glass reads the same dark page as the mini player's.
 struct BottomEdgeVeil: View {
     /// Whether the mini player sits above the tab bar, and needs covering too.
     let coversMiniPlayer: Bool
@@ -145,13 +148,17 @@ struct BottomEdgeVeil: View {
 
     var body: some View {
         let bottom = TabChrome.windowSafeBottom
-        let height = bottom + (coversMiniPlayer ? Self.miniPlayerTop : Self.tabBarHeight) + Self.lead
+        let card = BottomChrome.shared.cardInset
+        let barsTop = (coversMiniPlayer ? Self.miniPlayerTop : Self.tabBarHeight) + card
+        // The highest bar alone: the ramp has run its course by its foot, whatever sits below.
+        let highestBar = card > 0 ? card : (coversMiniPlayer ? Self.miniPlayerTop - Self.tabBarHeight : 0)
+        let height = bottom + barsTop + Self.lead
         // Measured from the foot of the screen. Inside a tab the safe area ends at the top of
         // the tab bar, and a fixed-height view only aligns to that; filling the whole screen
         // first is what puts the fade where the bars actually are.
         Color.clear
             .overlay(alignment: .bottom) {
-                LinearGradient(stops: Self.stops(height: height, rampEnd: height - bottom - Self.tabBarHeight),
+                LinearGradient(stops: Self.stops(height: height, rampEnd: Self.lead + highestBar),
                                startPoint: .top, endPoint: .bottom)
                     .frame(height: height)
             }
@@ -159,6 +166,7 @@ struct BottomEdgeVeil: View {
             // Keyboard included: it stays down behind the keyboard rather than riding up on it.
             .ignoresSafeArea()
             .animation(.easeInOut(duration: 0.25), value: coversMiniPlayer)
+            .animation(.easeInOut(duration: 0.3), value: card)
     }
 
     /// Smoothstep, squared so the start is gentler still, from the top to `rampEnd`; flat below.

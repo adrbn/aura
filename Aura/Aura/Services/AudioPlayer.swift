@@ -23,7 +23,8 @@ final class AudioPlayer {
     /// Bumped each time a song becomes a favourite — drives the one-shot sparkle burst.
     var favoriteCelebration = 0
 
-    /// Which way the last song change went: +1 forward, -1 backward. Drives the Now
+    /// Which way the last song change went: +1 forward, -1 backward — or 0 when a preview
+    /// became its own song, which dissolves in place rather than sliding. Drives the Now
     /// Playing slide transition.
     ///
     /// It lives here, not in the view, because the view only ever sees *some* of the
@@ -889,7 +890,30 @@ final class AudioPlayer {
         // This path never applied the fader: every song started from here played at full
         // level until the fader was next touched.
         applyOutputVolume(for: song)
+        watchPlayback(of: playerItem)
 
+        // Initialize duration from song metadata so Now Playing info shows it immediately
+        if let songDuration = song.duration, songDuration > 0 {
+            duration = Double(songDuration)
+        }
+
+        // The same claim the play button makes. Without it a track change simply
+        // inherited whatever state the session was left in: after an interruption — a
+        // call, a voice prompt in another app — the session is dead, `play()` on it is a
+        // silent no-op, and the queue looked like it had stopped of its own accord at the
+        // end of a song. The watchdog then covers the other half of that failure, where
+        // the session comes back but the item is still dead.
+        activateAudioSession()
+        player?.play()
+        isPlaying = true
+        currentSong = song
+        publishPlaybackState()
+        confirmPlaybackStarted()
+        announce(song)
+    }
+
+    /// The clock, the prefetch at 80%, the scrobble, and the end or failure of the item.
+    private func watchPlayback(of playerItem: AVPlayerItem) {
         timeObserver = player?.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.1, preferredTimescale: 600),
             queue: .main
@@ -922,25 +946,10 @@ final class AudioPlayer {
             self, selector: #selector(playerItemNewErrorLogEntry(_:)),
             name: .AVPlayerItemNewErrorLogEntry, object: playerItem
         )
+    }
 
-        // Initialize duration from song metadata so Now Playing info shows it immediately
-        if let songDuration = song.duration, songDuration > 0 {
-            duration = Double(songDuration)
-        }
-
-        // The same claim the play button makes. Without it a track change simply
-        // inherited whatever state the session was left in: after an interruption — a
-        // call, a voice prompt in another app — the session is dead, `play()` on it is a
-        // silent no-op, and the queue looked like it had stopped of its own accord at the
-        // end of a song. The watchdog then covers the other half of that failure, where
-        // the session comes back but the item is still dead.
-        activateAudioSession()
-        player?.play()
-        isPlaying = true
-        currentSong = song
-        publishPlaybackState()
-        confirmPlaybackStarted()
-
+    /// What follows a song starting: history, lyrics, artwork, the Lock Screen, the radio.
+    private func announce(_ song: Song) {
         // Local history only — what Wrapped and the stats count — on the rule it has
         // always used, half the song or 30 seconds. The server scrobble is separate: it
         // follows the "Scrobble After" setting on the playback position, in
@@ -2049,6 +2058,185 @@ final class AudioPlayer {
         }
     }
 
+    // MARK: - Previews becoming songs
+
+    /// How far ahead of the preview the song is readied, and how long the two overlap.
+    private static let handOverLead: TimeInterval = 1.5
+    private static let crossover: TimeInterval = 0.25
+
+    /// Songs a fetch just brought into the library take their previews' places, in the queue
+    /// and in the player. A preview playing hands over to its song without a seam — see
+    /// `handOver(from:to:)`; one paused gives way quietly, at the same point in the song.
+    @MainActor
+    func adoptLibrarySongs(_ replacement: @escaping (Song) -> Song?) async {
+        let swap = { (song: Song) -> Song in song.isPreview ? replacement(song) ?? song : song }
+        queue = queue.map(swap)
+        originalQueue = originalQueue.map(swap)
+        userQueue = userQueue.map(swap)
+        guard let preview = currentSong, preview.isPreview, let full = replacement(preview) else {
+            saveLastPlayback()
+            return
+        }
+        #if os(iOS)
+        if isPlaying, await handOver(from: preview, to: full) { return }
+        #endif
+        // It moved on while the song was being lined up: the queue is all that changes.
+        guard currentSong?.id == preview.id else {
+            saveLastPlayback()
+            return
+        }
+        if isPlaying {
+            // No seamless way in: the preview plays out, and its song follows from the top.
+            if queue.indices.contains(queueIndex), queue[queueIndex].id == full.id {
+                queue[queueIndex] = preview
+                queue.insert(full, at: queueIndex + 1)
+            }
+            saveLastPlayback()
+            return
+        }
+        let resume = await pausedPosition(in: full, from: preview)
+        guard currentSong?.id == preview.id, !isPlaying else { return }
+        songChangeDirection = 0
+        currentSong = full
+        currentTime = resume
+        pendingSeekTime = resume > 1 ? resume : nil
+        preparePlayback(full)
+        loadLyrics(for: full)
+        saveLastPlayback()
+    }
+
+    /// Where the song stands at the point a paused preview was left: its start when the
+    /// preview had played out, or when the two can't be lined up.
+    @MainActor
+    private func pausedPosition(in full: Song, from preview: Song) async -> TimeInterval {
+        #if os(iOS)
+        let at = currentTime
+        guard at > 1, let offset = await previewOffset(preview, in: full) else { return 0 }
+        return offset + at
+        #else
+        return 0
+        #endif
+    }
+
+    #if os(iOS)
+    /// Seconds into `full` at which `preview` begins, from the song's own copy on disk —
+    /// the copy the player then plays, so the two agree to the sample.
+    @MainActor
+    private func previewOffset(_ preview: Song, in full: Song) async -> TimeInterval? {
+        guard let server = ServerManager.shared.currentServer,
+              let address = preview.preview.flatMap(URL.init(string:)),
+              let copy = await AudioCacheManager.shared.localCopy(
+                  of: full, server: server, bitRate: AppSettings.shared.streamingQuality.bitRate)
+        else { return nil }
+        defer { if copy.path.hasPrefix(FileManager.default.temporaryDirectory.path) { try? FileManager.default.removeItem(at: copy) } }
+        return await PreviewAligner.offset(ofPreviewAt: address, inSongAt: copy)
+    }
+
+    /// A playing preview becomes its song mid-note.
+    ///
+    /// The song, lined up against the preview, is readied on a second player at the point
+    /// the preview will reach a moment later, and started at exactly that moment by the host
+    /// clock. The two then cross over in a quarter of a second — the same recording twice,
+    /// in step, so nothing is heard change — and the song is simply what's playing: its
+    /// clock, its length, its lyrics in time.
+    @MainActor
+    private func handOver(from preview: Song, to full: Song) async -> Bool {
+        guard let offset = await previewOffset(preview, in: full),
+              let server = ServerManager.shared.currentServer,
+              currentSong?.id == preview.id, isPlaying,
+              let outgoing = player, let timebase = outgoing.currentItem?.timebase
+        else { return false }
+
+        let item = makePlayerItem(for: full, server: server, bitRate: AppSettings.shared.streamingQuality.bitRate)
+        await EqualizerManager.shared.attach(to: item)
+        let incoming = AVPlayer(playerItem: item)
+        // Required for a start set by the host clock.
+        incoming.automaticallyWaitsToMinimizeStalling = false
+        incoming.volume = 0
+        guard await Self.becomesReady(item) else { return false }
+
+        let previewNow = CMSyncGetTime(timebase).seconds
+        let previewLength = outgoing.currentItem?.duration.seconds ?? .nan
+        let meet = previewNow + Self.handOverLead
+        // Past the preview's closing fade, there's nothing left to cross over from.
+        guard previewLength.isFinite, meet < previewLength - Self.previewFade - Self.crossover,
+              meet + offset < Double(full.duration ?? .max) - 5
+        else { return false }
+        let songPoint = CMTime(seconds: meet + offset, preferredTimescale: 44_100)
+        guard await incoming.seek(to: songPoint, toleranceBefore: .zero, toleranceAfter: .zero),
+              await incoming.preroll(atRate: 1),
+              currentSong?.id == preview.id, isPlaying, player === outgoing
+        else { return false }
+
+        let clock = CMClockGetHostTimeClock()
+        let meetHost = CMSyncConvertTime(CMTime(seconds: meet, preferredTimescale: 44_100), from: timebase, to: clock)
+        let wait = (meetHost - CMClockGetTime(clock)).seconds
+        guard wait > 0.02 else { return false }
+        incoming.setRate(1, time: .invalid, atHostTime: meetHost)
+        try? await Task.sleep(for: .seconds(wait))
+
+        let from = outgoing.volume
+        let to = Float(volume * replayGainFactor(for: full))
+        let steps = 12
+        for step in 1...steps {
+            let share = Float(step) / Float(steps)
+            outgoing.volume = from * (1 - share)
+            incoming.volume = to * share
+            try? await Task.sleep(for: .seconds(Self.crossover / Double(steps)))
+        }
+        adopt(incoming, playing: item, as: full, replacing: outgoing)
+        AppLogger.shared.log("🔀 Preview handed over to \(full.title) at \(meet + offset)s")
+        return true
+    }
+
+    /// Whether the item can play, within a few seconds.
+    @MainActor
+    private static func becomesReady(_ item: AVPlayerItem) async -> Bool {
+        for _ in 0..<80 {
+            switch item.status {
+            case .readyToPlay: return true
+            case .failed: return false
+            default: try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+        return false
+    }
+
+    /// The second player becomes the player: the preview's is let go, and the song is
+    /// watched, announced and saved like any song begun the usual way.
+    @MainActor
+    private func adopt(_ incoming: AVPlayer, playing item: AVPlayerItem, as full: Song, replacing outgoing: AVPlayer) {
+        if let observer = timeObserver {
+            outgoing.removeTimeObserver(observer)
+            timeObserver = nil
+        }
+        playerItemStatusObservation?.invalidate()
+        playerItemStatusObservation = nil
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemNewErrorLogEntry, object: nil)
+        outgoing.pause()
+        outgoing.replaceCurrentItem(with: nil)
+
+        hasPrefetchedNext = false
+        resetScrobbleProgress()
+        isSeeking = false
+        streamOffset = 0
+        bufferProgress = 0
+        incoming.automaticallyWaitsToMinimizeStalling = true
+        player = incoming
+        observePlayerItem(item, song: full)
+        observeBuffer(item, songId: full.id)
+        watchPlayback(of: item)
+        if let length = full.duration, length > 0 { duration = Double(length) }
+        currentTime = incoming.currentTime().seconds
+        songChangeDirection = 0
+        currentSong = full
+        announce(full)
+        saveLastPlayback()
+    }
+    #endif
+
     // MARK: - Lyrics
 
     func loadLyrics(for song: Song) {
@@ -2056,18 +2244,17 @@ final class AudioPlayer {
         lyricsGeneration += 1
         let generation = lyricsGeneration
         lyrics = []
-        // A preview is thirty seconds from somewhere in the song: synced lines would be
-        // out of step, and the server has none for a song it doesn't hold.
-        if song.isPreview {
-            lyricsStatus = "No lyrics for previews"
-            isLoadingLyrics = false
-            return
-        }
         lyricsStatus = "Loading lyrics..."
         isLoadingLyrics = true
         AppLogger.shared.log("🎤 loadLyrics: \(song.title) by \(song.artist ?? "?")")
         lyricsTask = Task {
-            let found = await resolveLyrics(for: song, generation: generation)
+            // A preview is thirty seconds from somewhere in the song, and nothing says where:
+            // its words come from LRCLIB alone — the server doesn't hold the song — and as a
+            // sheet, since timed lines would run out of step. The whole song, once it's in,
+            // brings them back in time.
+            let found = song.isPreview
+                ? await tryLRCLIB(song: song, generation: generation, timed: false)
+                : await resolveLyrics(for: song, generation: generation)
             await publishLyrics(generation) {
                 if !found {
                     self.lyrics = []
@@ -2180,19 +2367,19 @@ final class AudioPlayer {
         return true
     }
 
-    private func tryLRCLIB(song: Song, generation: Int) async -> Bool {
+    private func tryLRCLIB(song: Song, generation: Int, timed: Bool = true) async -> Bool {
         await publishLyrics(generation) { self.lyricsStatus = "Trying LRCLIB..." }
         guard let artist = song.artist, !artist.isEmpty else { return false }
 
         // 1. Try exact match first via /api/get
         if let result = await lrclibExactMatch(artist: artist, title: song.title, album: song.album ?? "", duration: song.duration ?? 0) {
-            return await applyLRCLIBResult(result, generation: generation)
+            return await applyLRCLIBResult(result, generation: generation, timed: timed)
         }
 
         // 2. Fall back to search endpoint with original terms
         if let result = await lrclibSearch(artist: artist, title: song.title, duration: song.duration,
                                            generation: generation) {
-            return await applyLRCLIBResult(result, generation: generation)
+            return await applyLRCLIBResult(result, generation: generation, timed: timed)
         }
 
         // 3. Try with cleaned terms (strip feat., parenthetical, brackets)
@@ -2201,14 +2388,14 @@ final class AudioPlayer {
         if cleanedArtist != artist || cleanedTitle != song.title {
             if let result = await lrclibSearch(artist: cleanedArtist, title: cleanedTitle, duration: song.duration,
                                                generation: generation) {
-                return await applyLRCLIBResult(result, generation: generation)
+                return await applyLRCLIBResult(result, generation: generation, timed: timed)
             }
         }
 
         // 4. Free-text search as final fallback
         if let result = await lrclibFreeTextSearch(query: "\(cleanedArtist) \(cleanedTitle)", duration: song.duration,
                                                    generation: generation) {
-            return await applyLRCLIBResult(result, generation: generation)
+            return await applyLRCLIBResult(result, generation: generation, timed: timed)
         }
 
         return false
@@ -2342,11 +2529,23 @@ final class AudioPlayer {
         return nil
     }
 
-    private func applyLRCLIBResult(_ json: [String: Any], generation: Int) async -> Bool {
+    /// `timed: false` shows the words as a sheet even when they come timed — for a preview.
+    private func applyLRCLIBResult(_ json: [String: Any], generation: Int, timed: Bool = true) async -> Bool {
+        let plain = json["plainLyrics"] as? String ?? ""
         // Prefer synced lyrics
         if let syncedLyrics = json["syncedLyrics"] as? String, !syncedLyrics.isEmpty {
             let parsed = parseLRC(syncedLyrics)
-            if !parsed.isEmpty {
+            if !timed, plain.isEmpty {
+                let lines = parsed.filter { !$0.text.isEmpty }.map { LyricsLine(time: nil, text: $0.text) }
+                guard !lines.isEmpty else { return false }
+                await publishLyrics(generation) {
+                    self.lyrics = lines
+                    self.lyricsSource = .legacy
+                    self.lyricsStatus = ""
+                }
+                return true
+            }
+            if !parsed.isEmpty, timed {
                 AppLogger.shared.log("🎵 LRCLIB: Got \(parsed.count) synced lyrics lines")
                 await publishLyrics(generation) {
                     self.lyrics = parsed
@@ -2357,8 +2556,8 @@ final class AudioPlayer {
             }
         }
         // Fall back to plain lyrics
-        if let plainLyrics = json["plainLyrics"] as? String, !plainLyrics.isEmpty {
-            let lines = plainLyrics.components(separatedBy: "\n")
+        if !plain.isEmpty {
+            let lines = plain.components(separatedBy: "\n")
                 .map { $0.trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty }
                 .map { LyricsLine(time: nil, text: $0) }
