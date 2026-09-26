@@ -17,7 +17,11 @@ struct FetchProgressBanner: View {
                 .id(fetch.id)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
                 .padding(.bottom, bottomGap)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                // Leaves by sinking a little behind the mini player as it fades, rather than
+                // sliding down across it.
+                .transition(.asymmetric(
+                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                    removal: .offset(y: 28).combined(with: .opacity)))
         }
     }
 }

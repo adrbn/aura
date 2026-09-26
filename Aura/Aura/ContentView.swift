@@ -51,9 +51,11 @@ struct ContentView: View {
                     .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.visible.first?.id)
                 #endif
 
+                // Above the fetch card, which a stack otherwise draws on top while it leaves.
                 if audioPlayer.hasQueue {
                     MiniPlayerView()
                         .padding(.bottom, keyboardVisible ? 4 : 57)
+                        .zIndex(1)
                 }
             }
 
