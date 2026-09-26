@@ -33,3 +33,8 @@
 "Favourite this in ${applicationName}" = "Ajoute aux favoris sur ${applicationName}";
 "Favorite this song in ${applicationName}" = "Ajoute ce morceau aux favoris sur ${applicationName}";
 "Like this in ${applicationName}" = "J'aime ce morceau sur ${applicationName}";
+
+"Play my favourites in ${applicationName}" = "Joue mes favoris sur ${applicationName}";
+"Play my favorites in ${applicationName}" = "Mets mes favoris sur ${applicationName}";
+"Shuffle my favourites in ${applicationName}" = "Mélange mes favoris sur ${applicationName}";
+"Shuffle my favorites in ${applicationName}" = "Lance mes favoris en aléatoire sur ${applicationName}";

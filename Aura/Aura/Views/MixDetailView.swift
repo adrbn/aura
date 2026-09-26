@@ -150,12 +150,16 @@ struct MixDetailView: View {
             // Avoid duplicates: update an existing playlist with the same name.
             let existing = try await SubsonicClient.shared.getPlaylists(server: server)
             let existingId = existing.first(where: { $0.name == name })?.id
-            try await SubsonicClient.shared.createPlaylist(
+            let saved = try await SubsonicClient.shared.createPlaylist(
                 server: server, name: name, songIds: shown.songs.map { $0.id }, playlistId: existingId
             )
             MixGenerator.shared.markSavedAsPlaylist(shown)
             isSaved = true
             ToastManager.shared.show("Saved “\(shown.title)” to your playlists")
+            // The mix's cover goes along, photo in, instead of the server's collage of its songs.
+            if let cover = await EditorialMixCover.jpeg(of: shown) {
+                await PlaylistCovers.upload(cover, playlistId: existingId ?? saved.id, server: server)
+            }
         } catch {
             AppLogger.shared.log("❌ Failed to save mix: \(error.localizedDescription)")
             ToastManager.shared.show("Couldn’t save mix", icon: "exclamationmark.triangle.fill")

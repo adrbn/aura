@@ -255,3 +255,18 @@ struct CoverGrain: View {
         }
     }
 }
+
+/// A cover drawn once into a picture — a playlist saved from a mix or a radio takes its cover
+/// along to the server.
+enum CoverRendering {
+    /// Points; rendered at 2× for 1200 pixels, what the server keeps of a playlist picture.
+    static let side: CGFloat = 600
+
+    @MainActor
+    static func jpeg(_ cover: some View) -> Data? {
+        let renderer = ImageRenderer(content: cover.frame(width: side, height: side))
+        renderer.scale = 2
+        renderer.isOpaque = true
+        return renderer.uiImage?.jpegData(compressionQuality: 0.9)
+    }
+}

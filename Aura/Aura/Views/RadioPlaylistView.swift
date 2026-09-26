@@ -4,6 +4,7 @@ struct RadioPlaylistView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
     @State private var isSaved = false
+    @State private var isSaving = false
     @State private var listHeight: CGFloat = 0
     @State private var headerHeight: CGFloat = 0
     /// The radio cover's colour: its seed artist's photo.
@@ -90,11 +91,7 @@ struct RadioPlaylistView: View {
                     if !isSaved {
                         Button {
                             guard !player.radioPlaylistSongs.isEmpty else { return }
-                            Task {
-                                await player.saveRadioPlaylist()
-                                isSaved = true
-                                ToastManager.shared.show("Saved to your playlists")
-                            }
+                            Task { await save() }
                         } label: {
                             Label("Save as Playlist", systemImage: "plus.circle")
                                 .font(.subheadline.weight(.medium))
@@ -104,7 +101,7 @@ struct RadioPlaylistView: View {
                         }
                         .buttonStyle(.borderless)
                         // Would save a one-song playlist out of a radio still being built.
-                        .disabled(player.radioPlaylistSongs.isEmpty || isAwaitingSongs)
+                        .disabled(player.radioPlaylistSongs.isEmpty || isAwaitingSongs || isSaving)
                     }
                 }
                 .padding(.horizontal)
@@ -183,5 +180,22 @@ struct RadioPlaylistView: View {
                 }
             }
         }
+    }
+
+    /// The radio as a playlist, its cover along with it — the one on this page, photos in.
+    private func save() async {
+        guard !isSaving else { return }
+        isSaving = true
+        defer { isSaving = false }
+        guard let playlistId = await player.saveRadioPlaylist() else {
+            ToastManager.shared.show("Couldn’t save radio", icon: "exclamationmark.triangle.fill")
+            return
+        }
+        isSaved = true
+        ToastManager.shared.show("Saved to your playlists")
+        let spec = RadioCoverSpec(songs: player.radioPlaylistSongs,
+                                  fallbackName: player.radioPlaylistName.replacingOccurrences(of: "Radio: ", with: ""))
+        guard let cover = await spec.jpeg(), let server = ServerManager.shared.currentServer else { return }
+        await PlaylistCovers.upload(cover, playlistId: playlistId, server: server)
     }
 }

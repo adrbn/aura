@@ -26,6 +26,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - A release the server has only part of stays listed, with how many songs are still to get: an album named after a single already on the server, or whose songs came in one by one — in the app or outside it — no longer passes for held, nor leaves the radar as "already heard". Its page marks every song the server has, wherever it's filed, not only the few the mix plays. Radars stored before are matched again at once
 - A release you got a song of stays listed only while the server lacks some of its songs: a single got song by song, or finished outside the app, no longer stays among the missing for good — nor does one whose Get It failed. Once a fetched song completes its release, the release joins the mix at once instead of at the next check
 - A release the server has whole offers Shuffle on its page instead of a Get button that had nothing left to get
+- The radar plays every song the server has of a release, not only its three most popular; a release still to get keeps to three previews
 
 ### Added — Covers & pages
 - Editorial covers for "Made For You" mixes and radios: the most-played artist's photo framed on the face (Apple Vision), a type-set title band in Archivo, a duotone for genre mixes, a cut-out figure over the period for Year Wrapped, and a three-artist layout for radios. Falls back to the lead artist's album cover, then to a flat colour field
@@ -33,7 +34,22 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Artist headers frame the photo on the face, even for photos stored rotated
 - Radio covers fill the square: the seed artist in a larger disc sending out rings, the two similar artists riding the first ring in the field's tone, the name in a black band with the similar artists on a strip beneath — the mixes' lockup — over a field that deepens towards its edges, with a fine grain. Every disc is drawn from the start, a tinted stand-in until its photo is in, and the rings travel while the radio is being put together
 
+### Added — Playlists
+- Filters on the Playlists page — Pinned, Radios, Mixes, Mine, Shared, Downloaded — as a row of capsules under the search field, each offered only when it would leave some playlists out. They narrow the search too
+- A list view beside the grid: one row per playlist, cover, name, songs and length. The switch sits at the end of the filter row, and the choice is remembered
+- A saved radio or mix keeps its cover: saving it sends the cover Aura drew — photos, band and all — as the playlist's picture on the server, instead of the server's collage of its songs
+
+### Changed — Equalizer
+- The equalizer is a response curve: the five bands as points on one smooth line over a decibel grid, dragged up or down from anywhere on the graph, with each band's frequency and gain beneath it. Presets sit in a grid of capsules under the curve, which glides to each one; Reset goes back to flat
+- Equalizer changes are saved as they're made: opened from Now Playing, a change was lost at the next launch unless the Settings tab had been visited
+
+### Added — In the car
+- Shuffle and repeat buttons on a car stereo or a remote now work; the system is told which modes are on
+- Now Playing reports the song's place in the queue ("4 of 20") where there is room for it, and the rate playback returns to, so a car's progress bar keeps moving between updates
+- Siri: "Play my favourites in Aura" — « Joue mes favoris sur Aura » — shuffles your favourite songs, with the app closed
+
 ### Changed — Appearance
+- The page's colour rises behind the tab bar and the mini player: over a bright cover the system's tab bar read lighter than the mini player, the one glass Aura draws itself — and the system's takes no tint
 - With the keyboard up, the mini player and the download and fetch cards stay where they are behind it, hidden, instead of riding up over the results
 - Every page's list ends above the mini player and the fetch card: a radio's songs, the genres, a genre's songs, the artists, the "see all" lists, the settings pages, About and Wrapped no longer end underneath them, and the A–Z index keeps its last letters clear of the card
 - Home's canvas carries a faint cutting-mat grid — hairlines every 16 points, a firmer one every fifth

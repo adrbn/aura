@@ -30,6 +30,9 @@ struct ContentView: View {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
                     Tab(tab.title, systemImage: tab.icon, value: index) {
                         tabContent(for: tab)
+                            .overlay(alignment: .bottom) {
+                                BottomEdgeVeil(coversMiniPlayer: audioPlayer.hasQueue)
+                            }
                     }
                 }
             }

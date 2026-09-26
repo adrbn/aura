@@ -185,8 +185,12 @@ struct EditorialMixCover: View {
             .accessibilityHidden(true)
     }
 
-    @ViewBuilder
     private func cover(_ spec: MixCoverSpec, _ art: MixCoverArt?) -> some View {
+        Self.template(spec, art, size: size)
+    }
+
+    @ViewBuilder
+    static func template(_ spec: MixCoverSpec, _ art: MixCoverArt?, size: CGFloat) -> some View {
         switch spec.template {
         case .mix(let kicker, let title):
             MixCoverTemplate(portrait: art?.portrait, kicker: kicker, title: title,
@@ -202,9 +206,81 @@ struct EditorialMixCover: View {
                               kicker: String(localized: "Wrapped"), s: size)
         }
     }
+
+    /// The mix's cover as a JPEG, photo in, for a playlist saved from it.
+    @MainActor
+    static func jpeg(of mix: Mix) async -> Data? {
+        let spec = MixCoverSpec(mix)
+        let art = await MixCoverArt.load(spec)
+        return CoverRendering.jpeg(template(spec, art, size: CoverRendering.side))
+    }
 }
 
 // MARK: - Radio
+
+/// What a radio's cover shows, worked out from its songs alone.
+struct RadioCoverSpec {
+    let seed: ArtistRef?
+    /// Artists the radio found around the seed, most frequent first.
+    let others: [ArtistRef]
+    let name: String
+    let seedCoverArt: String?
+
+    private static let sideCandidates = 6
+
+    init(songs: [Song], fallbackName: String) {
+        seed = songs.first.flatMap(CoverArtists.lead(of:))
+        let seedId = seed?.id
+        others = Array(CoverArtists.ranked(Array(songs.dropFirst()))
+            .filter { $0.id != seedId }
+            .prefix(Self.sideCandidates))
+        name = seed?.name.isEmpty == false ? seed?.name ?? fallbackName : fallbackName
+        seedCoverArt = songs.first?.displayCoverArt
+    }
+
+    var seedKey: String { seed?.id ?? "" }
+    var sidesKey: String { others.map(\.id).joined(separator: ",") }
+
+    /// The seed's photo, else the seed song's album cover.
+    func lead() async -> CoverPortrait? {
+        guard let seed else { return nil }
+        if let portrait = await CoverPortraits.load(seed, subject: false) { return portrait }
+        guard !Task.isCancelled, let seedCoverArt else { return nil }
+        return await CoverPortraits.album(seedCoverArt, subject: false)
+    }
+
+    /// The first two artists around the seed with a photo, and the names for the strip —
+    /// the top two, when none has one.
+    func sides() async -> (portraits: [CoverPortrait], names: [String]) {
+        var found: [CoverPortrait] = []
+        var names: [String] = []
+        for artist in others where found.count < 2 {
+            if Task.isCancelled { break }
+            if let portrait = await CoverPortraits.load(artist, subject: false) {
+                found.append(portrait)
+                names.append(artist.name)
+            }
+        }
+        return (found, names.isEmpty ? others.prefix(2).map(\.name) : names)
+    }
+
+    func template(lead: CoverPortrait?, sides: [CoverPortrait], names: [String], isLoading: Bool,
+                  size: CGFloat) -> RadioCoverTemplate {
+        RadioCoverTemplate(lead: lead, left: sides.first, right: sides.dropFirst().first, name: name,
+                           artists: names, field: lead?.band ?? CoverPalette.hashed(name),
+                           isLoading: isLoading, s: size)
+    }
+
+    /// The cover as a JPEG, photos in, for a playlist saved from the radio.
+    @MainActor
+    func jpeg() async -> Data? {
+        async let lead = lead()
+        async let sides = sides()
+        let (portrait, around) = await (lead, sides)
+        return CoverRendering.jpeg(template(lead: portrait, sides: around.portraits, names: around.names,
+                                            isLoading: false, size: CoverRendering.side))
+    }
+}
 
 /// A radio's cover: its seed artist in the big disc, two artists the radio found around it,
 /// on the seed photo's colour. The side discs arrive once the radio has songs.
@@ -221,54 +297,28 @@ struct EditorialRadioCover: View {
     @State private var lead: (key: String, portrait: CoverPortrait)?
     @State private var sides: (key: String, portraits: [CoverPortrait], names: [String]) = ("", [], [])
 
-    private static let sideCandidates = 6
-
     var body: some View {
-        let seed = songs.first.flatMap(CoverArtists.lead(of:))
-        let others = Array(CoverArtists.ranked(Array(songs.dropFirst()))
-            .filter { $0.id != seed?.id }
-            .prefix(Self.sideCandidates))
-        let seedKey = seed?.id ?? ""
-        let sidesKey = others.map(\.id).joined(separator: ",")
+        let spec = RadioCoverSpec(songs: songs, fallbackName: fallbackName)
+        let seedKey = spec.seedKey
+        let sidesKey = spec.sidesKey
         let current = lead?.key == seedKey ? lead?.portrait
-            : seed.flatMap { CoverPortraits.cached($0.id, subject: false) }
+            : spec.seed.flatMap { CoverPortraits.cached($0.id, subject: false) }
         let shownSides = sides.key == sidesKey ? sides.portraits : []
-        let name = seed?.name.isEmpty == false ? seed?.name ?? fallbackName : fallbackName
-        RadioCoverTemplate(lead: current,
-                           left: shownSides.first,
-                           right: shownSides.dropFirst().first,
-                           name: name,
-                           artists: sides.key == sidesKey ? sides.names : [],
-                           field: current?.band ?? CoverPalette.hashed(name),
-                           isLoading: isLoading,
-                           s: size)
+        spec.template(lead: current, sides: shownSides, names: sides.key == sidesKey ? sides.names : [],
+                      isLoading: isLoading, size: size)
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             .animation(.easeOut(duration: 0.3), value: shownSides.map(\.artistId))
             .animation(.easeOut(duration: 0.3), value: current?.band)
             .animation(.easeOut(duration: 0.3), value: current?.artistId)
             .task(id: "\(seedKey)#\(ArtworkRetry.shared.generation)") {
-                guard let seed, lead?.key != seedKey else { return }
-                var result = await CoverPortraits.load(seed, subject: false)
-                if result == nil, !Task.isCancelled, let coverArt = songs.first?.displayCoverArt {
-                    result = await CoverPortraits.album(coverArt, subject: false)
-                }
-                if let result, !Task.isCancelled { lead = (seedKey, result) }
+                guard spec.seed != nil, lead?.key != seedKey else { return }
+                if let result = await spec.lead(), !Task.isCancelled { lead = (seedKey, result) }
             }
             .task(id: "\(sidesKey)#\(ArtworkRetry.shared.generation)") {
                 guard sides.key != sidesKey || sides.portraits.count < 2 else { return }
-                var found: [CoverPortrait] = []
-                var names: [String] = []
-                for artist in others where found.count < 2 {
-                    if Task.isCancelled { return }
-                    if let portrait = await CoverPortraits.load(artist, subject: false) {
-                        found.append(portrait)
-                        names.append(artist.name)
-                    }
-                }
-                // Without photos, the strip still names who the radio plays.
-                if names.isEmpty { names = others.prefix(2).map(\.name) }
-                if !Task.isCancelled { sides = (sidesKey, found, names) }
+                let found = await spec.sides()
+                if !Task.isCancelled { sides = (sidesKey, found.portraits, found.names) }
             }
             .accessibilityHidden(true)
     }

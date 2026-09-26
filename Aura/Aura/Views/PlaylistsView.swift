@@ -22,11 +22,33 @@ struct PlaylistsView: View {
     @State private var editingPlaylist: Playlist?
     @State private var isFindingDuplicates = false
     @State private var scrollY: CGFloat = 0
+    @State private var filter: PlaylistFilter = .all
+    @State private var downloadedIds: Set<String> = []
+    @AppStorage("musika_playlists_layout") private var layout: PlaylistLayout = .grid
     let columns = [GridItem(.adaptive(minimum: 160), spacing: 16)]
 
+    private var filterContext: PlaylistFilterContext {
+        PlaylistFilterContext(username: serverManager.currentServer?.username,
+                              pinned: appSettings.pinnedPlaylistIds,
+                              downloaded: downloadedIds)
+    }
+
+    /// Moves when a song lands on the device or the offline snapshots change — the two
+    /// things the Downloaded filter reads.
+    private var downloadSignature: Int {
+        DownloadManager.shared.downloadedSongs.count
+            &+ OfflinePlaylistsStore.shared.playlists.reduce(0) { $0 &+ $1.songs.count }
+    }
+
+    /// The playlists the chosen filter keeps; search and the pinned split work on these.
+    private var filteredPlaylists: [Playlist] {
+        guard filter != .all else { return playlists }
+        let context = filterContext
+        return playlists.filter { context.matches($0, filter) }
+    }
 
     var pinnedPlaylists: [Playlist] {
-        let pinned = playlists.filter { appSettings.isPinned($0.id) }
+        let pinned = filteredPlaylists.filter { appSettings.isPinned($0.id) }
         let order = appSettings.pinnedPlaylistOrder
         return pinned.sorted { a, b in
             let ia = order.firstIndex(of: a.id) ?? Int.max
@@ -36,7 +58,7 @@ struct PlaylistsView: View {
     }
 
     var unpinnedPlaylists: [Playlist] {
-        let filtered = searchText.isEmpty ? playlists : playlists.filter {
+        let filtered = searchText.isEmpty ? filteredPlaylists : filteredPlaylists.filter {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
             ($0.comment ?? "").localizedCaseInsensitiveContains(searchText)
         }
@@ -46,7 +68,7 @@ struct PlaylistsView: View {
 
     /// When searching, return all matching playlists in a single sorted list (pinned badge preserved but not separated)
     var searchResultPlaylists: [Playlist] {
-        let filtered = playlists.filter {
+        let filtered = filteredPlaylists.filter {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
             ($0.comment ?? "").localizedCaseInsensitiveContains(searchText)
         }
@@ -140,49 +162,34 @@ struct PlaylistsView: View {
                     SearchFieldBar(text: $searchText, prompt: "Search in Playlists")
                         .padding(.top, 4)
                         .padding(.bottom, 8)
+                    if !isLoading && !playlists.isEmpty {
+                        PlaylistFilterBar(filters: filterContext.offered(for: playlists, keeping: filter),
+                                          selection: $filter, layout: $layout)
+                            .padding(.bottom, 4)
+                    }
                     if isLoading {
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(0..<8, id: \.self) { _ in
-                                SkeletonPlaylistCard()
-                            }
-                        }
-                        .padding()
+                        loadingPlaceholder
                     } else if playlists.isEmpty {
                         ContentUnavailableView("No Playlists",
                             systemImage: "music.note.list",
                             description: Text("Create playlists on your server"))
                             .padding(.top, 100)
+                    } else if filteredPlaylists.isEmpty {
+                        Text("No playlists here yet")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 60)
                     } else if !searchText.isEmpty {
-                        // Search mode: single grid, no separate pinned section
-                        VStack(alignment: .leading, spacing: 16) {
-                            LazyVGrid(columns: columns, spacing: 16) {
-                                ForEach(searchResultPlaylists) { playlist in
-                                    playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                        .padding(.top, 8)
+                        // Search mode: single collection, no separate pinned section
+                        playlistCollection(searchResultPlaylists)
+                            .padding(.top, 8)
                     } else {
-                        VStack(alignment: .leading, spacing: 16) {
-                            // Pinned
+                        VStack(alignment: .leading, spacing: layout == .grid ? 16 : 8) {
                             if !pinnedPlaylists.isEmpty {
-                                LazyVGrid(columns: columns, spacing: 16) {
-                                    ForEach(pinnedPlaylists) { playlist in
-                                        playlistCell(playlist, isPinned: true)
-                                    }
-                                }
-                                .padding(.horizontal)
+                                playlistCollection(pinnedPlaylists)
                             }
-
-                            // All
-                            LazyVGrid(columns: columns, spacing: 16) {
-                                ForEach(unpinnedPlaylists) { playlist in
-                                    playlistCell(playlist, isPinned: false)
-                                        .id(playlist.id)
-                                }
-                            }
-                            .padding(.horizontal)
+                            playlistCollection(unpinnedPlaylists)
                         }
                         .padding(.top, 8)
                     }
@@ -268,6 +275,9 @@ struct PlaylistsView: View {
             .navigationDestination(for: PlaylistDeepLink.self) { link in
                 PlaylistDetailView(playlistId: link.id)
             }
+            .onChange(of: downloadSignature, initial: true) {
+                downloadedIds = PlaylistFilterContext.downloadedPlaylistIds()
+            }
             .onAppear {
                 // Pick up pending values set BEFORE this view mounted (e.g. tab switch)
                 if player.isShowingRadioPlaylist {
@@ -342,17 +352,78 @@ struct PlaylistsView: View {
         .task { await loadPlaylists() }
     }
 
-    private func playlistCell(_ playlist: Playlist, isPinned: Bool) -> some View {
-        PlaylistCardView(playlist: playlist, isPinned: isPinned, showSongCount: isSelecting)
-            .overlay(alignment: .topLeading) {
-                if isSelecting {
-                    Image(systemName: selectedPlaylistIds.contains(playlist.id) ? "checkmark.circle.fill" : "circle")
-                        .font(.title3)
-                        .foregroundStyle(selectedPlaylistIds.contains(playlist.id) ? accentColor : .white.opacity(0.7))
-                        .shadow(radius: 2)
-                        .padding(8)
+    @ViewBuilder private var loadingPlaceholder: some View {
+        switch layout {
+        case .grid:
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(0..<8, id: \.self) { _ in
+                    SkeletonPlaylistCard()
                 }
             }
+            .padding()
+        case .list:
+            VStack(spacing: 8) {
+                ForEach(0..<10, id: \.self) { _ in
+                    SkeletonPlaylistRow()
+                }
+            }
+            .padding()
+        }
+    }
+
+    /// The playlists as a grid of covers or a list of rows, as chosen in the filter bar.
+    @ViewBuilder
+    private func playlistCollection(_ list: [Playlist]) -> some View {
+        switch layout {
+        case .grid:
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(list) { playlist in
+                    playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
+                        .id(playlist.id)
+                }
+            }
+            .padding(.horizontal)
+        case .list:
+            LazyVStack(spacing: 0) {
+                ForEach(list) { playlist in
+                    playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
+                        .id(playlist.id)
+                }
+            }
+            .padding(.leading)
+            // Clear of the alphabet rail when it shows.
+            .padding(.trailing, indexTitles.isEmpty ? 16 : 28)
+        }
+    }
+
+    private func selectionMark(_ playlist: Playlist, onCover: Bool) -> some View {
+        let isSelected = selectedPlaylistIds.contains(playlist.id)
+        return Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+            .font(.title3)
+            .foregroundStyle(isSelected ? AnyShapeStyle(accentColor)
+                                        : onCover ? AnyShapeStyle(Color.white.opacity(0.7)) : AnyShapeStyle(.secondary))
+            .shadow(radius: onCover ? 2 : 0)
+    }
+
+    @ViewBuilder
+    private func playlistItem(_ playlist: Playlist, isPinned: Bool) -> some View {
+        switch layout {
+        case .grid:
+            PlaylistCardView(playlist: playlist, isPinned: isPinned, showSongCount: isSelecting)
+                .overlay(alignment: .topLeading) {
+                    if isSelecting { selectionMark(playlist, onCover: true).padding(8) }
+                }
+        case .list:
+            HStack(spacing: 12) {
+                if isSelecting { selectionMark(playlist, onCover: false) }
+                PlaylistRowView(playlist: playlist, isPinned: isPinned)
+            }
+            .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
+        }
+    }
+
+    private func playlistCell(_ playlist: Playlist, isPinned: Bool) -> some View {
+        playlistItem(playlist, isPinned: isPinned)
             .contentShape(Rectangle())
             .onTapGesture {
                 if isSelecting {

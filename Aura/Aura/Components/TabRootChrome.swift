@@ -27,6 +27,13 @@ enum TabChrome {
             .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.top) ?? 59
     }
 
+    /// The window's own bottom safe area (home indicator).
+    static var windowSafeBottom: CGFloat {
+        (UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.bottom) ?? 34
+    }
+
     /// Height to reserve for the floating ConnectionBanner (0 when it's hidden).
     static var bannerInset: CGFloat { ConnectionBanner.isVisible ? 44 : 0 }
 
@@ -108,6 +115,54 @@ struct TopEdgeVeil: View {
         .opacity(min(max(scrollY / 16, 0), 1))
         .allowsHitTesting(false)
         .ignoresSafeArea(.container, edges: .top)
+    }
+}
+
+/// The page's own colour, rising behind the tab bar and the mini player.
+///
+/// Both are Liquid Glass, but only the mini player is ours: the tab bar is the system's,
+/// which reads the content under it lighter and takes no tint — iOS 26 ignores both the
+/// appearance proxy and `toolbarBackground` on it. So the two bars looked like different
+/// materials over a bright cover. Darkening what the tab bar sees is the one lever left,
+/// and it makes the pair read as one: dense under the bars, gone above the mini player.
+///
+/// Eased, not linear: a straight ramp starts on a visible line, which over a white cover
+/// reads as a grey band laid above the mini player. This one leaves the page at zero slope
+/// well above the mini player, climbs mostly behind its glass, and levels off at the top
+/// of the tab bar — no edge anywhere a cover can show it.
+struct BottomEdgeVeil: View {
+    /// Whether the mini player sits above the tab bar, and needs covering too.
+    let coversMiniPlayer: Bool
+
+    private static let density = 0.85
+    /// The tab bar's top, above the home indicator.
+    private static let tabBarHeight: CGFloat = 48
+    /// The mini player's top, above the home indicator.
+    private static let miniPlayerTop: CGFloat = 124
+    /// How far above the highest bar the fade begins.
+    private static let lead: CGFloat = 72
+    private static let stopCount = 16
+
+    var body: some View {
+        let bottom = TabChrome.windowSafeBottom
+        let height = bottom + (coversMiniPlayer ? Self.miniPlayerTop : Self.tabBarHeight) + Self.lead
+        LinearGradient(stops: Self.stops(height: height, rampEnd: height - bottom - Self.tabBarHeight),
+                       startPoint: .top, endPoint: .bottom)
+            .frame(height: height)
+            .allowsHitTesting(false)
+            // Keyboard included: it stays down behind the keyboard rather than riding up on it.
+            .ignoresSafeArea(edges: .bottom)
+            .animation(.easeInOut(duration: 0.25), value: coversMiniPlayer)
+    }
+
+    /// Smoothstep, squared so the start is gentler still, from the top to `rampEnd`; flat below.
+    private static func stops(height: CGFloat, rampEnd: CGFloat) -> [Gradient.Stop] {
+        (0...stopCount).map { index in
+            let location = CGFloat(index) / CGFloat(stopCount)
+            let t = min(location * height / rampEnd, 1)
+            let eased = t * t * (3 - 2 * t)
+            return .init(color: Color.themeBg.opacity(density * eased * eased), location: location)
+        }
     }
 }
 

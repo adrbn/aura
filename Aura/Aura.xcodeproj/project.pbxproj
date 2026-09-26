@@ -90,6 +90,7 @@
 		E10000010000000000000020 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000020 /* HomeView.swift */; };
 		E10000010000000000000021 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000021 /* LibraryView.swift */; };
 		E10000010000000000000022 /* PlaylistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000022 /* PlaylistsView.swift */; };
+		E1000001000000000000A013 /* PlaylistsBrowsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A013 /* PlaylistsBrowsing.swift */; };
 		E10000010000000000000023 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000023 /* SettingsView.swift */; };
 		E10000010000000000000024 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000024 /* SearchView.swift */; };
 		E10000010000000000000025 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000025 /* NowPlayingView.swift */; };
@@ -109,6 +110,7 @@
 		E100000100000000000000FE /* PageTint.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FE /* PageTint.swift */; };
 		E1000001000000000000A001 /* RadarCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A001 /* RadarCatalog.swift */; };
 		E1000001000000000000A002 /* RadarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A002 /* RadarService.swift */; };
+		E1000001000000000000A012 /* PlaylistCovers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A012 /* PlaylistCovers.swift */; };
 		E1000001000000000000A003 /* RadarReleasesSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A003 /* RadarReleasesSection.swift */; };
 		E1000001000000000000A010 /* RadarReleaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A010 /* RadarReleaseView.swift */; };
 		E1000001000000000000A011 /* DeezerSearchSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A011 /* DeezerSearchSection.swift */; };
@@ -281,6 +283,7 @@
 		E10000020000000000000020 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		E10000020000000000000021 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		E10000020000000000000022 /* PlaylistsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsView.swift; sourceTree = "<group>"; };
+		E1000002000000000000A013 /* PlaylistsBrowsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsBrowsing.swift; sourceTree = "<group>"; };
 		E10000020000000000000023 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		E10000020000000000000024 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		E10000020000000000000025 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
@@ -300,6 +303,7 @@
 		E100000200000000000000FE /* PageTint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageTint.swift; sourceTree = "<group>"; };
 		E1000002000000000000A001 /* RadarCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarCatalog.swift; sourceTree = "<group>"; };
 		E1000002000000000000A002 /* RadarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarService.swift; sourceTree = "<group>"; };
+		E1000002000000000000A012 /* PlaylistCovers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistCovers.swift; sourceTree = "<group>"; };
 		E1000002000000000000A003 /* RadarReleasesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarReleasesSection.swift; sourceTree = "<group>"; };
 		E1000002000000000000A010 /* RadarReleaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadarReleaseView.swift; sourceTree = "<group>"; };
 		E1000002000000000000A011 /* DeezerSearchSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeezerSearchSection.swift; sourceTree = "<group>"; };
@@ -572,6 +576,7 @@
 				E100000200000000000000F9 /* FaceFraming.swift */,
 				E1000002000000000000A001 /* RadarCatalog.swift */,
 				E1000002000000000000A002 /* RadarService.swift */,
+				E1000002000000000000A012 /* PlaylistCovers.swift */,
 				E1000002000000000000A009 /* ReleaseFetcher.swift */,
 				E1000002000000000000A008 /* SoulseekPick.swift */,
 				E1000002000000000000A005 /* LyricsVersion.swift */,
@@ -586,6 +591,7 @@
 				E1000002000000000000009B /* WrappedView.swift */,
 				E10000020000000000000021 /* LibraryView.swift */,
 				E10000020000000000000022 /* PlaylistsView.swift */,
+				E1000002000000000000A013 /* PlaylistsBrowsing.swift */,
 				E10000020000000000000023 /* SettingsView.swift */,
 				E10000020000000000000024 /* SearchView.swift */,
 				E10000020000000000000025 /* NowPlayingView.swift */,
@@ -996,6 +1002,7 @@
 				E1000001000000000000009B /* WrappedView.swift in Sources */,
 				E10000010000000000000021 /* LibraryView.swift in Sources */,
 				E10000010000000000000022 /* PlaylistsView.swift in Sources */,
+				E1000001000000000000A013 /* PlaylistsBrowsing.swift in Sources */,
 				E10000010000000000000023 /* SettingsView.swift in Sources */,
 				E10000010000000000000024 /* SearchView.swift in Sources */,
 				E10000010000000000000025 /* NowPlayingView.swift in Sources */,
@@ -1077,6 +1084,7 @@
 				E384C913F8C88AB732ED752D /* MusicEntities.swift in Sources */,
 				E1000001000000000000A001 /* RadarCatalog.swift in Sources */,
 				E1000001000000000000A002 /* RadarService.swift in Sources */,
+				E1000001000000000000A012 /* PlaylistCovers.swift in Sources */,
 				E1000001000000000000A003 /* RadarReleasesSection.swift in Sources */,
 				E1000001000000000000A010 /* RadarReleaseView.swift in Sources */,
 				E1000001000000000000A011 /* DeezerSearchSection.swift in Sources */,

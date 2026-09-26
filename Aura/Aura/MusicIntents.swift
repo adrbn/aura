@@ -117,10 +117,25 @@ struct SiriRepeatIntent: AudioPlaybackIntent {
     static var description = IntentDescription("Cycles repeat in Aura: off, all, then one.")
     static var openAppWhenRun = false
     func perform() async throws -> some IntentResult {
-        await MainActor.run {
-            let player = AudioPlayer.shared
-            player.repeatMode = player.repeatMode.next
+        await MainActor.run { AudioPlayer.shared.cycleRepeat() }
+        return .result()
+    }
+}
+
+/// Your favourite songs, shuffled — the one thing worth asking for by voice with no name
+/// to give, at the wheel especially.
+struct SiriPlayFavouritesIntent: AudioStartingIntent {
+    static var title: LocalizedStringResource = "Play Favourites"
+    static var description = IntentDescription("Shuffles your favourite songs in Aura.")
+    static var openAppWhenRun = false
+    func perform() async throws -> some IntentResult {
+        guard let server = ServerManager.shared.currentServer else { throw AuraIntentError.noServer }
+        guard let starred = try? await SubsonicClient.shared.getStarred2(server: server) else {
+            throw AuraIntentError.unreachable
         }
+        let songs = starred.song ?? []
+        guard !songs.isEmpty else { throw AuraIntentError.empty("Favourites") }
+        await MainActor.run { AudioPlayer.shared.playShuffled(songs, source: .favorites) }
         return .result()
     }
 }
@@ -217,6 +232,17 @@ struct AuraAppShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Play Album",
             systemImageName: "square.stack"
+        )
+        AppShortcut(
+            intent: SiriPlayFavouritesIntent(),
+            phrases: [
+                "Play my favourites in \(.applicationName)",
+                "Play my favorites in \(.applicationName)",
+                "Shuffle my favourites in \(.applicationName)",
+                "Shuffle my favorites in \(.applicationName)"
+            ],
+            shortTitle: "Favourites",
+            systemImageName: "heart.circle.fill"
         )
         AppShortcut(
             intent: SiriFavouriteIntent(),

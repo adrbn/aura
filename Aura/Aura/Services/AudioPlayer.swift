@@ -285,6 +285,37 @@ final class AudioPlayer {
             self?.pause()
             return .success
         }
+
+        // Car head units and some Bluetooth remotes carry their own shuffle and repeat
+        // buttons. They ask for a mode, not a toggle, so each answer lands on the one asked.
+        center.changeShuffleModeCommand.addTarget { [weak self] event in
+            guard let self, let e = event as? MPChangeShuffleModeCommandEvent else { return .commandFailed }
+            if (e.shuffleType != .off) != self.isShuffled { self.toggleShuffle() }
+            return .success
+        }
+        center.changeRepeatModeCommand.addTarget { [weak self] event in
+            guard let self, let e = event as? MPChangeRepeatModeCommandEvent else { return .commandFailed }
+            switch e.repeatType {
+            case .one: self.repeatMode = .one
+            case .all: self.repeatMode = .all
+            default: self.repeatMode = .off
+            }
+            self.syncRemoteModes()
+            self.saveLastPlayback()
+            return .success
+        }
+        syncRemoteModes()
+    }
+
+    /// Tells the system which shuffle and repeat modes are on, for the remotes that show them.
+    func syncRemoteModes() {
+        let center = MPRemoteCommandCenter.shared()
+        center.changeShuffleModeCommand.currentShuffleType = isShuffled ? .items : .off
+        center.changeRepeatModeCommand.currentRepeatType = switch repeatMode {
+        case .off: .off
+        case .all: .all
+        case .one: .one
+        }
     }
 
     /// Starts something when nothing is playing.
@@ -1486,6 +1517,7 @@ final class AudioPlayer {
 
     func toggleShuffle() {
         isShuffled.toggle()
+        syncRemoteModes()
         AppLogger.shared.log("🔀 shuffle: \(isShuffled)")
         if isShuffled {
             shuffleQueue()
@@ -1518,7 +1550,12 @@ final class AudioPlayer {
         }
     }
 
-    func cycleRepeat() { repeatMode = repeatMode.next; AppLogger.shared.log("🔁 repeat: \(repeatMode)"); saveLastPlayback() }
+    func cycleRepeat() {
+        repeatMode = repeatMode.next
+        syncRemoteModes()
+        AppLogger.shared.log("🔁 repeat: \(repeatMode)")
+        saveLastPlayback()
+    }
 
     var progress: Double {
         guard duration > 0 else { return 0 }
@@ -1832,17 +1869,22 @@ final class AudioPlayer {
         }
     }
 
-    func saveRadioPlaylist() async {
+    /// Saves the radio as a playlist — the one of the same name, if there is one. The id of
+    /// the playlist saved, nil when it couldn't be.
+    func saveRadioPlaylist() async -> String? {
         guard !radioPlaylistSongs.isEmpty,
-              let server = ServerManager.shared.currentServer else { return }
+              let server = ServerManager.shared.currentServer else { return nil }
         do {
             let songIds = radioPlaylistSongs.map { $0.id }
             // Check if a playlist with the same name already exists to avoid duplicates
             let playlists = try await SubsonicClient.shared.getPlaylists(server: server)
             let existingId = playlists.first(where: { $0.name == radioPlaylistName })?.id
-            try await SubsonicClient.shared.createPlaylist(server: server, name: radioPlaylistName, songIds: songIds, playlistId: existingId)
+            let saved = try await SubsonicClient.shared.createPlaylist(server: server, name: radioPlaylistName,
+                                                                       songIds: songIds, playlistId: existingId)
+            return existingId ?? saved.id
         } catch {
             AppLogger.shared.log("❌ Failed to save radio playlist: \(error.localizedDescription)")
+            return nil
         }
     }
 
@@ -2501,6 +2543,9 @@ final class AudioPlayer {
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
+            // What the rate returns to after a pause, so a car's progress bar keeps moving
+            // on its own between updates instead of waiting for the next one.
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
             // Without a media type the system does not reliably classify this as music,
             // which is what decides whether it appears where music is expected. The content
             // identifier gives the item a stable name across processes, so anything that
@@ -2508,6 +2553,12 @@ final class AudioPlayer {
             MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
             MPNowPlayingInfoPropertyExternalContentIdentifier: song.id
         ]
+
+        // "4 of 20", where the screen has room for it.
+        if !queue.isEmpty, queue.indices.contains(queueIndex) {
+            info[MPNowPlayingInfoPropertyPlaybackQueueIndex] = queueIndex
+            info[MPNowPlayingInfoPropertyPlaybackQueueCount] = queue.count
+        }
 
         // Use cached artwork immediately if available for this song
         if let artwork = cachedArtwork, cachedArtworkSongId == song.id {

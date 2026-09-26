@@ -422,51 +422,6 @@ struct PlaylistDetailView: View {
         return image.preparingForDisplay() ?? image
     }
 
-    /// Dedicated session for Navidrome native API calls — shares cookies between login and upload.
-    private static let navidromeSession: URLSession = {
-        let config = URLSessionConfiguration.default
-        config.httpCookieAcceptPolicy = .always
-        config.httpShouldSetCookies = true
-        return URLSession(configuration: config)
-    }()
-
-    private func getNavidromeToken(server: ServerConfig) async -> String? {
-        guard let url = URL(string: "\(server.baseURL)/auth/login") else {
-            AppLogger.shared.log("❌ Navidrome auth: invalid login URL")
-            return nil
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        guard let body = try? JSONSerialization.data(withJSONObject: [
-            "username": server.username,
-            "password": server.password
-        ]) else {
-            AppLogger.shared.log("❌ Navidrome auth: failed to build request body")
-            return nil
-        }
-        request.httpBody = body
-        do {
-            let (data, response) = try await Self.navidromeSession.data(for: request)
-            guard let http = response as? HTTPURLResponse else { return nil }
-            AppLogger.shared.log("🔐 Navidrome auth: HTTP \(http.statusCode)")
-            guard (200...299).contains(http.statusCode) else {
-                let body = String(data: data, encoding: .utf8) ?? "(no body)"
-                AppLogger.shared.log("❌ Navidrome auth failed: \(body)")
-                return nil
-            }
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let token = json["token"] as? String, !token.isEmpty {
-                AppLogger.shared.log("🔐 Navidrome auth: token received")
-                return token
-            }
-            AppLogger.shared.log("❌ Navidrome auth: no token in response")
-        } catch {
-            AppLogger.shared.log("❌ Navidrome auth error: \(error.localizedDescription)")
-        }
-        return nil
-    }
-
     /// Pulled out of the header: inlined, the surrounding expression stopped
     /// type-checking in reasonable time.
     @ViewBuilder private var headerCover: some View {
@@ -504,91 +459,30 @@ struct PlaylistDetailView: View {
     }
 
     private func uploadPlaylistCoverArt(data: Data) async {
-        guard let server = serverManager.currentServer else { return }
-
-        // Authenticate with Navidrome native API via JWT
-        guard let token = await getNavidromeToken(server: server) else {
-            AppLogger.shared.log("❌ Playlist cover upload: failed to get auth token")
-            return
+        guard let server = serverManager.currentServer,
+              await PlaylistCovers.upload(data, playlistId: playlistId, server: server) else { return }
+        // The cached picture would otherwise keep showing.
+        if let coverArt = playlist?.coverArt {
+            ArtworkCache.shared.removeImages(forCoverArt: coverArt)
         }
-
-        // Use Navidrome native API: POST /api/playlist/{id}/image
-        let urlString = "\(server.baseURL)/api/playlist/\(playlistId)/image"
-        guard let url = URL(string: urlString) else {
-            AppLogger.shared.log("❌ Playlist cover upload: invalid URL: \(urlString)")
-            return
-        }
-
-        let boundary = UUID().uuidString
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        // Set both Authorization and X-ND-Authorization for Navidrome compatibility
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "X-ND-Authorization")
-
-        var body = Data()
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"image\"; filename=\"cover.jpg\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
-        body.append(data)
-        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
-        request.httpBody = body
-
-        AppLogger.shared.log("📤 Uploading playlist cover: \(urlString) (\(data.count) bytes)")
-        do {
-            let (responseData, response) = try await Self.navidromeSession.data(for: request)
-            if let httpResponse = response as? HTTPURLResponse {
-                let responseBody = String(data: responseData, encoding: .utf8) ?? "(no body)"
-                AppLogger.shared.log("Playlist cover upload: HTTP \(httpResponse.statusCode) — \(responseBody)")
-                if (200...299).contains(httpResponse.statusCode) {
-                    // Invalidate cached cover art so the new image loads
-                    if let coverArt = playlist?.coverArt {
-                        ArtworkCache.shared.removeImages(forCoverArt: coverArt)
-                    }
-                    await loadPlaylist()
-                    await MainActor.run { coverArtRefreshId = UUID() }
-                }
-            }
-        } catch {
-            AppLogger.shared.log("❌ Playlist cover art upload error: \(error.localizedDescription)")
-        }
+        await loadPlaylist()
+        coverArtRefreshId = UUID()
     }
 
     /// Remove a custom playlist cover via the Navidrome native API (reverts to the
     /// auto-generated cover built from the playlist's songs).
     private func removePlaylistCoverArt() async {
         guard let server = serverManager.currentServer else { return }
-        guard let token = await getNavidromeToken(server: server) else {
-            AppLogger.shared.log("❌ Remove playlist cover: failed to get auth token")
+        guard await PlaylistCovers.remove(playlistId: playlistId, server: server) else {
+            ToastManager.shared.show("Couldn’t remove cover art", icon: "exclamationmark.triangle.fill")
             return
         }
-        let urlString = "\(server.baseURL)/api/playlist/\(playlistId)/image"
-        guard let url = URL(string: urlString) else { return }
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "X-ND-Authorization")
-        AppLogger.shared.log("🗑 Removing playlist cover: \(urlString)")
-        do {
-            let (responseData, response) = try await Self.navidromeSession.data(for: request)
-            if let http = response as? HTTPURLResponse {
-                let body = String(data: responseData, encoding: .utf8) ?? "(no body)"
-                AppLogger.shared.log("🗑 Remove playlist cover: HTTP \(http.statusCode) — \(body)")
-                if (200...299).contains(http.statusCode) {
-                    if let coverArt = playlist?.coverArt {
-                        ArtworkCache.shared.removeImages(forCoverArt: coverArt)
-                    }
-                    await loadPlaylist()
-                    await MainActor.run { coverArtRefreshId = UUID() }
-                    ToastManager.shared.show("Cover art removed", icon: "checkmark")
-                } else {
-                    ToastManager.shared.show("Couldn’t remove cover art", icon: "exclamationmark.triangle.fill")
-                }
-            }
-        } catch {
-            AppLogger.shared.log("❌ Remove playlist cover error: \(error.localizedDescription)")
+        if let coverArt = playlist?.coverArt {
+            ArtworkCache.shared.removeImages(forCoverArt: coverArt)
         }
+        await loadPlaylist()
+        coverArtRefreshId = UUID()
+        ToastManager.shared.show("Cover art removed", icon: "checkmark")
     }
 }
 
