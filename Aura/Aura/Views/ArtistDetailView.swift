@@ -53,8 +53,8 @@ struct ArtistDetailView: View {
                     stretch: heroScroll.stretch
                 )
 
-                // Across the page, as an album's Play and Shuffle are: three pills bunched on the
-                // left left the rest of the row empty.
+                // Across the page, as an album's Play and Shuffle are: three pills at their own
+                // widths, centred, left uneven gaps at either end.
                 HStack(spacing: 10) {
                     Button {
                         if let name = artist?.name {
@@ -105,6 +105,10 @@ struct ArtistDetailView: View {
                     .opacity(isLoading ? 0.4 : 1)
                     .disabled(isLoading)
                 }
+                .lineLimit(1)
+                // In the 16-point column the name, Top Songs and the rows share: the row has
+                // no inset of its own, so without it the buttons ran to the screen's edges.
+                .padding(.horizontal, 16)
             }
             .frame(maxWidth: .infinity)
             .listRowSeparator(.hidden)
