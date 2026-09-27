@@ -53,8 +53,8 @@ struct ArtistDetailView: View {
                     stretch: heroScroll.stretch
                 )
 
-                // Across the page, as an album's Play and Shuffle are: three pills at their own
-                // widths, centred, left uneven gaps at either end.
+                // Instant Mix and Shuffle share the row, the heart keeping its own small size:
+                // at their own widths the pills sat centred, with uneven gaps at either end.
                 HStack(spacing: 10) {
                     Button {
                         if let name = artist?.name {
@@ -64,10 +64,10 @@ struct ArtistDetailView: View {
                         Label("Instant Mix", systemImage: "wand.and.stars")
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 11)
+                            .padding(.vertical, 8)
                             .background(accentColor)
                             .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(Capsule())
                     }
                     .buttonStyle(.borderless)
                     .disabled(topSongs.isEmpty)
@@ -79,10 +79,10 @@ struct ArtistDetailView: View {
                         Label("Shuffle", systemImage: "shuffle")
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 11)
+                            .padding(.vertical, 8)
                             .background(Color.primary.opacity(0.08))
                             .foregroundStyle(accentColor)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(Capsule())
                     }
                     .buttonStyle(.borderless)
                     .disabled(topSongs.isEmpty)
@@ -94,12 +94,11 @@ struct ArtistDetailView: View {
                         toggleArtistStar()
                     } label: {
                         Image(systemName: isStarred ? "heart.fill" : "heart")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.title3)
                             .foregroundStyle(accentColor)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 11)
+                            .frame(width: 38, height: 36)
                             .background(Color.primary.opacity(0.08))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(Capsule())
                     }
                     .buttonStyle(.borderless)
                     .opacity(isLoading ? 0.4 : 1)

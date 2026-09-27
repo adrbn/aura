@@ -87,7 +87,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 ### Added — Pages
 - A long press on a cover lifts that cover alone, in its own shape, with its actions — Change, Save and Remove Cover Art on a playlist, Save on an album — instead of the whole header rising with it
 - The accent can be any colour, picked with the system's colour picker, beside the nine ready-made ones
-- An artist's page says how many times you've played them, under the name, where it used to count their albums; a shimmering placeholder holds its place while it loads. Instant Mix, Shuffle and the heart span the width in the page's column, lined up with the name and Top Songs, as an album's Play and Shuffle do
+- An artist's page says how many times you've played them, under the name, where it used to count their albums; a shimmering placeholder holds its place while it loads. Instant Mix and Shuffle stretch across the row beside the small round heart, lined up with the name and Top Songs, instead of sitting centred at their own widths
 - Playing from the Radar says "Release Radar" in Now Playing, with the radar's icon
 - A radar release lists every artist credited on it: a collaboration shows under each of its artists, and its byline names them all
 
