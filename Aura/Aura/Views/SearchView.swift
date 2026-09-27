@@ -257,10 +257,11 @@ struct SearchResultsContainer: View {
             // to be stacked on top, so a query still in flight kept the previous
             // query's hits on screen — typing "misera" left "miser"'s albums showing,
             // which reads as an answer rather than as something already thrown away.
-            BouncingDotsLoader()
-                .searchLoadingRow()
+            // Rows in the shape of the answer, where it will appear — the same skeleton
+            // every other list loads with.
+            SkeletonSongList(count: 6)
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                 .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
         } else {
             if results.isOffline {
                 HStack(spacing: 6) {

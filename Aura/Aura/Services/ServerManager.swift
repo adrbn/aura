@@ -36,6 +36,12 @@ final class ServerManager {
     private let pathMonitor = NWPathMonitor()
     private let pathMonitorQueue = DispatchQueue(label: "musika.pathmonitor")
     private var lastPathStatus: NWPath.Status = .satisfied
+    /// False until the monitor has reported the device's network once.
+    private var pathKnown = false
+    /// How long the network has to stay gone, while the app is in use, before offline mode
+    /// takes over — long enough that a tunnel or a lift doesn't flip the whole app.
+    private let lostNetworkGrace: TimeInterval = 10
+    private var lostNetworkTask: Task<Void, Never>?
 
     /// Polling interval grows exponentially while server is unreachable: 30s → 60s → 120s → 300s (max)
     private let baseInterval: TimeInterval = 30
@@ -121,12 +127,14 @@ final class ServerManager {
         MixGenerator.shared.restoreForServer(server.id)
     }
 
-    func testConnection() async {
+    /// Pings the server and records the answer. True when it answered.
+    @discardableResult
+    func testConnection(timeout: TimeInterval? = nil) async -> Bool {
         guard let server = currentServer else {
             connectionError = "No server configured"
             isConnected = false
             AppLogger.shared.log("❌ testConnection: no server configured")
-            return
+            return false
         }
         // Short-circuit if device has no network at all — saves a 30s timeout per failure
         if !hasNetwork {
@@ -136,11 +144,11 @@ final class ServerManager {
                 self.consecutiveFailures += 1
                 self.enableAutoOfflineIfNeeded()
             }
-            return
+            return false
         }
         AppLogger.shared.log("🖥 testConnection: \(server.baseURL)")
         do {
-            let ok = try await SubsonicClient.shared.ping(server: server)
+            let ok = try await SubsonicClient.shared.ping(server: server, timeout: timeout)
             await MainActor.run {
                 let wasConnected = self.isConnected
                 self.isConnected = ok
@@ -157,7 +165,7 @@ final class ServerManager {
                     if self.wasAutoOffline && AppSettings.shared.offlineMode {
                         // Offline mode was enabled automatically — leave it automatically
                         // too. Manual offline (user toggle) is never overridden.
-                        self.goBackOnline()
+                        self.goBackOnline(manual: false)
                         ToastManager.shared.show("Back online", icon: "wifi")
                         AppLogger.shared.log("🟢 Server back online — auto-resumed online mode")
                     }
@@ -173,10 +181,13 @@ final class ServerManager {
                 }
             }
             AppLogger.shared.log("🖥 testConnection: \(ok ? "connected" : "failed")")
+            return ok
         } catch is CancellationError {
             AppLogger.shared.log("⚠️ testConnection cancelled (view lifecycle)")
+            return false
         } catch let error as URLError where error.code == .cancelled {
             AppLogger.shared.log("⚠️ testConnection URL request cancelled")
+            return false
         } catch {
             await MainActor.run {
                 self.isConnected = false
@@ -185,6 +196,7 @@ final class ServerManager {
                 self.enableAutoOfflineIfNeeded()
             }
             AppLogger.shared.log("❌ testConnection error: \(error.localizedDescription)")
+            return false
         }
     }
 
@@ -198,14 +210,78 @@ final class ServerManager {
         if let manualDate = manualOnlineDate, Date().timeIntervalSince(manualDate) < manualOnlineGracePeriod {
             return
         }
-        guard !AppSettings.shared.offlineMode,
-              !DownloadManager.shared.downloadedSongs.isEmpty,
-              consecutiveFailures >= autoOfflineThreshold else { return }
+        guard consecutiveFailures >= autoOfflineThreshold else { return }
+        goOfflineAutomatically(announce: true)
+    }
+
+    /// Offline mode, switched on because the server can't be reached — and so switched off
+    /// again by itself once it can. Only with something downloaded: offline mode shows the
+    /// downloads, and with none it would be an empty screen in place of the error states.
+    private func goOfflineAutomatically(announce: Bool) {
+        guard !AppSettings.shared.offlineMode, !DownloadManager.shared.downloadedSongs.isEmpty else { return }
         AppSettings.shared.offlineMode = true
         AppSettings.shared.save()
         wasAutoOffline = true
-        ToastManager.shared.show("Switched to offline mode", icon: "wifi.slash")
-        AppLogger.shared.log("📴 Auto-enabled offline mode — server unreachable (\(consecutiveFailures) failures)")
+        if announce { ToastManager.shared.show("Switched to offline mode", icon: "wifi.slash") }
+        AppLogger.shared.log("📴 Offline mode — \(hasNetwork ? "server unreachable" : "no network") (\(consecutiveFailures) failures)")
+    }
+
+    // MARK: - Choosing the Mode When the App Opens
+
+    /// True while `settleModeOnOpen` runs, so reopening twice in quick succession can't
+    /// start a second check racing the first.
+    private var isSettlingMode = false
+    /// How long each ping made on opening waits. Short, because the app is deciding which
+    /// face to show; a server that takes longer than this to answer a ping isn't one to
+    /// browse anyway.
+    private let openCheckTimeout: TimeInterval = 5
+
+    /// On launch and on every return to the app: online if the server answers, offline if
+    /// it doesn't — unless the reader chose offline by hand, which holds until they leave it.
+    ///
+    /// Opening used to trust the saved mode. Offline chosen by hand never lifted by itself;
+    /// offline switched on automatically lifted only if the first ping, fired before the
+    /// network (or the VPN the server sits behind) was up, happened to succeed, and then
+    /// waited out the backoff; and a phone with no network at all stayed "online" with an
+    /// error on every screen, because the checks that count failures skip themselves when
+    /// there's no network. The mode only changes on opening: while the app is in use, the
+    /// existing rules stand, so a hand-picked offline mode holds until the next opening.
+    @MainActor
+    func settleModeOnOpen() async {
+        guard currentServer != nil, !isSettlingMode else { return }
+        isSettlingMode = true
+        defer { isSettlingMode = false }
+
+        await waitForFirstPath()
+        var reachable = false
+        if hasNetwork {
+            reachable = await testConnection(timeout: openCheckTimeout)
+            if !reachable, hasNetwork {
+                // The first request after a wake often fails while Wi-Fi or the VPN comes
+                // back up; one more try, a moment later, before calling it offline.
+                try? await Task.sleep(for: .seconds(1.5))
+                reachable = await testConnection(timeout: openCheckTimeout)
+            }
+        }
+        if reachable {
+            // Only an offline mode the app chose lifts by itself: one the reader picked is
+            // theirs — on a plane, saving data — and reopening the app isn't changing it.
+            if AppSettings.shared.offlineMode && wasAutoOffline { goBackOnline(manual: false) }
+        } else {
+            goOfflineAutomatically(announce: false)
+        }
+        AppLogger.shared.log("🔌 Opened \(AppSettings.shared.offlineMode ? "offline" : "online") — server \(reachable ? "answered" : "unreachable")")
+    }
+
+    /// The path monitor answers within moments of starting; until it has, `hasNetwork` is
+    /// only its optimistic default.
+    @MainActor
+    private func waitForFirstPath() async {
+        var waits = 0
+        while !pathKnown && waits < 20 {
+            try? await Task.sleep(for: .milliseconds(50))
+            waits += 1
+        }
     }
 
     // MARK: - Network Path Monitoring
@@ -219,14 +295,17 @@ final class ServerManager {
 
             DispatchQueue.main.async {
                 self.hasNetwork = isReachable
+                self.pathKnown = true
 
                 if !isReachable {
                     // Network gone — short-circuit ping logic
                     self.isConnected = false
                     self.connectionError = "No network connection"
                     AppLogger.shared.log("📡 Network unavailable")
+                    self.goOfflineIfNetworkStaysLost()
                     return
                 }
+                self.lostNetworkTask?.cancel()
 
                 // Network came back (or first satisfied) — re-test the server immediately
                 if prev != .satisfied {
@@ -243,13 +322,38 @@ final class ServerManager {
         pathMonitor.start(queue: pathMonitorQueue)
     }
 
-    /// Leaves offline mode (user action or automatic reconnection) and resets state
-    func goBackOnline() {
+    /// Without a network the periodic checks skip themselves, so no failure is ever counted
+    /// and the failure rule can't fire: the app stayed "online" with an error on every
+    /// screen. A network that stays gone switches it here instead; the monitor's next
+    /// satisfied path pings, and the ping brings it back online.
+    private func goOfflineIfNetworkStaysLost() {
+        lostNetworkTask?.cancel()
+        lostNetworkTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(self?.lostNetworkGrace ?? 10))
+            guard let self, !Task.isCancelled, !self.hasNetwork else { return }
+            if let manualDate = self.manualOnlineDate,
+               Date().timeIntervalSince(manualDate) < self.manualOnlineGracePeriod { return }
+            self.goOfflineAutomatically(announce: true)
+        }
+    }
+
+    /// Offline mode because the reader asked for it: it stays until they leave it, the app
+    /// reopening or the server answering included.
+    func goOfflineManually() {
+        AppSettings.shared.offlineMode = true
+        AppSettings.shared.save()
+        wasAutoOffline = false
+        AppLogger.shared.log("📴 Offline mode — chosen")
+    }
+
+    /// Leaves offline mode and resets state. `manual` is the user's own choice, which holds
+    /// off automatic offline for a while; the app coming back online by itself doesn't.
+    func goBackOnline(manual: Bool = true) {
         AppSettings.shared.offlineMode = false
         AppSettings.shared.save()
         wasAutoOffline = false
         consecutiveFailures = 0
-        manualOnlineDate = Date()
+        if manual { manualOnlineDate = Date() }
         // Offline mode short-circuits artwork fetches to the downloaded-only master, so
         // anything not downloaded is showing a placeholder. Leaving offline mode has to
         // let those retry — nothing else will.

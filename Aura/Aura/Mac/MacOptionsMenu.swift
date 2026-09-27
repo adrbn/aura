@@ -19,7 +19,7 @@ struct MacOptionsMenu: View {
             Divider()
 
             Picker("Accent", selection: $settings.appAccentColor) {
-                ForEach(AppAccentColor.allCases, id: \.self) { colour in
+                ForEach(AppAccentColor.presets, id: \.self) { colour in
                     Text(colour.rawValue).tag(colour)
                 }
             }

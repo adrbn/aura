@@ -38,9 +38,10 @@ struct QueueView: View {
                 // User queue — songs added via "Add to Queue" / "Play Next"
                 if !player.userQueue.isEmpty {
                     Section {
-                        // Key by position, not song.id: the same track can legitimately sit
-                        // in the queue more than once, and id-keyed rows collapse/misroute taps.
-                        ForEach(Array(player.userQueue.enumerated()), id: \.offset) { index, song in
+                        // Keyed by song and by which of its copies it is (see `keyed`).
+                        ForEach(Self.keyed(player.userQueue)) { row in
+                            let index = row.index
+                            let song = row.song
                             HStack(spacing: 12) {
                                 CoverArtImage(coverArt: song.coverArt, size: 46, cornerRadius: 6)
                                 VStack(alignment: .leading, spacing: 2) {
@@ -89,9 +90,9 @@ struct QueueView: View {
                 let autoNext = autoNextSongs
                 if !autoNext.isEmpty {
                     Section {
-                        // Position-keyed (see userQueue note): guarantees a tap plays the row
-                        // you touched even if the queue holds two songs with the same id.
-                        ForEach(Array(autoNext.enumerated()), id: \.offset) { index, song in
+                        ForEach(Self.keyed(autoNext)) { row in
+                            let index = row.index
+                            let song = row.song
                             HStack(spacing: 12) {
                                 CoverArtImage(coverArt: song.coverArt, size: 46, cornerRadius: 6)
                                 VStack(alignment: .leading, spacing: 2) {
@@ -168,6 +169,10 @@ struct QueueView: View {
                     }
                 }
             }
+            // A song played leaves the top and the rest slide up; a new album's songs fade
+            // in over the old — rather than every row rewritten where it stands.
+            .animation(.smooth(duration: 0.35), value: Self.keyed(player.userQueue).map(\.id))
+            .animation(.smooth(duration: 0.35), value: Self.keyed(autoNextSongs).map(\.id))
             .scrollIndicators(.hidden)
             .scrollContentBackground(.hidden)
             .background(Color.themeBg)
@@ -214,6 +219,26 @@ struct QueueView: View {
                 }
             }
         }
+    }
+
+    /// Rows keyed by song and by which of its copies they are. Keyed by position, as they
+    /// were, every row was a different song after each track and simply rewrote itself;
+    /// keyed by song alone, two copies of one song collapsed and a tap could play the wrong
+    /// one. This way each row is itself for as long as it's there, and a tap still plays
+    /// the row touched.
+    private static func keyed(_ songs: [Song]) -> [QueueRow] {
+        var copies: [String: Int] = [:]
+        return songs.enumerated().map { index, song in
+            let copy = copies[song.id, default: 0]
+            copies[song.id] = copy + 1
+            return QueueRow(index: index, song: song, id: "\(song.id)#\(copy)")
+        }
+    }
+
+    struct QueueRow: Identifiable {
+        let index: Int
+        let song: Song
+        let id: String
     }
 
     private var autoNextSongs: [Song] {

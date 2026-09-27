@@ -143,28 +143,83 @@ struct ContentView: View {
         }
     }
 
+    /// Offline, the same app: the same tabs in the same order, each showing what this
+    /// iPhone holds, with the mini player and Now Playing where they always are.
     private var offlineContent: some View {
-        NavigationStack {
-            ZStack(alignment: .bottom) {
-                OfflineLibraryView()
-                if audioPlayer.hasQueue {
-                    VStack(spacing: 0) {
-                        Spacer()
-                        MiniPlayerView()
+        ZStack(alignment: .bottom) {
+            TabView(selection: $selectedTab) {
+                ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
+                    Tab(tab.title, systemImage: tab.icon, value: index) {
+                        offlineTabContent(for: tab)
+                            .overlay(alignment: .bottom) {
+                                BottomEdgeVeil(coversMiniPlayer: audioPlayer.hasQueue)
+                            }
                     }
                 }
-                ToastOverlay()
             }
+            .tint(appSettings.activeTheme.accentColor)
+
+            VStack(spacing: 0) {
+                Spacer()
+                if audioPlayer.hasQueue {
+                    MiniPlayerView()
+                        .padding(.bottom, 57)
+                }
+            }
+            .ignoresSafeArea(.keyboard)
+            .opacity(keyboardVisible ? 0 : 1)
+            .allowsHitTesting(!keyboardVisible)
+
+            ToastOverlay()
         }
         .fullScreenCover(isPresented: Binding(
             get: { audioPlayer.isShowingNowPlaying },
             set: { audioPlayer.isShowingNowPlaying = $0 }
-        )) {
+        ), onDismiss: {
+            handlePostDismissNavigation()
+        }) {
             NowPlayingView()
         }
+        // Now Playing's links open in the tab that holds them, as online.
+        .onChange(of: audioPlayer.pendingArtistId) { _, newId in
+            if newId != nil { switchToLibraryTab() }
+        }
+        .onChange(of: audioPlayer.pendingAlbumId) { _, newId in
+            if newId != nil { switchToLibraryTab() }
+        }
+        .onChange(of: audioPlayer.pendingGenreName) { _, newName in
+            if newName != nil { switchToLibraryTab() }
+        }
+        .onChange(of: audioPlayer.pendingFavoritesOpen) { _, open in
+            if open && !audioPlayer.isShowingNowPlaying { switchToLibraryTab() }
+        }
+        .onChange(of: audioPlayer.pendingPlaylistId) { _, newId in
+            if newId != nil { switchToPlaylistsTab() }
+        }
+        .onChange(of: audioPlayer.pendingMixId) { _, newId in
+            if newId != nil { switchToHomeTab() }
+        }
         .task {
+            OfflineLibrary.shared.refresh()
             await serverManager.testConnection()
             serverManager.startMonitoring()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = true }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = false }
+        }
+    }
+
+    @ViewBuilder
+    private func offlineTabContent(for tab: TabItem) -> some View {
+        switch tab {
+        case .home: OfflineHomeView()
+        case .library: OfflineLibraryView()
+        case .playlists: OfflinePlaylistsView()
+        case .settings: SettingsView()
+        case .search: OfflineSearchView()
         }
     }
 
@@ -380,8 +435,7 @@ struct ConnectionBanner: View {
 
                 if !DownloadManager.shared.downloadedSongs.isEmpty {
                     Button {
-                        appSettings.offlineMode = true
-                        appSettings.save()
+                        ServerManager.shared.goOfflineManually()
                     } label: {
                         Text("Go Offline")
                             .font(.caption.weight(.bold))
@@ -428,90 +482,3 @@ struct LoadErrorView: View {
     }
 }
 
-// MARK: - Offline Status Bar
-
-/// Compact strip at the top of the offline library explaining WHY the app is
-/// offline — "no internet" and "server unreachable" are very different problems
-/// for a self-hosted server (e.g. Navidrome on a home LAN / Tailscale).
-struct OfflineStatusBar: View {
-    @Environment(ServerManager.self) private var serverManager
-    @Environment(\.appAccentColor) private var accentColor
-    @State private var isRetrying = false
-
-    private var statusText: String {
-        if !serverManager.hasNetwork { return "No internet connection" }
-        if !serverManager.isConnected { return "Server unreachable" }
-        return "Offline mode"
-    }
-
-    private var statusDetail: String {
-        if !serverManager.hasNetwork { return "Playing downloaded music" }
-        if !serverManager.isConnected { return "You're connected, but the server isn't responding" }
-        return "Server is reachable — go online anytime"
-    }
-
-    private var statusIcon: String {
-        if !serverManager.hasNetwork { return "wifi.slash" }
-        if !serverManager.isConnected { return "exclamationmark.icloud" }
-        return "icloud.slash"
-    }
-
-    private var statusTint: Color { serverManager.isConnected ? .green : .orange }
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: statusIcon)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(statusTint)
-                .frame(width: 36, height: 36)
-                .background(statusTint.opacity(0.15), in: Circle())
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(statusText)
-                    .font(.subheadline.weight(.semibold))
-                Text(statusDetail)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: 8)
-
-            if !serverManager.isConnected && serverManager.hasNetwork {
-                action(isRetrying ? nil : "Retry") {
-                    guard !isRetrying else { return }
-                    isRetrying = true
-                    Task {
-                        await serverManager.testConnection()
-                        isRetrying = false
-                    }
-                }
-            } else if serverManager.isConnected {
-                // Server answers while we're offline — the way out is right here, not in
-                // Settings.
-                action("Go Online") { serverManager.goBackOnline() }
-            }
-        }
-        .padding(12)
-        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .padding(.horizontal, 16)
-    }
-
-    /// The card's one action, as a tinted capsule; a spinner while it runs.
-    private func action(_ title: String?, perform: @escaping () -> Void) -> some View {
-        Button(action: perform) {
-            Group {
-                if let title {
-                    Text(title).font(.footnote.weight(.semibold))
-                } else {
-                    ProgressView().controlSize(.small)
-                }
-            }
-            .foregroundStyle(accentColor)
-            .padding(.horizontal, 14)
-            .frame(height: 32)
-            .background(accentColor.opacity(0.16), in: Capsule())
-        }
-        .buttonStyle(.plain)
-    }
-}

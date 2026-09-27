@@ -19,14 +19,13 @@ struct AlbumDetailView: View {
                         Spacer().frame(height: 16)
 
                         CoverArtAsyncImage(coverArt: album.coverArt, size: 260)
+                            .coverMenu(cornerRadius: 12, actions: [
+                                CoverMenuAction(title: String(localized: "Save Cover Art"),
+                                                systemImage: "square.and.arrow.down") {
+                                    CoverArtSaver.save(coverArt: album.coverArt)
+                                },
+                            ])
                             .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
-                            .contextMenu {
-                                Button {
-                                    saveCoverArt(coverArtId: album.coverArt)
-                                } label: {
-                                    Label("Save Cover Art", systemImage: "square.and.arrow.down")
-                                }
-                            }
 
                         Text(album.name)
                             .font(.title2.bold())
@@ -125,7 +124,7 @@ struct AlbumDetailView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
                     }
-                    .padding(.bottom, 8)
+                    .padding(.bottom, DetailListLayout.gap)
                     .frame(maxWidth: .infinity)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets())
@@ -153,13 +152,7 @@ struct AlbumDetailView: View {
                         // The count closes the list, as a record sleeve does, rather than
                         // heading it: alone on a row above the first song it sat in a
                         // full-height list row, a caption adrift in empty space.
-                        Text(summary(of: album, songs: songs))
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                            .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 0, trailing: 16))
+                        ListSummaryRow(text: ListSummaryRow.text(year: album.year, songs: songs, seconds: album.duration))
                     }
 
                     ListEndSpacer()
@@ -167,6 +160,7 @@ struct AlbumDetailView: View {
                         .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)
+                .environment(\.defaultMinListRowHeight, 1)
                 .scrollContentBackground(.hidden)
                 .background(ArtworkCanvas(coverArt: album.coverArt))
                 .scrollIndicators(.hidden)
@@ -194,17 +188,6 @@ struct AlbumDetailView: View {
         .task { await loadAlbum() }
     }
 
-    /// "2024 · 12 songs · 48 min" — whichever of them the server knows.
-    private func summary(of album: AlbumWithSongs, songs: [Song]) -> String {
-        let seconds = album.duration ?? songs.compactMap(\.duration).reduce(0, +)
-        let parts = [
-            album.year.map(String.init),
-            "\(songs.count) \(songs.count == 1 ? "song" : "songs")",
-            seconds > 0 ? Duration.seconds(max(seconds, 60))
-                .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)) : nil,
-        ]
-        return parts.compactMap { $0 }.joined(separator: " · ")
-    }
 
     /// Shown when the album couldn't be loaded (e.g. the server is unreachable)
     /// so navigating in never leaves a blank screen.
@@ -259,23 +242,6 @@ struct AlbumDetailView: View {
                 }
             } catch {
                 await MainActor.run { isStarred = wasStarred }
-            }
-        }
-    }
-
-    private func saveCoverArt(coverArtId: String?) {
-        guard let coverArtId,
-              let server = serverManager.currentServer,
-              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArtId, size: ArtworkCache.fullSize) else { return }
-        Task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                if let image = UIImage(data: data) {
-                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    ToastManager.shared.show("Saved to Photos", icon: "checkmark")
-                }
-            } catch {
-                AppLogger.shared.log("❌ Save cover art failed: \(error.localizedDescription)")
             }
         }
     }

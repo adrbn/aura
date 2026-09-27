@@ -14,6 +14,23 @@ struct RadarRelease: Codable, Hashable, Identifiable {
     let type: String
     let cover: String?
     let link: String?
+    /// Everyone Deezer credits it to, its main artist first — the radar files a collaboration
+    /// under whichever of its artists is played most. Nil on a radar built before it was
+    /// asked; empty when Deezer couldn't say.
+    var credits: [String]? = nil
+
+    /// The release's artists as it credits them — "John Summit, The Chainsmokers & Ilsey" —
+    /// the same on the radar, on its page and in the player.
+    var byline: String {
+        guard let credits, let last = credits.last else { return artist.name }
+        return credits.count == 1 ? last : credits.dropLast().joined(separator: ", ") + " & " + last
+    }
+
+    /// Whether `name` is one of the release's artists.
+    func isBy(_ name: String) -> Bool {
+        (credits?.isEmpty == false ? credits! : [artist.name])
+            .contains { SongQuery.fold($0) == SongQuery.fold(name) }
+    }
 
     var typeLabel: String {
         switch type {
@@ -232,8 +249,11 @@ struct DeezerTrack: Decodable, Hashable, Identifiable {
     /// cover, and the artist as the library knows them, so Now Playing can go to them.
     func previewSong(of release: RadarRelease) -> Song? {
         guard let previewURL else { return nil }
+        // A song by the release's own artists is credited like the release; one of a
+        // compilation keeps its own.
+        let credit = artist.map(\.name).flatMap { release.isBy($0) ? nil : $0 } ?? release.byline
         return Song(id: "deezer-\(id)", title: title, album: release.title,
-                    artist: artist?.name ?? release.artist.name, albumId: nil, artistId: release.artist.libraryId,
+                    artist: credit, albumId: nil, artistId: release.artist.libraryId,
                     artists: nil, track: track_position, year: Int(release.released.prefix(4)), genre: nil,
                     coverArt: release.largeCover, duration: Self.previewLength, bitRate: nil, suffix: "mp3",
                     contentType: "audio/mpeg", isDir: false, starred: nil, size: nil, path: nil, playCount: nil,
@@ -345,6 +365,25 @@ enum RadarCatalog {
         return albums.data
     }
 
+    private struct AlbumCredits: Decodable {
+        struct Contributor: Decodable {
+            let name: String
+            let role: String?
+        }
+        let artist: DeezerTrack.Credit?
+        let contributors: [Contributor]?
+    }
+
+    /// Everyone a release is by, its main artist first: an artist's discography lists the
+    /// collaborations they're in, while the release's own page names all its artists.
+    static func credits(albumId: String) async -> [String]? {
+        guard Int(albumId) != nil, let url = URL(string: "https://api.deezer.com/album/\(albumId)"),
+              let album: AlbumCredits = await fetch(url) else { return nil }
+        let main = (album.contributors ?? []).filter { ($0.role ?? "Main") == "Main" }.map(\.name)
+        let names = main.isEmpty ? [album.artist?.name].compactMap { $0 } : main
+        return names.enumerated().filter { names.firstIndex(of: $0.element) == $0.offset }.map(\.element)
+    }
+
     /// A release's tracks in order. Asked when the release is opened: the previews' links
     /// carry a token that expires, so they are never kept.
     static func tracks(albumId: String) async -> [DeezerTrack]? {
@@ -411,20 +450,30 @@ enum RadarCatalog {
 }
 
 /// Deezer allows 50 API calls per 5 seconds, per client. The radar and the covers' artist
-/// photos both call it, so they queue here for one shared budget instead of each assuming
-/// it has the whole of it.
+/// photos both call it, each in its own lane with its own share of that budget.
+///
+/// One queue for both put a cover's photo behind the radar's whole run — a hundred and more
+/// lookups when it asks every release for its artists — so the covers on screen came up
+/// flat for minutes, and the lookups that ran into the quota never came back.
 actor DeezerPacer {
-    static let shared = DeezerPacer()
+    /// The radar, the release pages and the catalogue search: 5 calls a second.
+    static let shared = DeezerPacer(spacing: .milliseconds(200))
+    /// The covers' artist photos, which someone is looking at: 4 a second. Both lanes
+    /// together stay under Deezer's 10.
+    static let photos = DeezerPacer(spacing: .milliseconds(250))
 
-    /// About 6 calls a second: two thirds of the quota, the rest left for bursts.
-    private static let spacing: Duration = .milliseconds(150)
+    private let spacing: Duration
     private var next = ContinuousClock.now
+
+    init(spacing: Duration) {
+        self.spacing = spacing
+    }
 
     /// Returns when the caller's slot comes. Slots are handed out in order of asking.
     func wait() async {
         let now = ContinuousClock.now
         let slot = max(now, next)
-        next = slot + Self.spacing
+        next = slot + spacing
         if slot > now { try? await Task.sleep(until: slot, clock: .continuous) }
     }
 }

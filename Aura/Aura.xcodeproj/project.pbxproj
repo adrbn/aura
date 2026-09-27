@@ -24,6 +24,7 @@
 		30809170EF314ADF20C2CFE9 /* MacPlayerBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A7A8D3269A4534007744BF /* MacPlayerBar.swift */; };
 		30CDA697DD9DFA3D48C1ADEA /* SongLinkServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F4E2D16AB99E6213E82E52 /* SongLinkServiceTests.swift */; };
 		32A49759C5A3CF32AEA00A68 /* MacPlaylistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */; };
+		37F714D890A226E19DE5F65E /* CoverMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C50ECA7916A55ECF9EE4962 /* CoverMenu.swift */; };
 		38937ABA4C1C046DBB0779CD /* MacBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67D53CBB8991E7A47AB055E /* MacBackground.swift */; };
 		3AB1165B891D0FE586E05EFC /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
 		3BC4FC997E17751EBE645FCB /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
@@ -37,6 +38,7 @@
 		5AEBDDA3941D7AAD77C9C22A /* AuraMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */; };
 		5DACC2F94E2FBAC2FA1E5506 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
 		5EBDFB2C27EFFEF20CA718EE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 599B6E59E456CCD14BAC1A6B /* Cocoa.framework */; };
+		606EA6CB9CEA6481F2D26E66 /* AccentColourPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D53C72F337D1037C1F5737FC /* AccentColourPicker.swift */; };
 		64A2EAE251FFBA441E86F6C8 /* MacArtistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */; };
 		66C5C84F0E93A4DE920CCF29 /* MacShelf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6163600181237025007A32C2 /* MacShelf.swift */; };
 		67044D538D8B66F71256F498 /* SearchHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C1 /* SearchHistory.swift */; };
@@ -57,6 +59,7 @@
 		98F1B4F40CFCC70C873D4FEE /* LyricsTranslationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F316BCC5018DF788F0B8F8 /* LyricsTranslationSettingsView.swift */; };
 		A0EA5D295C3DFD151DE59C30 /* SlskdClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB587064D721AA775E21C53 /* SlskdClient.swift */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
+		A395A249C83D1902B6E912C2 /* OfflineLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3B5FB4CB9ED329D9240207 /* OfflineLibrary.swift */; };
 		A5CF83658D8D594FC39B114A /* SlskdClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB587064D721AA775E21C53 /* SlskdClient.swift */; };
 		A966843C05E005A327BAAA64 /* OfflinePlaylistsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DE /* OfflinePlaylistsStore.swift */; };
 		AA11BB22CC33DD44EE55F001 /* MixCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55F002 /* MixCacheTests.swift */; };
@@ -195,6 +198,7 @@
 		EAD18EB0F47BC2E6F77CB899 /* MacServerPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2840376375D75F5F54A64277 /* MacServerPicker.swift */; };
 		EBA1389D873C96B20ECBC2AD /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
 		EBEB7A689B00639BFDCF12E6 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000050 /* DownloadManager.swift */; };
+		EE512248F159953168EFB22B /* OfflineTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */; };
 		EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
 		F4367F560164A20E2291171A /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000089 /* KeychainHelper.swift */; };
 		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
@@ -244,6 +248,7 @@
 		1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacWindowChrome.swift; sourceTree = "<group>"; };
 		2840376375D75F5F54A64277 /* MacServerPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerPicker.swift; sourceTree = "<group>"; };
 		2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistsView.swift; sourceTree = "<group>"; };
+		2B3B5FB4CB9ED329D9240207 /* OfflineLibrary.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineLibrary.swift; sourceTree = "<group>"; };
 		2DE0E8DD48DEACB25983419C /* MacCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacCommands.swift; sourceTree = "<group>"; };
 		332E4899162985D5A2BE70F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQueryTests.swift; sourceTree = "<group>"; };
@@ -262,11 +267,13 @@
 		6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistLinks.swift; sourceTree = "<group>"; };
 		6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
 		7507C823E9A1C89305C77937 /* MacHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacHomeView.swift; sourceTree = "<group>"; };
+		76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineTabs.swift; sourceTree = "<group>"; };
 		7B7AA32B23D8B48D503402F9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		88855F68FD1F326A2B289FF3 /* MacGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacGrid.swift; sourceTree = "<group>"; };
 		8BF55BE55F578254EC9F3FB0 /* AuraMac.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = AuraMac.entitlements; sourceTree = "<group>"; };
 		8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MusicEntities.swift; sourceTree = "<group>"; };
 		972B2D4634806C3FA589AE66 /* MacMixesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacMixesView.swift; sourceTree = "<group>"; };
+		9C50ECA7916A55ECF9EE4962 /* CoverMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoverMenu.swift; sourceTree = "<group>"; };
 		A114C4B8E0319934E5F90216 /* MacRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
 		A31E6A5950E5B49121F1EDCD /* MacSidebar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSidebar.swift; sourceTree = "<group>"; };
@@ -279,6 +286,7 @@
 		BEB587064D721AA775E21C53 /* SlskdClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlskdClient.swift; sourceTree = "<group>"; };
 		C29B621CC4AF2D3304AEB48D /* MacAlbumsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacAlbumsView.swift; sourceTree = "<group>"; };
 		CCAA00020000000000000001 /* MusicBrainzService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicBrainzService.swift; sourceTree = "<group>"; };
+		D53C72F337D1037C1F5737FC /* AccentColourPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccentColourPicker.swift; sourceTree = "<group>"; };
 		D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacOptionsMenu.swift; sourceTree = "<group>"; };
 		D7A1E179BB18A52978EC7635 /* SongLinkService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongLinkService.swift; sourceTree = "<group>"; };
 		DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraMacApp.swift; sourceTree = "<group>"; };
@@ -638,6 +646,8 @@
 				E1000002000000000000A011 /* DeezerSearchSection.swift */,
 				E1000002000000000000A00D /* FetchProgressBanner.swift */,
 				12F316BCC5018DF788F0B8F8 /* LyricsTranslationSettingsView.swift */,
+				2B3B5FB4CB9ED329D9240207 /* OfflineLibrary.swift */,
+				76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -666,6 +676,8 @@
 				E100000200000000000000F4 /* AlphabetIndexBar.swift */,
 				E100000200000000000000D4 /* FolderPicker.swift */,
 				E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */,
+				D53C72F337D1037C1F5737FC /* AccentColourPicker.swift */,
+				9C50ECA7916A55ECF9EE4962 /* CoverMenu.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -1109,6 +1121,10 @@
 				E1000001000000000000A005 /* LyricsVersion.swift in Sources */,
 				B5FD446B4105F41FB7E47BB2 /* GeminiLyricsTranslator.swift in Sources */,
 				98F1B4F40CFCC70C873D4FEE /* LyricsTranslationSettingsView.swift in Sources */,
+				A395A249C83D1902B6E912C2 /* OfflineLibrary.swift in Sources */,
+				EE512248F159953168EFB22B /* OfflineTabs.swift in Sources */,
+				606EA6CB9CEA6481F2D26E66 /* AccentColourPicker.swift in Sources */,
+				37F714D890A226E19DE5F65E /* CoverMenu.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1158,7 +1174,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AuraWidget/Info.plist;
@@ -1188,7 +1204,7 @@
 				CODE_SIGN_ENTITLEMENTS = Aura/Mac/AuraMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1218,7 +1234,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Aura/Aura.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1251,7 +1267,7 @@
 				CODE_SIGN_ENTITLEMENTS = Aura/Mac/AuraMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1437,7 +1453,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Aura/Aura.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1468,7 +1484,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Aura/Aura.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1496,7 +1512,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AuraWidget/Info.plist;
@@ -1522,7 +1538,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AuraWidget/Info.plist;
@@ -1609,7 +1625,7 @@
 				CODE_SIGN_ENTITLEMENTS = Aura/Mac/AuraMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 181;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;

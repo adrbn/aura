@@ -41,11 +41,21 @@ extension View {
 
 /// A single song-row shaped skeleton placeholder
 struct SkeletonSongRow: View {
+    /// Off for a release's own list, which numbers its songs instead of showing covers.
+    var showsArt = true
+
     var body: some View {
         HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color(.systemGray5))
-                .frame(width: 44, height: 44)
+            if showsArt {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(.systemGray5))
+                    .frame(width: 44, height: 44)
+            } else {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Color(.systemGray6))
+                    .frame(width: 14, height: 14)
+                    .frame(minWidth: 22)
+            }
             VStack(alignment: .leading, spacing: 4) {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color(.systemGray5))
@@ -67,10 +77,11 @@ struct SkeletonSongRow: View {
 /// Multiple song-row skeletons
 struct SkeletonSongList: View {
     var count: Int = 8
+    var showsArt = true
 
     var body: some View {
         ForEach(0..<count, id: \.self) { _ in
-            SkeletonSongRow()
+            SkeletonSongRow(showsArt: showsArt)
         }
     }
 }

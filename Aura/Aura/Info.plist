@@ -9,6 +9,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Aura saves the covers you choose to keep to your photo library.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Aura connects to the music server on your local network that you configure.</string>
 	<key>NSSupportsLiveActivities</key>

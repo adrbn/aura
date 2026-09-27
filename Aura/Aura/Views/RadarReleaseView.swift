@@ -58,6 +58,8 @@ struct RadarReleaseView: View {
                                               bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 16))
                     .listRowBackground(Color.clear)
                 }
+                // Closes the list as it does an album's.
+                ListSummaryRow(text: meta)
             } else if unreachable {
                 ContentUnavailableView {
                     Label("Deezer couldn't be reached", systemImage: "wifi.exclamationmark")
@@ -67,11 +69,9 @@ struct RadarReleaseView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             } else {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 40)
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
+                SkeletonSongList(count: 6, showsArt: false)
+                    .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
+                                              bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 16))
             }
 
             ListEndSpacer()
@@ -79,6 +79,7 @@ struct RadarReleaseView: View {
                 .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
+        .environment(\.defaultMinListRowHeight, 1)
         .scrollContentBackground(.hidden)
         .background(TintedCanvas(tint: tint))
         .scrollIndicators(.hidden)
@@ -98,6 +99,7 @@ struct RadarReleaseView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                 }
+                .tint(.primary)
                 .accessibilityLabel("More")
             }
         }
@@ -122,19 +124,16 @@ struct RadarReleaseView: View {
                     .multilineTextAlignment(.center)
                 if let artistId = release.artist.libraryId {
                     Button { player.pendingArtistId = artistId } label: {
-                        Text(release.artist.name)
+                        Text(release.byline)
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(accentColor)
                     }
                     .buttonStyle(.borderless)
                 } else {
-                    Text(release.artist.name)
+                    Text(release.byline)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.secondary)
                 }
-                Text(meta)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
             }
             .padding(.horizontal)
 
@@ -166,11 +165,11 @@ struct RadarReleaseView: View {
             .padding(.horizontal)
         }
         .padding(.top, 12)
-        .padding(.bottom, 12)
+        .padding(.bottom, DetailListLayout.gap)
         .frame(maxWidth: .infinity)
     }
 
-    /// "Album · 25 Sept 2026 · 12 songs · 41 min"
+    /// "Single · 25 Sept 2026 · 12 songs · 41 min"
     private var meta: String {
         var parts = [release.typeLabel]
         if let date = release.releaseDate { parts.append(date.formatted(date: .abbreviated, time: .omitted)) }
@@ -285,7 +284,7 @@ private struct RadarTrackRow: View {
 
     private var subtitle: String {
         var parts: [String] = []
-        if let name = track.artist?.name, name != release.artist.name { parts.append(name) }
+        if let name = track.artist?.name, !release.isBy(name) { parts.append(name) }
         if let seconds = track.duration, seconds > 0 {
             parts.append(Duration.seconds(seconds).formatted(.time(pattern: .minuteSecond)))
         }

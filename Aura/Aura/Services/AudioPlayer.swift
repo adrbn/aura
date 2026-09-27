@@ -347,12 +347,15 @@ final class AudioPlayer {
         /// Playback position (seconds) within `currentSong` at the moment of saving, so a
         /// cold relaunch resumes where the user left off — not just the same track at 0:00.
         var position: TimeInterval = 0
+        /// Where the autoplay tail begins. Not kept before, so after a relaunch the songs
+        /// autoplay added behind a one-song album went on showing as that album's.
+        var autoplayFromIndex: Int?
 
         enum CodingKeys: String, CodingKey {
-            case currentSong, queue, queueIndex, userQueue, playbackSource, repeatMode, position
+            case currentSong, queue, queueIndex, userQueue, playbackSource, repeatMode, position, autoplayFromIndex
         }
 
-        init(currentSong: Song, queue: [Song], queueIndex: Int, userQueue: [Song] = [], playbackSource: PlaybackSource = .unknown, repeatMode: RepeatMode = .off, position: TimeInterval = 0) {
+        init(currentSong: Song, queue: [Song], queueIndex: Int, userQueue: [Song] = [], playbackSource: PlaybackSource = .unknown, repeatMode: RepeatMode = .off, position: TimeInterval = 0, autoplayFromIndex: Int? = nil) {
             self.currentSong = currentSong
             self.queue = queue
             self.queueIndex = queueIndex
@@ -360,6 +363,7 @@ final class AudioPlayer {
             self.playbackSource = playbackSource
             self.repeatMode = repeatMode
             self.position = position
+            self.autoplayFromIndex = autoplayFromIndex
         }
 
         init(from decoder: Decoder) throws {
@@ -371,6 +375,7 @@ final class AudioPlayer {
             playbackSource = try c.decodeIfPresent(PlaybackSource.self, forKey: .playbackSource) ?? .unknown
             repeatMode = try c.decodeIfPresent(RepeatMode.self, forKey: .repeatMode) ?? .off
             position = try c.decodeIfPresent(TimeInterval.self, forKey: .position) ?? 0
+            autoplayFromIndex = try c.decodeIfPresent(Int.self, forKey: .autoplayFromIndex)
         }
     }
 
@@ -378,7 +383,7 @@ final class AudioPlayer {
         // A preview's address expires within the hour: the session to come back to is the
         // last one played from the server.
         guard let song = currentSong, !song.isPreview else { return }
-        let state = LastPlayback(currentSong: song, queue: queue, queueIndex: queueIndex, userQueue: userQueue, playbackSource: playbackSource, repeatMode: repeatMode, position: currentTime)
+        let state = LastPlayback(currentSong: song, queue: queue, queueIndex: queueIndex, userQueue: userQueue, playbackSource: playbackSource, repeatMode: repeatMode, position: currentTime, autoplayFromIndex: autoplayFromIndex)
         if let data = try? JSONEncoder().encode(state) {
             UserDefaults.standard.set(data, forKey: lastPlaybackKey)
         }
@@ -400,6 +405,8 @@ final class AudioPlayer {
         userQueue = state.userQueue
         playbackSource = state.playbackSource
         repeatMode = state.repeatMode
+        autoplayFromIndex = state.autoplayFromIndex
+        leaveSourceIfForeign(state.currentSong)
         // Restore radioPlaylistName from persisted source
         if case .radio(let name) = state.playbackSource {
             radioPlaylistName = name
@@ -778,6 +785,7 @@ final class AudioPlayer {
                     if let autoIdx = autoplayFromIndex, idx >= autoIdx, playbackSource != .autoplay {
                         playbackSource = .autoplay
                     }
+                    leaveSourceIfForeign(queue[idx])
                     AppLogger.shared.log("⏭ Offline skip → idx \(idx): \(queue[idx].title)")
                     // This walks the queue forward like next() does, so it has to say so —
                     // otherwise the artwork slides using whatever the last manual action left.
@@ -1350,6 +1358,14 @@ final class AudioPlayer {
         AudioCacheManager.shared.prefetch(songId: song.id, server: server, bitRate: bitRate, songSuffix: song.suffix, songContentType: song.contentType)
     }
 
+    /// A song that isn't on the album Now Playing names was added after it — by autoplay,
+    /// whatever the queue's bookkeeping says. It stops showing, and leading back to, an
+    /// album it isn't on.
+    private func leaveSourceIfForeign(_ song: Song) {
+        guard case .album(let id, _) = playbackSource, let albumId = song.albumId, albumId != id else { return }
+        playbackSource = .autoplay
+    }
+
     func next() {
         AppLogger.shared.log("⏭ next() request | queueCount: \(queue.count) | queueIdx: \(queueIndex) | current: \(currentSong?.title ?? "nil")")
 
@@ -1392,6 +1408,7 @@ final class AudioPlayer {
         if let autoIdx = autoplayFromIndex, queueIndex >= autoIdx, playbackSource != .autoplay {
             playbackSource = .autoplay
         }
+        leaveSourceIfForeign(queue[queueIndex])
 
         AppLogger.shared.log("⏭ next() → idx \(queueIndex): \(queue[queueIndex].title)")
         currentSong = queue[queueIndex]

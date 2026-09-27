@@ -93,7 +93,10 @@ final class RadarService {
               let server = ServerManager.shared.currentServer else { return }
         if radar?.serverId != server.id { radar = RadarStore.load(for: server.id) }
         let now = Date()
-        let staleCatalogue = radar.map { now.timeIntervalSince($0.fetched) > Self.catalogueAge } ?? true
+        // A radar from before releases were credited in full is asked again at once.
+        let staleCatalogue = radar.map {
+            now.timeIntervalSince($0.fetched) > Self.catalogueAge || $0.releases.contains { $0.credits == nil }
+        } ?? true
         let staleLibrary = radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge || $0.lacking == nil || $0.whole == nil } ?? true
         guard staleCatalogue || staleLibrary else { return }
 
@@ -351,7 +354,25 @@ final class RadarService {
         }
         // Deezer down or out of reach: an empty radar would say "nothing new" for a day.
         guard answered > 0 || artists.isEmpty else { return nil }
-        return releases.sorted { $0.released > $1.released }
+        return await credited(releases, known: previous).sorted { $0.released > $1.released }
+    }
+
+    /// The releases with all their artists named, asked of Deezer once per release. One
+    /// Deezer can't answer for gets none, and shows the artist it was found under.
+    private static func credited(_ releases: [RadarRelease], known previous: [RadarRelease]) async -> [RadarRelease] {
+        let known = Dictionary(previous.compactMap { release in release.credits.map { (release.id, $0) } },
+                               uniquingKeysWith: { first, _ in first })
+        var credited: [RadarRelease] = []
+        for release in releases {
+            var named = release
+            if let credits = named.credits ?? known[release.id] {
+                named.credits = credits
+            } else {
+                named.credits = await RadarCatalog.credits(albumId: release.id) ?? []
+            }
+            credited.append(named)
+        }
+        return credited
     }
 
     /// Nil when Deezer couldn't be asked; empty when it doesn't know the artist.

@@ -156,6 +156,9 @@ struct PlaylistsView: View {
                         .rotationEffect(.degrees(90))
                         .foregroundStyle(.secondary)
                 }
+                // A menu's label takes the tint, not its own style: without this the row's
+                // accent won over the grey the grid button beside it has.
+                .tint(Color.secondary)
             }
         }
         .tint(accentColor)

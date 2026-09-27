@@ -13,26 +13,49 @@ import Foundation
 ///
 /// Off until a key is added in Settings → Lyrics Translation. Then the lines being
 /// translated go to Google, with the song's title and artist, and nothing else.
+///
+/// Google's free tier gives each model its own daily allowance, and Flash's is small — a
+/// couple of dozen songs. So the models are tried in turn: when one's allowance is spent,
+/// the next carries on, and the spent one is left alone until Google resets it.
 @MainActor
 enum GeminiLyricsTranslator {
     private static let keyAccount = "gemini-api-key"
     private static let endpoint = URL(string: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions")!
-    /// Google's alias for its newest Flash model, so a retired model never breaks it.
-    private static let model = "gemini-flash-latest"
-    /// Thinking a little is what gets the tricky lines right; more only adds seconds.
-    private static let reasoningEffort = "low"
     private static let timeout: TimeInterval = 60
+
+    /// A model, and what it accepts.
+    private struct Model {
+        let id: String
+        /// Thinking a little is what gets the tricky lines right; more only adds seconds.
+        let thinks: Bool
+        /// Gemma takes no system instructions: they go at the top of the request instead.
+        let takesInstructions: Bool
+    }
+
+    /// Best first. Google's aliases follow its newest Flash models, so a retired one never
+    /// breaks the chain; Gemma's free allowance runs to thousands of songs a day.
+    private static let models = [
+        Model(id: "gemini-flash-latest", thinks: true, takesInstructions: true),
+        Model(id: "gemini-flash-lite-latest", thinks: false, takesInstructions: true),
+        Model(id: "gemma-3-27b-it", thinks: false, takesInstructions: false),
+    ]
+
+    /// When each spent model can be asked again.
+    private static var spentUntil: [String: Date] = [:]
 
     enum Failure: LocalizedError {
         case refusedKey
-        case quota
+        /// Every model's allowance is spent; the first comes back at this time.
+        case quota(until: Date?)
         case server(Int, String)
         case unreadable
 
         var errorDescription: String? {
             switch self {
             case .refusedKey: return String(localized: "Google refused the key.")
-            case .quota: return String(localized: "The key's free quota is spent for now.")
+            case .quota(let until?):
+                return String(localized: "Gemini's free quota is spent until \(until.formatted(date: .omitted, time: .shortened)).")
+            case .quota(nil): return String(localized: "Gemini's free quota is spent for now.")
             case .server(let status, let message): return "Google answered \(status): \(message)"
             case .unreadable: return String(localized: "Google's answer couldn't be read.")
             }
@@ -81,14 +104,39 @@ enum GeminiLyricsTranslator {
                           to target: Locale.Language) async throws -> [String: String] {
         guard let key = apiKey else { throw Failure.refusedKey }
         let numbered = lines.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
-        let body: [String: Any] = [
-            "model": model,
-            "reasoning_effort": reasoningEffort,
-            "messages": [
-                ["role": "system", "content": instructions(to: target, song: song)],
-                ["role": "user", "content": numbered],
-            ],
+        let rules = instructions(to: target, song: song)
+        var lastFailure: Failure?
+        for model in models where (spentUntil[model.id] ?? .distantPast) <= Date() {
+            do {
+                let text = try await ask(model, rules: rules, lines: numbered, key: key)
+                return parse(text, lines: lines)
+            } catch let failure as Failure {
+                switch failure {
+                case .quota(let until):
+                    spentUntil[model.id] = until
+                    AppLogger.shared.log("🌐 \(model.id)'s free quota is spent — trying the next model")
+                case .server(let status, _) where status == 404 || status == 400:
+                    // Retired, or not offered to this key: the next model may be.
+                    AppLogger.shared.log("🌐 \(model.id) unavailable (\(status)) — trying the next model")
+                default:
+                    throw failure
+                }
+                lastFailure = failure
+            }
+        }
+        if case .server = lastFailure { throw lastFailure! }
+        throw Failure.quota(until: spentUntil.values.filter { $0 > Date() }.min())
+    }
+
+    /// One request to one model; its answer's text.
+    private static func ask(_ model: Model, rules: String, lines: String, key: String) async throws -> String {
+        var body: [String: Any] = [
+            "model": model.id,
+            "messages": model.takesInstructions
+                ? [["role": "system", "content": rules], ["role": "user", "content": lines]]
+                : [["role": "user", "content": rules + "\n\nThe lines:\n" + lines]],
         ]
+        if model.thinks { body["reasoning_effort"] = "low" }
         var request = URLRequest(url: endpoint, timeoutInterval: timeout)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -101,10 +149,14 @@ enum GeminiLyricsTranslator {
         guard let answer = try? JSONDecoder().decode(ChatAnswer.self, from: data),
               let text = answer.choices.first?.message.content, !text.isEmpty
         else { throw Failure.unreadable }
+        return text
+    }
 
+    /// The numbered answer, back on the lines it translates.
+    private static func parse(_ text: String, lines: [String]) -> [String: String] {
         var translated: [String: String] = [:]
         for row in text.components(separatedBy: .newlines) {
-            guard let (number, line) = SongTranslationModel.parse(row), lines.indices.contains(number - 1),
+            guard let (number, line) = LyricsLines.parse(row), lines.indices.contains(number - 1),
                   translated[lines[number - 1]] == nil else { continue }
             translated[lines[number - 1]] = line
         }
@@ -125,8 +177,23 @@ enum GeminiLyricsTranslator {
         if status == 401 || status == 403 || (status == 400 && message.localizedCaseInsensitiveContains("API key")) {
             return .refusedKey
         }
-        if status == 429 { return .quota }
+        if status == 429 { return .quota(until: resumption(after: data)) }
         return .server(status, message)
+    }
+
+    /// When a spent model can be asked again. A daily allowance comes back at midnight in
+    /// California, where Google counts days; a per-minute one after the wait Google names.
+    private static func resumption(after data: Data) -> Date {
+        let body = String(decoding: data, as: UTF8.self)
+        if body.contains("PerDay") {
+            var pacific = Calendar(identifier: .gregorian)
+            pacific.timeZone = TimeZone(identifier: "America/Los_Angeles") ?? .current
+            let today = pacific.startOfDay(for: Date())
+            return pacific.date(byAdding: .day, value: 1, to: today) ?? Date().addingTimeInterval(3600)
+        }
+        let wait = body.range(of: #"retry in ([0-9.]+)s"#, options: .regularExpression)
+            .flatMap { Double(body[$0].dropFirst("retry in ".count).dropLast()) }
+        return Date().addingTimeInterval(min(max(wait ?? 60, 5), 3600))
     }
 
     /// Google answers `{"error": {"message": …}}`, sometimes wrapped in an array.
@@ -140,8 +207,8 @@ enum GeminiLyricsTranslator {
     }
 
     private static func instructions(to target: Locale.Language, song: LyricsSong) -> String {
-        let into = SongTranslationModel.englishName(of: target) ?? "the reader's language"
-        let informal = target.languageCode.flatMap { SongTranslationModel.informalYou[$0.identifier] }
+        let into = LyricsLines.englishName(of: target) ?? "the reader's language"
+        let informal = target.languageCode.flatMap { LyricsLines.informalYou[$0.identifier] }
             .map { " Address the listener in the familiar form — \($0) — with each word in the form its place in the sentence calls for." } ?? ""
         let context = song.sentence.isEmpty ? "" : " \(song.sentence)"
         return """

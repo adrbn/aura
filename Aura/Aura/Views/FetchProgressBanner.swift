@@ -5,8 +5,8 @@ import SwiftUI
 /// The releases being fetched, above the mini player: which of the four steps each is at,
 /// and how far into it — then Play once it's in the library, or Retry if it didn't make it.
 ///
-/// A slim pill: the cover, the title with where it's at, and the four steps as a hairline
-/// along the bottom edge — present without weighing on the screen.
+/// A slim pill: the cover, the title with where it's at, and the four steps as a ring at
+/// its end — present without weighing on the screen, and nothing drawn over the words.
 ///
 /// With several on their way they sit side by side, one on screen at a time: a swipe
 /// slides the next one in, and it lands with a small bounce. Past either end the row
@@ -131,10 +131,10 @@ private struct FetchCard: View {
             } placeholder: {
                 Color.primary.opacity(0.08)
             }
-            .frame(width: 30, height: 30)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .frame(width: 32, height: 32)
+            .clipShape(RoundedRectangle(cornerRadius: 7))
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(fetch.title)
                         .font(.footnote.weight(.semibold))
@@ -157,15 +157,9 @@ private struct FetchCard: View {
             Spacer(minLength: 0)
             trailing
         }
-        .padding(.leading, 9)
-        .padding(.trailing, 12)
-        .padding(.vertical, 7)
-        .overlay(alignment: .bottom) {
-            // Kept clear of the pill's rounded ends so it never gets clipped.
-            FetchSteps(fetch: fetch, tint: accentColor, thickness: 2)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 3)
-        }
+        .padding(.leading, 8)
+        .padding(.trailing, 10)
+        .padding(.vertical, 8)
         .contentShape(Rectangle())
         .onTapGesture { if fetch.stage == .ready { Task { await play() } } }
         .contextMenu {
@@ -217,7 +211,8 @@ private struct FetchCard: View {
             }
             .buttonStyle(.plain)
         default:
-            EmptyView()
+            FetchStepsRing(fetch: fetch, tint: accentColor)
+                .frame(width: 30, height: 30)
         }
     }
 
@@ -232,31 +227,57 @@ private struct FetchCard: View {
     }
 }
 
-/// Four segments — look, download, add, ready: the ones done full, the current one filling.
-struct FetchSteps: View {
+/// The four steps — look, download, add, ready — as a ring of four arcs: the ones done
+/// full, the current one filling, and the step's own sign in the middle.
+private struct FetchStepsRing: View {
     let fetch: ReleaseFetch
     let tint: Color
-    var thickness: CGFloat = 4
 
-    var body: some View {
-        HStack(spacing: 3) {
-            ForEach(0..<ReleaseFetchAttributes.steps, id: \.self) { index in
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.primary.opacity(0.14))
-                        Capsule()
-                            .fill(fetch.stage == .failed ? Color.orange : tint)
-                            .frame(width: geo.size.width * fill(index))
-                    }
-                }
-                .frame(height: thickness)
-            }
+    private static let lineWidth: CGFloat = 2.5
+    /// The gap between two arcs, as a share of the circle.
+    private static let gap = 0.035
+
+    private var steps: Int { ReleaseFetchAttributes.steps }
+
+    private var symbol: String {
+        switch fetch.stage {
+        case .searching: return "magnifyingglass"
+        case .downloading: return "arrow.down"
+        default: return "tray.and.arrow.down"
         }
-        .animation(.easeInOut(duration: 0.4), value: fetch.progress)
-        .animation(.easeInOut(duration: 0.4), value: fetch.stage)
     }
 
-    private func fill(_ index: Int) -> CGFloat {
+    var body: some View {
+        ZStack {
+            ForEach(0..<steps, id: \.self) { index in
+                let start = Double(index) / Double(steps) + Self.gap / 2
+                let end = Double(index + 1) / Double(steps) - Self.gap / 2
+                arc(from: start, to: end).stroke(Color.primary.opacity(0.14), style: stroke)
+                arc(from: start, to: start + (end - start) * Double(FetchSteps.fill(index, of: fetch)))
+                    .stroke(tint, style: stroke)
+            }
+            Image(systemName: symbol)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.secondary)
+                .contentTransition(.symbolEffect(.replace))
+        }
+        .padding(Self.lineWidth / 2 + 2)
+        .animation(.easeInOut(duration: 0.4), value: fetch.progress)
+        .animation(.easeInOut(duration: 0.4), value: fetch.stage)
+        .accessibilityHidden(true)
+    }
+
+    private var stroke: StrokeStyle { StrokeStyle(lineWidth: Self.lineWidth, lineCap: .round) }
+
+    /// From 12 o'clock, clockwise.
+    private func arc(from start: Double, to end: Double) -> some Shape {
+        Circle().trim(from: start, to: max(start, end)).rotation(.degrees(-90))
+    }
+}
+
+/// How full each of the four steps is — look, download, add, ready.
+enum FetchSteps {
+    static func fill(_ index: Int, of fetch: ReleaseFetch) -> CGFloat {
         if fetch.stage == .failed { return index == 0 ? 1 : 0 }
         if index < fetch.step || fetch.stage == .ready { return 1 }
         guard index == fetch.step else { return 0 }

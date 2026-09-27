@@ -28,27 +28,23 @@ struct PlaylistDetailView: View {
                         // below the buttons rather than being pushed to mid-screen.
                         headerCover
                         .frame(width: 200, height: 200)
-                        .contentShape(Rectangle())
-                        .contextMenu {
-                            Button {
+                        .coverMenu(cornerRadius: 12, actions: [
+                            CoverMenuAction(title: String(localized: "Change Cover Art"), systemImage: "photo") {
                                 showCoverPicker = true
-                            } label: {
-                                Label("Change Cover Art", systemImage: "photo")
-                            }
-                            Button {
-                                saveCoverArt(coverArtId: playlist.coverArt)
-                            } label: {
-                                Label("Save Cover Art", systemImage: "square.and.arrow.down")
-                            }
-                            Button(role: .destructive) {
+                            },
+                            CoverMenuAction(title: String(localized: "Save Cover Art"), systemImage: "square.and.arrow.down") {
+                                if let period = WrappedCovers.period(for: playlistId) {
+                                    CoverArtSaver.save(rendering: GeneratedCoverView(nature: .retrospective(period.coverLabel),
+                                                                                     size: 400, cornerRadius: 0))
+                                } else {
+                                    CoverArtSaver.save(coverArt: playlist.coverArt)
+                                }
+                            },
+                            CoverMenuAction(title: String(localized: "Remove Cover Art"), systemImage: "trash",
+                                            isDestructive: true) {
                                 Task { await removePlaylistCoverArt() }
-                            } label: {
-                                Label("Remove Cover Art", systemImage: "trash")
-                            }
-                        } preview: {
-                            // Lift only the cover (not the whole header block) on long-press.
-                            PlaylistCoverView(playlistId: playlistId, coverArt: playlist.coverArt, size: 260, cornerRadius: 12)
-                        }
+                            },
+                        ])
 
                         VStack(spacing: 4) {
                             Text(playlist.name)
@@ -67,10 +63,6 @@ struct PlaylistDetailView: View {
                                     .padding(.horizontal, 24)
                             } else if let owner = playlist.owner {
                                 Text(owner).font(.subheadline).foregroundStyle(.secondary)
-                            }
-
-                            if let count = playlist.songCount {
-                                Text("\(count) \(count == 1 ? "Song" : "Songs")").font(.caption).foregroundStyle(.tertiary)
                             }
                         }
 
@@ -103,7 +95,7 @@ struct PlaylistDetailView: View {
                         .padding(.horizontal, 16)
                     }
                     .padding(.top, 12)
-                    .padding(.bottom, 12)
+                    .padding(.bottom, DetailListLayout.gap)
                     .frame(maxWidth: .infinity)
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets())
@@ -139,6 +131,10 @@ struct PlaylistDetailView: View {
                                                       bottom: AppSettings.shared.listDensity.verticalPadding,
                                                       trailing: 16))
                         }
+                        // Closes the list as it does an album's.
+                        if !songs.isEmpty {
+                            ListSummaryRow(text: Self.summary(of: songs))
+                        }
                     }
 
                     ListEndSpacer()
@@ -146,6 +142,7 @@ struct PlaylistDetailView: View {
                         .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)
+                .environment(\.defaultMinListRowHeight, 1)
                 .scrollContentBackground(.hidden)
                 .background(ArtworkCanvas(coverArt: playlist.coverArt))
                 .scrollIndicators(.hidden)
@@ -192,10 +189,10 @@ struct PlaylistDetailView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
                         .rotationEffect(.degrees(90))
                 }
+                // In the back button's colour, not the accent: the pair frames the page.
+                .tint(.primary)
             }
         }
         .overlay(alignment: .bottom) {
@@ -267,6 +264,16 @@ struct PlaylistDetailView: View {
                 Label("Download", systemImage: "arrow.down.circle")
             }
         }
+    }
+
+    /// "12 songs · 48 min".
+    private static func summary(of songs: [Song]) -> String {
+        let seconds = songs.compactMap(\.duration).reduce(0, +)
+        let count = "\(songs.count) \(songs.count == 1 ? "song" : "songs")"
+        guard seconds > 0 else { return count }
+        let length = Duration.seconds(max(seconds, 60))
+            .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
+        return "\(count) · \(length)"
     }
 
     private func removeSong(song: Song, at index: Int) {
@@ -437,23 +444,6 @@ struct PlaylistDetailView: View {
                 ProgressView()
                     .scaleEffect(1.5)
                     .tint(.primary)
-            }
-        }
-    }
-
-    private func saveCoverArt(coverArtId: String?) {
-        guard let coverArtId,
-              let server = serverManager.currentServer,
-              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArtId, size: ArtworkCache.fullSize) else { return }
-        Task {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                if let image = UIImage(data: data) {
-                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    ToastManager.shared.show("Saved to Photos", icon: "checkmark")
-                }
-            } catch {
-                AppLogger.shared.log("❌ Save cover art failed: \(error.localizedDescription)")
             }
         }
     }

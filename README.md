@@ -4,7 +4,7 @@
 
 # Aura
 
-### Your own music library, in an app you'd choose on merit.
+### The polish of Apple Music. For the library you host.
 
 Aura is a native iOS player for the Navidrome or Subsonic server you already run.<br/>
 Lossless streaming, lyrics that light up word by word, a real equalizer — and all of it offline.
@@ -41,11 +41,11 @@ Aura is built to that bar, on top of your server. It talks plain Subsonic API, i
 
 Stream your files as they are — FLAC and ALAC stay lossless — or let Aura transcode on the way out when you're on cellular. Formats iOS can't open (OGG, Opus, WMA) are transcoded by the server automatically, so nothing in your library is unplayable.
 
-**A 5-band equalizer** you shape by dragging a curve, with 15 presets, **ReplayGain**, and a **sleep timer** that fades out rather than cutting.
+**A 5-band equalizer** you shape by dragging a curve, with 15 presets, **ReplayGain**, and a **sleep timer** that stops after a set time or at the end of the song.
 
 The queue is a real queue: play next, add to the end, drag to reorder, and an autoplay tail that keeps the music going when it runs out.
 
-Everything lands where iOS expects it — Lock Screen, Control Center, the Dynamic Island, a Live Activity, AirPlay, the Share Sheet — and in the car, CarPlay's Now Playing screen, shuffle and repeat included. **Siri** covers play, pause, next, previous, shuffle, repeat and favourite, plus *"play &lt;playlist&gt;"*, *"play &lt;album&gt;"* and *"play my favourites"* — in English and in French (*« Joue mes favoris sur Aura »*), with the app closed.
+Everything lands where iOS expects it — Lock Screen, Control Center, the Dynamic Island, AirPlay, the Share Sheet — and shuffle and repeat work from a car stereo or a remote. **Siri** covers play, pause, next, previous, shuffle, repeat and favourite, plus *"play &lt;playlist&gt;"*, *"play &lt;album&gt;"* and *"play my favourites"* — in English and in French (*« Joue mes favoris sur Aura »*), with the app closed.
 
 <br clear="right"/>
 
@@ -53,9 +53,9 @@ Everything lands where iOS expects it — Lock Screen, Control Center, the Dynam
 
 Aura reads per-word timings from the OpenSubsonic lyrics extension, falls back to line timings, then to plain text, and fills the gaps from [LRCLIB](https://lrclib.net).
 
-Each word lights as it is sung. The lines around it fall away in size, blur and opacity, so the line being sung is the only one competing for your attention. Tap any line to jump there, nudge the timing if your headphones lag, and turn the phone for full screen.
+Each word lights as it is sung. The lines around it fall away in size, blur and opacity, so the line being sung is the only one competing for your attention. Tap any line to jump there, nudge the timing if your headphones lag, and, with the landscape clock on, turn the phone for full screen.
 
-Lyrics in another language can carry **a translation under each line**, small and dimmed so the song keeps the eye. Add your own free Gemini key and Google's model translates it: the whole song at once, sentences carried across the line breaks and cut back under the lines they're sung on, idioms by their sense, the singer's familiar "you" kept, creoles read as themselves rather than as the language they resemble. Without a key it's made on the iPhone — by Apple Intelligence's small model, or Apple's Translation framework — and the words never leave the device. A song translated once comes back instantly.
+Lyrics in another language can carry **a translation under each line**, small and dimmed so the song keeps the eye. Add your own free Gemini key (Settings → Lyrics → Translation) and Google's model translates it: the whole song at once, sentences carried across the line breaks and cut back under the lines they're sung on, idioms by their sense, the singer's familiar "you" kept, creoles read as themselves rather than as the language they resemble. A song is sent only when you tap the translate button, so the free quota goes on the songs you actually read; when one of Google's models has used up its share for the day, the next one takes over. Only the lines, the song's title and its artist go to Google. Without a key there is no translation: the button leads to setting one up. A song translated once is kept on the iPhone and comes back instantly, offline too.
 
 ## Made for you
 
@@ -73,7 +73,7 @@ Each mix gets an **editorial cover**, the way a streaming service would design o
 
 Unified search across songs, albums, artists and playlists, ranked so the thing you typed comes first — with a Recently Searched list that remembers what you *played*, not everything you tapped. With the Radar on, it also shows what your server doesn't have yet, with previews.
 
-Album, playlist, mix and radio pages open in the colour of their artwork, fading into the page as you scroll; artist pages frame the photo on the face instead of cropping at the forehead.
+Album, playlist, mix and radio pages open in the colour of their artwork, fading into the page as you scroll; artist pages frame the photo on the face instead of cropping at the forehead. The accent is one of nine colours, or any colour you pick.
 
 Playlists as a grid of covers or a list, narrowed in a tap to the pinned ones, the saved radios, the mixes, yours, the shared ones or the downloaded ones. Custom playlist covers, an A–Z rail for scrolling long lists, content-based duplicate detection, multi-folder Navidrome libraries, and **several servers** you can switch between from the Home title.
 
@@ -83,7 +83,7 @@ Playlists as a grid of covers or a list, narrowed in a tap to the pinned ones, t
 
 Download a song, an album, a playlist, or the entire library, and everything keeps working with the server switched off — including search. What you stream is cached as you go, with a size limit you set.
 
-Offline, the library is laid out like the tabs you know — songs, albums, artists and playlists, each searchable, with Play and Shuffle over whatever the filter leaves.
+Offline, the library is laid out like the tabs you know — songs, albums, artists and playlists, each searchable, with Play and Shuffle over whatever the filter leaves. Offline mode you switch on yourself stays on, across launches, until you switch it off.
 
 When the server is simply unreachable, Aura says so and falls back to what it holds, instead of showing you a screen of empty squares.
 
@@ -91,7 +91,7 @@ When the server is simply unreachable, Aura says so and falls back to what it ho
 
 <img src="docs/assets/eq.webp" width="240" align="right" alt="The equalizer sheet: a smooth response curve through five draggable points over a decibel grid, each band's frequency and gain beneath it, and a grid of preset capsules" />
 
-Five bands from 60 Hz to 14 kHz, drawn as one curve over a decibel grid: drag anywhere on it and the nearest band follows. Fifteen presets sit beneath, and the curve glides to each one. It runs in the audio graph, not as a gimmick — the gain is applied to the stream itself and survives backgrounding, AirPlay and CarPlay.
+Five bands from 60 Hz to 14 kHz, drawn as one curve over a decibel grid: drag anywhere on it and the nearest band follows. Fifteen presets sit beneath, and the curve glides to each one. It runs in the audio graph, not as a gimmick — the gain is applied to the stream itself and survives backgrounding and AirPlay.
 
 <br clear="right"/>
 

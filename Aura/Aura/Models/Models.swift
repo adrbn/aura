@@ -146,6 +146,8 @@ final class AppSettings {
     var radarInLibraryOffered: Bool = false
     /// Lyrics in another language show a translation under each line, made on the device.
     var translateLyrics: Bool = false
+    /// The reader's own accent, as sRGB components, used when `appAccentColor` is `.custom`.
+    var customAccentRGB: [Double] = AppAccentColor.defaultCustomRGB
 
     private let settingsKey = "musika_app_settings"
     private static let slskdKeychainAccount = "slskd-external-service"
@@ -220,6 +222,8 @@ final class AppSettings {
             radarEnabled = decoded.radarEnabled ?? true
             radarInLibraryOffered = decoded.radarInLibraryOffered ?? false
             translateLyrics = decoded.translateLyrics ?? false
+            customAccentRGB = decoded.customAccentRGB.flatMap { $0.count == 3 ? $0 : nil }
+                ?? AppAccentColor.defaultCustomRGB
         }
         // The Radar joined the Library's rows after they were set up: offered once, on top.
         if !radarInLibraryOffered {
@@ -265,7 +269,8 @@ final class AppSettings {
             wrappedShowOnHome: wrappedShowOnHome,
             radarEnabled: radarEnabled,
             radarInLibraryOffered: radarInLibraryOffered,
-            translateLyrics: translateLyrics
+            translateLyrics: translateLyrics,
+            customAccentRGB: customAccentRGB
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: settingsKey)
@@ -353,6 +358,7 @@ struct SettingsData: Codable {
     var radarEnabled: Bool?
     var radarInLibraryOffered: Bool?
     var translateLyrics: Bool?
+    var customAccentRGB: [Double]?
 }
 
 enum AppAccentColor: String, Codable, CaseIterable {
@@ -365,9 +371,20 @@ enum AppAccentColor: String, Codable, CaseIterable {
     case blue = "Blue"
     case indigo = "Indigo"
     case purple = "Purple"
+    /// Any colour, picked with the system colour picker.
+    case custom = "Custom"
+
+    /// The ready-made accents, without `custom`.
+    static var presets: [AppAccentColor] { allCases.filter { $0 != .custom } }
+
+    /// Where the picker opens the first time: Aura's own pink.
+    static let defaultCustomRGB: [Double] = [1.0, 0.18, 0.33]
 
     var color: Color {
         switch self {
+        case .custom:
+            let rgb = AppSettings.shared.customAccentRGB
+            return Color(.sRGB, red: rgb[0], green: rgb[1], blue: rgb[2])
         case .pink: return .pink
         case .red: return .red
         case .orange: return .orange
@@ -829,7 +846,8 @@ enum PlaybackSource: Equatable, Codable {
         switch self {
         case .album(_, let name): return name
         case .playlist(_, let name): return name
-        case .mix(_, let name): return name
+        // The radar's full name: "Radar" alone, over Now Playing, said nothing of what it is.
+        case .mix(let id, let name): return id == "radar" ? String(localized: "Release Radar") : name
         case .wrapped(let period): return "Wrapped • \(period.title)"
         case .radio(let name): return name
         case .artist(_, let name): return name
@@ -854,7 +872,7 @@ enum PlaybackSource: Equatable, Codable {
         switch self {
         case .album: return "square.stack"
         case .playlist: return "music.note.list"
-        case .mix: return "square.stack.3d.up.fill"
+        case .mix(let id, _): return id == "radar" ? "dot.radiowaves.left.and.right" : "square.stack.3d.up.fill"
         case .wrapped: return "sparkles"
         case .radio: return "antenna.radiowaves.left.and.right"
         case .artist: return "music.mic"

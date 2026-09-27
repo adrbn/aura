@@ -270,6 +270,8 @@ struct PlaylistCoverView: View {
     var cacheToken: String? = nil
     var size: CGFloat
     var cornerRadius: CGFloat = 12
+    /// Seeds the gradient shown when the server has no picture for it.
+    var placeholderName: String? = nil
 
     var body: some View {
         if let period = WrappedCovers.period(for: playlistId) {
@@ -277,7 +279,8 @@ struct PlaylistCoverView: View {
                                size: size, cornerRadius: cornerRadius)
         } else {
             CoverArtImage(coverArt: coverArt, size: size,
-                          cornerRadius: cornerRadius, cacheToken: cacheToken)
+                          cornerRadius: cornerRadius, cacheToken: cacheToken,
+                          placeholderName: placeholderName, placeholderKind: .playlist)
         }
     }
 }

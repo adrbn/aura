@@ -48,11 +48,13 @@ struct ArtistDetailView: View {
                     coverArt: artist?.coverArt ?? coverArt,
                     artistImageURL: artistImageURL,
                     name: displayName,
-                    albumCount: albums.count,
+                    plays: albums.isEmpty ? nil : albums.compactMap(\.playCount).reduce(0, +),
                     isLoading: isLoading,
                     stretch: heroScroll.stretch
                 )
 
+                // Across the page, as an album's Play and Shuffle are: three pills bunched on the
+                // left left the rest of the row empty.
                 HStack(spacing: 10) {
                     Button {
                         if let name = artist?.name {
@@ -61,11 +63,11 @@ struct ArtistDetailView: View {
                     } label: {
                         Label("Instant Mix", systemImage: "wand.and.stars")
                             .font(.subheadline.weight(.semibold))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
                             .background(accentColor)
                             .foregroundStyle(.white)
-                            .clipShape(Capsule())
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.borderless)
                     .disabled(topSongs.isEmpty)
@@ -76,11 +78,11 @@ struct ArtistDetailView: View {
                     } label: {
                         Label("Shuffle", systemImage: "shuffle")
                             .font(.subheadline.weight(.semibold))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
                             .background(Color.primary.opacity(0.08))
                             .foregroundStyle(accentColor)
-                            .clipShape(Capsule())
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.borderless)
                     .disabled(topSongs.isEmpty)
@@ -92,11 +94,12 @@ struct ArtistDetailView: View {
                         toggleArtistStar()
                     } label: {
                         Image(systemName: isStarred ? "heart.fill" : "heart")
-                            .font(.title3)
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(accentColor)
-                            .frame(width: 38, height: 36)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 11)
                             .background(Color.primary.opacity(0.08))
-                            .clipShape(Capsule())
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.borderless)
                     .opacity(isLoading ? 0.4 : 1)
@@ -431,7 +434,9 @@ struct ArtistHero: View {
     let coverArt: String?
     let artistImageURL: URL?
     let name: String
-    let albumCount: Int
+    /// How many times the reader has played the artist — every album's plays together. Nil
+    /// until the albums are in.
+    let plays: Int?
     let isLoading: Bool
     /// How far the list is pulled past its top, in points. Zero at rest.
     let stretch: CGFloat
@@ -490,12 +495,19 @@ struct ArtistHero: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.6)
                     .shadow(color: .black.opacity(0.25), radius: 8, y: 2)
-                if albumCount > 0 {
-                    Text("\(albumCount) Albums")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.8))
+                // What the reader has of the artist, small under the name: their plays. The
+                // album count said what the grid below says anyway.
+                if let plays {
+                    Text(plays == 1 ? "1 play" : "\(plays.formatted()) plays")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.75))
                 } else if isLoading {
-                    ProgressView().controlSize(.small).tint(.white)
+                    // The shape of the line to come, over the photo: white, not the grey
+                    // skeletons use on the page.
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(.white.opacity(0.3))
+                        .frame(width: 64, height: 11)
+                        .shimmering()
                 }
             }
             // 16, the same column as Top Songs and the rows below, so the name lines up

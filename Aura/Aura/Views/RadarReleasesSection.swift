@@ -114,7 +114,7 @@ struct RadarReleaseRow: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(release.title), \(release.typeLabel) by \(release.artist.name), \(dateLabel)")
+        .accessibilityLabel("\(release.title), \(release.typeLabel) by \(release.byline), \(dateLabel)")
         .accessibilityHint(isHeld ? (heldSingle == nil ? "Opens its songs" : "Plays it from your library")
                                   : isOneSong ? "Plays its preview" : "Opens its songs")
         .accessibilityAddTraits(.isButton)
@@ -205,7 +205,7 @@ struct RadarReleaseRow: View {
 
     /// "Zaoui · Album · Sep 25", and how many songs are still to get when the server has some.
     private var details: String {
-        var parts = [release.artist.name, release.typeLabel, dateLabel]
+        var parts = [release.byline, release.typeLabel, dateLabel]
         if let lacking = RadarService.shared.current?.lacking?[release.id] {
             parts.append(String(localized: "\(lacking) to get"))
         }

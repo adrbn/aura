@@ -2,7 +2,6 @@ import SwiftUI
 import CarPlay
 
 class AppDelegate: NSObject, UIApplicationDelegate {
-    static var allowLandscape = false
     /// Stored when iOS relaunches us to deliver background download events;
     /// called by DownloadManager once the session has finished processing them.
     static var backgroundSessionCompletionHandler: (() -> Void)?
@@ -22,11 +21,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
 
+    /// Always upright: the landscape clock turns its own content rather than the window.
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-        if AppDelegate.allowLandscape {
-            return .allButUpsideDown
-        }
-        return .portrait
+        .portrait
     }
 
     func application(_ application: UIApplication,
@@ -79,13 +76,23 @@ struct AuraApp: App {
                         if newPhase == .inactive || newPhase == .background {
                             audioPlayer.persistPlaybackState()
                         }
+                        // Back in the app: online or offline is decided again, from the
+                        // connection as it is now, not as it was when the app was left.
+                        if newPhase == .background {
+                            wasInBackground = true
+                        } else if newPhase == .active && wasInBackground {
+                            wasInBackground = false
+                            Task { await serverManager.settleModeOnOpen() }
+                        }
                     }
                     .onChange(of: appSettings.activeTheme) { _, _ in
                         applyThemeAppearance()
                         forceUIKitRefresh()
                     }
-                    .onChange(of: appSettings.appAccentColor) { _, _ in
-                        forceUIKitRefresh()
+                    .onChange(of: appSettings.appAccentColor) { _, accent in
+                        // Not for a custom colour: it's set from inside the colour picker,
+                        // and re-mounting the window's views under it would close it.
+                        if accent != .custom { forceUIKitRefresh() }
                     }
 
                 if showSplash {
@@ -94,6 +101,9 @@ struct AuraApp: App {
                         .zIndex(1)
                 }
             }
+            // Opens online if the server answers, offline if it doesn't — decided while the
+            // splash is up, so the app usually appears in the right mode from the start.
+            .task { await serverManager.settleModeOnOpen() }
             .task {
                 // Pinned playlists follow you between devices; start listening for the
                 // Mac's changes before anything can touch them here.

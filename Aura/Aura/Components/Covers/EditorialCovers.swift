@@ -195,8 +195,17 @@ struct EditorialMixCover: View {
             .animation(.easeOut(duration: 0.3), value: art?.portrait.artistId)
             .task(id: "\(spec.taskKey)#\(ArtworkRetry.shared.generation)") {
                 guard loaded?.key != spec.taskKey else { return }
-                guard let result = await MixCoverArt.load(spec), !Task.isCancelled else { return }
-                loaded = (spec.taskKey, result)
+                // A photo that didn't come is asked again a little later: Deezer turns calls
+                // away for a few seconds once its quota is reached, and a cover left flat
+                // stayed flat until the app was reopened.
+                for pause in [0, 8, 30] {
+                    if pause > 0 { try? await Task.sleep(for: .seconds(pause)) }
+                    guard !Task.isCancelled else { return }
+                    if let result = await MixCoverArt.load(spec), !Task.isCancelled {
+                        loaded = (spec.taskKey, result)
+                        return
+                    }
+                }
             }
             .accessibilityHidden(true)
     }

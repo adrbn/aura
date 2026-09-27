@@ -42,11 +42,14 @@ actor SubsonicClient {
         return URL(string: urlString)
     }
 
-    func ping(server: ServerConfig) async throws -> Bool {
+    /// `timeout` shortens the session's 30 s wait, for checks the app is waiting on.
+    func ping(server: ServerConfig, timeout: TimeInterval? = nil) async throws -> Bool {
         guard let url = buildURL(server: server, endpoint: "ping") else {
             throw SubsonicClientError.invalidURL
         }
-        let (data, _) = try await session.data(from: url)
+        var request = URLRequest(url: url)
+        if let timeout { request.timeoutInterval = timeout }
+        let (data, _) = try await session.data(for: request)
         let response = try JSONDecoder().decode(SubsonicResponse<EmptyContent>.self, from: data)
         return response.subsonicResponse.status == "ok"
     }

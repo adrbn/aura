@@ -12,10 +12,12 @@ struct SettingsView: View {
     @State private var showDeleteConfirmation = false
     @State private var musicFolders: [MusicFolder] = []
 
+    /// "1.0.0 · build 181": the version the App Store shows, then the build — the number of
+    /// commits it was made from (scripts/set-build-number.sh), so it grows with the work.
     static var appVersion: String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(version) (\(build))"
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        guard let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String else { return version }
+        return "\(version) · build \(build)"
     }
 
     struct ServerStats {
@@ -111,8 +113,11 @@ struct SettingsView: View {
                     label: "Offline Mode",
                     color: appSettings.offlineMode ? .red : .teal
                 ) {
-                    appSettings.offlineMode.toggle()
-                    appSettings.save()
+                    if appSettings.offlineMode {
+                        serverManager.goBackOnline()
+                    } else {
+                        serverManager.goOfflineManually()
+                    }
                 }
 
                 quickTile(icon: "arrow.triangle.2.circlepath", label: "Scan", color: .mint) {
@@ -207,7 +212,10 @@ struct SettingsView: View {
         // hidden behind it (matches LibraryView's convention).
         .safeAreaInset(edge: .bottom) { ListEndSpacer() }
         // The page is painted by `tabRootGlass`, under its glow — see `body`.
-        .id("\(appSettings.appAccentColor.rawValue)-\(appSettings.activeTheme.rawValue)") // Force full re-render on accent/theme change
+        // Rebuilt on a theme change. Not on an accent change: the accent reaches every row
+        // through the environment, and a rebuild would close the colour picker the moment
+        // it first sets a custom colour.
+        .id(appSettings.activeTheme.rawValue)
         .sheet(isPresented: $showEqualizer) {
             EqualizerView()
                 .presentationDetents([.large])
@@ -681,25 +689,8 @@ struct SettingsView: View {
                 TabOrderView()
             }
 
-            HStack {
-                Text("Accent Colour")
-                Spacer()
-                HStack(spacing: 6) {
-                    ForEach(AppAccentColor.allCases, id: \.self) { accent in
-                        Circle()
-                            .fill(accent.color)
-                            .frame(width: 20, height: 20)
-                            .overlay {
-                                if appSettings.appAccentColor == accent {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundStyle(.white)
-                                }
-                            }
-                            .onTapGesture { appSettings.appAccentColor = accent }
-                    }
-                }
-            }
+            AccentColourPicker(accent: $appSettings.appAccentColor,
+                               customRGB: $appSettings.customAccentRGB)
         }
     }
 
@@ -710,7 +701,7 @@ struct SettingsView: View {
             NavigationLink {
                 LyricsTranslationSettingsView()
             } label: {
-                LabeledContent("Translation", value: GeminiLyricsTranslator.isConfigured ? "Gemini" : "iPhone")
+                LabeledContent("Translation", value: GeminiLyricsTranslator.isConfigured ? "Gemini" : "Off")
             }
             Toggle("Word-by-Word Highlight", isOn: $appSettings.betaKaraokeLyrics)
             VStack(alignment: .leading, spacing: 2) {

@@ -12,7 +12,7 @@ struct AboutView: View {
         static let privacy = URL(string: "https://adrbn.github.io/aura-site/privacy.html")!
     }
 
-    /// "1.0 (1)" — marketing version + build, read live from the bundle (never hardcoded).
+    /// "1.0.0 · build 181" — marketing version + build, read live from the bundle (never hardcoded).
     private var versionString: String { SettingsView.appVersion }
 
     var body: some View {
@@ -97,7 +97,7 @@ struct AboutView: View {
 
     private var descriptionCard: some View {
         card {
-            Text("Aura is a native SwiftUI client for your own Navidrome or Subsonic library — an Apple Music-grade experience for the music you host yourself. No ads, no tracking, no cloud in between.")
+            Text("Aura is a native SwiftUI client for the Navidrome or Subsonic library you host yourself. No ads, no tracking, no cloud in between.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineSpacing(3)

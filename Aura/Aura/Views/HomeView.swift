@@ -283,6 +283,11 @@ struct HomeView: View {
         return parts
     }
 
+    /// How a shelf follows what it shows. Keyed on the songs themselves rather than their
+    /// number: playing an album in place of another changes every card of Up Next and leaves
+    /// the count as it was, and that swap used to land in one cut.
+    private static let shelfMotion = Animation.smooth(duration: 0.4)
+
     private var homeContent: some View {
         VStack(alignment: .leading, spacing: 24) {
             // The stats line gets the same gap above and below — 15pt — so it reads as its
@@ -341,10 +346,14 @@ struct HomeView: View {
                     homeSection(for: section)
                 }
             }
-
             ListEndSpacer()
         }
         .padding(.top, 2)
+        // A shelf that comes or goes — Up Next once something is queued, Recently Played on a
+        // first play — fades in or out, and the shelves below glide to their place. Its own
+        // animation can't do it: a view being inserted isn't there yet to carry it.
+        .animation(Self.shelfMotion, value: player.upNextSongs.isEmpty)
+        .animation(Self.shelfMotion, value: recentSongs.isEmpty)
     }
 
     // MARK: - Retrospective ("Wrapped") entry
@@ -454,14 +463,13 @@ struct HomeView: View {
                                     insertion: .move(edge: .trailing).combined(with: .opacity),
                                     removal: .opacity
                                 ))
-                                .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.03), value: player.upNextSongs.count)
                             }
                         }
                         .padding(.horizontal)
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .animation(.easeInOut(duration: 0.3), value: player.upNextSongs.count)
+                .animation(Self.shelfMotion, value: player.upNextSongs.prefix(15).map(\.id))
             }
         case .recentlyPlayed:
             if !recentSongs.isEmpty {
@@ -471,19 +479,19 @@ struct HomeView: View {
             if !newestAlbums.isEmpty {
                 albumSection("Recently Added", albums: newestAlbums, listType: "newest")
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    .animation(.easeInOut(duration: 0.3), value: newestAlbums.count)
+                    .animation(Self.shelfMotion, value: newestAlbums.map(\.id))
             }
         case .frequentlyPlayed:
             if !frequentAlbums.isEmpty {
                 albumSection("Frequently Played", albums: frequentAlbums, listType: "frequent")
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    .animation(.easeInOut(duration: 0.3), value: frequentAlbums.count)
+                    .animation(Self.shelfMotion, value: frequentAlbums.map(\.id))
             }
         case .randomAlbums:
             if !randomAlbums.isEmpty {
                 albumSection("Random Albums", albums: randomAlbums, listType: "random")
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    .animation(.easeInOut(duration: 0.3), value: randomAlbums.count)
+                    .animation(Self.shelfMotion, value: randomAlbums.map(\.id))
             }
         case .favoriteSongs:
             if !starredSongs.isEmpty {
@@ -501,13 +509,12 @@ struct HomeView: View {
                                         insertion: .move(edge: .trailing).combined(with: .opacity),
                                         removal: .opacity
                                     ))
-                                    .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.03), value: starredSongs.count)
                             }
                         }.padding(.horizontal)
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .animation(.easeInOut(duration: 0.3), value: starredSongs.count)
+                .animation(Self.shelfMotion, value: starredSongs.prefix(50).map(\.id))
             }
         case .favoriteArtists:
             if !starredArtists.isEmpty {
@@ -524,13 +531,12 @@ struct HomeView: View {
                                         insertion: .move(edge: .trailing).combined(with: .opacity),
                                         removal: .opacity
                                     ))
-                                    .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.03), value: starredArtists.count)
                             }
                         }.padding(.horizontal)
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .animation(.easeInOut(duration: 0.3), value: starredArtists.count)
+                .animation(Self.shelfMotion, value: starredArtists.prefix(25).map(\.id))
             }
         }
     }
@@ -558,7 +564,6 @@ struct HomeView: View {
                                     insertion: .move(edge: .trailing).combined(with: .opacity),
                                     removal: .opacity
                                 ))
-                                .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.03), value: albums.count)
                         }
                     }.padding(.horizontal, horizontalPadding)
                 }
@@ -658,7 +663,7 @@ struct HomeView: View {
             }
         }
         .transition(.opacity.combined(with: .move(edge: .bottom)))
-        .animation(.easeInOut(duration: 0.3), value: recentSongs.count)
+        .animation(Self.shelfMotion, value: recentSongs.prefix(30).map(\.id))
     }
 
     // MARK: - Data Loading

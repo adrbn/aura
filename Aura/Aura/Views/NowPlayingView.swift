@@ -1,7 +1,6 @@
 import SwiftUI
 import AVKit
 import AVFoundation
-import Translation
 
 struct NowPlayingView: View {
     @Environment(AudioPlayer.self) private var player
@@ -11,9 +10,12 @@ struct NowPlayingView: View {
     @State private var translator = LyricsTranslator.shared
     @State private var showLyrics = false
     @State private var backgroundImage: UIImage?
-    @State private var vibrantOverlayColor: Color?
+    /// How the blurred cover behind everything is corrected: a vibrant tint for dark covers,
+    /// a deeper veil for light ones.
+    @State private var backdropTone = BackdropTone.plain
     @State private var showFileInfo = false
     @State private var showClockMode = false
+    @State private var clockOrientation: UIDeviceOrientation = .landscapeLeft
     @State private var showAddToPlaylist = false
     @State private var showEqualizer = false
     @State private var navAlbumId: String?
@@ -21,13 +23,14 @@ struct NowPlayingView: View {
     @State private var dragOffset: CGFloat = 0
     @State private var isUserScrolling = false
     @State private var scrollReturnTask: Task<Void, Never>?
-    @State private var recenterTask: Task<Void, Never>?
     @State private var previousSongId: String?
     @State private var coverDragOffset: CGFloat = 0
     @State private var showSleepTimerSheet = false
     @State private var selectedSleepMinutes: Int = 15
     @State private var coverDragAxis: CoverDragAxis = .undecided
     @State private var showCredits = false
+    /// Setting up a Gemini key, from the translate button.
+    @State private var showTranslationSetup = false
     @State private var showShareSheet = false
     @State private var showRadioExistsDialog = false
     @State private var existingRadioPlaylistId: String?
@@ -119,7 +122,6 @@ struct NowPlayingView: View {
                 AlbumDetailView(albumId: albumId)
             }
             .onAppear {
-                AppDelegate.allowLandscape = AppSettings.shared.landscapeClockEnabled
                 // Start preloading playlist membership and song links for current song
                 if let song = player.currentSong {
                     if !song.isPreview { PlaylistMembershipCache.shared.preloadMembership(for: song.id) }
@@ -127,26 +129,36 @@ struct NowPlayingView: View {
                 }
             }
             .onDisappear {
-                AppDelegate.allowLandscape = false
                 scrollReturnTask?.cancel()
                 dismissTask?.cancel()
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                    windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
-                }
             }
         }
         .presentationBackground(.clear)
-        // Every sheet that arrives is looked at for its language — and translated when the
-        // reader has asked for translations — whether or not the lyrics are open yet.
+        // Every sheet that arrives is looked at for its language, so the translate button is
+        // ready, and a song translated before shows its translation — but a song is only sent
+        // to Gemini when the reader taps the button for it. Each translation is a request on
+        // the reader's own quota, and most songs played are songs nobody reads along with.
         .task(id: player.lyrics.map(\.text)) {
             await translator.show(songId: player.currentSong?.id,
                                   song: LyricsSong(title: player.currentSong?.title,
                                                    artist: player.currentSong?.artist),
-                                  texts: player.lyrics.map(\.text),
-                                  translating: appSettings.translateLyrics)
+                                  texts: player.lyrics.map(\.text))
         }
-        .translationTask(translator.configuration) { session in
-            await translator.translate(with: session)
+        // Without a key, the translate button leads here; a key saved, translation starts.
+        .sheet(isPresented: $showTranslationSetup, onDismiss: {
+            guard !translator.needsKey else { return }
+            appSettings.translateLyrics = true
+            appSettings.save()
+            translator.translateMissing()
+        }) {
+            NavigationStack {
+                LyricsTranslationSettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showTranslationSetup = false }
+                        }
+                    }
+            }
         }
         .onChange(of: player.currentSong?.id) { oldId, newId in
             previousSongId = oldId
@@ -225,21 +237,30 @@ struct NowPlayingView: View {
         } message: {
             Text("\"\(existingRadioPlaylistName)\" already exists. View it or generate a new one?")
         }
+        // The clock turns itself to face the phone on its side; the interface stays upright,
+        // so Now Playing is never laid out again in landscape underneath. It comes and goes
+        // without the cover's slide, which played while the whole screen turned.
         .fullScreenCover(isPresented: $showClockMode) {
-            LandscapeClockView(lyricsMode: showLyrics)
-                .environment(player)
+            LandscapeClockView(orientation: clockOrientation, lyricsMode: showLyrics) {
+                Self.withoutAnimation { showClockMode = false }
+            }
+            .environment(player)
+            .presentationBackground(.clear)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-            // Physical-rotation notifications fire even when the interface is locked
-            // to portrait, so honor the opt-in here too — not just the orientation mask.
-            guard AppSettings.shared.landscapeClockEnabled else { return }
+            // Physical-rotation notifications fire though the interface is held in portrait.
+            guard AppSettings.shared.landscapeClockEnabled, !showClockMode else { return }
             let orientation = UIDevice.current.orientation
-            if orientation == .landscapeLeft || orientation == .landscapeRight {
-                showClockMode = true
-            } else if orientation == .faceDown || orientation == .portraitUpsideDown {
-                // Ignore upside-down orientations
-            }
+            guard orientation == .landscapeLeft || orientation == .landscapeRight else { return }
+            clockOrientation = orientation
+            Self.withoutAnimation { showClockMode = true }
         }
+    }
+
+    private static func withoutAnimation(_ change: () -> Void) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction, change)
     }
 
     // MARK: - Player View
@@ -449,9 +470,7 @@ struct NowPlayingView: View {
                     showAddToPlaylist: $showAddToPlaylist,
                     showFileInfo: $showFileInfo,
                     showCredits: $showCredits,
-                    showEqualizer: $showEqualizer,
-                    showSleepTimer: $showSleepTimerSheet,
-                    showShare: $showShareSheet
+                    showEqualizer: $showEqualizer
                 )
             }
             .padding(.horizontal, horizontalPadding)
@@ -523,8 +542,7 @@ struct NowPlayingView: View {
         isEffectivelyOffline || player.currentSong?.isPreview == true
     }
 
-    /// Four everyday controls — lyrics, radio, queue, output. The sleep timer and sharing
-    /// live in the "…" menu beside the heart: occasional actions, not a permanent row of icons.
+    /// Lyrics, radio, queue, sleep timer, output and sharing, each a tap away.
     private var optionsBar: some View {
             HStack {
                 Spacer()
@@ -565,7 +583,23 @@ struct NowPlayingView: View {
                 }
                 .accessibilityLabel("Show queue")
                 Spacer()
+                Button {
+                    showSleepTimerSheet = true
+                } label: {
+                    Image(systemName: player.sleepTimerActive ? "moon.fill" : "moon.zzz")
+                        .font(.title2)
+                        .foregroundStyle(player.sleepTimerActive ? accentColor : .white.opacity(0.6))
+                }
+                .accessibilityLabel(player.sleepTimerActive ? "Sleep timer active" : "Sleep timer")
+                Spacer()
                 AudioOutputButtonWrapper(accentColor: accentColor)
+                Spacer()
+                Button { showShareSheet = true } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.title2)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .accessibilityLabel("Share song")
                 Spacer()
             }
             .padding(.horizontal, horizontalPadding)
@@ -686,19 +720,30 @@ struct NowPlayingView: View {
     /// Shows or hides a translation under each line. Only there when the lyrics are in
     /// another language than the reader's, and one the device can translate.
     private var translateButton: some View {
-        let on = appSettings.translateLyrics
+        // On when this song's translation shows, or is on its way: a song not asked for yet
+        // shows the button off, and a tap asks for it.
+        let on = appSettings.translateLyrics && !translator.needsKey
+            && (translator.hasTranslation || translator.isWorking)
         return Button {
-            appSettings.translateLyrics.toggle()
+            // No key, no translation: the button sets one up rather than doing nothing.
+            guard !translator.needsKey else {
+                showTranslationSetup = true
+                return
+            }
+            appSettings.translateLyrics = !on
             appSettings.save()
-            if appSettings.translateLyrics { translator.translateMissing() }
+            // A failed attempt is retried by the same tap.
+            if !on { translator.translateMissing() }
         } label: {
+            // Quiet, like the artist line beside it rather than the title: a reader who
+            // doesn't want translations shouldn't have their eye pulled to the corner. No
+            // accent (it clashed with every cover's colour up there), and no disc behind it.
             Image(systemName: "translate")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white.opacity(on ? 1 : 0.55))
+                .font(.system(size: 14, weight: .regular))
+                .foregroundStyle(.white.opacity(on ? 0.7 : 0.32))
                 .frame(width: 34, height: 34)
-                .background(Circle().fill(.white.opacity(on ? 0.16 : 0)))
                 .symbolEffect(.pulse, isActive: on && translator.isWorking)
-                .contentShape(Circle())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.2), value: on)
@@ -713,10 +758,19 @@ struct NowPlayingView: View {
                         font: .subheadline.weight(.semibold),
                         color: .white,
                         alignment: .leading)
-            Text(song.artist ?? "Unknown Artist")
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.6))
-                .lineLimit(1)
+            // Why the translation isn't there, in place of the artist, until a tap on the
+            // translate button tries again.
+            if appSettings.translateLyrics, let failure = translator.failure {
+                Text(failure)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .lineLimit(1)
+            } else {
+                Text(song.artist ?? "Unknown Artist")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .lineLimit(1)
+            }
         }
     }
 
@@ -999,11 +1053,15 @@ struct NowPlayingView: View {
                                     Text(translation)
                                         .font(.system(size: 17, weight: .semibold))
                                         .opacity(0.6)
-                                        .transition(.opacity)
+                                        // Gone at once when hidden, so the next line never
+                                        // slides over a fading one; shown once there's room.
+                                        .transition(.asymmetric(
+                                            insertion: .opacity.animation(.easeOut(duration: 0.3).delay(0.15)),
+                                            removal: .opacity.animation(.easeOut(duration: 0.12))))
                                 }
                             }
-                                .animation(.easeOut(duration: 0.3), value: translator.lines[line.text])
-                                .animation(.easeOut(duration: 0.3), value: appSettings.translateLyrics)
+                                .animation(Self.translationMotion, value: translator.lines[line.text])
+                                .animation(Self.translationMotion, value: appSettings.translateLyrics)
                                 .foregroundStyle(.white.opacity(
                                     isUserScrolling ? 0.8
                                     : opacityForDistance(distance) * (isAnticipated ? 0.45 : 1)
@@ -1065,8 +1123,8 @@ struct NowPlayingView: View {
                 }
             }
             // Translations shown, hidden or arriving change every line's height, and the
-            // list keeps its offset: the line being sung drifted off the centre until the
-            // next one brought it back.
+            // list keeps its offset: the line being sung drifted off the centre, then was
+            // brought back in a second movement.
             .onChange(of: appSettings.translateLyrics) { _, _ in recenterLyrics(proxy) }
             .onChange(of: translator.lines.count) { _, _ in
                 if appSettings.translateLyrics { recenterLyrics(proxy) }
@@ -1074,14 +1132,14 @@ struct NowPlayingView: View {
         }
     }
 
-    /// Centres the line being sung once the lines have finished changing height (0.3 s).
+    /// How lines grow and shrink as translations come and go — and how the list follows.
+    private static let translationMotion = Animation.smooth(duration: 0.45)
+
+    /// Keeps the line being sung centred while the lines change height, in the same motion
+    /// as they do: one glide, rather than the list jumping and then scrolling back.
     private func recenterLyrics(_ proxy: ScrollViewProxy) {
-        recenterTask?.cancel()
-        recenterTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(320))
-            guard !Task.isCancelled, !isUserScrolling, let id = currentLyricId else { return }
-            withAnimation(.easeInOut(duration: 0.35)) { proxy.scrollTo(id, anchor: .center) }
-        }
+        guard !isUserScrolling, let id = currentLyricId else { return }
+        withAnimation(Self.translationMotion) { proxy.scrollTo(id, anchor: .center) }
     }
 
     @ViewBuilder
@@ -1368,9 +1426,12 @@ struct NowPlayingView: View {
                         .aspectRatio(contentMode: .fill)
                         .blur(radius: 130)
                         .scaleEffect(1.5)
-                        .overlay(Color.black.opacity(0.22))
+                        // Darkening alone turns a pastel into a dusty grey; the cover's
+                        // colour is lifted by as much as it's deepened.
+                        .saturation(backdropTone.saturation)
+                        .overlay(Color.black.opacity(backdropTone.veil))
                     // If cover is too dark, blend in the most vibrant color
-                    if let vibrant = vibrantOverlayColor {
+                    if let vibrant = backdropTone.vibrant {
                         vibrant.opacity(0.4)
                             .blendMode(.screen)
                     }
@@ -1387,15 +1448,15 @@ struct NowPlayingView: View {
     private func loadBackgroundImage(for song: Song) async {
         guard let coverArt = song.coverArt, ServerManager.shared.currentServer != nil else {
             backgroundImage = nil
-            vibrantOverlayColor = nil
+            backdropTone = .plain
             return
         }
         let key = "\(coverArt)_bg"
         if let cached = ArtworkCache.shared.image(for: key) {
-            let vibrant = await Self.vibrantColorIfDark(from: cached)
+            let tone = await Self.backdropTone(of: cached)
             await MainActor.run {
                 backgroundImage = cached
-                vibrantOverlayColor = vibrant
+                backdropTone = tone
             }
             return
         }
@@ -1404,10 +1465,10 @@ struct NowPlayingView: View {
         // the same progressive trick the foreground cover uses.
         if let anySize = ArtworkCache.shared.cachedImageAnySize(forCoverArt: coverArt)
             ?? song.albumId.flatMap({ ArtworkCache.shared.cachedImageAnySize(forCoverArt: $0) }) {
-            let vibrant = await Self.vibrantColorIfDark(from: anySize)
+            let tone = await Self.backdropTone(of: anySize)
             await MainActor.run {
                 backgroundImage = anySize
-                vibrantOverlayColor = vibrant
+                backdropTone = tone
             }
         }
         // Reuse the ordinary thumbnail rather than downloading a second bitmap.
@@ -1421,24 +1482,36 @@ struct NowPlayingView: View {
         let thumbKey = "\(coverArt)_\(ArtworkCache.thumbSize)"
         guard let img = await ArtworkCache.shared.fetchImage(
             coverArt: coverArt, requestSize: ArtworkCache.thumbSize, key: thumbKey) else { return }
-        let vibrant = await Self.vibrantColorIfDark(from: img)
+        let tone = await Self.backdropTone(of: img)
         await MainActor.run {
             backgroundImage = img
-            vibrantOverlayColor = vibrant
+            backdropTone = tone
         }
     }
 
     /// Runs the pixel analysis off the main thread.
-    private static func vibrantColorIfDark(from image: UIImage) async -> Color? {
+    private static func backdropTone(of image: UIImage) async -> BackdropTone {
         await Task.detached(priority: .userInitiated) {
-            extractVibrantColorIfDark(from: image)
+            analyseBackdrop(image)
         }.value
     }
 
-    /// Analyzes image brightness; if too dark, finds the most vibrant (saturated) non-dark color.
-    /// Returns nil for normal-brightness images (no correction needed).
-    private nonisolated static func extractVibrantColorIfDark(from image: UIImage) -> Color? {
-        guard let cgImage = image.cgImage else { return nil }
+    /// The veil and tint the blurred cover needs so white text and controls stay readable:
+    /// a light cover (a grey sleeve, a white one) used to blur into a pale grey page under
+    /// white controls. The veil darkens it until its brightness is at most
+    /// `BackdropTone.brightest` — the cover's own hue kept, only deeper, as Apple Music does.
+    /// A very dark cover instead gets its most vibrant colour blended in.
+    private nonisolated static func analyseBackdrop(_ image: UIImage) -> BackdropTone {
+        let (brightness, vibrant) = extractBrightnessAndVibrant(from: image)
+        guard let brightness else { return .plain }
+        let veil = brightness > 0 ? max(BackdropTone.plain.veil, 1 - BackdropTone.brightest / brightness) : BackdropTone.plain.veil
+        return BackdropTone(veil: min(veil, BackdropTone.deepestVeil), vibrant: vibrant)
+    }
+
+    /// The image's mean brightness, and — for a dark one (mean under 0.2) — its most vibrant
+    /// colour, brightened. Nil brightness when the image can't be read.
+    private nonisolated static func extractBrightnessAndVibrant(from image: UIImage) -> (Double?, Color?) {
+        guard let cgImage = image.cgImage else { return (nil, nil) }
         let width = min(cgImage.width, 50)
         let height = min(cgImage.height, 50)
         let colorSpace = CGColorSpaceCreateDeviceRGB()
@@ -1447,7 +1520,7 @@ struct NowPlayingView: View {
             data: &pixelData, width: width, height: height,
             bitsPerComponent: 8, bytesPerRow: width * 4,
             space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else { return nil }
+        ) else { return (nil, nil) }
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
 
         var totalBrightness: Double = 0
@@ -1480,15 +1553,15 @@ struct NowPlayingView: View {
         let avgBrightness = totalBrightness / Double(pixelCount)
 
         // Only apply vibrant color correction for dark covers (avg brightness < 0.2)
-        guard avgBrightness < 0.2, let color = bestColor, bestSaturation > 0.15 else { return nil }
+        guard avgBrightness < 0.2, let color = bestColor, bestSaturation > 0.15 else { return (avgBrightness, nil) }
 
         // Boost the vibrant color's brightness for a more visible effect
         let boostFactor = 1.5
-        return Color(
+        return (avgBrightness, Color(
             red: min(color.r * boostFactor, 1.0),
             green: min(color.g * boostFactor, 1.0),
             blue: min(color.b * boostFactor, 1.0)
-        )
+        ))
     }
 
     private func formatTime(_ time: TimeInterval) -> String {
@@ -1534,8 +1607,6 @@ struct SongActionsRow: View {
     @Binding var showFileInfo: Bool
     @Binding var showCredits: Bool
     @Binding var showEqualizer: Bool
-    @Binding var showSleepTimer: Bool
-    @Binding var showShare: Bool
 
     @Environment(AudioPlayer.self) private var player
     @State private var heartPop = false
@@ -1706,16 +1777,8 @@ struct SongActionsRow: View {
                           systemImage: DownloadManager.shared.isDownloaded(song.id) ? "checkmark.circle.fill" : "arrow.down.circle")
                 }
                 .disabled(DownloadManager.shared.isDownloaded(song.id))
-                Divider()
-                Button { showSleepTimer = true } label: {
-                    Label(player.sleepTimerActive ? "Sleep Timer (On)" : "Sleep Timer",
-                          systemImage: player.sleepTimerActive ? "moon.fill" : "moon.zzz")
-                }
-                Button { showShare = true } label: {
-                    Label("Share", systemImage: "square.and.arrow.up")
-                }
             } label: {
-                Image(systemName: player.sleepTimerActive ? "ellipsis.circle.fill" : "ellipsis")
+                Image(systemName: "ellipsis")
                     .font(.title3)
                     .foregroundStyle(.white.opacity(0.7))
                     .frame(width: 36, height: 36)
@@ -1725,3 +1788,25 @@ struct SongActionsRow: View {
     }
 }
 
+// MARK: - Backdrop tone
+
+/// How Now Playing's blurred-cover backdrop is corrected for the cover it comes from.
+struct BackdropTone: Equatable {
+    /// Black laid over the blurred cover, 0…1.
+    let veil: Double
+    /// A dark cover's most vibrant colour, screened over it; nil for any other cover.
+    let vibrant: Color?
+
+    /// Every cover gets at least this: it's what a mid-toned cover always had.
+    static let plain = BackdropTone(veil: 0.22, vibrant: nil)
+    /// The brightest the backdrop may stay under white text, as mean perceived brightness.
+    static let brightest: Double = 0.38
+    /// The deepest veil, for a white sleeve: deep enough for white text, still the
+    /// cover's grey or pastel rather than a near-black.
+    static let deepestVeil: Double = 0.52
+    /// How much colour comes back per unit of veil beyond `plain`'s.
+    private static let saturationPerVeil: Double = 1.2
+
+    /// A grey cover stays grey; a pastel one keeps its hue as it darkens.
+    var saturation: Double { 1 + max(0, veil - Self.plain.veil) * Self.saturationPerVeil }
+}

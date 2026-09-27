@@ -5,8 +5,6 @@ struct RadioPlaylistView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var isSaved = false
     @State private var isSaving = false
-    @State private var listHeight: CGFloat = 0
-    @State private var headerHeight: CGFloat = 0
     /// The radio cover's colour: its seed artist's photo.
     @State private var tint: (seed: String, color: UIColor)?
 
@@ -14,20 +12,12 @@ struct RadioPlaylistView: View {
 
     /// Space kept clear at the bottom of the list for the floating mini player.
     private let miniPlayerClearance: CGFloat = 80
-    /// The loader's own row never gets shorter than this, however little room is left.
-    private let minLoaderHeight: CGFloat = 120
 
     /// A radio that holds nothing but its seed while its songs are fetched isn't ready to
     /// show. Listing the seed there made it look like the radio's first — or only — song,
     /// with the loader wedged in above it.
     private var isAwaitingSongs: Bool {
         player.isFetchingRadioSongs && player.radioPlaylistSongs.count <= 1
-    }
-
-    /// The empty stretch between the buttons and the mini player, where the list will go.
-    private var loaderHeight: CGFloat {
-        let clearance = (player.hasQueue ? miniPlayerClearance : 0) + BottomChrome.shared.cardInset
-        return max(minLoaderHeight, listHeight - headerHeight - clearance)
     }
 
     var body: some View {
@@ -42,20 +32,12 @@ struct RadioPlaylistView: View {
                                     isLoading: player.isFetchingRadioSongs)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
 
-                VStack(spacing: 4) {
-                    Text(player.radioPlaylistName)
-                        .font(.title2.bold())
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .padding(.horizontal, 24)
-
-                    Text("\(player.radioPlaylistSongs.count) Songs")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        // "1 Songs" over an empty list would count the hidden seed. Kept in
-                        // the layout, so the header doesn't shift when the songs arrive.
-                        .opacity(isAwaitingSongs ? 0 : 1)
-                }
+                // The count closes the list, as it does an album's.
+                Text(player.radioPlaylistName)
+                    .font(.title2.bold())
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .padding(.horizontal, 24)
 
                 // Play/Shuffle and Save share one spaced stack so Save never
                 // overlaps the buttons above it.
@@ -107,31 +89,24 @@ struct RadioPlaylistView: View {
                 .padding(.horizontal)
             }
             .padding(.top, 12)
-            .padding(.bottom, 12)
+            .padding(.bottom, DetailListLayout.gap)
             .frame(maxWidth: .infinity)
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
 
             if isAwaitingSongs {
-                // Nothing to list yet, so the loader stands in for the whole list: centred in
-                // the empty stretch the songs will fill, not hung just under the buttons.
-                BouncingDotsLoader()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: loaderHeight)
-                    .listRowInsets(EdgeInsets())
+                // Nothing to list yet: rows in the list's shape stand in for it.
+                SkeletonSongList(count: 8)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                     .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
             } else {
                 // More songs on their way for a list that already has some (a refresh, or
                 // an artist mix that opens with the artist's own top songs).
                 if player.isFetchingRadioSongs {
-                    BouncingDotsLoader()
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
+                    SkeletonSongList(count: 2)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                         .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
                 }
 
                 // Song list
@@ -144,6 +119,9 @@ struct RadioPlaylistView: View {
                                               bottom: AppSettings.shared.listDensity.verticalPadding,
                                               trailing: 16))
                 }
+                if !player.radioPlaylistSongs.isEmpty && !player.isFetchingRadioSongs {
+                    ListSummaryRow(text: ListSummaryRow.text(songs: player.radioPlaylistSongs))
+                }
             }
 
             // The fetch card's room too, while it shows — a fixed clearance left the last
@@ -153,7 +131,7 @@ struct RadioPlaylistView: View {
                 .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { listHeight = $0 }
+        .environment(\.defaultMinListRowHeight, 1)
         .scrollContentBackground(.hidden)
         .background(TintedCanvas(tint: tint?.seed == radioSeed?.id ? tint?.color : nil))
         .task(id: radioSeed?.id) {
@@ -178,6 +156,7 @@ struct RadioPlaylistView: View {
                     Image(systemName: "ellipsis")
                         .rotationEffect(.degrees(90))
                 }
+                .tint(.primary)
             }
         }
     }

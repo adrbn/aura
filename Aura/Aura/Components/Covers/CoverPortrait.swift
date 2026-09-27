@@ -220,8 +220,8 @@ enum ArtistPhotos {
     /// Where Deezer redirects a picture it doesn't have: its grey silhouette, filed under the
     /// MD5 of an empty string. Artists without a photo still list a hash that lands here.
     private static let silhouette = "d41d8cd98f00b204e9800998ecf8427e"
-    /// Photos download three at a time; the lookups before them queue with the radar's on
-    /// `DeezerPacer`, which keeps both under Deezer's 50 calls per 5 seconds.
+    /// Photos download three at a time; the lookups before them go through their own lane of
+    /// `DeezerPacer`, beside the radar's, the two under Deezer's 50 calls per 5 seconds.
     private static let gate = DownloadGate(limit: 3)
     /// Names Deezer answered for without a matching artist that has a picture. Failed calls
     /// are not remembered: a timeout says nothing about the artist.
@@ -281,7 +281,7 @@ enum ArtistPhotos {
         var components = URLComponents(string: "https://api.deezer.com/search/artist")
         components?.queryItems = [URLQueryItem(name: "q", value: name), URLQueryItem(name: "limit", value: "5")]
         guard let url = components?.url else { return .failed }
-        await DeezerPacer.shared.wait()
+        await DeezerPacer.photos.wait()
         do {
             let (data, response) = try await session.data(from: url)
             guard (response as? HTTPURLResponse)?.statusCode == 200,

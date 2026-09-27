@@ -52,6 +52,43 @@ final class BottomChrome {
 }
 
 /// The end of a page's list: room for the mini player, and for the fetch card while it shows.
+/// The rhythm of a page that opens on its artwork and lists songs — album, playlist, mix,
+/// radar release: the first song sits as far below the buttons as the closing line sits
+/// below the last song.
+enum DetailListLayout {
+    static let gap: CGFloat = 12
+}
+
+/// The line that closes a page's list — "2026 · 9 songs · 40 min" — as the back of a record
+/// sleeve does, `DetailListLayout.gap` below the last song. The list it ends needs
+/// `.environment(\.defaultMinListRowHeight, 1)`, or the row is stretched to the list's
+/// usual 44 points and the words drift further down.
+struct ListSummaryRow: View {
+    let text: String
+
+    /// "2024 · 12 songs · 48 min" — whichever of them is known. The same words close every
+    /// list, online or not.
+    static func text(year: Int? = nil, songs: [Song], seconds: Int? = nil) -> String {
+        let length = seconds ?? songs.compactMap(\.duration).reduce(0, +)
+        return [
+            year.map(String.init),
+            "\(songs.count) \(songs.count == 1 ? "song" : "songs")",
+            length > 0 ? Duration.seconds(max(length, 60))
+                .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)) : nil,
+        ].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    var body: some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: DetailListLayout.gap, leading: 16, bottom: 0, trailing: 16))
+    }
+}
+
 struct ListEndSpacer: View {
     var height: CGFloat = 80
 

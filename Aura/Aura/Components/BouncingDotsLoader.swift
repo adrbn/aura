@@ -54,19 +54,6 @@ struct BouncingDotsLoader: View {
     }
 }
 
-extension View {
-    /// Centres the dots on their own row, with breathing room above and below.
-    func searchLoadingRow() -> some View {
-        frame(maxWidth: .infinity, alignment: .center)
-            // A fixed inset, not `containerRelativeFrame`. The scroll container extends
-            // behind the keyboard, so centring within it put the dots well above the middle
-            // of the black area actually visible — which, while searching, is the strip
-            // between the search field and the keyboard.
-            .padding(.top, 170)
-            .padding(.bottom, 40)
-    }
-}
-
 private extension BouncingDotsLoader {
     /// Height of one dot at phase `t`, in 0...1.
     ///

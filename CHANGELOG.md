@@ -41,10 +41,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Radio covers fill the square: the seed artist in a larger disc sending out rings, the two similar artists riding the first ring in the field's tone, the name in a black band with the similar artists on a strip beneath — the mixes' lockup — over a field that deepens towards its edges, with a fine grain. Every disc is drawn from the start, a tinted stand-in until its photo is in, and the rings travel while the radio is being put together
 
 ### Added — Lyrics
-- Translation by Gemini, with a key of your own (free from Google AI Studio, in Settings → Lyrics → Translation): the whole song goes in one request, so each line is read knowing the rest — a sentence running over several lines is translated as a sentence, then cut back at the line breaks, each line carrying the part sung on it. The iPhone's small model got the meaning backwards ("Nothing you can do that can't be done" as "nothing you can do can't be done") and read Cape Verdean Creole as Portuguese — Cesária Évora's "ta ba panha'l" became a banana. Every song is translated afresh once a key is in; the key stays in the Keychain, Settings checks it on the spot, and when Google can't answer the iPhone translates instead
-- Without a key, the on-device model is told the song's title and artist, and first asked which language the song is really in, so a creole isn't read as the language it resembles; lines it leaves out stay untranslated rather than going word for word through a translator that would read them as that language
-- Translation: lyrics in another language than the phone's show a translation under each line, small and dimmed. Where Apple Intelligence is on, its on-device language model writes it, reading the song as a whole as a subtitler would — idioms by their sense, the singer's familiar "tu" kept — instead of word for word ("sotto, sotto" is "au fond", not "en bas"). Elsewhere, and for any line the model leaves out, Apple's Translation framework does it line by line, offline once the language is downloaded. Free, nothing sent anywhere, and kept, so a song comes back translated at once. The button sits at the end of the lyrics header, facing the song's title, and only appears when there is something to translate
+- Translation by Gemini, with a key of your own (free from Google AI Studio, in Settings → Lyrics → Translation): lyrics in another language than the phone's show a translation under each line, small and dimmed. The whole song goes in one request, so each line is read knowing the rest — a sentence running over several lines is translated as a sentence, then cut back at the line breaks, each line carrying the part sung on it; idioms go by their sense, and a creole is read as itself, not as the language it resembles. The key stays in the Keychain and Settings checks it on the spot. Without a key the button leads to setting one up
+- A song is sent only when the translate button is tapped — never on its own when the lyrics open — so the free quota goes on the songs actually read. When one of Google's models has used up its share, the next takes over (Gemini Flash, then Flash-Lite, then Gemma), each set aside until its quota comes back
+- A translation is kept, and comes back at once, offline too. Offline, the button only shows for a song that has one kept
 - Lines already in the reader's language — a song switching languages — are left as they are
+- Translations fade in under their lines instead of snapping the sheet to a new height
 
 ### Added — Playlists
 - Filters on the Playlists page — Pinned, Radios, Mixes, Mine, Shared, Downloaded — as a row of small, quiet capsules under the search field, each offered only when it would leave some playlists out. The chosen one takes the accent and a cross; tapping it again shows every playlist. They narrow the search too
@@ -68,8 +69,8 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 ### Changed — Appearance
 - The tab roots — Home, Library, Playlists, Search, Settings — open in colour, as album and playlist pages do: a glow at the top in three neighbouring hues that slowly trade places and breathe, fading into the page before the middle of the screen. Its colour follows the time of day — violet at night, rose at dawn, amber through the morning and afternoon, orange and red towards sunset, magenta at dusk — drifting minute by minute, and never green. It scrolls away with the content, holds still under Reduce Motion and stops drawing when out of sight. Home's cutting mat runs through it
 - Home is lighter: section titles at 20 points semibold instead of 28 bold, the Made For You covers without a caption beneath them — each already prints its name — Favorite Artists as 110-point circles instead of 140, and the counts under the title as a quiet line of words — "22,563 songs · 18,804 albums · 304 playlists" — without icons
-- Now Playing keeps four controls along the bottom — lyrics, radio, queue, output; the sleep timer and Share move to the "…" menu beside the heart, whose dots fill while a timer runs
-- The Get It card is a slim pill: a smaller cover, the title over where it's at, and the four steps as a hairline along its bottom edge — about two thirds of its former height
+- Now Playing keeps its six controls along the bottom — lyrics, radio, queue, sleep timer, output and Share — each a tap away
+- The Get It card is a slim pill: a smaller cover, the title over where it's at, and the four steps as a ring of four arcs at its end — about two thirds of its former height, with nothing drawn over the words
 - Playlists open as a list by default
 - The pin on pinned playlists is a quiet mark — a small white pin on a dark disc over a cover, a grey one in the list — instead of a bright accent dot
 - The playlist filters span the row when they fit on one line, each keeping its proportions, and scroll when they don't
@@ -82,6 +83,40 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Artist headers drop the dark fade across the top of the photo; only a photo bright enough to hide the clock gets a light veil, the status bar's height
 - A face too high in an artist photo is brought down by zooming in on it (up to 1.7×), instead of sliding the photo down over a stretched, blurred copy of its top edge — pulling the page down zooms the same way
 - Artist photos for covers come from Deezer's public catalogue: the server's artist-image queue stalled every cover in the app whenever a shelf asked for a dozen artists at once
+
+### Added — Pages
+- A long press on a cover lifts that cover alone, in its own shape, with its actions — Change, Save and Remove Cover Art on a playlist, Save on an album — instead of the whole header rising with it
+- The accent can be any colour, picked with the system's colour picker, beside the nine ready-made ones
+- An artist's page says how many times you've played them, under the name, where it used to count their albums; a shimmering placeholder holds its place while it loads. Instant Mix, Shuffle and the heart span the width, as an album's Play and Shuffle do
+- Playing from the Radar says "Release Radar" in Now Playing, with the radar's icon
+- A radar release lists every artist credited on it: a collaboration shows under each of its artists, and its byline names them all
+
+### Changed — Landscape clock
+- Turning the phone on its side no longer rotates the whole interface: the clock turns its own content to face the phone, fades in and out instead of sliding up while the screen turned, and follows the phone from one side to the other. Closing it no longer leaves Now Playing squeezed into landscape
+- Lyrics on their side are the whole sheet in one size, the sung line held in the middle and brightened, instead of three or four lines of changing sizes that jumped to re-centre; a tapped line is sung from its start, and translations show under their lines
+- Real targets: previous, play and next are 56-point buttons, a tap on the clock switches between digital and analog — remembered — and a close button and a clock/lyrics switch sit in the corner, instead of a long press anywhere on the screen
+- A progress line with the time played and left, the blurred cover from the artwork cache — offline too — and the screen kept lit while the phone charges
+
+### Changed — Offline
+- Offline mode switched on by hand stays on when the app is reopened; only an offline mode the app chose itself, for want of a server, lifts on its own
+- Aura decides on opening: online if the server answers, offline if it doesn't, instead of trusting the mode it was left in
+- Offline pages follow the online pages' spacing, and close their lists with the album's "2024 · 12 songs · 48 min" line; the "on this iPhone" counts and the system's "The Internet connection appears to be offline" message are gone
+- Offline Wrapped playlists show their Wrapped cover, and playlist covers show offline as they do online
+
+### Changed — Appearance
+- Home's shelves and the queue move smoothly when a song is played — Up Next and Recently Played slide their covers into place instead of changing at once, and sections appear and leave with a fade
+- The ⋮ menus on album, playlist, radio and mix pages, and on the Playlists tab, are in the text colour instead of the accent
+- A radio's page, and every page listing songs, share the same spacing between header, list and closing line
+- Now Playing's background keeps a light cover's own hue, only deeper, so white controls stay readable; a very dark cover gets its most vibrant colour blended in
+- Loading placeholders stand where the answer will appear, in its shape
+
+### Fixed
+- Saving a cover to Photos no longer closes the app: Aura now asks to add to the photo library, as iOS requires, and says so if it's refused. A Wrapped playlist saves the cover shown, and a downloaded album's cover saves offline
+- A song autoplay adds after a one-song album no longer says it's playing from that album: where autoplay begins is now kept with the queue across relaunches, and a song that isn't on the album named above it shows as Autoplay
+- Made For You covers no longer fall back to flat colour when many covers load at once: artist photos have their own pace for Deezer's catalogue, apart from the Radar's, and a cover that couldn't get its photos tries again
+
+### Developer
+- `scripts/set-build-number.sh` stamps the build number from the commit count before an archive
 
 ### Fixed — Appearance
 - The Add to Playlist sheet lists on the page's own dark background, like its header, instead of the system grey
@@ -180,8 +215,8 @@ Initial public release. Native SwiftUI music client for Navidrome and Subsonic-A
 - Fully customizable and reorderable sections
 
 ### Added — Appearance
-- 7 accent colors
-- Pure black OLED mode
+- Nine accent colours
+- Light, dark or system appearance
 - Adjustable list density
 - Customizable tab bar order
 

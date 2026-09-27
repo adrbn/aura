@@ -37,6 +37,7 @@ private struct SettingsSaveModifier3: ViewModifier {
 
             .onChange(of: s.appLanguage) { _, _ in s.save() }
             .onChange(of: s.appAccentColor) { _, _ in s.save() }
+            .onChange(of: s.customAccentRGB) { _, _ in s.save() }
             .onChange(of: s.activeTheme) { _, _ in s.save() }
             .onChange(of: s.eqPreset) { _, _ in s.save() }
             .onChange(of: s.eqCustomBands) { _, _ in s.save() }

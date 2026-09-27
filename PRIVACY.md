@@ -5,7 +5,7 @@ description: How Aura handles your data. Short version — it doesn't leave your
 
 # Aura Privacy Policy
 
-**Last updated:** 2026-09-26
+**Last updated:** 2026-09-27
 **Effective date:** same as above
 
 Aura ("the app") is a music playback client for Subsonic-API-compatible servers (Navidrome, Airsonic, Gonic, and others) that **you** host or have legitimate access to. This policy explains what information Aura handles and what it does not.
@@ -42,6 +42,10 @@ Keychain entries are scoped to Aura and can be cleared by deleting the app.
 - Local database of your library metadata (for offline search)
 
 All of the above is removed when you delete the app.
+
+### Your photo library
+
+Aura never reads your photo library. **Change Cover Art** on a playlist opens the system photo picker, which hands Aura only the picture you choose. **Save Cover Art** asks iOS for permission to *add* to your library, and only adds that cover.
 
 ## Data Aura sends over the network
 
@@ -83,9 +87,9 @@ With the Radar on, what you type in **Search** is also sent to the same catalogu
 
 ### Lyrics translation
 
-By default, when you turn on translation in the lyrics, the lines are translated **on your device**: by Apple Intelligence's on-device language model where it is turned on, otherwise by Apple's Translation framework. The lyrics are then not sent to Apple, to the developer, or to any translation service. The first time a pair of languages is used, iOS may offer to download it; that download is between your device and Apple, like any system language. Translations are kept in the app's cache.
+Lyrics are translated **only if you add your own Google Gemini API key** (Settings → Lyrics → Translation). Nothing is translated on the device, and without a key no lyrics are sent anywhere.
 
-**Only if you add your own Google Gemini API key** (Settings → Lyrics → Translation), the lyrics you translate are sent to Google's Gemini API ([ai.google.dev](https://ai.google.dev)) instead, together with the song's title and artist — nothing else: not your server, your library or your listening history. The request is made with your key, under your own agreement with Google; on Google's free tier, Google may use it to improve its products. The key is stored in your device's Keychain and sent only to Google. Remove the key and translation is back on the device.
+With a key, the lyrics of a song you translate are sent to Google's Gemini API ([ai.google.dev](https://ai.google.dev)) once, when you tap the translate button for that song, together with the song's title and artist — nothing else: not your server, your library or your listening history. The request is made with your key, under your own agreement with Google; on Google's free tier, Google may use it to improve its products. When one Gemini model's free allowance is spent, Aura asks the next one (Flash, then Flash-Lite, then Gemma), all through the same key. The key is stored in your device's Keychain and sent only to Google. Translations are kept in the app's cache, so a song translated once is not sent again.
 
 ### To MusicBrainz (for song credits)
 
@@ -125,4 +129,4 @@ We may update this policy as Aura evolves. Material changes will be noted in the
 
 ## Jurisdiction
 
-Aura is a free/open-source project published from France. EU/GDPR applies by default. Under GDPR Articles 15–22 you have rights to access, rectification, erasure, restriction, portability, and objection — however, because Aura holds no personal data about you on any server we control, there is generally nothing to exercise those rights against. If you believe otherwise, contact us via the App Store listing.
+Aura is a free, open-source project by an independent developer. Whatever your country, the rights the GDPR (Articles 15–22) and similar laws give you are honoured: access, rectification, erasure, restriction, portability, and objection — however, because Aura holds no personal data about you on any server we control, there is generally nothing to exercise those rights against. If you believe otherwise, contact us via the App Store listing.

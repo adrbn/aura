@@ -34,7 +34,6 @@ struct MixDetailView: View {
                     Text(shown.title).font(.title2.bold()).multilineTextAlignment(.center)
                     Text(shown.subtitle).font(.subheadline).foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
-                    Text(countLabel).font(.caption).foregroundStyle(.tertiary)
                 }
                 .padding(.horizontal)
 
@@ -85,7 +84,7 @@ struct MixDetailView: View {
                 .padding(.horizontal)
             }
             .padding(.top, 12)
-            .padding(.bottom, 12)
+            .padding(.bottom, DetailListLayout.gap)
             .frame(maxWidth: .infinity)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets())
@@ -108,12 +107,17 @@ struct MixDetailView: View {
                                               trailing: 16))
                 }
             }
+            // Closes the list as it does an album's.
+            if radar != nil || !shown.songs.isEmpty {
+                ListSummaryRow(text: countLabel)
+            }
 
             ListEndSpacer()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
+        .environment(\.defaultMinListRowHeight, 1)
         .scrollContentBackground(.hidden)
         .background(TintedCanvas(tint: tint ?? PageTint.tone(spec.accent(MixCoverArt.cached(spec)))))
         .scrollIndicators(.hidden)
