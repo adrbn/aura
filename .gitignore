@@ -63,3 +63,6 @@ Aura/build/
 # variable font; redistributable, so it ships in the repo like Vavin.
 !Aura/Aura/Archivo*.ttf
 !Aura/Aura/Archivo-OFL.txt
+
+# Local over-the-air publishing settings (personal infrastructure) — see docs/OTA.md
+scripts/ota.env
