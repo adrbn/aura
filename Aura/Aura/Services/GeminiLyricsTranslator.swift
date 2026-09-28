@@ -47,6 +47,9 @@ enum GeminiLyricsTranslator {
         case refusedKey
         /// Every model's allowance is spent; the first comes back at this time.
         case quota(until: Date?)
+        /// Every model was overloaded — Google's 503, "This model is currently experiencing
+        /// high demand" — even after a second try.
+        case busy
         case server(Int, String)
         case unreadable
 
@@ -56,7 +59,10 @@ enum GeminiLyricsTranslator {
             case .quota(let until?):
                 return String(localized: "Gemini's free quota is spent until \(until.formatted(date: .omitted, time: .shortened)).")
             case .quota(nil): return String(localized: "Gemini's free quota is spent for now.")
-            case .server(let status, let message): return "Google answered \(status): \(message)"
+            case .busy: return String(localized: "Google is busy. Tap to try again.")
+            // Google's own message is for the log: in place of the artist it was a line of
+            // jargon cut off halfway.
+            case .server(let status, _): return String(localized: "Google couldn't translate this song (\(status)).")
             case .unreadable: return String(localized: "Google's answer couldn't be read.")
             }
         }
@@ -99,33 +105,51 @@ enum GeminiLyricsTranslator {
 
     // MARK: Translating
 
+    /// How long to wait before asking overloaded models once more.
+    private static let busyPause: Duration = .seconds(4)
+
     /// Each line with its translation. Lines Gemini leaves out are simply missing.
     static func translate(_ lines: [String], song: LyricsSong,
                           to target: Locale.Language) async throws -> [String: String] {
         guard let key = apiKey else { throw Failure.refusedKey }
         let numbered = lines.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
         let rules = instructions(to: target, song: song)
-        var lastFailure: Failure?
-        for model in models where (spentUntil[model.id] ?? .distantPast) <= Date() {
-            do {
-                let text = try await ask(model, rules: rules, lines: numbered, key: key)
-                return parse(text, lines: lines)
-            } catch let failure as Failure {
-                switch failure {
-                case .quota(let until):
-                    spentUntil[model.id] = until
-                    AppLogger.shared.log("🌐 \(model.id)'s free quota is spent — trying the next model")
-                case .server(let status, _) where status == 404 || status == 400:
-                    // Retired, or not offered to this key: the next model may be.
-                    AppLogger.shared.log("🌐 \(model.id) unavailable (\(status)) — trying the next model")
-                default:
-                    throw failure
+        // An overloaded model is passed over for the next; when every one is, they're all
+        // asked once more after a pause — Google's overloads are over in seconds, and a
+        // refused request costs no quota.
+        for attempt in 0..<2 {
+            if attempt > 0 { try await Task.sleep(for: busyPause) }
+            var lastFailure: Failure?
+            var sawBusy = false
+            for model in models where (spentUntil[model.id] ?? .distantPast) <= Date() {
+                do {
+                    let text = try await ask(model, rules: rules, lines: numbered, key: key)
+                    return parse(text, lines: lines)
+                } catch let failure as Failure {
+                    switch failure {
+                    case .quota(let until):
+                        spentUntil[model.id] = until
+                        AppLogger.shared.log("🌐 \(model.id)'s free quota is spent — trying the next model")
+                    case .busy:
+                        sawBusy = true
+                        AppLogger.shared.log("🌐 \(model.id) is overloaded — trying the next model")
+                    case .server(let status, let message) where status == 404 || status == 400:
+                        // Retired, or not offered to this key: the next model may be.
+                        AppLogger.shared.log("🌐 \(model.id) unavailable (\(status)): \(message) — trying the next model")
+                    case .server(let status, let message):
+                        AppLogger.shared.log("🌐 \(model.id) answered \(status): \(message)")
+                        throw failure
+                    default:
+                        throw failure
+                    }
+                    lastFailure = failure
                 }
-                lastFailure = failure
             }
+            if sawBusy { continue }
+            if case .server = lastFailure { throw lastFailure! }
+            throw Failure.quota(until: spentUntil.values.filter { $0 > Date() }.min())
         }
-        if case .server = lastFailure { throw lastFailure! }
-        throw Failure.quota(until: spentUntil.values.filter { $0 > Date() }.min())
+        throw Failure.busy
     }
 
     /// One request to one model; its answer's text.
@@ -178,6 +202,7 @@ enum GeminiLyricsTranslator {
             return .refusedKey
         }
         if status == 429 { return .quota(until: resumption(after: data)) }
+        if (500..<600).contains(status) { return .busy }
         return .server(status, message)
     }
 
