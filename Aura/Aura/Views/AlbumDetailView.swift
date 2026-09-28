@@ -160,7 +160,6 @@ struct AlbumDetailView: View {
                         .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)
-                .environment(\.defaultMinListRowHeight, 1)
                 .scrollContentBackground(.hidden)
                 .background(ArtworkCanvas(coverArt: album.coverArt))
                 .scrollIndicators(.hidden)

@@ -324,7 +324,6 @@ struct OfflineMixDetailView: View {
             ListSummaryRow(text: ListSummaryRow.text(songs: mix.songs))
             ListEndSpacer().clearRow()
         }
-        .environment(\.defaultMinListRowHeight, 1)
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
@@ -564,7 +563,6 @@ struct OfflineAlbumDetailView: View {
             ListSummaryRow(text: ListSummaryRow.text(year: album.songs.first?.year, songs: album.songs))
             ListEndSpacer().clearRow()
         }
-        .environment(\.defaultMinListRowHeight, 1)
         .offlinePage(title: album.name, coverArt: album.coverArt)
     }
 }
@@ -591,7 +589,6 @@ struct OfflinePlaylistDetailView: View {
             ListSummaryRow(text: ListSummaryRow.text(songs: availableSongs))
             ListEndSpacer().clearRow()
         }
-        .environment(\.defaultMinListRowHeight, 1)
         .offlinePage(title: snapshot.name, coverArt: snapshot.coverArt)
     }
 }

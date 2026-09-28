@@ -117,7 +117,6 @@ struct MixDetailView: View {
                 .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
-        .environment(\.defaultMinListRowHeight, 1)
         .scrollContentBackground(.hidden)
         .background(TintedCanvas(tint: tint ?? PageTint.tone(spec.accent(MixCoverArt.cached(spec)))))
         .scrollIndicators(.hidden)

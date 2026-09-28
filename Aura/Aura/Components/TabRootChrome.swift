@@ -60,11 +60,17 @@ enum DetailListLayout {
 }
 
 /// The line that closes a page's list — "2026 · 9 songs · 40 min" — as the back of a record
-/// sleeve does, `DetailListLayout.gap` below the last song. The list it ends needs
-/// `.environment(\.defaultMinListRowHeight, 1)`, or the row is stretched to the list's
-/// usual 44 points and the words drift further down.
+/// sleeve does, `DetailListLayout.gap` below the last song.
+///
+/// A list row is at least 44 points tall and centres anything shorter, which let these
+/// words drift down. Lowering the list's minimum row height fixed that but squashed every
+/// song row on the page with it, so the list keeps its minimum and the words are pinned
+/// to the top of their row instead.
 struct ListSummaryRow: View {
     let text: String
+
+    /// A plain list's default minimum row height.
+    private static let listRowMinimum: CGFloat = 44
 
     /// "2024 · 12 songs · 48 min" — whichever of them is known. The same words close every
     /// list, online or not.
@@ -82,10 +88,11 @@ struct ListSummaryRow: View {
         Text(text)
             .font(.footnote)
             .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, DetailListLayout.gap)
+            .frame(maxWidth: .infinity, minHeight: Self.listRowMinimum, alignment: .topLeading)
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: DetailListLayout.gap, leading: 16, bottom: 0, trailing: 16))
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
     }
 }
 

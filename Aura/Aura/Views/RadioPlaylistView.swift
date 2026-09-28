@@ -131,7 +131,6 @@ struct RadioPlaylistView: View {
                 .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
-        .environment(\.defaultMinListRowHeight, 1)
         .scrollContentBackground(.hidden)
         .background(TintedCanvas(tint: tint?.seed == radioSeed?.id ? tint?.color : nil))
         .task(id: radioSeed?.id) {

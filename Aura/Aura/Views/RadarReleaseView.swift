@@ -79,7 +79,6 @@ struct RadarReleaseView: View {
                 .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
-        .environment(\.defaultMinListRowHeight, 1)
         .scrollContentBackground(.hidden)
         .background(TintedCanvas(tint: tint))
         .scrollIndicators(.hidden)
