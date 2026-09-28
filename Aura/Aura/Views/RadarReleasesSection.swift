@@ -117,6 +117,11 @@ struct RadarReleaseRow: View {
             Button { player.pendingArtistId = release.artist.id } label: {
                 Label("Go to Artist", systemImage: "person")
             }
+            Button(role: .destructive) {
+                withAnimation { RadarService.shared.unfollow(release.artist) }
+            } label: {
+                Label("Stop Following \(release.artist.name)", systemImage: "person.crop.circle.badge.minus")
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(release.title), \(release.typeLabel) by \(release.byline), \(dateLabel)")

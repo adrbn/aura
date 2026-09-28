@@ -511,6 +511,15 @@ struct SettingsView: View {
             Toggle(isOn: $appSettings.radarEnabled) {
                 Label("Show Radar on Home", systemImage: "dot.radiowaves.left.and.right")
             }
+            if !RadarService.shared.unfollowed.isEmpty {
+                NavigationLink { UnfollowedArtistsView() } label: {
+                    LabeledContent {
+                        Text("\(RadarService.shared.unfollowed.count)")
+                    } label: {
+                        Label("Unfollowed Artists", systemImage: "person.crop.circle.badge.minus")
+                    }
+                }
+            }
         } header: {
             Text("Release Radar")
         } footer: {

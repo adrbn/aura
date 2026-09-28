@@ -59,6 +59,13 @@ final class RadarService {
     /// that release: the artist is still followed, and their next one still shows.
     private(set) var hidden = Set(UserDefaults.standard.stringArray(forKey: hiddenKey) ?? [])
     private static let hiddenKey = "radar_hidden_v1"
+    /// Artists no longer followed: none of their releases show, now or on later passes,
+    /// however much they're played. Kept with their names, so Settings can list them.
+    private(set) var unfollowed: [ArtistRef] = {
+        guard let data = UserDefaults.standard.data(forKey: RadarService.unfollowedKey) else { return [] }
+        return (try? JSONDecoder().decode([ArtistRef].self, from: data)) ?? []
+    }()
+    private static let unfollowedKey = "radar_unfollowed_v1"
     /// Owned here rather than by the screen that asked: a first run takes the best part of a
     /// minute, and leaving Home must not throw it away.
     private var refreshTask: Task<Void, Never>?
@@ -308,7 +315,8 @@ final class RadarService {
         var releases: [RadarRelease]
         let fetched: Date
         if staleCatalogue {
-            guard let found = await Self.findReleases(server: server, previous: radar?.releases ?? [])
+            guard let found = await Self.findReleases(server: server, previous: radar?.releases ?? [],
+                                                      skipping: Set(unfollowed.map(\.id)))
             else { return }
             (releases, fetched) = (found, now)
         } else {
@@ -326,7 +334,7 @@ final class RadarService {
         let heard = Set(matched.filter(\.value.isEmpty).keys)
         let inLibrary = matched.filter { !$0.value.isEmpty }
         let built = Radar(serverId: server.id,
-                          releases: releases.filter { !heard.contains($0.id) && !hidden.contains($0.id) },
+                          releases: releases.filter { !heard.contains($0.id) && isShown($0) },
                           fetched: fetched, inLibrary: inLibrary, matched: Date(), lacking: lacking)
         RadarStore.save(built)
         AppLogger.shared.log("📡 Radar: \(built.releases.count) releases, \(inLibrary.count) on the server (\(lacking.count) in part), \(heard.count) already heard")
@@ -337,13 +345,15 @@ final class RadarService {
 
     /// Nil when the server couldn't say who the artists are, or Deezer answered for none of
     /// them — the old radar stays up. An artist Deezer fails on keeps yesterday's releases.
-    private static func findReleases(server: ServerConfig, previous: [RadarRelease]) async -> [RadarRelease]? {
+    private static func findReleases(server: ServerConfig, previous: [RadarRelease],
+                                     skipping unfollowed: Set<String>) async -> [RadarRelease]? {
         let client = SubsonicClient.shared
         guard let frequent = try? await client.getAlbumList2(server: server, type: "frequent", size: 500) else {
             return nil
         }
         let starred = (try? await client.getStarred2(server: server))?.artist ?? []
-        let artists = RadarRules.artists(frequent: frequent, starred: starred)
+        let artists = RadarRules.artists(frequent: frequent.filter { !unfollowed.contains($0.artistId ?? "") },
+                                         starred: starred.filter { !unfollowed.contains($0.id) })
         let window = RadarWindow.range()
 
         var releases: [RadarRelease] = []
@@ -391,8 +401,35 @@ final class RadarService {
     func hide(_ release: RadarRelease) {
         hidden.insert(release.id)
         UserDefaults.standard.set(Array(hidden), forKey: Self.hiddenKey)
+        dropUnshown()
+    }
+
+    func unfollow(_ artist: ArtistRef) {
+        guard !unfollowed.contains(where: { $0.id == artist.id }) else { return }
+        unfollowed.append(artist)
+        saveUnfollowed()
+        dropUnshown()
+    }
+
+    /// Their releases come back at the next daily pass, not at once: the catalogue is
+    /// what's asked again, and it isn't asked more than once a day.
+    func follow(_ artist: ArtistRef) {
+        unfollowed.removeAll { $0.id == artist.id }
+        saveUnfollowed()
+    }
+
+    private func saveUnfollowed() {
+        UserDefaults.standard.set(try? JSONEncoder().encode(unfollowed), forKey: Self.unfollowedKey)
+    }
+
+    private func isShown(_ release: RadarRelease) -> Bool {
+        !hidden.contains(release.id) && !unfollowed.contains { $0.id == release.artist.id }
+    }
+
+    /// Takes what was just hidden or unfollowed off the radar on screen, without a pass.
+    private func dropUnshown() {
         guard let radar else { return }
-        let kept = Radar(serverId: radar.serverId, releases: radar.releases.filter { $0.id != release.id },
+        let kept = Radar(serverId: radar.serverId, releases: radar.releases.filter(isShown),
                          fetched: radar.fetched, inLibrary: radar.inLibrary, matched: radar.matched,
                          lacking: radar.lacking, whole: radar.whole)
         RadarStore.save(kept)
@@ -408,7 +445,7 @@ final class RadarService {
         let releases = await Self.withCovers(radar.releases)
         guard releases != radar.releases, self.radar?.serverId == radar.serverId,
               self.radar?.matched == radar.matched else { return }
-        let covered = Radar(serverId: radar.serverId, releases: releases.filter { !hidden.contains($0.id) },
+        let covered = Radar(serverId: radar.serverId, releases: releases.filter(isShown),
                             fetched: radar.fetched,
                             inLibrary: radar.inLibrary, matched: radar.matched, lacking: radar.lacking,
                             whole: radar.whole)

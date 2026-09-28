@@ -24,9 +24,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - The Get It countdown follows the server's real pace, learnt from the last few releases it added, instead of a fixed twenty minutes
 - The veil behind the tab bar and the mini player rises behind the Get It card too, so its glass reads the same dark page as the mini player's
 
+### Fixed — Mixes
+- The mixes no longer come back with the same songs: each genre was always read from its first page, so a regeneration drew from the same few dozen songs. Genre pages now start at a random point, and songs served in the last two generations go last, used only to fill a mix up. Made For You says when the mixes were last made ("Updated 14:32")
+
 ### Fixed — Radar
 - A release out the same day no longer stays without a cover: Deezer can list it before attaching its picture, so the radar asks for the cover again, whenever it's opened and at most once a minute, until it comes. Radar rows load their covers through the app's artwork cache, which tries again, instead of keeping an empty square after one failed load
 - A release can be swiped away from the Radar page with an X: it stays off the radar on every later pass, and leaves the mix if the server had it. Only that release — the artist is still followed
+- **Stop Following** an artist from a radar release's menu: none of their releases show on the radar again, however much they're played. Settings → Release Radar → Unfollowed Artists lists them, each a tap from being followed again (their releases come back at the next daily pass)
 - Get It's "About N min left" follows how long the server takes, by the server's own clock: it counted until the app next looked, so an hour with the phone asleep taught it that imports take an hour (95 min on a 20-minute import). The app also asks the server to scan five minutes after a download at the latest, instead of waiting half that inflated estimate — which slowed the import it was measuring. Earlier measures are dropped
 - Get It no longer waits forever for a song whose title holds a semicolon — "You and I, Pt. II (Full Version; 2017 Remaster)": Navidrome refuses a whole request with a bare ";" in it, so the song, already in the library, was never found. Every query sent to the server now spells it out
 - A re-issue is no longer a new release: an album Deezer dates anew under a title the artist had already put out stays off the radar — the same day's explicit and clean copies count once, and an album named after the single that announced it still counts

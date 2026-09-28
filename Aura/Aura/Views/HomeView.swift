@@ -401,6 +401,10 @@ struct HomeView: View {
                 Spacer()
                 if mixGenerator.isGenerating {
                     ProgressView().controlSize(.small)
+                } else if let made = mixGenerator.generatedAt {
+                    Text("Updated \(made, format: Calendar.current.isDateInToday(made) ? .dateTime.hour().minute() : .dateTime.weekday().hour().minute())")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding(.horizontal)
