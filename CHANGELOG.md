@@ -127,6 +127,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ### Developer
 - `scripts/set-build-number.sh` stamps the build number from the commit count before an archive
+- `scripts/watch-screenshots.sh` draws the watch app's pages on this Mac, from their own SwiftUI code with made-up data, at a 46 mm watch's size in SF Compact — pictures without a watch or a simulator. A likeness: list rows and safe areas are approximated
 - `scripts/ota-publish.sh` publishes a development build on the tailnet, so the iPhone installs it from anywhere, cellular included, with one tap (docs/OTA.md); `--here` serves it from this Mac instead, while the script runs
 
 ### Fixed — Appearance
