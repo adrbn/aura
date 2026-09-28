@@ -190,6 +190,8 @@ final class WatchLink: NSObject {
         case .seek(let time): player.seek(to: time)
         case .playSomething: Task { await player.playSomething() }
         case .play(let upcoming): play(upcoming)
+        case .playItem(let item, let index, let shuffled):
+            Task { await WatchCatalog.play(item, index: index, shuffled: shuffled) }
         }
     }
 
@@ -237,6 +239,12 @@ extension WatchLink: WCSessionDelegate {
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any],
                              replyHandler: @escaping ([String: Any]) -> Void) {
         let reply = UncheckedReply(send: replyHandler)
+        // The library's questions, answered from the phone's own lists and the server.
+        if let data = message[WatchLinkKey.request] as? Data,
+           let request = try? JSONDecoder().decode(WatchRequest.self, from: data) {
+            Task { @MainActor in reply.send(await WatchCatalog.answer(request)) }
+            return
+        }
         Task { @MainActor in
             beginObservingIfNeeded()
             let state = snapshot()

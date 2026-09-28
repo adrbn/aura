@@ -2,9 +2,9 @@ import SwiftUI
 
 /// Aura on the wrist: a remote for the iPhone's player.
 ///
-/// One screen at the root — what's playing, its lyrics a mode of it — and the queue pushed
-/// from its corner, so the Digital Crown has one job at a time: the phone's volume, the
-/// lyrics' lines, the queue's scroll.
+/// One screen at the root — what's playing, its lyrics a mode of it — with the library pushed
+/// from one top corner and the queue from a bottom one, so the Digital Crown has one job at
+/// a time: the phone's volume, the lyrics' lines, a list's scroll.
 @main
 struct AuraWatchApp: App {
     @State private var model = WatchModel()
@@ -16,7 +16,7 @@ struct AuraWatchApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
+            NavigationStack(path: Bindable(model).path) {
                 NowPlayingPage()
             }
             .environment(model)

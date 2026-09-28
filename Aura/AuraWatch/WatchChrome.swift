@@ -25,6 +25,20 @@ extension View {
         }
     }
 
+    /// The library in the top leading corner, across the clock from the volume, while `shown`.
+    func libraryCorner(_ shown: Bool, open: @escaping () -> Void) -> some View {
+        toolbar {
+            if shown {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: open) {
+                        Image(systemName: "music.note.square.stack.fill")
+                    }
+                    .accessibilityLabel("Library")
+                }
+            }
+        }
+    }
+
     /// The pinch of thumb and finger — double tap — presses this button.
     func primaryAction() -> some View {
         handGestureShortcut(.primaryAction)
@@ -55,6 +69,32 @@ private struct LyricCrown: ViewModifier {
                                   onChange: { turned($0.offset) }, onIdle: idle)
             // The volume let go of the Crown as the lyrics came up; they take it.
             .onAppear { hasCrown = true }
+    }
+}
+
+/// The library's search: a tap opens the watch's own input — dictation, Scribble or the
+/// keyboard — and what's entered is searched for on the phone.
+struct SearchField: View {
+    let submit: (String) -> Void
+    @State private var text = ""
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.6))
+            TextField("Search", text: $text, prompt: Text("Search"))
+                .textFieldStyle(.plain)
+                .font(.system(size: 15))
+                .onSubmit {
+                    let query = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    text = ""
+                    if !query.isEmpty { submit(query) }
+                }
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 40)
+        .glassEffect(.regular.interactive(), in: .capsule)
     }
 }
 

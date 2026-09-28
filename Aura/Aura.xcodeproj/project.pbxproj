@@ -100,6 +100,7 @@
 		D74811113ED9B60320C7E71B /* MacMixesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 972B2D4634806C3FA589AE66 /* MacMixesView.swift */; };
 		DD459BBB131DCB0C4D972CB5 /* ImageCropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40E8E704D9B72925B6B94399 /* ImageCropView.swift */; };
 		DE538F275F2FE804D1678772 /* MacOptionsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */; };
+		DF00AD8E1B03C8CD52B09E3B /* LibraryPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEA1BF8EC267E322EA33E1E4 /* LibraryPage.swift */; };
 		E10000010000000000000001 /* AuraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000001 /* AuraApp.swift */; };
 		E10000010000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000002 /* ContentView.swift */; };
 		E10000010000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000003 /* Assets.xcassets */; };
@@ -210,6 +211,7 @@
 		E1000001000000000000B002 /* LyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B002 /* LyricsTranslator.swift */; };
 		E1000001000000000000B003 /* CoverFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B003 /* CoverFinder.swift */; };
 		E384C913F8C88AB732ED752D /* MusicEntities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */; };
+		E5E285F07AE8AC12F1E7E5A0 /* WatchCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48463C5BC4D5C5785245C8BE /* WatchCatalog.swift */; };
 		EAD18EB0F47BC2E6F77CB899 /* MacServerPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2840376375D75F5F54A64277 /* MacServerPicker.swift */; };
 		EBA1389D873C96B20ECBC2AD /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
 		EBEB7A689B00639BFDCF12E6 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000050 /* DownloadManager.swift */; };
@@ -295,6 +297,7 @@
 		41DF74C93207494A7E1F1347 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		437B7190B573C0B80DC47A2B /* AuraWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraWatchApp.swift; sourceTree = "<group>"; };
 		46EB97B0FBEAA4C3113B875E /* AuraWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AuraWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		48463C5BC4D5C5785245C8BE /* WatchCatalog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchCatalog.swift; sourceTree = "<group>"; };
 		485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerSetupView.swift; sourceTree = "<group>"; };
 		48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacEqualizerView.swift; sourceTree = "<group>"; };
 		4BE00E8954AF9B98264A367E /* MacQueueView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacQueueView.swift; sourceTree = "<group>"; };
@@ -338,6 +341,7 @@
 		D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacOptionsMenu.swift; sourceTree = "<group>"; };
 		D7A1E179BB18A52978EC7635 /* SongLinkService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongLinkService.swift; sourceTree = "<group>"; };
 		DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraMacApp.swift; sourceTree = "<group>"; };
+		DEA1BF8EC267E322EA33E1E4 /* LibraryPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibraryPage.swift; sourceTree = "<group>"; };
 		E10000020000000000000001 /* AuraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuraApp.swift; sourceTree = "<group>"; };
 		E10000020000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E10000020000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -506,6 +510,7 @@
 				32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */,
 				84C2DD223260297B0A1DE6EA /* Backdrop.swift */,
 				35045E0AAD1E88D70B5D26E9 /* WatchChrome.swift */,
+				DEA1BF8EC267E322EA33E1E4 /* LibraryPage.swift */,
 			);
 			name = AuraWatch;
 			path = AuraWatch;
@@ -685,6 +690,7 @@
 				E1000002000000000000A005 /* LyricsVersion.swift */,
 				191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */,
 				1F4729DBCE407138E2BDA845 /* WatchLink.swift */,
+				48463C5BC4D5C5785245C8BE /* WatchCatalog.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1266,6 +1272,7 @@
 				06665240EFF5CFD599AC09F2 /* WatchLink.swift in Sources */,
 				9A636196503516598302BB10 /* UnfollowedArtistsView.swift in Sources */,
 				08E4C34DF24A10EBBA4861E3 /* DayGlow.swift in Sources */,
+				E5E285F07AE8AC12F1E7E5A0 /* WatchCatalog.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1296,6 +1303,7 @@
 				FB688442D8147551C7C26966 /* Backdrop.swift in Sources */,
 				21863410D59DC530364F711A /* WatchChrome.swift in Sources */,
 				5763435ECEB5A36E2B551C1F /* DayGlow.swift in Sources */,
+				DF00AD8E1B03C8CD52B09E3B /* LibraryPage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

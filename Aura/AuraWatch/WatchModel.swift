@@ -21,6 +21,20 @@ final class WatchModel: NSObject {
     private(set) var songDirection = 1
     private var pendingDirection = 1
 
+    /// The pages pushed over Now Playing. Emptied when something starts playing from the
+    /// library, so the song is what the watch comes back to.
+    var path: [WatchRoute] = []
+
+    // The library, as last heard from the phone: kept so a page opened again shows at once
+    // while it's asked again.
+    private(set) var shelf: WatchShelf?
+    private(set) var listings: [WatchItem: WatchListing] = [:]
+    private(set) var searches: [String: WatchSearchResults] = [:]
+    private(set) var covers: [String: UIImage] = [:]
+    private var coversAsked: Set<String> = []
+    private var coverBatch: [String] = []
+    private var isCoverBatchScheduled = false
+
     var accent: Color {
         let rgb = state?.accent ?? [1, 1, 1]
         guard rgb.count == 3 else { return .white }
@@ -39,6 +53,87 @@ final class WatchModel: NSObject {
         guard let data = try? JSONEncoder().encode(command) else { return }
         WCSession.default.sendMessage([WatchLinkKey.command: data], replyHandler: nil) { error in
             log.error("Command not sent: \(error.localizedDescription)")
+        }
+    }
+
+    /// Plays from the library and goes back to Now Playing to watch it start.
+    func play(_ item: WatchItem, index: Int = 0, shuffled: Bool = false) {
+        send(.playItem(item, index: index, shuffled: shuffled))
+        path = []
+    }
+
+    /// False when the phone couldn't be reached or didn't answer.
+    @discardableResult
+    func loadShelf() async -> Bool {
+        guard let shelf: WatchShelf = await ask(.shelf) else { return false }
+        self.shelf = shelf
+        return true
+    }
+
+    @discardableResult
+    func open(_ item: WatchItem) async -> Bool {
+        guard let listing: WatchListing = await ask(.open(item)) else { return false }
+        listings[item] = listing
+        return true
+    }
+
+    @discardableResult
+    func search(_ query: String) async -> Bool {
+        guard let results: WatchSearchResults = await ask(.search(query)) else { return false }
+        searches[query] = results
+        return true
+    }
+
+    /// Asks for a cover once, gathered with the others asked for in the same moment.
+    func wantCover(_ id: String) {
+        guard covers[id] == nil, coversAsked.insert(id).inserted else { return }
+        coverBatch.append(id)
+        guard !isCoverBatchScheduled else { return }
+        isCoverBatchScheduled = true
+        Task {
+            try? await Task.sleep(for: .milliseconds(60))
+            isCoverBatchScheduled = false
+            while !coverBatch.isEmpty {
+                let ids = Array(coverBatch.prefix(Self.coversPerMessage))
+                coverBatch.removeFirst(ids.count)
+                await fetchCovers(ids)
+            }
+        }
+    }
+
+    private static let coversPerMessage = 6
+
+    private func fetchCovers(_ ids: [String]) async {
+        guard let data = try? JSONEncoder().encode(WatchRequest.covers(ids)),
+              WCSession.default.activationState == .activated, WCSession.default.isReachable else {
+            // Asked again when the page next shows them.
+            coversAsked.subtract(ids)
+            return
+        }
+        let found: [String: Data] = await withCheckedContinuation { continuation in
+            WCSession.default.sendMessage([WatchLinkKey.request: data], replyHandler: { reply in
+                continuation.resume(returning: reply[WatchLinkKey.covers] as? [String: Data] ?? [:])
+            }, errorHandler: { error in
+                log.error("Covers not loaded: \(error.localizedDescription)")
+                continuation.resume(returning: [:])
+            })
+        }
+        for (id, data) in found { covers[id] = UIImage(data: data) }
+        coversAsked.subtract(ids.filter { found[$0] == nil })
+    }
+
+    private func ask<Answer: Decodable & Sendable>(_ request: WatchRequest) async -> Answer? {
+        guard WCSession.default.activationState == .activated, WCSession.default.isReachable,
+              let data = try? JSONEncoder().encode(request) else { return nil }
+        return await withCheckedContinuation { continuation in
+            WCSession.default.sendMessage([WatchLinkKey.request: data], replyHandler: { reply in
+                let answer = (reply[WatchLinkKey.reply] as? Data)
+                    .flatMap { try? JSONDecoder().decode(Answer.self, from: $0) }
+                continuation.resume(returning: answer)
+            }, errorHandler: { error in
+                log.error("No answer from the phone: \(error.localizedDescription)")
+                continuation.resume(returning: nil)
+            })
         }
     }
 

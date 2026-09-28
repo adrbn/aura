@@ -21,7 +21,7 @@ cp Aura/AuraWatch/WatchProtocol.swift Aura/AuraWatch/Backdrop.swift Aura/Aura/Co
 
 # The pages, with what only a watch has taken out and the watch's type sizes put in.
 python3 - "$WORK" Aura/AuraWatch/NowPlayingPage.swift Aura/AuraWatch/LyricsPage.swift \
-  Aura/AuraWatch/UpNextPage.swift <<'PY'
+  Aura/AuraWatch/UpNextPage.swift Aura/AuraWatch/LibraryPage.swift <<'PY'
 import re, sys, os
 work, *pages = sys.argv[1:]
 sizes = {"headline": "17, .semibold", "footnote": "14", "title3": "20", "title2": "22"}
@@ -33,6 +33,7 @@ for page in pages:
     # Liquid Glass renders only on screen; the shims draw a likeness of it.
     s = re.sub(r"\.glassEffect\([^)]*\), in: \.circle\)", ".harnessGlass(in: Circle())", s)
     s = s.replace(".buttonStyle(.glassProminent)", ".buttonStyle(HarnessProminent())")
+    s = s.replace(".buttonStyle(.glass)", ".buttonStyle(HarnessGlassButton())")
     open(os.path.join(work, os.path.basename(page)), "w").write(s)
 PY
 

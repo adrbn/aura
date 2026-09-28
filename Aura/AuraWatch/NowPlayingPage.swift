@@ -8,11 +8,11 @@ import SwiftUI
 /// same screen, as they are on the phone: the cover draws into the top corner, its blurred
 /// field staying behind, and the words rise where the controls stood — the Crown walking the
 /// lines now, the play button waiting at the foot. What comes next is pushed from the other
-/// corner, and a double tap plays and pauses whichever mode is showing.
+/// bottom corner, the library from the top one, and a double tap plays and pauses whichever
+/// mode is showing.
 struct NowPlayingPage: View {
     @Environment(WatchModel.self) private var model
     @State private var showsLyrics: Bool
-    @State private var showsQueue = false
     @Namespace private var morph
 
     /// Settles as the phone's cover does when it moves: quick, without a bounce.
@@ -31,7 +31,14 @@ struct NowPlayingPage: View {
             }
         }
         .screenBackdrop()
-        .navigationDestination(isPresented: $showsQueue) { UpNextPage() }
+        // Beside the clock, but not over the lyrics: their small cover has that corner.
+        .libraryCorner(!isShowingLyrics) { model.path.append(.library) }
+        .navigationDestination(for: WatchRoute.self) { $0.page }
+    }
+
+    private var isShowingLyrics: Bool {
+        guard let state = model.state, state.songId != nil else { return false }
+        return showsLyrics && !state.lyrics.isEmpty
     }
 
     private func player(_ state: WatchNowPlaying) -> some View {
@@ -50,7 +57,7 @@ struct NowPlayingPage: View {
             if lyrics {
                 LyricsMode(state: state)
                     .padding(.top, 42)
-                    .padding(.bottom, 46)
+                    .padding(.bottom, Foot.clearance)
                     .transition(.materialize)
             } else {
                 Controls(state: state, morph: morph)
@@ -75,10 +82,10 @@ struct NowPlayingPage: View {
                     .matchedGeometryEffect(id: "play", in: morph)
             }
             Spacer(minLength: 0)
-            CornerButton(symbol: "list.bullet", label: "Up Next") { showsQueue = true }
+            CornerButton(symbol: "list.bullet", label: "Up Next") { model.path.append(.upNext) }
         }
-        .padding(.horizontal, 12)
-        .padding(.bottom, 8)
+        .padding(.horizontal, Foot.inset)
+        .padding(.bottom, Foot.inset)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
     }
 
@@ -139,37 +146,41 @@ private struct Hero: View {
     }
 }
 
-/// Three groups down the display, as the watch's own Now Playing sets them: what's playing at
-/// the top, under the clock; the transport in the middle of what's left, with room above and
-/// below to be the thing the eye finds; the corner buttons at the foot.
+/// The display's foot: the corner buttons set in by the same amount from both edges, far
+/// enough that the corner's curve leaves them room, and what's above kept clear of them.
+private enum Foot {
+    static let inset: CGFloat = 16
+    static let button: CGFloat = 32
+    static let clearance: CGFloat = inset + button + 6
+}
+
+/// What's playing and the transport, one group, in the middle of the space between the clock
+/// and the corner buttons — as the watch's own Now Playing sets them — the title close over
+/// the controls it names, the group with even room above and below.
 private struct Controls: View {
     let state: WatchNowPlaying
     let morph: Namespace.ID
     @Environment(WatchModel.self) private var model
     @Environment(\.isLuminanceReduced) private var isDimmed
 
-    /// Below the clock's band.
-    static let top: CGFloat = 44
-    /// Above the corner buttons: 8 below them, 32 for them, 4 clear.
-    static let foot: CGFloat = 44
+    /// The clock's band.
+    static let top: CGFloat = 38
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             HStack(spacing: 4) {
                 SongTitle(state: state, direction: model.songDirection)
                 FavoriteButton(state: state)
             }
             .padding(.leading, 16)
             .padding(.trailing, 8)
-            Spacer(minLength: 8)
             Transport(state: state, morph: morph)
                 .padding(.horizontal, 16)
                 .opacity(isDimmed ? 0.5 : 1)
-            Spacer(minLength: 8)
         }
-        .padding(.top, Self.top)
-        .padding(.bottom, Self.foot)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, Self.top)
+        .padding(.bottom, Foot.inset + Foot.button)
     }
 }
 

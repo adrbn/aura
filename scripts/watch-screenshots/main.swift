@@ -23,6 +23,55 @@ func cover() -> NSImage {
     return renderer.nsImage ?? NSImage()
 }
 
+/// A made-up cover: two colours and a sun, and initials.
+@MainActor
+func sampleCover(_ top: Color, _ bottom: Color, _ sun: Color, _ mark: String) -> NSImage {
+    let art = ZStack {
+        LinearGradient(colors: [top, bottom], startPoint: .topLeading, endPoint: .bottomTrailing)
+        Circle().fill(sun.opacity(0.85)).frame(width: 60).offset(x: 20, y: -18)
+        Text(mark).font(.system(size: 34, weight: .black)).foregroundStyle(.white.opacity(0.9))
+            .offset(x: -22, y: 30)
+    }
+    .frame(width: 120, height: 120)
+    let renderer = ImageRenderer(content: art)
+    renderer.scale = 1
+    return renderer.nsImage ?? NSImage()
+}
+
+func item(_ kind: WatchItem.Kind, _ id: String, _ title: String, _ subtitle: String, _ cover: String? = nil) -> WatchItem {
+    WatchItem(kind: kind, id: id, title: title, subtitle: subtitle, coverArt: cover)
+}
+
+let lateNight = item(.mix, "m2", "Late Night", "Slow songs for after midnight", "c2")
+
+let shelf = WatchShelf(
+    mixes: [
+        item(.mix, "radar", "Radar", "New releases from your artists", "c1"),
+        lateNight,
+        item(.mix, "m3", "Electronic Mix", "Neon Harbour, Mira Vale and more", "c3"),
+        item(.mix, "m4", "Focus", "Instrumental, steady, quiet", "c4"),
+    ],
+    playlists: [
+        item(.favorites, "favorites", "Favorites", "Your starred songs"),
+        item(.playlist, "p1", "Road Trip", "42 songs", "c5"),
+        item(.playlist, "p2", "Sunday Morning", "18 songs", "c6"),
+    ])
+
+let lateNightSongs = WatchListing(songs: [
+    item(.song, "s1", "Midnight Signals", "Neon Harbour", "c"),
+    item(.song, "s2", "Low Tide (Extended Mix)", "Mira Vale", "c2"),
+    item(.song, "s3", "Coastline", "The Quiet Hours", "c4"),
+    item(.song, "s4", "Glasshouse", "Ada Lune", "c6"),
+])
+
+let neon = WatchSearchResults(
+    songs: [
+        item(.song, "s1", "Midnight Signals", "Neon Harbour", "c"),
+        item(.song, "s5", "Neon Rain", "Ada Lune", "c3"),
+    ],
+    albums: [item(.album, "a1", "Harbour Lights", "Neon Harbour", "c5")],
+    artists: [item(.artist, "r1", "Neon Harbour", "Artist", "c")])
+
 let lyrics: [WatchNowPlaying.Line] = [
     .init(time: 12, text: "Streetlights hum a quiet tune"),
     .init(time: 17, text: "Every window holds a moon"),
@@ -59,6 +108,8 @@ struct WatchScreen<Page: View>: View {
     var clock = Clock.trailing
     var pushed = false
     var dimmed = false
+    /// The library button in the top leading corner, as Now Playing shows it.
+    var library = false
     @ViewBuilder let content: Page
 
     var body: some View {
@@ -83,6 +134,17 @@ struct WatchScreen<Page: View>: View {
                         .opacity(dimmed ? 0.5 : 1)
                         .padding(.trailing, 14)
                         .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.top, 9)
+                }
+                if library {
+                    Image(systemName: "music.note.square.stack.fill")
+                        .font(compact(14, .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .harnessGlass(in: Circle())
+                        .opacity(dimmed ? 0.5 : 1)
+                        .padding(.leading, 14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 9)
                 }
                 if pushed {
@@ -118,16 +180,33 @@ MainActor.assumeIsolated {
     pausedState.isPlaying = false
     let paused = WatchModel(state: pausedState, artwork: art, tone: tone)
     let idle = WatchModel(state: WatchNowPlaying(accent: playing.accent), artwork: nil)
+    live.shelf = shelf
+    live.listings[lateNight] = lateNightSongs
+    live.searches["neon"] = neon
+    live.covers = [
+        "c": art,
+        "c1": sampleCover(.orange, .red, .yellow, "R"),
+        "c2": sampleCover(Color(red: 0.1, green: 0.1, blue: 0.35), .purple, .white, "LN"),
+        "c3": sampleCover(.teal, .blue, .pink, "E"),
+        "c4": sampleCover(.gray, .black, .mint, "F"),
+        "c5": sampleCover(.yellow, .orange, .white, "RT"),
+        "c6": sampleCover(.pink, .indigo, .orange, "SM"),
+    ]
     let sheet = VStack(alignment: .leading, spacing: 28) {
         HStack(alignment: .top, spacing: 28) {
-            WatchScreen(label: "Now Playing", model: live, clock: .center) { NowPlayingPage() }
+            WatchScreen(label: "Now Playing", model: live, clock: .center, library: true) { NowPlayingPage() }
             WatchScreen(label: "Lyrics (karaoke)", model: live) { NowPlayingPage(showsLyrics: true) }
             WatchScreen(label: "Up Next (pushed)", model: live, pushed: true) { UpNextPage() }
         }
         HStack(alignment: .top, spacing: 28) {
-            WatchScreen(label: "Paused", model: paused, clock: .center) { NowPlayingPage() }
-            WatchScreen(label: "Always On", model: live, clock: .center, dimmed: true) { NowPlayingPage() }
-            WatchScreen(label: "Nothing playing", model: idle) { NowPlayingPage() }
+            WatchScreen(label: "Paused", model: paused, clock: .center, library: true) { NowPlayingPage() }
+            WatchScreen(label: "Always On", model: live, clock: .center, dimmed: true, library: true) { NowPlayingPage() }
+            WatchScreen(label: "Nothing playing", model: idle, library: true) { NowPlayingPage() }
+        }
+        HStack(alignment: .top, spacing: 28) {
+            WatchScreen(label: "Library (pushed)", model: live, pushed: true) { LibraryPage() }
+            WatchScreen(label: "Search", model: live, pushed: true) { SearchPage(query: "neon") }
+            WatchScreen(label: "A mix", model: live, pushed: true) { ItemPage(item: lateNight) }
         }
     }
     .padding(32)

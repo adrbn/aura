@@ -52,12 +52,23 @@ final class WatchModel {
     var isReachable = true
     var tone = WatchTone()
     var songDirection = 1
+    var path: [WatchRoute] = []
+    var shelf: WatchShelf?
+    var listings: [WatchItem: WatchListing] = [:]
+    var searches: [String: WatchSearchResults] = [:]
+    var covers: [String: NSImage] = [:]
 
     init(state: WatchNowPlaying?, artwork: NSImage?, tone: WatchTone = WatchTone()) {
         self.state = state
         self.artwork = artwork
         self.tone = tone
     }
+
+    func play(_ item: WatchItem, index: Int = 0, shuffled: Bool = false) {}
+    func loadShelf() async -> Bool { true }
+    func open(_ item: WatchItem) async -> Bool { true }
+    func search(_ query: String) async -> Bool { true }
+    func wantCover(_ id: String) {}
 
     var accent: Color {
         let rgb = state?.accent ?? [1, 1, 1]
@@ -91,6 +102,9 @@ extension View {
     /// A toolbar item, drawn by the screen frame in main.swift beside the clock.
     func volumeCorner(_ shown: Bool, tint: Color) -> some View { self }
 
+    /// Also a toolbar item, drawn by the screen frame.
+    func libraryCorner(_ shown: Bool, open: @escaping () -> Void) -> some View { self }
+
     func primaryAction() -> some View { self }
 
     func lyricCrown(_ line: Binding<Double>, lines: Int,
@@ -105,6 +119,54 @@ struct HarnessProminent: ButtonStyle {
             .foregroundStyle(.white)
             .padding(.vertical, 11)
             .background(Capsule().fill(Color(red: 0.98, green: 0.26, blue: 0.4)))
+    }
+}
+
+/// A glass button: a capsule of pale glass.
+struct HarnessGlassButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.white)
+            .padding(.vertical, 11)
+            .padding(.horizontal, 12)
+            .harnessGlass(in: Capsule())
+    }
+}
+
+/// The search field as the watch draws it, empty: its prompt in a glass capsule.
+struct SearchField: View {
+    let submit: (String) -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(compact(14, .semibold))
+                .foregroundStyle(.white.opacity(0.6))
+            Text("Search")
+                .font(compact(15))
+                .foregroundStyle(.white.opacity(0.45))
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 40)
+        .harnessGlass(in: Capsule())
+    }
+}
+
+/// A lazy stack draws nothing off screen; the Mac draws it whole.
+struct LazyVStack<Content: View>: View {
+    let alignment: HorizontalAlignment
+    let spacing: CGFloat?
+    let content: Content
+
+    init(alignment: HorizontalAlignment = .center, spacing: CGFloat? = nil, @ViewBuilder content: () -> Content) {
+        self.alignment = alignment
+        self.spacing = spacing
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: alignment, spacing: spacing) { content }
     }
 }
 

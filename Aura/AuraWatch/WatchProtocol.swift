@@ -13,6 +13,55 @@ enum WatchLinkKey {
     static let command = "command"
     /// Sent by the watch when it opens: the reply is the current state.
     static let hello = "hello"
+    /// A `WatchRequest` from the watch's library; the answer comes back under `reply`, or
+    /// for covers under `covers`, as small JPEGs by cover id.
+    static let request = "request"
+    static let reply = "reply"
+    static let covers = "covers"
+}
+
+/// Something in the library the watch can list, open or play: a mix, a playlist, an album,
+/// an artist or a song, named as the phone names it.
+struct WatchItem: Codable, Hashable, Identifiable, Sendable {
+    enum Kind: String, Codable, Sendable {
+        case mix, playlist, favorites, album, artist, song
+    }
+
+    let kind: Kind
+    let id: String
+    let title: String
+    let subtitle: String
+    /// The cover's id on the server, or an address for a release not on it yet.
+    let coverArt: String?
+}
+
+/// The library's front page: what the phone's Home makes for you, and the playlists.
+struct WatchShelf: Codable, Equatable, Sendable {
+    var mixes: [WatchItem] = []
+    var playlists: [WatchItem] = []
+}
+
+/// What's in a mix, a playlist, an album or an artist: its songs, and an artist's albums.
+struct WatchListing: Codable, Equatable, Sendable {
+    var songs: [WatchItem] = []
+    var albums: [WatchItem] = []
+}
+
+struct WatchSearchResults: Codable, Equatable, Sendable {
+    var songs: [WatchItem] = []
+    var albums: [WatchItem] = []
+    var artists: [WatchItem] = []
+
+    var isEmpty: Bool { songs.isEmpty && albums.isEmpty && artists.isEmpty }
+}
+
+/// What the watch's library asks of the phone, answered in the reply.
+enum WatchRequest: Codable, Sendable {
+    case shelf
+    case open(WatchItem)
+    case search(String)
+    /// At most a handful at a time, so the reply stays well under WatchConnectivity's limit.
+    case covers([String])
 }
 
 /// The player as the watch shows it.
@@ -92,4 +141,7 @@ enum WatchCommand: Codable, Equatable {
     case playSomething
     case seek(TimeInterval)
     case play(WatchNowPlaying.Upcoming)
+    /// A mix, a playlist, an album or an artist's top songs, from the song at `index`, or
+    /// shuffled; a song on its own, as the phone plays a search result.
+    case playItem(WatchItem, index: Int, shuffled: Bool)
 }
