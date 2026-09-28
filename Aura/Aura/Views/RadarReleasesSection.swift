@@ -16,6 +16,14 @@ struct RadarReleaseRows: View {
                 .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
                                           bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 16))
                 .listRowBackground(Color.clear)
+                // A deliberate tap on the X, not a full swipe: there's no list to bring it back from.
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        withAnimation { RadarService.shared.hide(release) }
+                    } label: {
+                        Label("Hide", systemImage: "xmark")
+                    }
+                }
         }
     }
 }

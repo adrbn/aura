@@ -55,6 +55,10 @@ final class RadarService {
     static let shared = RadarService()
 
     private(set) var radar: Radar?
+    /// Releases swiped away. They stay off the radar whatever the next pass finds — only
+    /// that release: the artist is still followed, and their next one still shows.
+    private(set) var hidden = Set(UserDefaults.standard.stringArray(forKey: hiddenKey) ?? [])
+    private static let hiddenKey = "radar_hidden_v1"
     /// Owned here rather than by the screen that asked: a first run takes the best part of a
     /// minute, and leaving Home must not throw it away.
     private var refreshTask: Task<Void, Never>?
@@ -321,7 +325,8 @@ final class RadarService {
         // listener already has under another date: nothing new, nothing missing.
         let heard = Set(matched.filter(\.value.isEmpty).keys)
         let inLibrary = matched.filter { !$0.value.isEmpty }
-        let built = Radar(serverId: server.id, releases: releases.filter { !heard.contains($0.id) },
+        let built = Radar(serverId: server.id,
+                          releases: releases.filter { !heard.contains($0.id) && !hidden.contains($0.id) },
                           fetched: fetched, inLibrary: inLibrary, matched: Date(), lacking: lacking)
         RadarStore.save(built)
         AppLogger.shared.log("📡 Radar: \(built.releases.count) releases, \(inLibrary.count) on the server (\(lacking.count) in part), \(heard.count) already heard")
@@ -383,6 +388,17 @@ final class RadarService {
         return credited
     }
 
+    func hide(_ release: RadarRelease) {
+        hidden.insert(release.id)
+        UserDefaults.standard.set(Array(hidden), forKey: Self.hiddenKey)
+        guard let radar else { return }
+        let kept = Radar(serverId: radar.serverId, releases: radar.releases.filter { $0.id != release.id },
+                         fetched: radar.fetched, inLibrary: radar.inLibrary, matched: radar.matched,
+                         lacking: radar.lacking, whole: radar.whole)
+        RadarStore.save(kept)
+        self.radar = kept
+    }
+
     /// Between passes, the covers still missing — so a release listed before it had one
     /// shows it as soon as Deezer does, not at the next quarter-hour pass.
     private func fillMissingCovers() async {
@@ -392,7 +408,8 @@ final class RadarService {
         let releases = await Self.withCovers(radar.releases)
         guard releases != radar.releases, self.radar?.serverId == radar.serverId,
               self.radar?.matched == radar.matched else { return }
-        let covered = Radar(serverId: radar.serverId, releases: releases, fetched: radar.fetched,
+        let covered = Radar(serverId: radar.serverId, releases: releases.filter { !hidden.contains($0.id) },
+                            fetched: radar.fetched,
                             inLibrary: radar.inLibrary, matched: radar.matched, lacking: radar.lacking,
                             whole: radar.whole)
         RadarStore.save(covered)
