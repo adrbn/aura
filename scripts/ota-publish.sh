@@ -13,13 +13,26 @@
 #   AURA_OTA_SSH   ssh target for that machine (e.g. root@server.example.ts.net)
 #   AURA_OTA_DIR   directory served on that machine (default /opt/aura-ota)
 #   DEVELOPER_DIR  optional — which Xcode builds it
+#
+# --here serves the build from this Mac instead, for as long as the script runs (Ctrl-C
+# once installed): nothing is written to the server or kept in Tailscale's settings. The
+# Mac has to stay awake until the phone has downloaded it.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 if [ -f scripts/ota.env ]; then set -a; . scripts/ota.env; set +a; fi
-HOST="${AURA_OTA_HOST:?set AURA_OTA_HOST in scripts/ota.env}"
-TARGET="${AURA_OTA_SSH:?set AURA_OTA_SSH in scripts/ota.env}"
-DIR="${AURA_OTA_DIR:-/opt/aura-ota}"
+HERE=false
+[ "${1:-}" = "--here" ] && HERE=true
+if $HERE; then
+  TS=$(command -v tailscale || echo /Applications/Tailscale.app/Contents/MacOS/Tailscale)
+  PORT="${AURA_OTA_PORT:-8446}"
+  HOST="$("$TS" status --json | python3 -c \
+    'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))'):$PORT"
+else
+  HOST="${AURA_OTA_HOST:?set AURA_OTA_HOST in scripts/ota.env}"
+  TARGET="${AURA_OTA_SSH:?set AURA_OTA_SSH in scripts/ota.env}"
+  DIR="${AURA_OTA_DIR:-/opt/aura-ota}"
+fi
 BASE="https://$HOST/aura"
 
 WORK="${TMPDIR:-/tmp}/aura-ota"
@@ -92,6 +105,28 @@ cat > "$STAGE/index.html" <<HTML
 <p>Then open Aura once, so Siri and Shortcuts find it again.</p>
 </html>
 HTML
+
+if $HERE; then
+  # The App Store build of Tailscale can't serve a folder, only proxy a port, so a
+  # local server holds the files. Explicit types: iOS reads the manifest as XML.
+  mkdir -p "$WORK/www" && ln -s "$STAGE" "$WORK/www/aura"
+  python3 - "$WORK/www" <<'PY' &
+import functools, http.server, sys
+class Handler(http.server.SimpleHTTPRequestHandler):
+    extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map,
+                      ".plist": "text/xml", ".ipa": "application/octet-stream"}
+http.server.ThreadingHTTPServer(("127.0.0.1", 8765),
+    functools.partial(Handler, directory=sys.argv[1])).serve_forever()
+PY
+  SERVER=$!
+  trap 'kill $SERVER 2>/dev/null' EXIT
+  echo
+  echo "Aura $VERSION (build $BUILD, $COMMIT) — $BASE/"
+  echo "On the phone, Tailscale on, any network: open that link, tap Install, then open"
+  echo "Aura once. Served from this Mac until Ctrl-C; keep it awake until then."
+  "$TS" serve --https="$PORT" http://127.0.0.1:8765
+  exit 0
+fi
 
 echo "→ upload to $TARGET:$DIR"
 ssh -o ConnectTimeout=20 "$TARGET" "mkdir -p '$DIR'"

@@ -10,6 +10,18 @@ no shared Wi-Fi and no Xcode in front of it: one command here, one tap there.
 It prints a URL. Open it on the phone, with Tailscale on, tap **Install**, then
 open Aura once.
 
+### From this Mac instead
+
+```bash
+./scripts/ota-publish.sh --here
+```
+
+Same build and page, served from this Mac for as long as the script runs, with
+nothing written to the server or kept in Tailscale's settings. The Mac's App
+Store build of Tailscale can't serve a folder, so a local server holds the
+files and Tailscale proxies a port to it (8446, or `AURA_OTA_PORT`). Keep the
+Mac awake until the phone has downloaded the app, then Ctrl-C.
+
 ## Why not devicectl
 
 `devicectl` only talks to a device CoreDevice found itself, over Bonjour, on

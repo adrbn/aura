@@ -116,11 +116,12 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - A song autoplay adds after a one-song album no longer says it's playing from that album: where autoplay begins is now kept with the queue across relaunches, and a song that isn't on the album named above it shows as Autoplay
 - Made For You covers no longer fall back to flat colour when many covers load at once: artist photos have their own pace for Deezer's catalogue, apart from the Radar's, and a cover that couldn't get its photos tries again
 - Now Playing shows every artist's name in full: a line of several names scrolls like the title when it doesn't fit, instead of cutting each name to a few letters and an ellipsis. The artist beside the lyrics scrolls too
+- Song rows on album, playlist, mix, radio, Radar release and offline pages are back to their full height. The line closing each list had lowered every row's minimum height to sit close under the last song, squashing the songs with it; it now keeps its place on its own
 - A long title in the mini player starts on its first word, then scrolls. It no longer keeps moving behind Now Playing, under open lyrics or while Aura is in the background, where it used to be found halfway through with its beginning out of sight
 
 ### Developer
 - `scripts/set-build-number.sh` stamps the build number from the commit count before an archive
-- `scripts/ota-publish.sh` publishes a development build on the tailnet, so the iPhone installs it from anywhere, cellular included, with one tap (docs/OTA.md)
+- `scripts/ota-publish.sh` publishes a development build on the tailnet, so the iPhone installs it from anywhere, cellular included, with one tap (docs/OTA.md); `--here` serves it from this Mac instead, while the script runs
 
 ### Fixed — Appearance
 - The Add to Playlist sheet lists on the page's own dark background, like its header, instead of the system grey
