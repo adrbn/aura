@@ -15,6 +15,11 @@ final class WatchModel: NSObject {
     private(set) var state: WatchNowPlaying?
     private(set) var artwork: UIImage?
     private(set) var isReachable = false
+    private(set) var tone = WatchTone()
+    /// Which way the last song change went: 1 forward, -1 back. A new song slides in from
+    /// that side, as it does on the phone.
+    private(set) var songDirection = 1
+    private var pendingDirection = 1
 
     var accent: Color {
         let rgb = state?.accent ?? [1, 1, 1]
@@ -29,6 +34,7 @@ final class WatchModel: NSObject {
     }
 
     func send(_ command: WatchCommand) {
+        if case .previous = command { pendingDirection = -1 }
         anticipate(command)
         guard let data = try? JSONEncoder().encode(command) else { return }
         WCSession.default.sendMessage([WatchLinkKey.command: data], replyHandler: nil) { error in
@@ -68,10 +74,21 @@ final class WatchModel: NSObject {
     fileprivate func apply(_ message: [String: Any]) {
         if let data = message[WatchLinkKey.state] as? Data,
            let state = try? JSONDecoder().decode(WatchNowPlaying.self, from: data) {
-            if state.artworkId != self.state?.artworkId { artwork = nil }
+            if state.artworkId != self.state?.artworkId {
+                artwork = nil
+                tone = WatchTone()
+            }
+            if state.songId != self.state?.songId {
+                songDirection = pendingDirection
+                pendingDirection = 1
+            }
             self.state = state
         }
         if let data = message[WatchLinkKey.artwork] as? Data { artwork = UIImage(data: data) }
+        if let data = message[WatchLinkKey.tone] as? Data,
+           let tone = try? JSONDecoder().decode(WatchTone.self, from: data) {
+            self.tone = tone
+        }
     }
 
     fileprivate func setReachable(_ reachable: Bool) {

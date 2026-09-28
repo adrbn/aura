@@ -1505,7 +1505,7 @@ struct NowPlayingView: View {
     /// white controls. The veil darkens it until its brightness is at most
     /// `BackdropTone.brightest` — the cover's own hue kept, only deeper, as Apple Music does.
     /// A very dark cover instead gets its most vibrant colour blended in.
-    private nonisolated static func analyseBackdrop(_ image: UIImage) -> BackdropTone {
+    nonisolated static func analyseBackdrop(_ image: UIImage) -> BackdropTone {
         let (brightness, vibrant) = extractBrightnessAndVibrant(from: image)
         guard let brightness else { return .plain }
         let veil = brightness > 0 ? max(BackdropTone.plain.veil, 1 - BackdropTone.brightest / brightness) : BackdropTone.plain.veil

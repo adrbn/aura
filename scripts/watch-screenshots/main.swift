@@ -6,6 +6,7 @@ import SwiftUI
 
 let screen = CGSize(width: 208, height: 248)
 let output = CommandLine.arguments.dropFirst().first ?? "aura-watch.png"
+let root = CommandLine.arguments.dropFirst(2).first ?? "."
 
 @MainActor
 func cover() -> NSImage {
@@ -44,39 +45,59 @@ let playing = WatchNowPlaying(
     songId: "0", title: "Midnight Signals", artist: "Neon Harbour", artworkId: "c",
     isPlaying: true, position: 23, positionDate: Date(), duration: 214,
     isFavorite: true, canFavorite: true, lyrics: lyrics, upNext: upNext,
-    accent: [0.98, 0.26, 0.4])
+    accent: [0.98, 0.26, 0.4], karaoke: true)
 
+/// Where the clock sits: to the right, or in the middle when the trailing corner holds a button.
+enum Clock { case trailing, center }
+
+/// One watch face-on, drawn as the system frames an app: the navigation container's backdrop
+/// under everything, the page, the clock, and — on a pushed page — the back button.
 @MainActor
 struct WatchScreen<Page: View>: View {
     let label: String
-    let page: Int
     let model: WatchModel
+    var clock = Clock.trailing
+    var pushed = false
+    var dimmed = false
     @ViewBuilder let content: Page
 
     var body: some View {
         VStack(spacing: 14) {
             ZStack(alignment: .top) {
                 Color.black
+                Backdrop()
                 content
-                    .safeAreaPadding(.top, 30)
-                    .safeAreaPadding(.bottom, 14)
-                    .environment(model)
+                    // The clock's band; the foot has none, content runs to the edge.
+                    .safeAreaPadding(.top, pushed ? 44 : 40)
                     .frame(width: screen.width, height: screen.height)
-                HStack {
-                    Spacer()
-                    Text("10:09").font(compact(16, .semibold)).foregroundStyle(.white)
+                Text("10:09")
+                    .font(compact(16, .semibold))
+                    .foregroundStyle(.white.opacity(dimmed ? 0.7 : 1))
+                    .padding(.horizontal, 24)
+                    .frame(maxWidth: .infinity, alignment: clock == .center ? .center : .trailing)
+                    .padding(.top, 15)
+                if clock == .center {
+                    // The volume, a top trailing toolbar item, beside the clock.
+                    CompanionVolume(tint: model.accent, isFocused: true)
+                        .frame(width: 30, height: 30)
+                        .opacity(dimmed ? 0.5 : 1)
+                        .padding(.trailing, 14)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.top, 9)
                 }
-                .padding(.top, 8)
-                .padding(.trailing, 22)
-                HStack(spacing: 5) {
-                    ForEach(0..<3, id: \.self) { dot in
-                        Circle().fill(.white.opacity(dot == page ? 1 : 0.3)).frame(width: 6, height: 6)
-                    }
+                if pushed {
+                    Image(systemName: "chevron.left")
+                        .font(compact(15, .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .harnessGlass(in: Circle())
+                        .padding(.leading, 14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 9)
                 }
-                .frame(maxHeight: .infinity, alignment: .bottom)
-                .padding(.bottom, 6)
-                .opacity(page < 0 ? 0 : 1)
             }
+            .environment(model)
+            .environment(\.isLuminanceReduced, dimmed)
             .frame(width: screen.width, height: screen.height)
             .clipShape(RoundedRectangle(cornerRadius: 42, style: .continuous))
             .padding(9)
@@ -88,16 +109,27 @@ struct WatchScreen<Page: View>: View {
 }
 
 MainActor.assumeIsolated {
+    registerVavin(root: root)
     let art = cover()
-    let live = WatchModel(state: playing, artwork: art)
+    // What the phone measures for this cover: a mid-dark one, lightly veiled.
+    let tone = WatchTone(veil: 0.3, vibrant: nil)
+    let live = WatchModel(state: playing, artwork: art, tone: tone)
+    var pausedState = playing
+    pausedState.isPlaying = false
+    let paused = WatchModel(state: pausedState, artwork: art, tone: tone)
     let idle = WatchModel(state: WatchNowPlaying(accent: playing.accent), artwork: nil)
-    let sheet = HStack(alignment: .top, spacing: 28) {
-        WatchScreen(label: "Now Playing", page: 0, model: live) { NowPlayingPage(isCurrent: true) }
-        WatchScreen(label: "Lyrics", page: 1, model: live) { LyricsPage() }
-        WatchScreen(label: "Up Next", page: 2, model: live) { UpNextPage() }
-        WatchScreen(label: "Nothing playing", page: 0, model: idle) { NowPlayingPage(isCurrent: true) }
+    let sheet = VStack(alignment: .leading, spacing: 28) {
+        HStack(alignment: .top, spacing: 28) {
+            WatchScreen(label: "Now Playing", model: live, clock: .center) { NowPlayingPage() }
+            WatchScreen(label: "Lyrics (karaoke)", model: live) { NowPlayingPage(showsLyrics: true) }
+            WatchScreen(label: "Up Next (pushed)", model: live, pushed: true) { UpNextPage() }
+        }
+        HStack(alignment: .top, spacing: 28) {
+            WatchScreen(label: "Paused", model: paused, clock: .center) { NowPlayingPage() }
+            WatchScreen(label: "Always On", model: live, clock: .center, dimmed: true) { NowPlayingPage() }
+            WatchScreen(label: "Nothing playing", model: idle) { NowPlayingPage() }
+        }
     }
-    .buttonStyle(WatchButtonStyle())
     .padding(32)
     .background(Color(red: 0.11, green: 0.11, blue: 0.12))
     .environment(\.colorScheme, .dark)

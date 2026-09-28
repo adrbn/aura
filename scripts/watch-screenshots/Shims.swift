@@ -50,10 +50,13 @@ final class WatchModel {
     var state: WatchNowPlaying?
     var artwork: NSImage?
     var isReachable = true
+    var tone = WatchTone()
+    var songDirection = 1
 
-    init(state: WatchNowPlaying?, artwork: NSImage?) {
+    init(state: WatchNowPlaying?, artwork: NSImage?, tone: WatchTone = WatchTone()) {
         self.state = state
         self.artwork = artwork
+        self.tone = tone
     }
 
     var accent: Color {
@@ -63,6 +66,46 @@ final class WatchModel {
 
     func send(_ command: WatchCommand) {}
     func refresh() {}
+}
+
+/// Vavin, the phone's display face, read from the repo as the watch reads it from its bundle.
+func registerVavin(root: String) {
+    let url = URL(fileURLWithPath: root + "/Aura/Aura/VavinCondensed-Bold-Latin.ttf") as CFURL
+    CTFontManagerRegisterFontsForURL(url, .process, nil)
+}
+
+// The watch-only calls the pages make (AuraWatch/WatchChrome.swift), drawn as a watch draws them.
+
+extension View {
+    /// The watch lays it as the navigation container's background; the screen frame in
+    /// main.swift draws it.
+    func screenBackdrop() -> some View { self }
+
+    /// Liquid Glass doesn't draw off-screen: a pale disc with a bright rim stands in.
+    func harnessGlass<S: Shape>(in shape: S) -> some View {
+        background(shape.fill(.white.opacity(0.14)))
+            .overlay(shape.stroke(LinearGradient(colors: [.white.opacity(0.5), .white.opacity(0.08)],
+                                                 startPoint: .top, endPoint: .bottom), lineWidth: 0.8))
+    }
+
+    /// A toolbar item, drawn by the screen frame in main.swift beside the clock.
+    func volumeCorner(_ shown: Bool, tint: Color) -> some View { self }
+
+    func primaryAction() -> some View { self }
+
+    func lyricCrown(_ line: Binding<Double>, lines: Int,
+                    turned: @escaping (Double) -> Void, idle: @escaping () -> Void) -> some View { self }
+}
+
+/// A prominent glass button: a capsule in the tint — the sample accent, as SwiftUI keeps
+/// the tint to itself.
+struct HarnessProminent: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.white)
+            .padding(.vertical, 11)
+            .background(Capsule().fill(Color(red: 0.98, green: 0.26, blue: 0.4)))
+    }
 }
 
 /// The Crown's volume control as watchOS draws it: a speaker in a thin ring.
@@ -81,60 +124,16 @@ struct CompanionVolume: View {
     }
 }
 
-/// watchOS draws a List as a column of rounded platters; the Mac's would be a table.
-struct List<Data: RandomAccessCollection, RowContent: View>: View where Data.Element: Identifiable {
-    let data: Data
-    let row: (Data.Element) -> RowContent
-
-    init(_ data: Data, @ViewBuilder rowContent: @escaping (Data.Element) -> RowContent) {
-        self.data = data
-        self.row = rowContent
-    }
-
-    var body: some View {
-        // Laid over the page rather than inside it: rows past the bottom are cut off, as
-        // they wait below the fold, instead of squeezing the page taller than the screen.
-        Color.clear.overlay(alignment: .top) {
-            VStack(spacing: 5) {
-                ForEach(data) { row($0).buttonStyle(WatchRowStyle()) }
-            }
-        }
-        .clipped()
-    }
-}
-
 /// A scroll view shown at its top, as a page is when it opens.
 struct ScrollView<Content: View>: View {
     let content: Content
     init(@ViewBuilder content: () -> Content) { self.content = content() }
 
     var body: some View {
+        // Runs on under the display's foot, as a watch's scroll view does.
         Color.clear.overlay(alignment: .top) {
             content.fixedSize(horizontal: false, vertical: true)
         }
-        .clipped()
-    }
-}
-
-struct WatchRowStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(white: 0.16)))
-    }
-}
-
-/// A bordered watch button: a full-width capsule in the tint.
-struct WatchButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(compact(17))
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(Capsule().fill(Color(white: 0.2)))
+        .ignoresSafeArea(edges: .bottom)
     }
 }

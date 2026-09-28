@@ -12,6 +12,7 @@
 		04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
 		06665240EFF5CFD599AC09F2 /* WatchLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4729DBCE407138E2BDA845 /* WatchLink.swift */; };
 		08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */; };
+		08E4C34DF24A10EBBA4861E3 /* DayGlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */; };
 		0A1F89D1ABA2F4604606726A /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
 		0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
 		0CF35D1498580545AAB8E5CF /* MacArtistLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */; };
@@ -20,6 +21,7 @@
 		169403C7846F4989E4392CEF /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
 		196AB9045E589FCE183BD48E /* PlayHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE183A34FA /* PlayHistory.swift */; };
 		1DE6DF3B70B4F115C8E5194A /* ServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000012 /* ServerManager.swift */; };
+		21863410D59DC530364F711A /* WatchChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35045E0AAD1E88D70B5D26E9 /* WatchChrome.swift */; };
 		223777C02AEF4304FF9CB3D0 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
 		260922167542C20F9CDAD108 /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000080 /* AppLogger.swift */; };
 		2654DD345C3C590F7D60DA5B /* MacPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */; };
@@ -38,6 +40,7 @@
 		4C739EA1B9AD12C6CCB78F46 /* MacSongTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184924427443C74B467EA233 /* MacSongTable.swift */; };
 		5231BD9F05833F1D0842D467 /* SubsonicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000010 /* SubsonicClient.swift */; };
 		5375DDB39A738A3F48D581DB /* EqualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */; };
+		5763435ECEB5A36E2B551C1F /* DayGlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */; };
 		5AEBDDA3941D7AAD77C9C22A /* AuraMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */; };
 		5DACC2F94E2FBAC2FA1E5506 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
 		5EBDFB2C27EFFEF20CA718EE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 599B6E59E456CCD14BAC1A6B /* Cocoa.framework */; };
@@ -216,6 +219,7 @@
 		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
 		F9FA80A12F501CE2B050FF14 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
 		FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC935E192C9737FFC79738ED /* MacSongRow.swift */; };
+		FB688442D8147551C7C26966 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C2DD223260297B0A1DE6EA /* Backdrop.swift */; };
 		FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
 /* End PBXBuildFile section */
 
@@ -285,6 +289,7 @@
 		2DE0E8DD48DEACB25983419C /* MacCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacCommands.swift; sourceTree = "<group>"; };
 		32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchProtocol.swift; sourceTree = "<group>"; };
 		332E4899162985D5A2BE70F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		35045E0AAD1E88D70B5D26E9 /* WatchChrome.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchChrome.swift; sourceTree = "<group>"; };
 		3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQueryTests.swift; sourceTree = "<group>"; };
 		40E8E704D9B72925B6B94399 /* ImageCropView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
 		41DF74C93207494A7E1F1347 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -307,6 +312,7 @@
 		76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineTabs.swift; sourceTree = "<group>"; };
 		7B7AA32B23D8B48D503402F9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		833EA8A9845DA4856999EFD6 /* NowPlayingPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NowPlayingPage.swift; sourceTree = "<group>"; };
+		84C2DD223260297B0A1DE6EA /* Backdrop.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Backdrop.swift; sourceTree = "<group>"; };
 		88855F68FD1F326A2B289FF3 /* MacGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacGrid.swift; sourceTree = "<group>"; };
 		8A9B259A7C1405CA806A2C51 /* UnfollowedArtistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UnfollowedArtistsView.swift; sourceTree = "<group>"; };
 		8BF55BE55F578254EC9F3FB0 /* AuraMac.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = AuraMac.entitlements; sourceTree = "<group>"; };
@@ -314,6 +320,7 @@
 		972B2D4634806C3FA589AE66 /* MacMixesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacMixesView.swift; sourceTree = "<group>"; };
 		993444593E7509462E6F7CB1 /* LyricsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsPage.swift; sourceTree = "<group>"; };
 		9C50ECA7916A55ECF9EE4962 /* CoverMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoverMenu.swift; sourceTree = "<group>"; };
+		9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DayGlow.swift; sourceTree = "<group>"; };
 		A114C4B8E0319934E5F90216 /* MacRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
 		A31E6A5950E5B49121F1EDCD /* MacSidebar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSidebar.swift; sourceTree = "<group>"; };
@@ -497,6 +504,8 @@
 				993444593E7509462E6F7CB1 /* LyricsPage.swift */,
 				AAEB2AEB2052627E49050B2F /* UpNextPage.swift */,
 				32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */,
+				84C2DD223260297B0A1DE6EA /* Backdrop.swift */,
+				35045E0AAD1E88D70B5D26E9 /* WatchChrome.swift */,
 			);
 			name = AuraWatch;
 			path = AuraWatch;
@@ -753,6 +762,7 @@
 				E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */,
 				D53C72F337D1037C1F5737FC /* AccentColourPicker.swift */,
 				9C50ECA7916A55ECF9EE4962 /* CoverMenu.swift */,
+				9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -837,6 +847,7 @@
 				E99E2813C1C31F576D7B6CF0 /* Sources */,
 				2F19E87303FA684FE204D9C8 /* Frameworks */,
 				3D93E298A91617D62AEE951F /* Resources */,
+				7723D0C7B248FB3DDC3A89DA /* Embed Vavin */,
 			);
 			buildRules = (
 			);
@@ -975,6 +986,28 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		7723D0C7B248FB3DDC3A89DA /* Embed Vavin */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Aura/VavinCondensed-Bold-Latin.ttf",
+				"$(SRCROOT)/Aura/Vavin-OFL.txt",
+			);
+			name = "Embed Vavin";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Bold-Latin.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Vavin-OFL.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Vavin, the phone's display face (SIL OFL 1.1: redistributable, its licence alongside),\n# for the watch's page titles and wordmark.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\nfor F in \"$SRCROOT/Aura/VavinCondensed-Bold-Latin.ttf\" \"$SRCROOT/Aura/Vavin-OFL.txt\"; do\n  cp \"$F\" \"$DEST/\" || { echo \"error: could not embed $F\"; exit 1; }\ndone\n";
+		};
 		BA14764C4F9D39549C0E56B8 /* Embed Vavin */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1232,6 +1265,7 @@
 				F9FA80A12F501CE2B050FF14 /* WatchProtocol.swift in Sources */,
 				06665240EFF5CFD599AC09F2 /* WatchLink.swift in Sources */,
 				9A636196503516598302BB10 /* UnfollowedArtistsView.swift in Sources */,
+				08E4C34DF24A10EBBA4861E3 /* DayGlow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1259,6 +1293,9 @@
 				B3BFA808FAD49E93A7FD8F14 /* UpNextPage.swift in Sources */,
 				0A1F89D1ABA2F4604606726A /* WatchProtocol.swift in Sources */,
 				C03D99F693D04E563B0F59C5 /* MarqueeText.swift in Sources */,
+				FB688442D8147551C7C26966 /* Backdrop.swift in Sources */,
+				21863410D59DC530364F711A /* WatchChrome.swift in Sources */,
+				5763435ECEB5A36E2B551C1F /* DayGlow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

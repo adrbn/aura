@@ -17,7 +17,9 @@ final class WatchLink: NSObject {
     /// How far the watch's count may stray from the player before it's corrected.
     private static let drift: TimeInterval = 1.5
     private static let upNextCount = 20
-    private static let artworkSize: CGFloat = 200
+    /// Pixels a side: the cover fills the watch's display, and a message must stay well under
+    /// WatchConnectivity's 64 KB with the lyrics and the queue beside it.
+    private static let artworkSize: CGFloat = 360
 
     private let player = AudioPlayer.shared
     private var isObserving = false
@@ -25,6 +27,7 @@ final class WatchLink: NSObject {
     private var lastSent: WatchNowPlaying?
     private var artworkId: String?
     private var artwork: Data?
+    private var tone: Data?
 
     func start() {
         guard WCSession.isSupported() else { return }
@@ -77,6 +80,7 @@ final class WatchLink: NSObject {
         if state.artworkId != artworkId {
             artworkId = state.artworkId
             artwork = nil
+            tone = nil
             loadArtwork(for: state.artworkId)
         }
         send(state)
@@ -105,7 +109,8 @@ final class WatchLink: NSObject {
             canFavorite: !song.isPreview,
             lyrics: player.lyrics.map { .init(time: $0.time.map { $0 - offset }, text: $0.text) },
             upNext: Array((queued + rest).prefix(Self.upNextCount)),
-            accent: accent)
+            accent: accent,
+            karaoke: AppSettings.shared.betaKaraokeLyrics)
     }
 
     private func upcoming(_ song: Song, slot: Int, isQueued: Bool) -> WatchNowPlaying.Upcoming {
@@ -123,6 +128,7 @@ final class WatchLink: NSObject {
         guard let data = try? JSONEncoder().encode(state) else { return [:] }
         var message: [String: Any] = [WatchLinkKey.state: data]
         if let artwork { message[WatchLinkKey.artwork] = artwork }
+        if let tone { message[WatchLinkKey.tone] = tone }
         return message
     }
 
@@ -150,13 +156,29 @@ final class WatchLink: NSObject {
             guard let (data, _) = try? await URLSession.shared.data(from: url),
                   let image = UIImage(data: data) else { return }
             let side = Self.artworkSize
-            let small = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in
+            // At one pixel a point: the renderer would otherwise draw at the phone's scale, three
+            // times the pixels the watch is sent for.
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 1
+            let small = UIGraphicsImageRenderer(size: CGSize(width: side, height: side), format: format).image { _ in
                 image.draw(in: CGRect(x: 0, y: 0, width: side, height: side))
             }
             guard artworkId == coverArt, let lastSent else { return }
-            artwork = small.jpegData(compressionQuality: 0.7)
+            artwork = small.jpegData(compressionQuality: 0.6)
+            tone = try? JSONEncoder().encode(Self.tone(of: small))
             send(lastSent)
         }
+    }
+
+    private nonisolated static func tone(of image: UIImage) -> WatchTone {
+        let measured = NowPlayingView.analyseBackdrop(image)
+        var tone = WatchTone(veil: measured.veil)
+        if let vibrant = measured.vibrant {
+            var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+            UIColor(vibrant).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+            tone.vibrant = [red, green, blue].map(Double.init)
+        }
+        return tone
     }
 
     private func perform(_ command: WatchCommand) {
@@ -222,6 +244,7 @@ extension WatchLink: WCSessionDelegate {
             if state.artworkId != artworkId {
                 artworkId = state.artworkId
                 artwork = nil
+                tone = nil
                 loadArtwork(for: state.artworkId)
             }
             reply.send(payload(state))

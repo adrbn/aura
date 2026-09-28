@@ -16,8 +16,8 @@ cd "$(dirname "$0")/.."
 WORK="${TMPDIR:-/tmp}/aura-watch-shots"
 rm -rf "$WORK" && mkdir -p "$WORK"
 
-cp Aura/AuraWatch/WatchProtocol.swift Aura/Aura/Components/MarqueeText.swift \
-   scripts/watch-screenshots/Shims.swift scripts/watch-screenshots/main.swift "$WORK/"
+cp Aura/AuraWatch/WatchProtocol.swift Aura/AuraWatch/Backdrop.swift Aura/Aura/Components/MarqueeText.swift \
+   Aura/Aura/Components/DayGlow.swift scripts/watch-screenshots/Shims.swift scripts/watch-screenshots/main.swift "$WORK/"
 
 # The pages, with what only a watch has taken out and the watch's type sizes put in.
 python3 - "$WORK" Aura/AuraWatch/NowPlayingPage.swift Aura/AuraWatch/LyricsPage.swift \
@@ -27,12 +27,14 @@ work, *pages = sys.argv[1:]
 sizes = {"headline": "17, .semibold", "footnote": "14", "title3": "20", "title2": "22"}
 for page in pages:
     s = open(page).read().replace("import WatchKit\n", "")
-    s = s.split("/// The watch's volume control")[0]
-    s = re.sub(r"\.system\(size: (\d+), weight: \.(\w+)\)", r"compact(\1, .\2)", s)
-    s = re.sub(r"\.system\(size: (\d+)\)", r"compact(\1)", s)
+    s = re.sub(r"(?:Font)?\.system\(size: (\d+), weight: \.(\w+)\)", r"compact(\1, .\2)", s)
+    s = re.sub(r"(?:Font)?\.system\(size: (\w+)\)", r"compact(\1)", s)
     s = re.sub(r"(font: |\.font\()\.(%s)\b" % "|".join(sizes), lambda m: m.group(1) + "compact(%s)" % sizes[m.group(2)], s)
+    # Liquid Glass renders only on screen; the shims draw a likeness of it.
+    s = re.sub(r"\.glassEffect\([^)]*\), in: \.circle\)", ".harnessGlass(in: Circle())", s)
+    s = s.replace(".buttonStyle(.glassProminent)", ".buttonStyle(HarnessProminent())")
     open(os.path.join(work, os.path.basename(page)), "w").write(s)
 PY
 
-xcrun swiftc -target "$(uname -m)-apple-macos15" -o "$WORK/render" "$WORK"/*.swift
-"$WORK/render" "$OUT"
+xcrun swiftc -target "$(uname -m)-apple-macos26" -o "$WORK/render" "$WORK"/*.swift
+"$WORK/render" "$OUT" "$PWD"
