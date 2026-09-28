@@ -1,19 +1,17 @@
 import SwiftUI
 
-/// Aura's screen on the wrist, and the only one at the root: the song playing, as large as
-/// the watch can make it.
+/// Aura's screen on the wrist, and the only one at the root: the song playing, laid out as
+/// the phone lays it out — the cover over its own blurred colours, the title under it — with
+/// the controls in one row along the display's foot and the Crown on the phone's volume.
 ///
-/// The cover fills the display, its corners the display's own, with the title and the
-/// transport over its foot and the Crown on the phone's volume. The lyrics are a mode of this
-/// same screen, as they are on the phone: the cover draws into the top corner, its blurred
-/// field staying behind, and the words rise where the controls stood — the Crown walking the
-/// lines now, the play button waiting at the foot. What comes next is pushed from the other
-/// corner, and a double tap plays and pauses whichever mode is showing.
+/// The lyrics are a mode of this same screen, as on the phone: the cover draws into the top
+/// corner where the heart was and the words take its place, the Crown walking the lines. The
+/// row at the foot never moves: lyrics, previous, play, next, and what comes next — pushed
+/// from the far corner. A double tap plays and pauses in either mode.
 struct NowPlayingPage: View {
     @Environment(WatchModel.self) private var model
     @State private var showsLyrics: Bool
     @State private var showsQueue = false
-    @Namespace private var morph
 
     /// Settles as the phone's cover does when it moves: quick, without a bounce.
     static let modeChange = Animation.spring(response: 0.5, dampingFraction: 0.86)
@@ -38,41 +36,37 @@ struct NowPlayingPage: View {
         // A song without words falls back to the cover; the mode returns with the next one
         // that has them, as the phone's does.
         let lyrics = showsLyrics && !state.lyrics.isEmpty
-        return ZStack {
-            Hero(isLyrics: lyrics, isPlaying: state.isPlaying, toggle: toggleLyrics)
-            if lyrics {
-                LyricsMode(state: state)
-                    .padding(.top, 42)
-                    .padding(.bottom, 46)
-                    .transition(.materialize)
-            } else {
-                Controls(state: state, morph: morph)
-                    .transition(.sink)
+        return GeometryReader { proxy in
+            let layout = PlayerLayout(size: proxy.size)
+            ZStack {
+                if lyrics {
+                    LyricsMode(state: state)
+                        .frame(width: proxy.size.width, height: layout.lyricsHeight)
+                        .position(x: proxy.size.width / 2, y: layout.lyricsCentre)
+                        .transition(.materialize)
+                } else {
+                    SongTitle(state: state, direction: model.songDirection)
+                        .frame(width: proxy.size.width - 32)
+                        .position(x: proxy.size.width / 2, y: layout.titleCentre)
+                        .transition(.sink)
+                    FavoriteButton(state: state)
+                        .position(PlayerLayout.corner)
+                        .transition(.opacity)
+                }
+                SongCover(isLyrics: lyrics, isPlaying: state.isPlaying, toggle: toggleLyrics)
+                    .frame(width: lyrics ? PlayerLayout.thumbnail : layout.coverSide,
+                           height: lyrics ? PlayerLayout.thumbnail : layout.coverSide)
+                    .position(lyrics ? PlayerLayout.corner : layout.coverCentre)
+                ControlRow(state: state, showsLyrics: lyrics, toggleLyrics: toggleLyrics) {
+                    showsQueue = true
+                }
+                .frame(width: proxy.size.width)
+                .position(x: proxy.size.width / 2, y: layout.rowCentre)
             }
-            footer(state, lyrics: lyrics)
         }
         .ignoresSafeArea()
         .animation(Self.modeChange, value: lyrics)
         .volumeCorner(!lyrics, tint: model.accent)
-    }
-
-    /// The display's two bottom corners, and between them — in the lyrics — the play button.
-    private func footer(_ state: WatchNowPlaying, lyrics: Bool) -> some View {
-        HStack(spacing: 0) {
-            CornerButton(symbol: lyrics ? "quote.bubble.fill" : "quote.bubble",
-                         label: lyrics ? "Hide Lyrics" : "Show Lyrics",
-                         isEnabled: !state.lyrics.isEmpty, action: toggleLyrics)
-            Spacer(minLength: 0)
-            if lyrics {
-                PlayButton(state: state, side: 36)
-                    .matchedGeometryEffect(id: "play", in: morph)
-            }
-            Spacer(minLength: 0)
-            CornerButton(symbol: "list.bullet", label: "Up Next") { showsQueue = true }
-        }
-        .padding(.horizontal, 12)
-        .padding(.bottom, 8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
     }
 
     private func toggleLyrics() {
@@ -80,44 +74,44 @@ struct NowPlayingPage: View {
     }
 }
 
-/// The cover. Full screen, it wears a veil at the top for the clock and one at the foot for
-/// the title; in the lyrics it is the small square in the corner, as the phone shrinks its
-/// cover beside its lyrics. While paused it draws back, the display's shape and all.
-private struct Hero: View {
+/// Where things sit, worked out from the display's size so a smaller watch keeps the
+/// proportions: the clock's band at the top, the row of controls at the foot, and the cover
+/// and the title sharing what lies between.
+private struct PlayerLayout {
+    let size: CGSize
+
+    /// Below the clock's band.
+    static let top: CGFloat = 42
+    /// A toolbar item's place beside the clock, set in from the display's curve: the heart's,
+    /// then the small cover's.
+    static let corner = CGPoint(x: 29, y: 24)
+    static let thumbnail: CGFloat = 30
+    private static let rowHeight: CGFloat = 46
+    private static let titleHeight: CGFloat = 36
+    private static let gap: CGFloat = 6
+
+    var rowCentre: CGFloat { size.height - 29 }
+    private var rowTop: CGFloat { rowCentre - Self.rowHeight / 2 }
+    var titleCentre: CGFloat { rowTop - Self.gap - Self.titleHeight / 2 }
+    var coverSide: CGFloat {
+        min(size.width * 0.56, titleCentre - Self.titleHeight / 2 - Self.gap - Self.top)
+    }
+    var coverCentre: CGPoint { CGPoint(x: size.width / 2, y: Self.top + coverSide / 2) }
+    var lyricsHeight: CGFloat { rowTop - 4 - Self.top }
+    var lyricsCentre: CGFloat { Self.top + lyricsHeight / 2 }
+}
+
+/// The cover, as a card over its own blurred colours, the phone's Now Playing at the
+/// watch's scale. In the lyrics it is the small square in the corner, as the phone shrinks its
+/// cover beside its lyrics; while paused it draws back, as the phone's does.
+private struct SongCover: View {
     let isLyrics: Bool
     let isPlaying: Bool
     let toggle: () -> Void
     @Environment(WatchModel.self) private var model
     @Environment(\.isLuminanceReduced) private var isDimmed
 
-    /// Where the small cover sits: a toolbar button's place beside the clock.
-    static let thumbnail: CGFloat = 30
-    static let thumbnailCentre = CGPoint(x: 29, y: 24)
-    /// The display's own corner, so the full cover and the screen are one shape.
-    static let displayCorner: CGFloat = 42
-
     var body: some View {
-        GeometryReader { proxy in
-            let full = proxy.size
-            let side = Self.thumbnail
-            art
-                .frame(width: isLyrics ? side : full.width, height: isLyrics ? side : full.height)
-                .overlay { veils.opacity(isLyrics ? 0 : 1) }
-                .clipShape(RoundedRectangle(cornerRadius: isLyrics ? 7 : Self.displayCorner, style: .continuous))
-                .shadow(color: .black.opacity(isPlaying ? 0 : 0.5), radius: 16, y: 6)
-                .scaleEffect(isPlaying || isLyrics ? 1 : 0.86)
-                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isPlaying)
-                // Always On: a rich image is dimmed, as the system asks.
-                .opacity(isDimmed ? 0.45 : 1)
-                .position(isLyrics ? Self.thumbnailCentre : CGPoint(x: full.width / 2, y: full.height / 2))
-                .onTapGesture(perform: toggle)
-                .accessibilityElement()
-                .accessibilityLabel(isLyrics ? "Hide Lyrics" : "Show Lyrics")
-                .accessibilityAddTraits(.isButton)
-        }
-    }
-
-    private var art: some View {
         ZStack {
             if let artwork = model.artwork {
                 Image(uiImage: artwork)
@@ -125,56 +119,25 @@ private struct Hero: View {
                     .scaledToFill()
                     .transition(.opacity)
             } else {
-                Color.white.opacity(0.06)
+                Color.white.opacity(0.08)
+                Image(systemName: "music.note")
+                    .font(.system(size: 30))
+                    .foregroundStyle(.white.opacity(0.4))
             }
         }
         .animation(.easeInOut(duration: 0.5), value: model.state?.artworkId)
         .animation(.easeOut(duration: 0.3), value: model.artwork == nil)
-    }
-
-    /// Eased, so neither veil ends in a line.
-    private var veils: some View {
-        VStack(spacing: 0) {
-            LinearGradient(stops: [
-                .init(color: .black.opacity(0.5), location: 0),
-                .init(color: .black.opacity(0.18), location: 0.55),
-                .init(color: .clear, location: 1),
-            ], startPoint: .top, endPoint: .bottom)
-            .frame(height: 64)
-            Spacer(minLength: 0)
-            LinearGradient(stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .black.opacity(0.35), location: 0.3),
-                .init(color: .black.opacity(0.72), location: 0.65),
-                .init(color: .black.opacity(0.86), location: 1),
-            ], startPoint: .top, endPoint: .bottom)
-            .frame(height: 160)
-        }
-        .allowsHitTesting(false)
-    }
-}
-
-/// The title with the heart beside it, as the phone sets them, over the transport.
-private struct Controls: View {
-    let state: WatchNowPlaying
-    let morph: Namespace.ID
-    @Environment(WatchModel.self) private var model
-    @Environment(\.isLuminanceReduced) private var isDimmed
-
-    var body: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 4) {
-                SongTitle(state: state, direction: model.songDirection)
-                FavoriteButton(state: state)
-            }
-            Transport(state: state, morph: morph)
-                .opacity(isDimmed ? 0.5 : 1)
-        }
-        .padding(.leading, 16)
-        .padding(.trailing, 8)
-        // Clear of the corner buttons beneath.
-        .padding(.bottom, 44)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .clipShape(RoundedRectangle(cornerRadius: isLyrics ? 7 : 12, style: .continuous))
+        .shadow(color: .black.opacity(isLyrics ? 0.2 : 0.4), radius: isLyrics ? 4 : 12, y: isLyrics ? 2 : 6)
+        .scaleEffect(isPlaying || isLyrics ? 1 : 0.85)
+        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isPlaying)
+        // Always On: a rich image is dimmed, as the system asks.
+        .opacity(isDimmed ? 0.55 : 1)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: toggle)
+        .accessibilityElement()
+        .accessibilityLabel(isLyrics ? "Hide Lyrics" : "Show Lyrics")
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -187,13 +150,10 @@ private struct SongTitle: View {
     private static let change = Animation.spring(response: 0.45, dampingFraction: 0.85)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            MarqueeText(text: state.title, font: .system(size: 17, weight: .bold), color: .white,
-                        alignment: .leading)
-            MarqueeText(text: state.artist, font: .system(size: 14), color: .white.opacity(0.72),
-                        alignment: .leading)
+        VStack(spacing: 0) {
+            MarqueeText(text: state.title, font: .system(size: 16, weight: .bold), color: .white)
+            MarqueeText(text: state.artist, font: .system(size: 14), color: .white.opacity(0.7))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .id(state.songId)
         .transition(.asymmetric(
             insertion: .offset(x: CGFloat(direction) * 60).combined(with: .opacity),
@@ -202,29 +162,40 @@ private struct SongTitle: View {
     }
 }
 
-private struct Transport: View {
+/// The one row along the display's foot, the same in both modes: the lyrics and the queue
+/// in the corners, the transport between them.
+private struct ControlRow: View {
     let state: WatchNowPlaying
-    let morph: Namespace.ID
+    let showsLyrics: Bool
+    let toggleLyrics: () -> Void
+    let openQueue: () -> Void
     @Environment(WatchModel.self) private var model
+    @Environment(\.isLuminanceReduced) private var isDimmed
 
     var body: some View {
         HStack(spacing: 0) {
+            CornerButton(symbol: showsLyrics ? "quote.bubble.fill" : "quote.bubble",
+                         label: showsLyrics ? "Hide Lyrics" : "Show Lyrics",
+                         isEnabled: !state.lyrics.isEmpty, action: toggleLyrics)
+            Spacer(minLength: 0)
             skip("backward.fill", label: "Previous") { model.send(.previous) }
             Spacer(minLength: 0)
-            PlayButton(state: state, side: 50)
-                .matchedGeometryEffect(id: "play", in: morph)
+            PlayButton(state: state, side: 46)
             Spacer(minLength: 0)
             skip("forward.fill", label: "Next") { model.send(.next) }
+            Spacer(minLength: 0)
+            CornerButton(symbol: "list.bullet", label: "Up Next", action: openQueue)
         }
-        .padding(.trailing, 8)
+        .padding(.horizontal, 12)
+        .opacity(isDimmed ? 0.5 : 1)
     }
 
     private func skip(_ symbol: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 20))
+                .font(.system(size: 17))
                 .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
+                .frame(width: 32, height: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(Pressable(scale: 0.82))
@@ -233,17 +204,17 @@ private struct Transport: View {
 }
 
 /// Play and pause, in glass, carrying the song's progress as a ring — the watch's own idiom
-/// for it. The one a double tap presses: there is only ever one on screen.
+/// for it, and the one button a double tap presses.
 private struct PlayButton: View {
     let state: WatchNowPlaying
     let side: CGFloat
     @Environment(WatchModel.self) private var model
 
     var body: some View {
-        let glyph = side * 0.42
+        let glyph = side * 0.4
         Button { model.send(.playPause) } label: {
             ZStack {
-                ProgressRing(state: state, lineWidth: side > 40 ? 3 : 2.5)
+                ProgressRing(state: state, lineWidth: 3)
                 Image(systemName: state.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: glyph))
                     .foregroundStyle(.white)
@@ -307,8 +278,8 @@ private struct CornerButton: View {
     }
 }
 
-/// The heart, as on the phone: outlined, the accent once the song is starred, pulsing while
-/// the server is asked, and popping when the star lands.
+/// The heart, in the corner beside the clock: outlined, the accent once the song is starred,
+/// pulsing while the server is asked, and popping when the star lands, as on the phone.
 private struct FavoriteButton: View {
     let state: WatchNowPlaying
     @Environment(WatchModel.self) private var model
@@ -326,17 +297,17 @@ private struct FavoriteButton: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
             }
-            .font(.system(size: 17, weight: .semibold))
+            .font(.system(size: 14, weight: .semibold))
             .keyframeAnimator(initialValue: 1.0, trigger: state.isFavorite) { content, scale in
                 content.scaleEffect(scale)
             } keyframes: { _ in
                 SpringKeyframe(state.isFavorite ? 1.35 : 1, duration: 0.2, spring: .init(response: 0.28, dampingRatio: 0.45))
                 SpringKeyframe(1, duration: 0.3, spring: .init(response: 0.3, dampingRatio: 0.7))
             }
-            .frame(width: 34, height: 34)
-            .contentShape(Rectangle())
+            .frame(width: 30, height: 30)
+            .glassEffect(.regular.interactive(), in: .circle)
         }
-        .buttonStyle(Pressable(scale: 0.85))
+        .buttonStyle(Pressable(scale: 0.88))
         .disabled(!state.canFavorite || state.isSavingFavorite)
         .opacity(state.canFavorite ? 1 : 0.35)
         .sensoryFeedback(.success, trigger: state.isFavorite) { was, now in !was && now }

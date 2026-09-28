@@ -17,6 +17,9 @@ struct Radar: Codable {
     /// Whether a release on the server keeps all its new songs. Nil in a radar stored when it
     /// kept three, which is matched again in full.
     var whole: Bool? = true
+    /// The artists the cover is drawn from, set at the daily pass and kept until the next, so
+    /// hiding a release doesn't redraw the cover. Nil in a radar stored before it was kept.
+    var coverArtists: [ArtistRef]? = nil
 
     var missing: [RadarRelease] { releases.filter { inLibrary[$0.id] == nil } }
 
@@ -35,11 +38,15 @@ struct Radar: Codable {
     }
 
     var mix: Mix {
+        Mix(id: "radar", title: String(localized: "Radar"),
+            subtitle: String(localized: "New releases from your artists"),
+            songs: songs, kind: .radar, coverArtists: coverArtists ?? Self.artists(of: releases))
+    }
+
+    /// Each release's artist once, in the radar's order.
+    static func artists(of releases: [RadarRelease]) -> [ArtistRef] {
         var seen = Set<String>()
-        let artists = releases.map(\.artist).filter { seen.insert($0.id).inserted }
-        return Mix(id: "radar", title: String(localized: "Radar"),
-                   subtitle: String(localized: "New releases from your artists"),
-                   songs: songs, kind: .radar, coverArtists: artists)
+        return releases.map(\.artist).filter { seen.insert($0.id).inserted }
     }
 }
 
@@ -259,7 +266,8 @@ final class RadarService {
         var lacking = radar.lacking ?? [:]
         lacking[release.id] = count > 0 ? count : nil
         let updated = Radar(serverId: radar.serverId, releases: radar.releases, fetched: radar.fetched,
-                            inLibrary: inLibrary, matched: radar.matched, lacking: lacking, whole: radar.whole)
+                            inLibrary: inLibrary, matched: radar.matched, lacking: lacking, whole: radar.whole,
+                            coverArtists: radar.coverArtists)
         RadarStore.save(updated)
         self.radar = updated
     }
@@ -333,9 +341,13 @@ final class RadarService {
         // listener already has under another date: nothing new, nothing missing.
         let heard = Set(matched.filter(\.value.isEmpty).keys)
         let inLibrary = matched.filter { !$0.value.isEmpty }
-        let built = Radar(serverId: server.id,
-                          releases: releases.filter { !heard.contains($0.id) && isShown($0) },
-                          fetched: fetched, inLibrary: inLibrary, matched: Date(), lacking: lacking)
+        let shown = releases.filter { !heard.contains($0.id) && isShown($0) }
+        // The cover is redrawn with the catalogue, once a day, and not between.
+        let coverArtists = staleCatalogue ? Radar.artists(of: shown)
+            : radar?.coverArtists ?? Radar.artists(of: shown)
+        let built = Radar(serverId: server.id, releases: shown,
+                          fetched: fetched, inLibrary: inLibrary, matched: Date(), lacking: lacking,
+                          coverArtists: coverArtists)
         RadarStore.save(built)
         AppLogger.shared.log("📡 Radar: \(built.releases.count) releases, \(inLibrary.count) on the server (\(lacking.count) in part), \(heard.count) already heard")
         if ServerManager.shared.currentServer?.id == server.id { radar = built }
@@ -429,9 +441,12 @@ final class RadarService {
     /// Takes what was just hidden or unfollowed off the radar on screen, without a pass.
     private func dropUnshown() {
         guard let radar else { return }
+        // A hidden release leaves the cover as it is; an artist no longer followed leaves it.
+        let cover = (radar.coverArtists ?? Radar.artists(of: radar.releases))
+            .filter { artist in !unfollowed.contains { $0.id == artist.id } }
         let kept = Radar(serverId: radar.serverId, releases: radar.releases.filter(isShown),
                          fetched: radar.fetched, inLibrary: radar.inLibrary, matched: radar.matched,
-                         lacking: radar.lacking, whole: radar.whole)
+                         lacking: radar.lacking, whole: radar.whole, coverArtists: cover)
         RadarStore.save(kept)
         self.radar = kept
     }
@@ -448,7 +463,7 @@ final class RadarService {
         let covered = Radar(serverId: radar.serverId, releases: releases.filter(isShown),
                             fetched: radar.fetched,
                             inLibrary: radar.inLibrary, matched: radar.matched, lacking: radar.lacking,
-                            whole: radar.whole)
+                            whole: radar.whole, coverArtists: radar.coverArtists)
         RadarStore.save(covered)
         self.radar = covered
     }
