@@ -60,6 +60,10 @@ final class RadarService {
     private var refreshTask: Task<Void, Never>?
 
     private static let catalogueAge: TimeInterval = 20 * 3600
+    /// A cover still missing is asked for whenever the radar is opened, but not more than
+    /// once a minute — Deezer may take hours to attach one.
+    private static let coverRetry: TimeInterval = 60
+    private var coversAsked: Date?
     /// Only the releases still missing are looked for again, so this can be short: a song
     /// fetched outside the app shows up a quarter of an hour after the server lists it.
     private static let libraryAge: TimeInterval = 15 * 60
@@ -98,7 +102,10 @@ final class RadarService {
             now.timeIntervalSince($0.fetched) > Self.catalogueAge || $0.releases.contains { $0.credits == nil }
         } ?? true
         let staleLibrary = radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge || $0.lacking == nil || $0.whole == nil } ?? true
-        guard staleCatalogue || staleLibrary else { return }
+        guard staleCatalogue || staleLibrary else {
+            await fillMissingCovers()
+            return
+        }
 
         // Clears itself before anyone waiting on it resumes, so they see the way clear.
         let task = Task {
@@ -374,6 +381,22 @@ final class RadarService {
             credited.append(named)
         }
         return credited
+    }
+
+    /// Between passes, the covers still missing — so a release listed before it had one
+    /// shows it as soon as Deezer does, not at the next quarter-hour pass.
+    private func fillMissingCovers() async {
+        guard let radar, radar.releases.contains(where: { !$0.hasCover }),
+              Date().timeIntervalSince(coversAsked ?? .distantPast) > Self.coverRetry else { return }
+        coversAsked = Date()
+        let releases = await Self.withCovers(radar.releases)
+        guard releases != radar.releases, self.radar?.serverId == radar.serverId,
+              self.radar?.matched == radar.matched else { return }
+        let covered = Radar(serverId: radar.serverId, releases: releases, fetched: radar.fetched,
+                            inLibrary: radar.inLibrary, matched: radar.matched, lacking: radar.lacking,
+                            whole: radar.whole)
+        RadarStore.save(covered)
+        self.radar = covered
     }
 
     /// The releases, with the covers Deezer had not attached yet when they were listed. A

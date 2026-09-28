@@ -22,7 +22,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - The veil behind the tab bar and the mini player rises behind the Get It card too, so its glass reads the same dark page as the mini player's
 
 ### Fixed — Radar
-- A release out the same day no longer stays without a cover: Deezer can list it before attaching its picture, so the radar asks for the cover again on each pass until it comes. Radar rows load their covers through the app's artwork cache, which tries again, instead of keeping an empty square after one failed load
+- A release out the same day no longer stays without a cover: Deezer can list it before attaching its picture, so the radar asks for the cover again, whenever it's opened and at most once a minute, until it comes. Radar rows load their covers through the app's artwork cache, which tries again, instead of keeping an empty square after one failed load
 - Get It no longer waits forever for a song whose title holds a semicolon — "You and I, Pt. II (Full Version; 2017 Remaster)": Navidrome refuses a whole request with a bare ";" in it, so the song, already in the library, was never found. Every query sent to the server now spells it out
 - A re-issue is no longer a new release: an album Deezer dates anew under a title the artist had already put out stays off the radar — the same day's explicit and clean copies count once, and an album named after the single that announced it still counts
 - Songs the server had long before a release came out (more than two weeks) don't join the mix as new; a release made only of such songs leaves the radar. Radars built before are rebuilt at once
