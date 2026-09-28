@@ -3,8 +3,8 @@ import SwiftUI
 /// Aura's screen on the wrist, and the only one at the root: the song playing, as large as
 /// the watch can make it.
 ///
-/// The cover fills the display, blurred, its corners the display's own, with the title and the
-/// transport over its foot and the Crown on the phone's volume. The lyrics are a mode of this
+/// The cover lies behind it in the phone's blur, the title at the top, the transport in the
+/// middle and the Crown on the phone's volume. The lyrics are a mode of this
 /// same screen, as they are on the phone: the cover draws into the top corner, its blurred
 /// field staying behind, and the words rise where the controls stood — the Crown walking the
 /// lines now, the play button waiting at the foot. What comes next is pushed from the other
@@ -39,7 +39,14 @@ struct NowPlayingPage: View {
         // that has them, as the phone's does.
         let lyrics = showsLyrics && !state.lyrics.isEmpty
         return ZStack {
-            Hero(isLyrics: lyrics, isPlaying: state.isPlaying, toggle: toggleLyrics)
+            if !lyrics {
+                // A tap on the cover's field turns to the words, as a tap on the phone's cover does.
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: toggleLyrics)
+                    .accessibilityHidden(true)
+            }
+            Hero(isLyrics: lyrics, toggle: toggleLyrics)
             if lyrics {
                 LyricsMode(state: state)
                     .padding(.top, 42)
@@ -80,12 +87,12 @@ struct NowPlayingPage: View {
     }
 }
 
-/// The cover. Full screen and blurred, it wears a veil at the top for the clock and one at
-/// the foot for the title; in the lyrics it is the small square in the corner, as the phone shrinks its
-/// cover beside its lyrics. While paused it draws back, the display's shape and all.
+/// The cover, for the lyrics: the small square in the corner, as the phone shrinks its cover
+/// beside its lyrics. With the controls showing it is the whole display and unseen — the
+/// backdrop behind is the same cover in the phone's blur — so turning to the lyrics reads as
+/// the blur condensing into the corner, coming into focus as it goes.
 private struct Hero: View {
     let isLyrics: Bool
-    let isPlaying: Bool
     let toggle: () -> Void
     @Environment(WatchModel.self) private var model
     @Environment(\.isLuminanceReduced) private var isDimmed
@@ -95,9 +102,6 @@ private struct Hero: View {
     static let thumbnailCentre = CGPoint(x: 29, y: 24)
     /// The display's own corner, so the full cover and the screen are one shape.
     static let displayCorner: CGFloat = 42
-    /// Enough that the cover is a mood rather than a picture behind the title, not so much
-    /// that it's only colour.
-    static let softness: CGFloat = 16
 
     var body: some View {
         GeometryReader { proxy in
@@ -105,20 +109,16 @@ private struct Hero: View {
             let side = Self.thumbnail
             art
                 .frame(width: isLyrics ? side : full.width, height: isLyrics ? side : full.height)
-                // Soft behind the words, sharp once it's the small cover: it comes into focus
-                // as it draws into the corner.
-                .blur(radius: isLyrics ? 0 : Self.softness, opaque: true)
-                .overlay { veils.opacity(isLyrics ? 0 : 1) }
+                .blur(radius: isLyrics ? 0 : 36, opaque: true)
                 .clipShape(RoundedRectangle(cornerRadius: isLyrics ? 7 : Self.displayCorner, style: .continuous))
-                .shadow(color: .black.opacity(isPlaying ? 0 : 0.5), radius: 16, y: 6)
-                .scaleEffect(isPlaying || isLyrics ? 1 : 0.86)
-                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isPlaying)
                 // Always On: a rich image is dimmed, as the system asks.
-                .opacity(isDimmed ? 0.45 : 1)
+                .opacity(isLyrics ? (isDimmed ? 0.45 : 1) : 0)
                 .position(isLyrics ? Self.thumbnailCentre : CGPoint(x: full.width / 2, y: full.height / 2))
                 .onTapGesture(perform: toggle)
+                .allowsHitTesting(isLyrics)
+                .accessibilityHidden(!isLyrics)
                 .accessibilityElement()
-                .accessibilityLabel(isLyrics ? "Hide Lyrics" : "Show Lyrics")
+                .accessibilityLabel("Hide Lyrics")
                 .accessibilityAddTraits(.isButton)
         }
     }
@@ -137,50 +137,39 @@ private struct Hero: View {
         .animation(.easeInOut(duration: 0.5), value: model.state?.artworkId)
         .animation(.easeOut(duration: 0.3), value: model.artwork == nil)
     }
-
-    /// Eased, so neither veil ends in a line.
-    private var veils: some View {
-        VStack(spacing: 0) {
-            LinearGradient(stops: [
-                .init(color: .black.opacity(0.5), location: 0),
-                .init(color: .black.opacity(0.18), location: 0.55),
-                .init(color: .clear, location: 1),
-            ], startPoint: .top, endPoint: .bottom)
-            .frame(height: 64)
-            Spacer(minLength: 0)
-            LinearGradient(stops: [
-                .init(color: .clear, location: 0),
-                .init(color: .black.opacity(0.35), location: 0.3),
-                .init(color: .black.opacity(0.72), location: 0.65),
-                .init(color: .black.opacity(0.86), location: 1),
-            ], startPoint: .top, endPoint: .bottom)
-            .frame(height: 160)
-        }
-        .allowsHitTesting(false)
-    }
 }
 
-/// The title with the heart beside it, as the phone sets them, over the transport.
+/// Three groups down the display, as the watch's own Now Playing sets them: what's playing at
+/// the top, under the clock; the transport in the middle of what's left, with room above and
+/// below to be the thing the eye finds; the corner buttons at the foot.
 private struct Controls: View {
     let state: WatchNowPlaying
     let morph: Namespace.ID
     @Environment(WatchModel.self) private var model
     @Environment(\.isLuminanceReduced) private var isDimmed
 
+    /// Below the clock's band.
+    static let top: CGFloat = 44
+    /// Above the corner buttons: 8 below them, 32 for them, 4 clear.
+    static let foot: CGFloat = 44
+
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 0) {
             HStack(spacing: 4) {
                 SongTitle(state: state, direction: model.songDirection)
                 FavoriteButton(state: state)
             }
+            .padding(.leading, 16)
+            .padding(.trailing, 8)
+            Spacer(minLength: 8)
             Transport(state: state, morph: morph)
+                .padding(.horizontal, 16)
                 .opacity(isDimmed ? 0.5 : 1)
+            Spacer(minLength: 8)
         }
-        .padding(.leading, 16)
-        .padding(.trailing, 8)
-        // Clear of the corner buttons beneath.
-        .padding(.bottom, 44)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .padding(.top, Self.top)
+        .padding(.bottom, Self.foot)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -222,7 +211,6 @@ private struct Transport: View {
             Spacer(minLength: 0)
             skip("forward.fill", label: "Next") { model.send(.next) }
         }
-        .padding(.trailing, 8)
     }
 
     private func skip(_ symbol: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
