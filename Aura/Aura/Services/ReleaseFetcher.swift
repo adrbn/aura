@@ -75,8 +75,10 @@ final class ReleaseFetcher {
     /// A peer that sends nothing for this long is passed over — unless it's the last one.
     private static let stallLimit: TimeInterval = 90
     private static let lastStallLimit: TimeInterval = 20 * 60
-    /// Halfway there with nothing yet: time to ask the server to look.
-    private static var firstScan: TimeInterval { ImportPace.estimate / 2 }
+    /// Halfway there with nothing yet: time to ask the server to look — but never later than
+    /// five minutes in. Tied to the estimate alone it fed itself: a long estimate put off the
+    /// scan, the late scan made the import long, and that became the next estimate.
+    private static var firstScan: TimeInterval { min(ImportPace.estimate / 2, 5 * 60) }
     private static let scanEvery: TimeInterval = 4 * 60
     private static let importLimit: TimeInterval = 90 * 60
     private static let readyKept: TimeInterval = 30 * 60
@@ -394,7 +396,7 @@ final class ReleaseFetcher {
         var lastScan: Date?
         while !Task.isCancelled {
             if let songs = await songs(of: fetch) {
-                ImportPace.note(Date().timeIntervalSince(downloaded))
+                if let added = ImportPace.added(songs) { ImportPace.note(added.timeIntervalSince(downloaded)) }
                 await finish(id, songs: songs)
                 return
             }
@@ -656,7 +658,8 @@ private final class ReleaseFetchActivities {
 /// any fixed figure was wrong for every server but one. The countdown on the card and the
 /// Lock Screen, and when the app first asks for a scan, follow what was measured instead.
 enum ImportPace {
-    private static let key = "release_fetch_import_pace_v1"
+    /// v1 held how long the app took to notice, which counted every hour it spent asleep.
+    private static let key = "release_fetch_import_pace_v2"
     private static let kept = 5
     /// Before anything is measured: a sweep every ten minutes, of files ten minutes old.
     private static let assumed: TimeInterval = 20 * 60
@@ -664,7 +667,22 @@ enum ImportPace {
     static var estimate: TimeInterval {
         let recent = UserDefaults.standard.array(forKey: key) as? [Double] ?? []
         guard !recent.isEmpty else { return assumed }
-        return max(recent.sorted()[recent.count / 2], 60)
+        let sorted = recent.sorted()
+        let mid = sorted.count / 2
+        // A true median: with two measures, the upper one alone set the countdown.
+        let median = sorted.count.isMultiple(of: 2) ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+        return max(median, 60)
+    }
+
+    /// When the server added these songs, by its own clock — not when the app happened to
+    /// look, which is as late as the phone stayed asleep. Nil when the server doesn't say.
+    static func added(_ songs: [Song]) -> Date? {
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let plain = ISO8601DateFormatter()
+        return songs.compactMap { song in
+            song.created.flatMap { withFraction.date(from: $0) ?? plain.date(from: $0) }
+        }.max()
     }
 
     /// A release found on the server this long after its download finished. Anything under
