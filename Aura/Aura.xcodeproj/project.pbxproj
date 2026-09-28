@@ -14,6 +14,7 @@
 		08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */; };
 		08E4C34DF24A10EBBA4861E3 /* DayGlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */; };
 		0A1F89D1ABA2F4604606726A /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
+		0A3112A686D5D037ACD3FFCC /* CarPlayArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7027618C0439D47187558051 /* CarPlayArtwork.swift */; };
 		0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
 		0CF35D1498580545AAB8E5CF /* MacArtistLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */; };
 		1098ACD0A4306A067B6F7DBC /* AuraWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 46EB97B0FBEAA4C3113B875E /* AuraWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -211,13 +212,14 @@
 		E1000001000000000000B002 /* LyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B002 /* LyricsTranslator.swift */; };
 		E1000001000000000000B003 /* CoverFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B003 /* CoverFinder.swift */; };
 		E384C913F8C88AB732ED752D /* MusicEntities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */; };
-		E5E285F07AE8AC12F1E7E5A0 /* WatchCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48463C5BC4D5C5785245C8BE /* WatchCatalog.swift */; };
+		E5E285F07AE8AC12F1E7E5A0 /* LibraryCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48463C5BC4D5C5785245C8BE /* LibraryCatalog.swift */; };
 		EAD18EB0F47BC2E6F77CB899 /* MacServerPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2840376375D75F5F54A64277 /* MacServerPicker.swift */; };
 		EBA1389D873C96B20ECBC2AD /* BouncingDotsLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F7 /* BouncingDotsLoader.swift */; };
 		EBEB7A689B00639BFDCF12E6 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000050 /* DownloadManager.swift */; };
 		EE512248F159953168EFB22B /* OfflineTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */; };
 		EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
 		F4367F560164A20E2291171A /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000089 /* KeychainHelper.swift */; };
+		F7121339D268A340E4E09F3A /* CarPlayBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C03CBFD9194F991514A276 /* CarPlayBrowser.swift */; };
 		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
 		F9FA80A12F501CE2B050FF14 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
 		FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC935E192C9737FFC79738ED /* MacSongRow.swift */; };
@@ -277,6 +279,7 @@
 /* Begin PBXFileReference section */
 		06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPreferences.swift; sourceTree = "<group>"; };
 		12F316BCC5018DF788F0B8F8 /* LyricsTranslationSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsTranslationSettingsView.swift; sourceTree = "<group>"; };
+		14C03CBFD9194F991514A276 /* CarPlayBrowser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarPlayBrowser.swift; sourceTree = "<group>"; };
 		184924427443C74B467EA233 /* MacSongTable.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongTable.swift; sourceTree = "<group>"; };
 		191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GeminiLyricsTranslator.swift; sourceTree = "<group>"; };
 		192D83957C7F2C1E93977841 /* MacPlaylistOrder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlaylistOrder.swift; sourceTree = "<group>"; };
@@ -297,7 +300,7 @@
 		41DF74C93207494A7E1F1347 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		437B7190B573C0B80DC47A2B /* AuraWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraWatchApp.swift; sourceTree = "<group>"; };
 		46EB97B0FBEAA4C3113B875E /* AuraWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AuraWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		48463C5BC4D5C5785245C8BE /* WatchCatalog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchCatalog.swift; sourceTree = "<group>"; };
+		48463C5BC4D5C5785245C8BE /* LibraryCatalog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibraryCatalog.swift; sourceTree = "<group>"; };
 		485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerSetupView.swift; sourceTree = "<group>"; };
 		48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacEqualizerView.swift; sourceTree = "<group>"; };
 		4BE00E8954AF9B98264A367E /* MacQueueView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacQueueView.swift; sourceTree = "<group>"; };
@@ -311,6 +314,7 @@
 		61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlaylistsView.swift; sourceTree = "<group>"; };
 		6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistLinks.swift; sourceTree = "<group>"; };
 		6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
+		7027618C0439D47187558051 /* CarPlayArtwork.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarPlayArtwork.swift; sourceTree = "<group>"; };
 		7507C823E9A1C89305C77937 /* MacHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacHomeView.swift; sourceTree = "<group>"; };
 		76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineTabs.swift; sourceTree = "<group>"; };
 		7B7AA32B23D8B48D503402F9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -690,7 +694,9 @@
 				E1000002000000000000A005 /* LyricsVersion.swift */,
 				191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */,
 				1F4729DBCE407138E2BDA845 /* WatchLink.swift */,
-				48463C5BC4D5C5785245C8BE /* WatchCatalog.swift */,
+				48463C5BC4D5C5785245C8BE /* LibraryCatalog.swift */,
+				14C03CBFD9194F991514A276 /* CarPlayBrowser.swift */,
+				7027618C0439D47187558051 /* CarPlayArtwork.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1272,7 +1278,9 @@
 				06665240EFF5CFD599AC09F2 /* WatchLink.swift in Sources */,
 				9A636196503516598302BB10 /* UnfollowedArtistsView.swift in Sources */,
 				08E4C34DF24A10EBBA4861E3 /* DayGlow.swift in Sources */,
-				E5E285F07AE8AC12F1E7E5A0 /* WatchCatalog.swift in Sources */,
+				E5E285F07AE8AC12F1E7E5A0 /* LibraryCatalog.swift in Sources */,
+				F7121339D268A340E4E09F3A /* CarPlayBrowser.swift in Sources */,
+				0A3112A686D5D037ACD3FFCC /* CarPlayArtwork.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

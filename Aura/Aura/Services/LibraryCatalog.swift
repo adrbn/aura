@@ -2,11 +2,11 @@
 import Foundation
 import UIKit
 
-/// The library as the watch browses it: what the phone's Home makes for you, the playlists,
-/// search, and what's in each — answered from what the phone already has where it can, from
-/// the server where it must — and played as the phone plays it.
+/// The library as the watch and the car browse it: what the phone's Home makes for you, the
+/// playlists, search, and what's in each — answered from what the phone already has where it
+/// can, from the server where it must — and played as the phone plays it.
 @MainActor
-enum WatchCatalog {
+enum LibraryCatalog {
     /// A long list stays a small message: the watch shows this many songs of a collection.
     private static let listed = 100
     /// Pixels a side: a 36 pt row's cover and a 60 pt header's, at the watch's scale.
@@ -33,7 +33,13 @@ enum WatchCatalog {
             player.playSong(song, source: .search(query: ""))
             return
         }
-        var songs = await songs(of: item)
+        await play(await songs(of: item), of: item, at: index, shuffled: shuffled)
+    }
+
+    /// Plays songs already fetched for `item` — the car's list holds them — as the phone
+    /// would play that item.
+    static func play(_ songs: [Song], of item: WatchItem, at index: Int, shuffled: Bool) async {
+        var songs = songs
         if item.kind == .mix, item.id == "radar" {
             // A preview's address lasts a quarter of an hour: fetch what has gone stale.
             await RadarService.shared.loadTrackLists()
@@ -46,6 +52,19 @@ enum WatchCatalog {
         } else {
             let start = songs.indices.contains(index) ? index : 0
             player.playSong(songs[start], fromQueue: songs, startIndex: start, source: source)
+        }
+    }
+
+    /// Plays a song from Up Next: one queued by hand leaves the queue as it plays, one from
+    /// the rest plays from where it stands. Checked first, in case the queue moved on.
+    static func playUpcoming(_ songId: String, slot: Int, queued: Bool) {
+        if queued {
+            guard player.userQueue.indices.contains(slot), player.userQueue[slot].id == songId else { return }
+            let song = player.userQueue.remove(at: slot)
+            player.playSong(song, fromQueue: player.queue, startIndex: player.queueIndex, source: .queue)
+        } else {
+            guard player.queue.indices.contains(slot), player.queue[slot].id == songId else { return }
+            player.playSong(player.queue[slot], fromQueue: player.queue, startIndex: slot, source: .autoplay)
         }
     }
 
@@ -73,7 +92,7 @@ enum WatchCatalog {
             do {
                 playlists += try await SubsonicClient.shared.getPlaylists(server: server).map { Self.item($0) }
             } catch {
-                AppLogger.shared.log("⌚️ Watch playlists not loaded: \(error.localizedDescription)")
+                AppLogger.shared.log("📚 Playlists not loaded: \(error.localizedDescription)")
             }
         }
         return WatchShelf(mixes: mixes, playlists: playlists)
@@ -87,7 +106,7 @@ enum WatchCatalog {
                 let artist = try await SubsonicClient.shared.getArtist(server: server, id: item.id)
                 listing.albums = (artist.album ?? []).map { Self.item($0) }
             } catch {
-                AppLogger.shared.log("⌚️ Watch artist not loaded: \(error.localizedDescription)")
+                AppLogger.shared.log("📚 Artist not loaded: \(error.localizedDescription)")
             }
         }
         return listing
@@ -104,7 +123,7 @@ enum WatchCatalog {
             return WatchSearchResults(songs: songs.map { Self.item($0) }, albums: (found.album ?? []).map { Self.item($0) },
                                       artists: (found.artist ?? []).map { Self.item($0) })
         } catch {
-            AppLogger.shared.log("⌚️ Watch search failed: \(error.localizedDescription)")
+            AppLogger.shared.log("📚 Search failed: \(error.localizedDescription)")
             return WatchSearchResults()
         }
     }
@@ -142,7 +161,7 @@ enum WatchCatalog {
 
     // MARK: - Songs
 
-    private static func songs(of item: WatchItem) async -> [Song] {
+    static func songs(of item: WatchItem) async -> [Song] {
         guard let server = ServerManager.shared.currentServer else { return [] }
         let songs: [Song]
         do {
@@ -165,7 +184,7 @@ enum WatchCatalog {
                 songs = await song(item.id).map { [$0] } ?? []
             }
         } catch {
-            AppLogger.shared.log("⌚️ Watch \(item.kind.rawValue) not loaded: \(error.localizedDescription)")
+            AppLogger.shared.log("📚 \(item.kind.rawValue) not loaded: \(error.localizedDescription)")
             return []
         }
         remember(songs)
@@ -197,27 +216,27 @@ enum WatchCatalog {
 
     // MARK: - Items
 
-    private static func item(_ mix: Mix) -> WatchItem {
+    static func item(_ mix: Mix) -> WatchItem {
         WatchItem(kind: .mix, id: mix.id, title: mix.title, subtitle: mix.subtitle, coverArt: mix.coverArt)
     }
 
-    private static func item(_ playlist: Playlist) -> WatchItem {
+    static func item(_ playlist: Playlist) -> WatchItem {
         let count = playlist.songCount.map { String(localized: "\($0) songs") } ?? ""
         return WatchItem(kind: .playlist, id: playlist.id, title: playlist.name, subtitle: count,
                          coverArt: playlist.coverArt)
     }
 
-    private static func item(_ album: Album) -> WatchItem {
+    static func item(_ album: Album) -> WatchItem {
         WatchItem(kind: .album, id: album.id, title: album.name, subtitle: album.artist ?? "",
                   coverArt: album.coverArt)
     }
 
-    private static func item(_ artist: Artist) -> WatchItem {
+    static func item(_ artist: Artist) -> WatchItem {
         WatchItem(kind: .artist, id: artist.id, title: artist.name, subtitle: String(localized: "Artist"),
                   coverArt: artist.coverArt)
     }
 
-    private static func item(_ song: Song) -> WatchItem {
+    static func item(_ song: Song) -> WatchItem {
         WatchItem(kind: .song, id: song.id, title: song.title, subtitle: song.artist ?? "Unknown Artist",
                   coverArt: song.coverArt)
     }

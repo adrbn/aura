@@ -119,9 +119,9 @@ struct AboutView: View {
                 featureRow(icon: "quote.bubble", title: "Synced lyrics",
                            subtitle: "Time-synced from your server, LRCLIB as backup.")
                 rowDivider
-                // CarPlay is implemented but NOT claimed here: it needs Apple's
-                // `com.apple.developer.carplay-audio` entitlement, which hasn't been
-                // granted, so the CarPlay scene is never created at runtime.
+                featureRow(icon: "carplay", title: "CarPlay",
+                           subtitle: "Your mixes, playlists and albums in the car.")
+                rowDivider
                 featureRow(icon: "arrow.down.circle", title: "Offline downloads",
                            subtitle: "Keep your music for the road, no signal needed.")
             }

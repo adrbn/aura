@@ -7,5 +7,8 @@
 	     entire point: the phone and the Mac have to read and write the same one. -->
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)com.aura.goldian</string>
+	<!-- Granted by Apple on 2026-09-28: the CarPlay audio app scene (CarPlaySceneDelegate). -->
+	<key>com.apple.developer.carplay-audio</key>
+	<true/>
 </dict>
 </plist>

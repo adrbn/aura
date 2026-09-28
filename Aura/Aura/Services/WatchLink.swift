@@ -191,24 +191,14 @@ final class WatchLink: NSObject {
         case .playSomething: Task { await player.playSomething() }
         case .play(let upcoming): play(upcoming)
         case .playItem(let item, let index, let shuffled):
-            Task { await WatchCatalog.play(item, index: index, shuffled: shuffled) }
+            Task { await LibraryCatalog.play(item, index: index, shuffled: shuffled) }
         }
     }
 
     /// The same as tapping the row in the phone's queue — once it's sure the row is still
     /// the song the watch showed.
     private func play(_ upcoming: WatchNowPlaying.Upcoming) {
-        if upcoming.isQueued {
-            guard player.userQueue.indices.contains(upcoming.slot),
-                  player.userQueue[upcoming.slot].id == upcoming.songId else { return }
-            let song = player.userQueue.remove(at: upcoming.slot)
-            player.playSong(song, fromQueue: player.queue, startIndex: player.queueIndex, source: .queue)
-        } else {
-            guard player.queue.indices.contains(upcoming.slot),
-                  player.queue[upcoming.slot].id == upcoming.songId else { return }
-            player.playSong(player.queue[upcoming.slot], fromQueue: player.queue,
-                            startIndex: upcoming.slot, source: .autoplay)
-        }
+        LibraryCatalog.playUpcoming(upcoming.songId, slot: upcoming.slot, queued: upcoming.isQueued)
     }
 }
 
@@ -242,7 +232,7 @@ extension WatchLink: WCSessionDelegate {
         // The library's questions, answered from the phone's own lists and the server.
         if let data = message[WatchLinkKey.request] as? Data,
            let request = try? JSONDecoder().decode(WatchRequest.self, from: data) {
-            Task { @MainActor in reply.send(await WatchCatalog.answer(request)) }
+            Task { @MainActor in reply.send(await LibraryCatalog.answer(request)) }
             return
         }
         Task { @MainActor in
