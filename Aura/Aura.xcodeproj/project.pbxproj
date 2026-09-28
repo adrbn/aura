@@ -10,9 +10,12 @@
 		0031110FB412232B510DA63F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332E4899162985D5A2BE70F9 /* Foundation.framework */; };
 		00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7507C823E9A1C89305C77937 /* MacHomeView.swift */; };
 		04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
+		06665240EFF5CFD599AC09F2 /* WatchLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4729DBCE407138E2BDA845 /* WatchLink.swift */; };
 		08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */; };
+		0A1F89D1ABA2F4604606726A /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
 		0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
 		0CF35D1498580545AAB8E5CF /* MacArtistLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */; };
+		1098ACD0A4306A067B6F7DBC /* AuraWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 46EB97B0FBEAA4C3113B875E /* AuraWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		125F7988574B0686E951FB7C /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
 		169403C7846F4989E4392CEF /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
 		196AB9045E589FCE183BD48E /* PlayHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE183A34FA /* PlayHistory.swift */; };
@@ -50,7 +53,10 @@
 		79226C21CD16E88AF9BA7E57 /* MacServerSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */; };
 		7E8ABA46083A765581C69A5E /* MacGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88855F68FD1F326A2B289FF3 /* MacGrid.swift */; };
 		7E8BB5A780EBB03A7F6F7786 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000013 /* AudioPlayer.swift */; };
+		7EB4906DACEABB1495A4C68C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 41DF74C93207494A7E1F1347 /* Foundation.framework */; };
 		80FBFEA4B8D74CC894B51E42 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F2 /* AppIcon.icon */; };
+		84A2867D8CD62676827A9934 /* NowPlayingPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 833EA8A9845DA4856999EFD6 /* NowPlayingPage.swift */; };
+		850445137A0B3E7CAA59D4B3 /* AuraWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 437B7190B573C0B80DC47A2B /* AuraWatchApp.swift */; };
 		87906AC1B1CBE2493FEBE438 /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
 		8BB5962C91AED0B33C182D53 /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
 		8C4E3E5E24DD37272F4E615D /* MacQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE00E8954AF9B98264A367E /* MacQueueView.swift */; };
@@ -69,16 +75,21 @@
 		B14BB8B8B6119F8BED515D05 /* AudioCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000087 /* AudioCacheManager.swift */; };
 		B225BE723A71BD7C8986CD35 /* MacWindowChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */; };
 		B308A21EB72F34D0B1A95848 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
+		B3BFA808FAD49E93A7FD8F14 /* UpNextPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAEB2AEB2052627E49050B2F /* UpNextPage.swift */; };
 		B3E087CB664FFC52D5EBFC95 /* MacNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC64675BCED89523D6B47E4D /* MacNowPlayingView.swift */; };
 		B588F5C510ADD0E5A079AF5D /* MixCollageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */; };
 		B5FD446B4105F41FB7E47BB2 /* GeminiLyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */; };
 		BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000070 /* Localizable.xcstrings */; };
+		BD810962312AF0BE4C7E7884 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DC88F51AFE7480355DB58E /* WatchModel.swift */; };
 		BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E789F4384A074A1B5C0CC509 /* PinSync.swift */; };
+		C03D99F693D04E563B0F59C5 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
 		C4A06B22916E4B2EEB2E9205 /* ListeningStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009A /* ListeningStats.swift */; };
 		C4C2E0968A314AF534FA406D /* MacCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE0E8DD48DEACB25983419C /* MacCommands.swift */; };
+		C98089C682B3DC5ADD5CE792 /* LyricsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 993444593E7509462E6F7CB1 /* LyricsPage.swift */; };
 		CB0915AA49DFE0752C781019 /* MusicBrainzService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAA00020000000000000001 /* MusicBrainzService.swift */; };
 		CCAA00010000000000000001 /* MusicBrainzService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAA00020000000000000001 /* MusicBrainzService.swift */; };
 		D0A5EB9898BCC71E22E56B92 /* MixCollageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */; };
+		D2B62F1920D7C43F77ED9061 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F2 /* AppIcon.icon */; };
 		D445B4900263E009D2334A45 /* MacSongsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52EF92C7DDB19233A3394D28 /* MacSongsView.swift */; };
 		D5BE2989193E4B96C7AA1B99 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000003 /* Assets.xcassets */; };
 		D6CD0FB601529915A9B3255C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000011 /* Models.swift */; };
@@ -202,6 +213,7 @@
 		EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
 		F4367F560164A20E2291171A /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000089 /* KeychainHelper.swift */; };
 		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
+		F9FA80A12F501CE2B050FF14 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
 		FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC935E192C9737FFC79738ED /* MacSongRow.swift */; };
 		FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
 /* End PBXBuildFile section */
@@ -214,6 +226,13 @@
 			remoteGlobalIDString = E10000060000000000000001;
 			remoteInfo = Aura;
 		};
+		998E0171FF0442A68287C871 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E10000090000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 47DC76665DB4C37E2C827F5D;
+			remoteInfo = AuraWatch;
+		};
 		E1000000B000000000000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E10000090000000000000001 /* Project object */;
@@ -224,6 +243,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		AB0B341B9B9F60FFB041240E /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				1098ACD0A4306A067B6F7DBC /* AuraWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E10000070000000000000005 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -245,14 +275,20 @@
 		192D83957C7F2C1E93977841 /* MacPlaylistOrder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlaylistOrder.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE18380A8A /* SearchRanking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchRanking.swift; sourceTree = "<group>"; };
 		196AB9045E589FCE183A34FA /* PlayHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayHistory.swift; sourceTree = "<group>"; };
+		1F4729DBCE407138E2BDA845 /* WatchLink.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchLink.swift; sourceTree = "<group>"; };
 		1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacWindowChrome.swift; sourceTree = "<group>"; };
+		22DC88F51AFE7480355DB58E /* WatchModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchModel.swift; sourceTree = "<group>"; };
 		2840376375D75F5F54A64277 /* MacServerPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerPicker.swift; sourceTree = "<group>"; };
 		2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistsView.swift; sourceTree = "<group>"; };
 		2B3B5FB4CB9ED329D9240207 /* OfflineLibrary.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineLibrary.swift; sourceTree = "<group>"; };
 		2DE0E8DD48DEACB25983419C /* MacCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacCommands.swift; sourceTree = "<group>"; };
+		32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchProtocol.swift; sourceTree = "<group>"; };
 		332E4899162985D5A2BE70F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQueryTests.swift; sourceTree = "<group>"; };
 		40E8E704D9B72925B6B94399 /* ImageCropView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
+		41DF74C93207494A7E1F1347 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		437B7190B573C0B80DC47A2B /* AuraWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraWatchApp.swift; sourceTree = "<group>"; };
+		46EB97B0FBEAA4C3113B875E /* AuraWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AuraWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerSetupView.swift; sourceTree = "<group>"; };
 		48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacEqualizerView.swift; sourceTree = "<group>"; };
 		4BE00E8954AF9B98264A367E /* MacQueueView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacQueueView.swift; sourceTree = "<group>"; };
@@ -269,10 +305,12 @@
 		7507C823E9A1C89305C77937 /* MacHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacHomeView.swift; sourceTree = "<group>"; };
 		76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineTabs.swift; sourceTree = "<group>"; };
 		7B7AA32B23D8B48D503402F9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		833EA8A9845DA4856999EFD6 /* NowPlayingPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NowPlayingPage.swift; sourceTree = "<group>"; };
 		88855F68FD1F326A2B289FF3 /* MacGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacGrid.swift; sourceTree = "<group>"; };
 		8BF55BE55F578254EC9F3FB0 /* AuraMac.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = AuraMac.entitlements; sourceTree = "<group>"; };
 		8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MusicEntities.swift; sourceTree = "<group>"; };
 		972B2D4634806C3FA589AE66 /* MacMixesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacMixesView.swift; sourceTree = "<group>"; };
+		993444593E7509462E6F7CB1 /* LyricsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsPage.swift; sourceTree = "<group>"; };
 		9C50ECA7916A55ECF9EE4962 /* CoverMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoverMenu.swift; sourceTree = "<group>"; };
 		A114C4B8E0319934E5F90216 /* MacRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
@@ -281,6 +319,7 @@
 		AA11BB22CC33DD44EE55F002 /* MixCacheTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MixCacheTests.swift; sourceTree = "<group>"; };
 		AA11BB22CC33DD44EE55F302 /* SearchArtistTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SearchArtistTests.swift; sourceTree = "<group>"; };
 		AA11BB22CC33DD44EE55F402 /* LyricWordTimingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricWordTimingTests.swift; sourceTree = "<group>"; };
+		AAEB2AEB2052627E49050B2F /* UpNextPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpNextPage.swift; sourceTree = "<group>"; };
 		AC64675BCED89523D6B47E4D /* MacNowPlayingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacNowPlayingView.swift; sourceTree = "<group>"; };
 		BC935E192C9737FFC79738ED /* MacSongRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongRow.swift; sourceTree = "<group>"; };
 		BEB587064D721AA775E21C53 /* SlskdClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlskdClient.swift; sourceTree = "<group>"; };
@@ -414,6 +453,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2F19E87303FA684FE204D9C8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7EB4906DACEABB1495A4C68C /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3FA6CE23449E82799F45D642 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -439,11 +486,26 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		23556B58FEBB3EA541157F30 /* AuraWatch */ = {
+			isa = PBXGroup;
+			children = (
+				437B7190B573C0B80DC47A2B /* AuraWatchApp.swift */,
+				22DC88F51AFE7480355DB58E /* WatchModel.swift */,
+				833EA8A9845DA4856999EFD6 /* NowPlayingPage.swift */,
+				993444593E7509462E6F7CB1 /* LyricsPage.swift */,
+				AAEB2AEB2052627E49050B2F /* UpNextPage.swift */,
+				32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */,
+			);
+			name = AuraWatch;
+			path = AuraWatch;
+			sourceTree = "<group>";
+		};
 		2B43EB2ADC8F9C920032929A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				3FE90F5D7556521127C834DD /* OS X */,
 				6D023D5BE16A62FC9C72524F /* iOS */,
+				A561DAA4078569CEFA3EEF49 /* watchOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -519,6 +581,14 @@
 			path = Mac;
 			sourceTree = "<group>";
 		};
+		A561DAA4078569CEFA3EEF49 /* watchOS */ = {
+			isa = PBXGroup;
+			children = (
+				41DF74C93207494A7E1F1347 /* Foundation.framework */,
+			);
+			name = watchOS;
+			sourceTree = "<group>";
+		};
 		E10000050000000000000001 = {
 			isa = PBXGroup;
 			children = (
@@ -527,6 +597,7 @@
 				E10000050000000000000009 /* Products */,
 				2B43EB2ADC8F9C920032929A /* Frameworks */,
 				552B2B5BE81D4ECC96B2BA91 /* AuraTests */,
+				23556B58FEBB3EA541157F30 /* AuraWatch */,
 			);
 			sourceTree = "<group>";
 		};
@@ -602,6 +673,7 @@
 				E1000002000000000000A008 /* SoulseekPick.swift */,
 				E1000002000000000000A005 /* LyricsVersion.swift */,
 				191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */,
+				1F4729DBCE407138E2BDA845 /* WatchLink.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -689,6 +761,7 @@
 				E10000030000000000000002 /* AuraWidgetExtension.appex */,
 				ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */,
 				5FC303FFB1AA5654FA101AC6 /* AuraTests.xctest */,
+				46EB97B0FBEAA4C3113B875E /* AuraWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -754,6 +827,23 @@
 			productReference = 5FC303FFB1AA5654FA101AC6 /* AuraTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		47DC76665DB4C37E2C827F5D /* AuraWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 854ED9B0C4CC7E9970F53FD7 /* Build configuration list for PBXNativeTarget "AuraWatch" */;
+			buildPhases = (
+				E99E2813C1C31F576D7B6CF0 /* Sources */,
+				2F19E87303FA684FE204D9C8 /* Frameworks */,
+				3D93E298A91617D62AEE951F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AuraWatch;
+			productName = AuraWatch;
+			productReference = 46EB97B0FBEAA4C3113B875E /* AuraWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
 		E10000060000000000000001 /* Aura */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E10000080000000000000001 /* Build configuration list for PBXNativeTarget "Aura" */;
@@ -763,11 +853,13 @@
 				E10000070000000000000002 /* Resources */,
 				E100000700000000000000F0 /* Embed display fonts if present */,
 				E10000070000000000000005 /* Embed Foundation Extensions */,
+				AB0B341B9B9F60FFB041240E /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				E1000000C000000000000001 /* PBXTargetDependency */,
+				16B5EBD935B2182EB7BA26DE /* PBXTargetDependency */,
 			);
 			name = Aura;
 			productName = Aura;
@@ -827,6 +919,7 @@
 				E10000060000000000000002 /* AuraWidgetExtension */,
 				104378F2D7F8F4A6BC123D9D /* Aura-mac */,
 				14E9655B0E42340E60963398 /* AuraTests */,
+				47DC76665DB4C37E2C827F5D /* AuraWatch */,
 			);
 		};
 /* End PBXProject section */
@@ -839,6 +932,14 @@
 				D5BE2989193E4B96C7AA1B99 /* Assets.xcassets in Resources */,
 				BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */,
 				80FBFEA4B8D74CC894B51E42 /* AppIcon.icon in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3D93E298A91617D62AEE951F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D2B62F1920D7C43F77ED9061 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1125,6 +1226,8 @@
 				EE512248F159953168EFB22B /* OfflineTabs.swift in Sources */,
 				606EA6CB9CEA6481F2D26E66 /* AccentColourPicker.swift in Sources */,
 				37F714D890A226E19DE5F65E /* CoverMenu.swift in Sources */,
+				F9FA80A12F501CE2B050FF14 /* WatchProtocol.swift in Sources */,
+				06665240EFF5CFD599AC09F2 /* WatchLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1141,9 +1244,29 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E99E2813C1C31F576D7B6CF0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				850445137A0B3E7CAA59D4B3 /* AuraWatchApp.swift in Sources */,
+				BD810962312AF0BE4C7E7884 /* WatchModel.swift in Sources */,
+				84A2867D8CD62676827A9934 /* NowPlayingPage.swift in Sources */,
+				C98089C682B3DC5ADD5CE792 /* LyricsPage.swift in Sources */,
+				B3BFA808FAD49E93A7FD8F14 /* UpNextPage.swift in Sources */,
+				0A1F89D1ABA2F4604606726A /* WatchProtocol.swift in Sources */,
+				C03D99F693D04E563B0F59C5 /* MarqueeText.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		16B5EBD935B2182EB7BA26DE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = AuraWatch;
+			target = 47DC76665DB4C37E2C827F5D /* AuraWatch */;
+			targetProxy = 998E0171FF0442A68287C871 /* PBXContainerItemProxy */;
+		};
 		CC753A5EC635CA55D9AE1AFC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = Aura;
@@ -1237,6 +1360,7 @@
 				CURRENT_PROJECT_VERSION = 182;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				ENABLE_PREVIEWS = YES;
+				EXCLUDED_SOURCE_FILE_NAMES = AuraWatch.app;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Aura/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aura;
@@ -1258,6 +1382,36 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = "Release-AppStore";
+		};
+		49016541442FA7C5FB07016F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 182;
+				DEVELOPMENT_TEAM = 2TWQF4T93E;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Aura;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.aura.goldian;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
 		};
 		4CBFA4184E40FB7F0BE2B877 /* Release-AppStore */ = {
 			isa = XCBuildConfiguration;
@@ -1289,6 +1443,36 @@
 			};
 			name = "Release-AppStore";
 		};
+		6CA07A4857601EB4B47FE4BF /* Release-AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 182;
+				DEVELOPMENT_TEAM = 2TWQF4T93E;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Aura;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.aura.goldian;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = "Release-AppStore";
+		};
 		6EEB4A1AE0B4EF7BDE095AD0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1307,6 +1491,35 @@
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
+		};
+		772D609FE5180362670FE81F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 182;
+				DEVELOPMENT_TEAM = 2TWQF4T93E;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Aura;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.aura.goldian;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aura.goldian.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
 		};
 		C84F5AA6FA4F842AA8AE87BA /* Release-AppStore */ = {
 			isa = XCBuildConfiguration;
@@ -1684,6 +1897,16 @@
 				F4B99FBA20E0BD513F1B9C5D /* Release */,
 				213FE713A6FF311D487E2C16 /* Debug */,
 				4CBFA4184E40FB7F0BE2B877 /* Release-AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		854ED9B0C4CC7E9970F53FD7 /* Build configuration list for PBXNativeTarget "AuraWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49016541442FA7C5FB07016F /* Release */,
+				772D609FE5180362670FE81F /* Debug */,
+				6CA07A4857601EB4B47FE4BF /* Release-AppStore */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

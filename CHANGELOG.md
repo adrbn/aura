@@ -6,6 +6,9 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added — Apple Watch
+- Aura on the wrist, as a remote for the iPhone: what's playing with its cover, play/pause, previous, next, the heart, and the Digital Crown on the phone's volume. Swipe sideways for the lyrics, following the song — tap a line to jump to it — and for what's up next, where a tap plays it. The watch counts the position on its own; the phone only speaks when something changes, so a playing song isn't a message a second. Needs watchOS 26; not in the App Store build until it has been tried on a watch
+
 ### Added — Made For You
 - Radar: this month's releases from the artists you play most, found in Deezer's public catalogue and matched against your server. The releases the server has play as a mix; the others are listed beneath it, opening in Deezer — or in a Soulseek search, in the sideload build. The catalogue is checked once a day and the server every quarter hour, so a release you add joins the mix soon after the server lists it. Off in Settings → Release Radar
 - Radar previews: tapping a release that isn't on the server plays its tracks' thirty-second Deezer previews in the player, as a queue — Now Playing, the lock screen and the queue included. A preview is marked as such and asks nothing of the server: no star, no scrobble, no history, no radio when it ends

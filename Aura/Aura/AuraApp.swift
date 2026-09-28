@@ -53,6 +53,7 @@ struct AuraApp: App {
         UIScrollView.appearance().showsVerticalScrollIndicator = false
         UIScrollView.appearance().showsHorizontalScrollIndicator = false
         applyThemeAppearance()
+        WatchLink.shared.start()
     }
 
     var body: some Scene {
