@@ -45,13 +45,10 @@ struct RadarReleaseRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: release.cover.flatMap(URL.init(string:))) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Color.primary.opacity(0.08)
-            }
-            .frame(width: 50, height: 50)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            // The app's artwork cache, not AsyncImage: that kept an empty square for good
+            // after one failed load, and for a release listed before it had a cover.
+            CoverArtImage(coverArt: release.hasCover ? release.cover : nil, size: 50, cornerRadius: 6,
+                          placeholderName: release.title, placeholderKind: .album)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(release.title)

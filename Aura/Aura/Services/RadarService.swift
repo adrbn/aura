@@ -294,7 +294,7 @@ final class RadarService {
 
     private func refresh(server: ServerConfig, catalogue staleCatalogue: Bool) async {
         let now = Date()
-        let releases: [RadarRelease]
+        var releases: [RadarRelease]
         let fetched: Date
         if staleCatalogue {
             guard let found = await Self.findReleases(server: server, previous: radar?.releases ?? [])
@@ -303,6 +303,7 @@ final class RadarService {
         } else {
             (releases, fetched) = (radar?.releases ?? [], radar?.fetched ?? now)
         }
+        releases = await Self.withCovers(releases)
         // Once a day everything is checked again; in between, only what was still missing,
         // whole or in part.
         let lacked = radar?.lacking
@@ -373,6 +374,24 @@ final class RadarService {
             credited.append(named)
         }
         return credited
+    }
+
+    /// The releases, with the covers Deezer had not attached yet when they were listed. A
+    /// release out today can come without one, and the artist's discography keeps saying so
+    /// for hours after its own page has it. Asked again on every pass until it comes: one
+    /// call each, for those alone.
+    private static func withCovers(_ releases: [RadarRelease]) async -> [RadarRelease] {
+        var covered: [RadarRelease] = []
+        for release in releases {
+            guard !release.hasCover, let cover = await RadarCatalog.cover(albumId: release.id) else {
+                covered.append(release)
+                continue
+            }
+            var found = release
+            found.cover = cover
+            covered.append(found)
+        }
+        return covered
     }
 
     /// Nil when Deezer couldn't be asked; empty when it doesn't know the artist.

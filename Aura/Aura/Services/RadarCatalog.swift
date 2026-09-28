@@ -12,7 +12,9 @@ struct RadarRelease: Codable, Hashable, Identifiable {
     let released: String
     /// Deezer's `record_type`: album, ep, single or compile.
     let type: String
-    let cover: String?
+    /// Nil, or an address with no picture in it, for a release listed before Deezer had
+    /// attached its cover — asked for again until it comes (`RadarService`).
+    var cover: String?
     let link: String?
     /// Everyone Deezer credits it to, its main artist first — the radar files a collaboration
     /// under whichever of its artists is played most. Nil on a radar built before it was
@@ -43,9 +45,18 @@ struct RadarRelease: Codable, Hashable, Identifiable {
 
     var releaseDate: Date? { RadarWindow.formatter.date(from: released) }
 
+    /// Whether the cover points at a picture. Deezer lists a release out today before it has
+    /// one, with no address or one whose image id is blank (`/images/cover//…`), which leads
+    /// to its grey stand-in.
+    var hasCover: Bool {
+        guard let cover, !cover.isEmpty else { return false }
+        return !cover.contains("/cover//")
+    }
+
     /// Deezer's medium cover is 250 px, soft full-screen; the same picture comes larger.
     var largeCover: String? {
-        cover.map { $0.replacingOccurrences(of: "/250x250-", with: "/1000x1000-") }
+        guard hasCover else { return nil }
+        return cover.map { $0.replacingOccurrences(of: "/250x250-", with: "/1000x1000-") }
     }
 }
 
@@ -382,6 +393,18 @@ enum RadarCatalog {
         let main = (album.contributors ?? []).filter { ($0.role ?? "Main") == "Main" }.map(\.name)
         let names = main.isEmpty ? [album.artist?.name].compactMap { $0 } : main
         return names.enumerated().filter { names.firstIndex(of: $0.element) == $0.offset }.map(\.element)
+    }
+
+    private struct AlbumCover: Decodable {
+        let cover_medium: String?
+    }
+
+    /// A release's cover, from its own page — nil while Deezer still has none for it.
+    static func cover(albumId: String) async -> String? {
+        guard Int(albumId) != nil, let url = URL(string: "https://api.deezer.com/album/\(albumId)"),
+              let album: AlbumCover = await fetch(url),
+              let cover = album.cover_medium, !cover.isEmpty, !cover.contains("/cover//") else { return nil }
+        return cover
     }
 
     /// A release's tracks in order. Asked when the release is opened: the previews' links
