@@ -69,10 +69,24 @@ struct TappableArtistText: View {
     var dismissNowPlaying: Bool = false
     /// Optional closure for in-view navigation (e.g. within NowPlayingView's NavigationStack)
     var onNavigate: ((String) -> Void)? = nil
+    /// Every name in full, the line scrolling when they don't fit — like the title above
+    /// it — instead of each name being cut to a few letters and an ellipsis.
+    var scrolls: Bool = false
+    /// Passed to the marquee: false while the line can't be seen.
+    var scrollsNow: Bool = true
 
     @Environment(AudioPlayer.self) private var player
 
     var body: some View {
+        if scrolls {
+            Marquee(key: artistString, isActive: scrollsNow) { artists }
+        } else {
+            artists
+        }
+    }
+
+    @ViewBuilder
+    private var artists: some View {
         let parts = parseArtists(from: artistString)
 
         if parts.count <= 1 {

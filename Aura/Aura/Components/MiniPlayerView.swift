@@ -14,10 +14,13 @@ struct MiniPlayerView: View {
                         .id("mini-\(song.id)-\(song.coverArt ?? "")")
 
                     VStack(alignment: .leading, spacing: 2) {
+                        // Held at its start while Now Playing covers it, so closing the
+                        // player finds the title's first word, not the middle of a slide.
                         MarqueeText(text: song.title,
                                     font: .subheadline.weight(.semibold),
                                     color: .primary,
-                                    alignment: .leading)
+                                    alignment: .leading,
+                                    isActive: !player.isShowingNowPlaying)
                         Text(song.artist ?? "Unknown Artist")
                             .font(.caption)
                             .foregroundStyle(.secondary)

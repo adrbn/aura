@@ -372,12 +372,14 @@ struct NowPlayingView: View {
                     } label: {
                         MarqueeText(text: displayTitle(for: song),
                                     font: .title2.bold(),
-                                    color: .white,)
+                                    color: .white,
+                                    isActive: !showLyrics)
                     }
                 } else {
                     MarqueeText(text: displayTitle(for: song),
                                 font: .title2.bold(),
-                                color: .white,)
+                                color: .white,
+                                isActive: !showLyrics)
                 }
                 TappableArtistText(
                     artistString: song.artist ?? "Unknown Artist",
@@ -388,7 +390,9 @@ struct NowPlayingView: View {
                     onNavigate: { artistId in
                         player.pendingArtistId = artistId
                         player.isShowingNowPlaying = false
-                    }
+                    },
+                    scrolls: true,
+                    scrollsNow: !showLyrics
                 )
             }
             .frame(maxWidth: .infinity, alignment: .center)
@@ -766,10 +770,10 @@ struct NowPlayingView: View {
                     .foregroundStyle(.white.opacity(0.6))
                     .lineLimit(1)
             } else {
-                Text(song.artist ?? "Unknown Artist")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
-                    .lineLimit(1)
+                MarqueeText(text: song.artist ?? "Unknown Artist",
+                            font: .caption,
+                            color: .white.opacity(0.6),
+                            alignment: .leading)
             }
         }
     }
