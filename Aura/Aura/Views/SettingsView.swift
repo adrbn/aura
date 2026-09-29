@@ -518,6 +518,13 @@ struct SettingsView: View {
             Toggle(isOn: $appSettings.radarEnabled) {
                 Label("Show Radar on Home", systemImage: "dot.radiowaves.left.and.right")
             }
+            if let watched = RadarService.shared.watched {
+                LabeledContent {
+                    Text("\(watched.count)")
+                } label: {
+                    Label("Followed with SoulSync", systemImage: "arrow.down.circle")
+                }
+            }
             if !RadarService.shared.unfollowed.isEmpty {
                 NavigationLink { UnfollowedArtistsView() } label: {
                     LabeledContent {
@@ -530,7 +537,11 @@ struct SettingsView: View {
         } header: {
             Text("Release Radar")
         } footer: {
-            Text("New releases from the artists you play most, found in Deezer's public catalogue. Only artist names are sent.")
+            if RadarService.shared.watched != nil {
+                Text("The radar follows SoulSync's watchlist, and adds your favourite and most-played artists to it. SoulSync downloads their new releases by itself once a day; Get It fetches one at once.")
+            } else {
+                Text("New releases from the artists you play most, found in Deezer's public catalogue. Only artist names are sent.")
+            }
         }
     }
 

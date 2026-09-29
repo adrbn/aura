@@ -676,7 +676,10 @@ struct ArtistRef: Codable, Hashable, Identifiable {
     let name: String
 
     /// The id, when the library knows the artist: one found only on Deezer has none.
-    var libraryId: String? { id.isEmpty ? nil : id }
+    var libraryId: String? { id.isEmpty || id.hasPrefix(Self.deezerPrefix) ? nil : id }
+
+    /// Marks the id of an artist the radar follows who isn't in the library yet.
+    static let deezerPrefix = "dz:"
 }
 
 /// A song's ReplayGain values from the server, in dB (gains) and linear full scale

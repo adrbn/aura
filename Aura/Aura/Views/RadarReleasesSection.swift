@@ -114,8 +114,10 @@ struct RadarReleaseRow: View {
                     Label("Search by Hand", systemImage: "magnifyingglass")
                 }
             }
-            Button { player.pendingArtistId = release.artist.id } label: {
-                Label("Go to Artist", systemImage: "person")
+            if let artistId = release.artist.libraryId {
+                Button { player.pendingArtistId = artistId } label: {
+                    Label("Go to Artist", systemImage: "person")
+                }
             }
             Button(role: .destructive) {
                 withAnimation { RadarService.shared.unfollow(release.artist) }
@@ -213,11 +215,14 @@ struct RadarReleaseRow: View {
         #endif
     }
 
-    /// "Zaoui · Album · Sep 25", and how many songs are still to get when the server has some.
+    /// "Zaoui · Album · Sep 25", and how many songs are still to get when the server has some
+    /// — or that SoulSync is bringing it, when it's one it downloads by itself.
     private var details: String {
         var parts = [release.byline, release.typeLabel, dateLabel]
         if let lacking = RadarService.shared.current?.lacking?[release.id] {
             parts.append(String(localized: "\(lacking) to get"))
+        } else if !isHeld && RadarService.shared.isComing(release) {
+            parts.append(String(localized: "On its way"))
         }
         return parts.joined(separator: " · ")
     }

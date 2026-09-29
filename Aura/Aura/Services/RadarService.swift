@@ -73,6 +73,13 @@ final class RadarService {
         return (try? JSONDecoder().decode([ArtistRef].self, from: data)) ?? []
     }()
     private static let unfollowedKey = "radar_unfollowed_v1"
+    /// SoulSync's watchlist as it last answered, by artist: what it downloads by itself. Nil
+    /// when it isn't there — the radar then follows the artists it picks alone.
+    private(set) var watched: [String: SoulSyncWatchlist.Artist]?
+    private var watchAsked = false
+    /// Which list the last daily pass followed: a first pass with SoulSync reachable doesn't
+    /// wait a day to follow its list.
+    private static let followingKey = "radar_following_v1"
     /// Owned here rather than by the screen that asked: a first run takes the best part of a
     /// minute, and leaving Home must not throw it away.
     private var refreshTask: Task<Void, Never>?
@@ -118,7 +125,7 @@ final class RadarService {
         // A radar from before releases were credited in full is asked again at once.
         let staleCatalogue = radar.map {
             now.timeIntervalSince($0.fetched) > Self.catalogueAge || $0.releases.contains { $0.credits == nil }
-        } ?? true
+        } ?? true || SoulSyncWatchlist.isEnabled && UserDefaults.standard.string(forKey: Self.followingKey) == nil
         let staleLibrary = radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge || $0.lacking == nil || $0.whole == nil } ?? true
         guard staleCatalogue || staleLibrary else {
             await fillMissingCovers()
@@ -323,11 +330,19 @@ final class RadarService {
         var releases: [RadarRelease]
         let fetched: Date
         if staleCatalogue {
+            let watchlist = await SoulSyncWatchlist.artists()
             guard let found = await Self.findReleases(server: server, previous: radar?.releases ?? [],
-                                                      skipping: Set(unfollowed.map(\.id)))
+                                                      unfollowed: unfollowed, watchlist: watchlist)
             else { return }
             (releases, fetched) = (found, now)
+            watched = watchlist.map(Self.index)
+            watchAsked = true
+            UserDefaults.standard.set(watchlist == nil ? "radar" : "soulsync", forKey: Self.followingKey)
         } else {
+            if !watchAsked {
+                watchAsked = true
+                watched = await SoulSyncWatchlist.artists().map(Self.index)
+            }
             (releases, fetched) = (radar?.releases ?? [], radar?.fetched ?? now)
         }
         releases = await Self.withCovers(releases)
@@ -357,22 +372,24 @@ final class RadarService {
 
     /// Nil when the server couldn't say who the artists are, or Deezer answered for none of
     /// them — the old radar stays up. An artist Deezer fails on keeps yesterday's releases.
-    private static func findReleases(server: ServerConfig, previous: [RadarRelease],
-                                     skipping unfollowed: Set<String>) async -> [RadarRelease]? {
+    private static func findReleases(server: ServerConfig, previous: [RadarRelease], unfollowed: [ArtistRef],
+                                     watchlist: [SoulSyncWatchlist.Artist]?) async -> [RadarRelease]? {
         let client = SubsonicClient.shared
         guard let frequent = try? await client.getAlbumList2(server: server, type: "frequent", size: 500) else {
             return nil
         }
         let starred = (try? await client.getStarred2(server: server))?.artist ?? []
-        let artists = RadarRules.artists(frequent: frequent.filter { !unfollowed.contains($0.artistId ?? "") },
-                                         starred: starred.filter { !unfollowed.contains($0.id) })
+        let skipped = Set(unfollowed.map(\.id))
+        let picks = RadarRules.artists(frequent: frequent.filter { !skipped.contains($0.artistId ?? "") },
+                                       starred: starred.filter { !skipped.contains($0.id) })
+        let artists = await following(picks, watchlist: watchlist, unfollowed: unfollowed, server: server)
         let window = RadarWindow.range()
 
         var releases: [RadarRelease] = []
         var seen = Set<Int>()
         var answered = 0
-        for artist in artists {
-            guard let albums = await discography(of: artist) else {
+        for (artist, deezerId) in artists {
+            guard let albums = await discography(of: artist, deezerId: deezerId) else {
                 for release in previous where release.artist.id == artist.id && window.contains(release.released)
                     && seen.insert(Int(release.id) ?? 0).inserted {
                     releases.append(release)
@@ -390,6 +407,28 @@ final class RadarService {
         // Deezer down or out of reach: an empty radar would say "nothing new" for a day.
         guard answered > 0 || artists.isEmpty else { return nil }
         return await credited(releases, known: previous).sorted { $0.released > $1.released }
+    }
+
+    /// The artists followed: SoulSync's list when it answers, the radar's picks put on it, each
+    /// with the Deezer id SoulSync has for them; else the picks alone, looked up by name.
+    private static func following(_ picks: [ArtistRef], watchlist: [SoulSyncWatchlist.Artist]?,
+                                  unfollowed: [ArtistRef], server: ServerConfig) async -> [(ArtistRef, String?)] {
+        guard let watchlist else { return picks.map { ($0, nil) } }
+        let library = (try? await SubsonicClient.shared.getArtists(server: server)) ?? []
+        let ids = Dictionary(library.map { (SoulSyncWatchlist.key($0.name), $0.id) }, uniquingKeysWith: { first, _ in first })
+        let followed = await SoulSyncWatchlist.following(watched: watchlist, picks: picks, library: ids,
+                                                         unfollowed: Set(unfollowed.map { SoulSyncWatchlist.key($0.name) }))
+        return followed.map { ($0.artist, $0.deezerId) }
+    }
+
+    private static func index(_ watchlist: [SoulSyncWatchlist.Artist]) -> [String: SoulSyncWatchlist.Artist] {
+        Dictionary(watchlist.map { (SoulSyncWatchlist.key($0.artistName), $0) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    /// A release SoulSync will download by itself: its artist is on the list, and the list
+    /// takes releases of its kind.
+    func isComing(_ release: RadarRelease) -> Bool {
+        watched?[SoulSyncWatchlist.key(release.artist.name)]?.fetches(release.type) == true
     }
 
     /// The releases with all their artists named, asked of Deezer once per release. One
@@ -416,11 +455,16 @@ final class RadarService {
         dropUnshown()
     }
 
+    /// SoulSync stops following them too, and downloading what they put out.
     func unfollow(_ artist: ArtistRef) {
         guard !unfollowed.contains(where: { $0.id == artist.id }) else { return }
         unfollowed.append(artist)
         saveUnfollowed()
         dropUnshown()
+        let key = SoulSyncWatchlist.key(artist.name)
+        guard let deezerId = watched?[key]?.deezerArtistId ?? Self.deezerId(of: artist) else { return }
+        watched?[key] = nil
+        Task { await SoulSyncWatchlist.remove(deezerId: deezerId) }
     }
 
     /// Their releases come back at the next daily pass, not at once: the catalogue is
@@ -428,6 +472,17 @@ final class RadarService {
     func follow(_ artist: ArtistRef) {
         unfollowed.removeAll { $0.id == artist.id }
         saveUnfollowed()
+        guard watched != nil else { return }
+        Task {
+            var deezerId = Self.deezerId(of: artist)
+            if deezerId == nil, case .found(let id) = await RadarCatalog.artistId(for: artist.name) { deezerId = id }
+            guard let deezerId else { return }
+            await SoulSyncWatchlist.add([(deezerId, artist.name)])
+        }
+    }
+
+    private static func deezerId(of artist: ArtistRef) -> String? {
+        artist.id.hasPrefix(ArtistRef.deezerPrefix) ? String(artist.id.dropFirst(ArtistRef.deezerPrefix.count)) : nil
     }
 
     private func saveUnfollowed() {
@@ -435,7 +490,10 @@ final class RadarService {
     }
 
     private func isShown(_ release: RadarRelease) -> Bool {
-        !hidden.contains(release.id) && !unfollowed.contains { $0.id == release.artist.id }
+        // By name too: an artist followed before the library had them changes id when it does.
+        let name = SoulSyncWatchlist.key(release.artist.name)
+        return !hidden.contains(release.id)
+            && !unfollowed.contains { $0.id == release.artist.id || SoulSyncWatchlist.key($0.name) == name }
     }
 
     /// Takes what was just hidden or unfollowed off the radar on screen, without a pass.
@@ -487,7 +545,8 @@ final class RadarService {
     }
 
     /// Nil when Deezer couldn't be asked; empty when it doesn't know the artist.
-    private static func discography(of artist: ArtistRef) async -> [DeezerAlbum]? {
+    private static func discography(of artist: ArtistRef, deezerId: String?) async -> [DeezerAlbum]? {
+        if let deezerId { return await RadarCatalog.albums(artistId: deezerId) }
         switch await RadarCatalog.artistId(for: artist.name) {
         case .found(let id): return await RadarCatalog.albums(artistId: id)
         case .none: return []
