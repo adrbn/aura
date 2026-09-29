@@ -399,12 +399,9 @@ struct HomeView: View {
             HStack {
                 Text("Made For You").font(Self.sectionFont)
                 Spacer()
+                // When they were last made is told in Settings, under Library Scan.
                 if mixGenerator.isGenerating {
                     ProgressView().controlSize(.small)
-                } else if let made = mixGenerator.generatedAt {
-                    Text("Updated \(made, format: Calendar.current.isDateInToday(made) ? .dateTime.hour().minute() : .dateTime.weekday().hour().minute())")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
             }
             .padding(.horizontal)

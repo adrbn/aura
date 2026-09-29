@@ -340,6 +340,13 @@ struct SettingsView: View {
                     Label("Full Scan", systemImage: "arrow.triangle.2.circlepath")
                 }
             }
+            if let made = MixGenerator.shared.generatedAt {
+                LabeledContent {
+                    Text("Updated \(made, format: Calendar.current.isDateInToday(made) ? .dateTime.hour().minute() : .dateTime.weekday().hour().minute())")
+                } label: {
+                    Label("Made For You", systemImage: "sparkles")
+                }
+            }
         } header: {
             Text("Library Scan")
         } footer: {
