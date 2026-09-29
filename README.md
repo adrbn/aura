@@ -47,6 +47,8 @@ The queue is a real queue: play next, add to the end, drag to reorder, and an au
 
 Everything lands where iOS expects it — Lock Screen, Control Center, the Dynamic Island, AirPlay, the Share Sheet — and shuffle and repeat work from a car stereo or a remote. **Siri** covers play, pause, next, previous, shuffle, repeat and favourite, plus *"play &lt;playlist&gt;"*, *"play &lt;album&gt;"* and *"play my favourites"* — in English and in French (*« Joue mes favoris sur Aura »*), with the app closed.
 
+**CarPlay** lays the library out as the phone does: Home with the mixes and the Radar, the playlists with your favourites, the albums just added. Each page opens under its cover with Play and Shuffle, and Now Playing keeps the heart, Up Next and the album a tap away.
+
 <br clear="right"/>
 
 ## Lyrics, word by word
@@ -54,6 +56,8 @@ Everything lands where iOS expects it — Lock Screen, Control Center, the Dynam
 Aura reads per-word timings from the OpenSubsonic lyrics extension, falls back to line timings, then to plain text, and fills the gaps from [LRCLIB](https://lrclib.net).
 
 Each word lights as it is sung. The lines around it fall away in size, blur and opacity, so the line being sung is the only one competing for your attention. Tap any line to jump there, nudge the timing if your headphones lag, and, with the landscape clock on, turn the phone for full screen.
+
+When a song's lyrics run early or late — another edit, a longer intro, an instrumental break they didn't know about — **put them in time yourself**. Over the same blurred cover, tap *Now* as the marked line starts: one tap moves every line after it, up to the next tap, so a pause the lyrics missed is one more tap after it, and what came before stays put. Tap any line to hear it from just before it starts, and fine-tune what you're hearing in steps of 0.05 s. Per-word timings move with their lines, so the words still light one by one. The result stays on the iPhone and comes before every other source; restoring the original timing is one tap in the same menu.
 
 Lyrics in another language can carry **a translation under each line**, small and dimmed so the song keeps the eye. Add your own free Gemini key (Settings → Lyrics → Translation) and Google's model translates it: the whole song at once, sentences carried across the line breaks and cut back under the lines they're sung on, idioms by their sense, the singer's familiar "you" kept, creoles read as themselves rather than as the language they resemble. A song is sent only when you tap the translate button, so the free quota goes on the songs you actually read; when one of Google's models has used up its share for the day, the next one takes over. Only the lines, the song's title and its artist go to Google. Without a key there is no translation: the button leads to setting one up. A song translated once is kept on the iPhone and comes back instantly, offline too.
 
@@ -121,6 +125,10 @@ Two configurations ship: the App Store build, and a sideload build that addition
 ### What the sideload build adds
 
 If you run [slskd](https://github.com/slskd/slskd) next to your server, the sideload build can fetch what you're missing. **Get It** on a Radar release, on a song found in Search, or the heart on a preview in Now Playing: Aura picks the copy with the most of the release's tracks, in the best quality, from a peer with a free slot, moves on if a download stalls, and waits for your server to add it. A card above the mini player and a Live Activity follow each step — looking, downloading, adding, ready — with a countdown that learns how long your server takes, and a liked song is starred once it lands. If you're listening to its preview when it lands, the song takes over at the very point the preview had reached, without a seam: the two recordings are lined up and crossed over in a quarter of a second. You point it at your own slskd; nothing goes through anyone else's.
+
+If you also run **SoulSync**, the Radar follows its watchlist, so what the Radar shows is what SoulSync will download: your favourite and most-played artists are added to it once each, stopping following an artist in Aura takes them off it too, and a release SoulSync is going to fetch says *On its way*.
+
+With **File Browser** pointed at your music, lyrics you time by hand can be written beside the song on your server as an `.lrc` — word timings included — so every device and every app gets them. Put `.lrc` first in Navidrome's lyrics order (`ND_LYRICSPRIORITY`) for it to serve them over the rest.
 
 ## Compatibility
 
