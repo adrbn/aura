@@ -37,7 +37,7 @@ final class CarPlayBrowser {
             }
             let played = await recent
             if !played.isEmpty {
-                sections.append(CPListSection(items: played.map { row($0, placeholder: "square.stack") },
+                sections.append(CPListSection(items: played.map(albumRow),
                                               header: String(localized: "Recently Played"), sectionIndexTitle: nil))
             }
             fill(template, with: sections)
@@ -76,7 +76,7 @@ final class CarPlayBrowser {
             guard !newest.isEmpty else { return }
             fill(template, with: [
                 CPListSection(items: [shuffle]),
-                CPListSection(items: newest.map { row($0, placeholder: "square.stack") },
+                CPListSection(items: newest.map(albumRow),
                               header: String(localized: "Recently Added"), sectionIndexTitle: nil),
             ])
         }
@@ -155,6 +155,8 @@ final class CarPlayBrowser {
     /// Shuffle, then its songs.
     func open(_ item: WatchItem) async {
         let songs = await LibraryCatalog.songs(of: item)
+        // One song has no page to browse: it plays.
+        if songs.count == 1 { return await play(songs, of: item, at: 0, shuffled: false) }
         let template = CPListTemplate(title: item.title, sections: [])
         template.emptyViewTitleVariants = [String(localized: "Nothing to play")]
         if !songs.isEmpty {
@@ -252,15 +254,31 @@ final class CarPlayBrowser {
 
     // MARK: - Rows
 
-    private func albums(_ type: String, count: Int) async -> [WatchItem] {
+    private func albums(_ type: String, count: Int) async -> [Album] {
         guard let server = ServerManager.shared.currentServer else { return [] }
         do {
             return try await SubsonicClient.shared.getAlbumList2(server: server, type: type, size: count)
-                .map { LibraryCatalog.item($0) }
         } catch {
             AppLogger.shared.log("🚗 Albums (\(type)) not loaded: \(error.localizedDescription)")
             return []
         }
+    }
+
+    /// An album's row: a single plays straight away, anything longer opens its page.
+    private func albumRow(_ album: Album) -> CPListItem {
+        let item = LibraryCatalog.item(album)
+        guard album.songCount == 1 else { return row(item, placeholder: "square.stack") }
+        let row = CPListItem(text: item.title, detailText: item.subtitle.isEmpty ? nil : item.subtitle,
+                             image: CarPlayArtwork.glyph("music.note"))
+        row.handler = { [weak self] _, completion in
+            guard let self else { return completion() }
+            Task {
+                await self.open(item)
+                completion()
+            }
+        }
+        setCover(item.coverArt, on: row)
+        return row
     }
 
     /// A row that opens `item`'s page, its cover laid in once it comes.
