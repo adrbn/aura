@@ -744,6 +744,11 @@ struct SettingsView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
+            #if !APPSTORE_BUILD
+            if appSettings.betaFeaturesEnabled {
+                LyricsOnServerRows()
+            }
+            #endif
         } header: {
             Text("Lyrics")
         }
@@ -1215,3 +1220,36 @@ extension View {
         }
     }
 }
+
+#if !APPSTORE_BUILD
+/// Lyrics timed by hand, written to the server through File Browser as well.
+private struct LyricsOnServerRows: View {
+    @AppStorage(LyricsOnServer.enabledKey) private var isOn = false
+    @AppStorage(LyricsOnServer.addressKey) private var address = ""
+    @AppStorage(LyricsOnServer.userKey) private var user = ""
+    @State private var password = KeychainHelper.loadPassword(for: LyricsOnServer.passwordAccount) ?? ""
+
+    var body: some View {
+        Toggle("Save Synced Lyrics to the Server", isOn: $isOn)
+        if isOn {
+            TextField("File Browser", text: $address, prompt: Text(LyricsOnServer.suggestedAddress))
+                .keyboardType(.URL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            TextField("Username", text: $user)
+                .textContentType(.username)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            SecureField("Password", text: $password)
+                .textContentType(.password)
+                .onChange(of: password) { _, value in
+                    if value.isEmpty {
+                        KeychainHelper.delete(for: LyricsOnServer.passwordAccount)
+                    } else {
+                        KeychainHelper.save(password: value, for: LyricsOnServer.passwordAccount)
+                    }
+                }
+        }
+    }
+}
+#endif

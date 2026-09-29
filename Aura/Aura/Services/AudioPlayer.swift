@@ -2297,6 +2297,8 @@ final class AudioPlayer {
     /// named as such gets its own words even when every source hands back the original's.
     /// A verdict already reached for the song applies at once, network or not.
     private func resolveLyrics(for song: Song, generation: Int) async -> Bool {
+        // Timed by hand on this device: nothing found anywhere else replaces that.
+        if await tryOverride(for: song, generation: generation) { return true }
         if case .replaced(let synced, let plain)? = LyricsVersion.verdict(for: song.id) {
             if await applyLRCLIBResult(["syncedLyrics": synced ?? "", "plainLyrics": plain ?? ""],
                                        generation: generation) {
@@ -2368,6 +2370,50 @@ final class AudioPlayer {
         return false
     }
 
+
+    private func tryOverride(for song: Song, generation: Int) async -> Bool {
+        guard let text = LyricsOverrides.lrc(for: song.id) else { return false }
+        let parsed = LyricsOverrides.parse(text)
+        guard !parsed.isEmpty else { return false }
+        AppLogger.shared.log("🎵 Lyrics timed by hand: \(parsed.count) lines")
+        await publishLyrics(generation) {
+            self.lyrics = parsed
+            self.lyricsSource = .structured
+            self.lyricsStatus = ""
+        }
+        return true
+    }
+
+    /// Keeps lines timed by hand for the song, and shows them at once.
+    func saveTimedLyrics(_ lines: [LyricsOverrides.Line], for song: Song) throws {
+        try LyricsOverrides.save(lines, for: song.id)
+        guard currentSong?.id == song.id else { return }
+        // A fetch still under way would put back the lines just replaced.
+        lyricsTask?.cancel()
+        lyricsGeneration += 1
+        lyrics = lines.map { LyricsLine(time: $0.time, text: $0.text, words: $0.words) }
+        lyricsSource = .structured
+        lyricsStatus = ""
+        isLoadingLyrics = false
+    }
+
+    /// Back to the lyrics as found.
+    func restoreFoundLyrics(for song: Song) {
+        LyricsOverrides.remove(song.id)
+        guard LyricsOnServer.isEnabled else {
+            if currentSong?.id == song.id { refetchLyrics() }
+            return
+        }
+        // The server's copy goes first, or the fetch would bring it straight back.
+        Task {
+            do {
+                try await LyricsOnServer.remove(for: song)
+            } catch {
+                AppLogger.shared.log("🎵 Server lyrics timing not removed: \(error.localizedDescription)")
+            }
+            if currentSong?.id == song.id { refetchLyrics() }
+        }
+    }
 
     /// Reads the `.lrc` saved next to a downloaded song.
     private func tryLocalLyrics(for song: Song, generation: Int) async -> Bool {

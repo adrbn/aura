@@ -1614,6 +1614,7 @@ struct SongActionsRow: View {
 
     @Environment(AudioPlayer.self) private var player
     @State private var heartPop = false
+    @State private var showSync = false
 
     private var isStarred: Bool { player.currentSong?.isStarred ?? false }
 
@@ -1753,6 +1754,15 @@ struct SongActionsRow: View {
                         Label("Switch Source (\(player.lyricsSource == .structured ? "Legacy" : "Synced"))",
                               systemImage: "arrow.triangle.2.circlepath")
                     }
+                    Button { showSync = true } label: {
+                        Label("Sync Lyrics", systemImage: "timer")
+                    }
+                    .disabled(player.lyrics.isEmpty)
+                    if LyricsOverrides.has(song.id) {
+                        Button { player.restoreFoundLyrics(for: song) } label: {
+                            Label("Restore Original Timing", systemImage: "arrow.uturn.backward")
+                        }
+                    }
                     Divider()
                 }
                 Button { showFileInfo = true } label: {
@@ -1788,6 +1798,9 @@ struct SongActionsRow: View {
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
             }
+        }
+        .fullScreenCover(isPresented: $showSync) {
+            LyricsSyncView(song: song, lines: player.lyrics)
         }
     }
 }

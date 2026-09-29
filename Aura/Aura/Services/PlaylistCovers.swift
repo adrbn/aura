@@ -71,7 +71,8 @@ enum PlaylistCovers {
         }
     }
 
-    private static func token(server: ServerConfig) async -> String? {
+    /// A native-API token; the lyrics written to the server look songs up with it too.
+    static func token(server: ServerConfig) async -> String? {
         guard let url = URL(string: "\(server.baseURL)/auth/login") else {
             AppLogger.shared.log("❌ Navidrome auth: invalid login URL")
             return nil
