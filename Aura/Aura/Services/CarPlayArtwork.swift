@@ -57,6 +57,41 @@ enum CarPlayArtwork {
         return asset.image(with: UITraitCollection(userInterfaceStyle: .dark))
     }
 
+    /// Header buttons' faces — each symbol and its word drawn as one picture, since the car
+    /// shortens a button's own title to "…". The car scales a picture to its button by width,
+    /// so all share the widest one's canvas and come out the same size.
+    @available(iOS 26.4, *)
+    static func labels(_ faces: [(title: String, symbol: String)]) -> [UIImage] {
+        let limit = CPListTemplateDetailsHeader.maximumActionButtonSize
+        let font = UIFont.systemFont(ofSize: min(17, limit.height * 0.5), weight: .semibold)
+        let gap = font.pointSize * 0.4
+        let parts = faces.map { face in
+            (text: face.title,
+             icon: UIImage(systemName: face.symbol, withConfiguration: UIImage.SymbolConfiguration(font: font)))
+        }
+        let widths = parts.map { part in
+            (part.icon?.size.width ?? 0) + (part.icon == nil ? 0 : gap)
+                + NSAttributedString(string: part.text, attributes: [.font: font]).size().width
+        }
+        let size = CGSize(width: min(limit.width, ceil(widths.max() ?? 0)), height: limit.height)
+        return zip(parts, widths).map { part, width in
+            let draw = { (tint: UIColor) -> UIImage in
+                let text = NSAttributedString(string: part.text, attributes: [.font: font, .foregroundColor: tint])
+                let icon = part.icon?.withTintColor(tint, renderingMode: .alwaysOriginal)
+                let left = max(0, (size.width - width) / 2)
+                return UIGraphicsImageRenderer(size: size).image { _ in
+                    icon?.draw(at: CGPoint(x: left, y: (size.height - (icon?.size.height ?? 0)) / 2))
+                    let start = left + (icon.map { $0.size.width + gap } ?? 0)
+                    text.draw(at: CGPoint(x: start, y: (size.height - text.size().height) / 2))
+                }
+            }
+            let asset = UIImageAsset()
+            asset.register(draw(.black), with: UITraitCollection(userInterfaceStyle: .light))
+            asset.register(draw(.white), with: UITraitCollection(userInterfaceStyle: .dark))
+            return asset.image(with: UITraitCollection(userInterfaceStyle: .dark))
+        }
+    }
+
     static var accent: UIColor {
         UIColor(AppSettings.shared.activeTheme.accentColor)
     }

@@ -176,7 +176,10 @@ final class CarPlayBrowser {
         let songs = await LibraryCatalog.songs(of: item)
         // One song has no page to browse: it plays.
         if songs.count == 1 { return await play(songs, of: item, at: 0, shuffled: false) }
-        let template = CPListTemplate(title: item.title, sections: [])
+        // Under a header the name is already there, large: the bar above goes without it.
+        var headed = false
+        if #available(iOS 26.4, *) { headed = !songs.isEmpty }
+        let template = CPListTemplate(title: headed ? nil : item.title, sections: [])
         template.emptyViewTitleVariants = [String(localized: "Nothing to play")]
         if !songs.isEmpty {
             let playAll: () async -> Void = { [weak self] in
@@ -215,15 +218,21 @@ final class CarPlayBrowser {
         let thumbnail = picture ?? (item.kind == .favorites
             ? CarPlayArtwork.glyph("heart.fill", tint: CarPlayArtwork.accent)
             : CarPlayArtwork.glyph("music.note.list"))
-        let buttons = [(String(localized: "Play"), "play.fill", play),
-                       (String(localized: "Shuffle"), "shuffle", shuffle)].map { title, symbol, perform in
-            let button = CPButton(image: CarPlayArtwork.symbol(symbol)) { _ in Task { await perform() } }
-            button.title = title
-            return button
+        let actions = [play, shuffle]
+        let faces = CarPlayArtwork.labels([(String(localized: "Play"), "play.fill"),
+                                           (String(localized: "Shuffle"), "shuffle")])
+        let buttons = zip(faces, actions).map { face, perform in
+            CPButton(image: face) { _ in Task { await perform() } }
         }
+        // A mix's or playlist's line is a description: it reads whole in the body, where the
+        // subtitle would cut it to one line.
+        let describes = item.kind == .mix || item.kind == .playlist
         let header = CPListTemplateDetailsHeader(thumbnail: CPThumbnailImage(image: thumbnail), title: item.title,
-                                                 subtitle: item.subtitle.isEmpty ? nil : item.subtitle,
+                                                 subtitle: describes || item.subtitle.isEmpty ? nil : item.subtitle,
                                                  actionButtons: buttons)
+        if describes, !item.subtitle.isEmpty {
+            header.bodyVariants = [NSAttributedString(string: item.subtitle)]
+        }
         header.wantsAdaptiveBackgroundStyle = picture != nil
         return header
     }
