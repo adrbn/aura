@@ -415,9 +415,9 @@ struct NowPlayingView: View {
                 if !showLyrics, height > 0 { songInfoHeight = height }
             }
             .frame(height: showLyrics ? 0 : songInfoHeight, alignment: .top)
-            // Clipped to the collapsing frame. Unclipped, the title overflowed the frame
-            // as it shrank and lay across the year and the heart below it while fading.
-            .clipped()
+            // Unclipped on purpose: the title rides the collapsing frame down as it fades,
+            // and back up as it returns — the move is the transition. Clipped to the frame
+            // once, it was wiped away top to bottom like a blind instead.
             .opacity(showLyrics ? 0 : 1)
             // It still owns a coordinate space once collapsed, it just has no height —
             // so make sure nothing invisible can be tapped.
@@ -803,7 +803,7 @@ struct NowPlayingView: View {
                     if value.translation.width < -threshold || value.predictedEndTranslation.width < -threshold * 2 {
                         player.next()
                     } else if value.translation.width > threshold || value.predictedEndTranslation.width > threshold * 2 {
-                        player.previous()
+                        player.previous(restartsFirst: false)
                     }
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { coverDragOffset = 0 }
                 case .vertical:

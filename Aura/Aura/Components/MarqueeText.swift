@@ -91,8 +91,13 @@ struct Marquee<Content: View>: View {
     }
 
     private func loop() async {
+        guard shouldScroll, isMoving else {
+            // Stopped, or nothing to scroll: back to the first word, gently. Never by
+            // replacing the text — see `startOver`.
+            if offset != 0 { withAnimation(.easeOut(duration: 0.3)) { offset = 0 } }
+            return
+        }
         startOver()
-        guard shouldScroll, isMoving else { return }
         let travel = Double(overflow / speed)
         while !Task.isCancelled {
             try? await Task.sleep(for: .seconds(startPause))
@@ -107,7 +112,13 @@ struct Marquee<Content: View>: View {
         }
     }
 
+    /// A fresh copy at the first word — only when the text has moved off it. A copy at rest
+    /// is left alone: a new one has no earlier frame, so it's drawn straight at its final
+    /// place, outside any animation moving the view around it. Stopping the title as the
+    /// lyrics opened did exactly that — it vanished from under the cover and reappeared
+    /// over the year below, fading there.
     private func startOver() {
+        guard offset != 0 else { return }
         var transaction = Transaction()
         transaction.disablesAnimations = true
         withTransaction(transaction) {

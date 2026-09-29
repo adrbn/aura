@@ -62,7 +62,7 @@ struct MiniPlayerView: View {
                         if value.translation.width < -50 || value.predictedEndTranslation.width < -100 {
                             player.next()
                         } else if value.translation.width > 50 || value.predictedEndTranslation.width > 100 {
-                            player.previous()
+                            player.previous(restartsFirst: false)
                         }
                     }
             )

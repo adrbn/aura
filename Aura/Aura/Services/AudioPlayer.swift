@@ -1416,8 +1416,10 @@ final class AudioPlayer {
         saveLastPlayback()
     }
 
-    func previous() {
-        if currentTime > 3 { AppLogger.shared.log("⏮ previous() → restart"); seek(to: 0); return }
+    /// Back a song — or, as the previous button does, to the start of this one once it's
+    /// a few seconds in. A swipe across the cover always means the song before.
+    func previous(restartsFirst: Bool = true) {
+        if restartsFirst, currentTime > 3 { AppLogger.shared.log("⏮ previous() → restart"); seek(to: 0); return }
         guard !queue.isEmpty else { return }
         // Wrap to the end, mirroring next(). Forward already loops via `% queue.count`;
         // going back from the first track dead-ended on a restart instead, so an album that
