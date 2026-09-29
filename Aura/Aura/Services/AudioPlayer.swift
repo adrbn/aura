@@ -2316,24 +2316,42 @@ final class AudioPlayer {
     }
 
     /// Asks LRCLIB for the version's own sheets and, when most of them disagree with the
-    /// lyrics on screen, shows theirs instead. The verdict is kept, so this runs once a song.
+    /// lyrics on screen, shows theirs instead; then, in the sideload build, NetEase for the
+    /// recording's timed sheet, shown when the lyrics found keep another recording's time.
+    /// The verdict is kept, so this runs once a song — unless a source didn't answer.
     private func checkVersion(of song: Song, generation: Int) async {
-        let current = await MainActor.run { () -> [String]? in
-            self.lyricsGeneration == generation ? self.lyrics.map(\.text) : nil
+        let current = await MainActor.run { () -> [LyricsLine]? in
+            self.lyricsGeneration == generation ? self.lyrics : nil
         }
-        guard let current, !current.isEmpty,
-              let candidates = await LyricsVersion.candidates(title: song.title, artist: song.artist,
-                                                              duration: song.duration)
-        else { return }
-        guard let pick = LyricsVersion.replacement(among: candidates, for: current, duration: song.duration) else {
-            LyricsVersion.store(.kept, for: song.id)
+        guard let current, !current.isEmpty else { return }
+        let candidates = await LyricsVersion.candidates(title: song.title, artist: song.artist, duration: song.duration)
+        if let candidates,
+           let pick = LyricsVersion.replacement(among: candidates, for: current.map(\.text), duration: song.duration) {
+            AppLogger.shared.log("🎵 Lyrics version: \(song.title) — the lyrics found are another version's; "
+                                 + "LRCLIB \(pick.id) (\(pick.artistName ?? "?")) replaces them")
+            await replaceLyrics(of: song, synced: pick.syncedLyrics, plain: pick.plainLyrics, generation: generation)
             return
         }
-        AppLogger.shared.log("🎵 Lyrics version: \(song.title) — the lyrics found are another version's; "
-                             + "LRCLIB \(pick.id) (\(pick.artistName ?? "?")) replaces them")
-        LyricsVersion.store(.replaced(synced: pick.syncedLyrics, plain: pick.plainLyrics), for: song.id)
-        _ = await applyLRCLIBResult(["syncedLyrics": pick.syncedLyrics ?? "", "plainLyrics": pick.plainLyrics ?? ""],
-                                    generation: generation)
+        var settled = candidates != nil
+        #if !APPSTORE_BUILD
+        switch await LyricsVersion.recordingSheet(title: song.title, artist: song.artist, duration: song.duration) {
+        case .found(let sheet) where !LyricsVersion.agrees(sheet, with: current):
+            AppLogger.shared.log("🎵 Lyrics version: \(song.title) — the lyrics found keep another recording's time; "
+                                 + "NetEase's replace them")
+            await replaceLyrics(of: song, synced: sheet, plain: nil, generation: generation)
+            return
+        case .failed:
+            settled = false
+        default:
+            break
+        }
+        #endif
+        if settled { LyricsVersion.store(.kept, for: song.id) }
+    }
+
+    private func replaceLyrics(of song: Song, synced: String?, plain: String?, generation: Int) async {
+        LyricsVersion.store(.replaced(synced: synced, plain: plain), for: song.id)
+        _ = await applyLRCLIBResult(["syncedLyrics": synced ?? "", "plainLyrics": plain ?? ""], generation: generation)
     }
 
     /// Runs every lyrics source in order and reports whether ANY matched. Each `tryX`

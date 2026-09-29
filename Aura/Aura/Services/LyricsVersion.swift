@@ -11,6 +11,9 @@ import Foundation
 ///
 /// The vote is what makes this safe. LRCLIB has mislabelled entries — the original's words
 /// filed under the duet — and a single match would sometimes pick one of them.
+///
+/// A remix keeps the original's words but not its clock, which no vote on words can see: in
+/// the sideload build, NetEase is asked for the recording's own timed sheet as well.
 enum LyricsVersion {
 
     /// One sheet from LRCLIB, as its search returns it.
@@ -152,6 +155,161 @@ enum LyricsVersion {
         }
     }
 
+    // MARK: NetEase
+
+    /// What NetEase's catalogue had for the recording.
+    enum RecordingSheet: Equatable {
+        /// Its timed lyrics, as LRC, a line per timestamp.
+        case found(String)
+        case none
+        /// NetEase didn't answer: nothing can be concluded.
+        case failed
+    }
+
+    private struct NetEaseSearch: Decodable {
+        struct Result: Decodable {
+            let songs: [Track]?
+        }
+
+        struct Track: Decodable {
+            struct Named: Decodable {
+                let name: String?
+            }
+
+            let id: Int
+            let name: String
+            let artists: [Named]?
+            let album: Named?
+            /// Milliseconds.
+            let duration: Int?
+        }
+
+        let result: Result?
+    }
+
+    private struct NetEaseLyrics: Decodable {
+        struct Sheet: Decodable {
+            let lyric: String?
+        }
+
+        let lrc: Sheet?
+    }
+
+    /// The recording's own timed lyrics from NetEase. Its catalogue lists remixes and edits as
+    /// released, each with its length, and their sheets follow that recording — the verses a
+    /// remix drops, the minute of intro before the first line — where LRCLIB files the
+    /// original's timing under the remix: the Kygo remix of *Cut Your Teeth* ran the original's
+    /// clock over six and a half minutes. A track counts when it names the song and the
+    /// version and lasts as long, to within 3 s.
+    static func recordingSheet(title: String, artist: String?, duration: Int?) async -> RecordingSheet {
+        let markers = markers(title: title, artist: artist)
+        guard !markers.isEmpty, let duration, duration > 0 else { return .none }
+        let lead = SongQuery.artistNames(artist ?? "").first ?? ""
+        var components = URLComponents(string: "https://music.163.com/api/search/get")
+        components?.queryItems = [URLQueryItem(name: "s", value: "\(title) \(lead)"),
+                                  URLQueryItem(name: "type", value: "1"),
+                                  URLQueryItem(name: "limit", value: "20")]
+        guard let url = components?.url, let search: NetEaseSearch = await netEase(url) else { return .failed }
+        let tracks = (search.result?.songs ?? []).filter {
+            isRecording($0, title: title, markers: markers, duration: duration)
+        }
+        for track in tracks.prefix(3) {
+            guard let url = URL(string: "https://music.163.com/api/song/lyric?id=\(track.id)&lv=1"),
+                  let lyrics: NetEaseLyrics = await netEase(url) else { return .failed }
+            if let sheet = timedSheet(lyrics.lrc?.lyric ?? "", duration: duration) { return .found(sheet) }
+        }
+        return .none
+    }
+
+    private static func isRecording(_ track: NetEaseSearch.Track, title: String, markers: [String],
+                                    duration: Int) -> Bool {
+        guard let length = track.duration, abs(Double(length) / 1000 - Double(duration)) <= 3 else { return false }
+        let name = " " + SongQuery.plainWords(track.name) + " "
+        guard name.contains(" " + SongQuery.plainWords(baseTitle(title)) + " ") else { return false }
+        let label = " " + SongQuery.plainWords(([track.name, track.album?.name] + (track.artists ?? []).map(\.name))
+            .compactMap { $0 }.joined(separator: " ")) + " "
+        return markers.contains { label.contains(" \($0) ") }
+    }
+
+    /// The sheet's sung lines, one per timestamp, in order — without the credits NetEase puts
+    /// first ("作词 : …") — or nil when it isn't timed, stands in for an instrumental, or runs
+    /// past the recording's end, the sign of a sheet meant for a longer one.
+    static func timedSheet(_ lrc: String, duration: Int) -> String? {
+        guard !lrc.contains("纯音乐") else { return nil }
+        var lines: [(time: TimeInterval, text: String)] = []
+        for row in lrc.components(separatedBy: .newlines) {
+            let stamps = row.matches(of: #/\[(\d+):(\d+(?:\.\d+)?)\]/#)
+            guard let last = stamps.last else { continue }
+            let text = row[last.range.upperBound...].trimmingCharacters(in: .whitespaces)
+            guard !text.isEmpty, !isCredit(text) else { continue }
+            for stamp in stamps {
+                guard let minutes = Double(stamp.1), let seconds = Double(stamp.2) else { continue }
+                lines.append((minutes * 60 + seconds, text))
+            }
+        }
+        lines.sort { $0.time < $1.time }
+        guard lines.count >= 4, let end = lines.last?.time, end <= Double(duration) + 2 else { return nil }
+        return lines.map { "[\(LyricsOverrides.stamp($0.time))]\($0.text)" }.joined(separator: "\n")
+    }
+
+    /// "作词 : Name", "Producer: Name" — a role, then a colon.
+    private static func isCredit(_ text: String) -> Bool {
+        guard let colon = text.firstIndex(where: { $0 == ":" || $0 == "：" }) else { return false }
+        let role = text[..<colon].trimmingCharacters(in: .whitespaces)
+        if role.unicodeScalars.contains(where: { (0x4E00...0x9FFF).contains($0.value) }) { return true }
+        return role.range(of: #"^(lyrics|lyricist|written|writer|composer|composed|music|producer|produced|arranger|arranged|mix(ed|ing)?|master(ed|ing)?)( by)?$"#,
+                          options: [.regularExpression, .caseInsensitive]) != nil
+    }
+
+    /// Whether the lyrics found already keep the recording's time: most of the sheet's lines
+    /// are among them, starting within 2.5 s of it. Lines are told apart by their first words,
+    /// since transcriptions of one recording break the same verse in different places.
+    static func agrees(_ sheet: String, with current: [LyricsLine]) -> Bool {
+        let found = current.compactMap { line in line.time.map { (time: $0, words: opening(line.text)) } }
+        let theirs = sheet.components(separatedBy: "\n").compactMap { row -> (time: TimeInterval, words: [Substring])? in
+            guard let stamp = row.firstMatch(of: #/^\[(\d+):(\d+(?:\.\d+)?)\]/#),
+                  let minutes = Double(stamp.1), let seconds = Double(stamp.2) else { return nil }
+            return (minutes * 60 + seconds, opening(String(row[stamp.range.upperBound...])))
+        }
+        guard !found.isEmpty, !theirs.isEmpty else { return false }
+        let kept = theirs.filter { line in
+            found.contains { abs($0.time - line.time) <= 2.5 && sameOpening($0.words, line.words) }
+        }
+        return Double(kept.count) >= 0.6 * Double(theirs.count)
+    }
+
+    private static func opening(_ text: String) -> [Substring] {
+        Array(SongQuery.plainWords(text).split(separator: " ").prefix(4))
+    }
+
+    private static func sameOpening(_ a: [Substring], _ b: [Substring]) -> Bool {
+        let count = min(a.count, b.count)
+        return count > 0 && a.prefix(count) == b.prefix(count)
+    }
+
+    /// Without cookies: once a request sends back the one NetEase sets, it answers every
+    /// search with unrelated songs.
+    private static let netEaseSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieAcceptPolicy = .never
+        return URLSession(configuration: configuration)
+    }()
+
+    private static func netEase<Answer: Decodable>(_ url: URL) async -> Answer? {
+        var request = URLRequest(url: url, timeoutInterval: 10)
+        request.setValue("https://music.163.com", forHTTPHeaderField: "Referer")
+        do {
+            let (data, response) = try await netEaseSession.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+            return try JSONDecoder().decode(Answer.self, from: data)
+        } catch {
+            AppLogger.shared.log("⚠️ Lyrics version check: NetEase failed: \(error.localizedDescription)", level: .debug)
+            return nil
+        }
+    }
+
     // MARK: Verdicts
 
     /// What the check concluded for a song, kept so it runs once per song.
@@ -166,7 +324,9 @@ enum LyricsVersion {
         guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
             return nil
         }
-        let directory = caches.appendingPathComponent("LyricsVersions", isDirectory: true)
+        // The second folder since the check asks NetEase as well: every song gets it once.
+        try? FileManager.default.removeItem(at: caches.appendingPathComponent("LyricsVersions", isDirectory: true))
+        let directory = caches.appendingPathComponent("LyricsVersions2", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory
     }()

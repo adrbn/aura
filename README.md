@@ -102,7 +102,7 @@ Five bands from 60 Hz to 14 kHz, drawn as one curve over a decibel grid: drag an
 ## Private by design
 
 - **Your credentials live in the Keychain**, never in preferences or a file, and never leave the device except to your own server.
-- **No account, no analytics, no telemetry.** Aura talks to your server; to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking; to Deezer's public catalogue for the artist photos on mix covers, the covers your server is missing, the Radar's new releases and their previews — artist names, the titles of albums without artwork and release ids, never your library; and to Apple's and Deezer's public search when you share a song, to find it on other services. Switch the Radar off and Deezer hears only about cover photos and the songs you share. Google hears about the lyrics you translate only if you add a Gemini key of your own. The details are in the [privacy policy](PRIVACY.md).
+- **No account, no analytics, no telemetry.** Aura talks to your server; to LRCLIB when a song has no lyrics of its own or names a version whose lyrics need checking; in the sideload build, to NetEase for that version's own timing, with the song's title and artist; to Deezer's public catalogue for the artist photos on mix covers, the covers your server is missing, the Radar's new releases and their previews — artist names, the titles of albums without artwork and release ids, never your library; and to Apple's and Deezer's public search when you share a song, to find it on other services. Switch the Radar off and Deezer hears only about cover photos and the songs you share. Google hears about the lyrics you translate only if you add a Gemini key of your own. The details are in the [privacy policy](PRIVACY.md).
 - **Play counts and history stay on the device** unless you point Aura at your own scrobbler.
 - **Open source**, so none of this has to be taken on trust.
 
@@ -129,6 +129,8 @@ If you run [slskd](https://github.com/slskd/slskd) next to your server, the side
 If you also run **SoulSync**, the Radar follows its watchlist, so what the Radar shows is what SoulSync will download: your favourite and most-played artists are added to it once each, stopping following an artist in Aura takes them off it too, and a release SoulSync is going to fetch says *On its way*.
 
 With **File Browser** pointed at your music, lyrics you time by hand can be written beside the song on your server as an `.lrc` — word timings included — so every device and every app gets them. Put `.lrc` first in Navidrome's lyrics order (`ND_LYRICSPRIORITY`) for it to serve them over the rest.
+
+A remix or an edit keeps the original's words but not its clock — the verses it drops, the minute of intro before the first line — and the lyrics sources often file the original's timing under it. The sideload build asks NetEase's catalogue, which lists each recording with its length, for the sheet timed for this one, and shows it when the lyrics found run to another clock.
 
 ## Compatibility
 
