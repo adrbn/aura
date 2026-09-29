@@ -33,7 +33,10 @@ final class CarPlayBrowser {
             let mixes = await madeForYou()
             var sections: [CPListSection] = []
             if !mixes.isEmpty {
-                sections.append(CPListSection(items: [await shelf(mixes)]))
+                // The name as the section's header, not the row's: a row's title reads as a
+                // link, and there is no page beyond the covers to go to.
+                sections.append(CPListSection(items: [await shelf(mixes)],
+                                              header: String(localized: "Made For You"), sectionIndexTitle: nil))
             }
             let played = await recent
             if !played.isEmpty {
@@ -50,17 +53,24 @@ final class CarPlayBrowser {
         Task {
             let favourites = WatchItem(kind: .favorites, id: "favorites", title: String(localized: "Favorites"),
                                        subtitle: String(localized: "Your starred songs"), coverArt: nil)
-            var rows = [row(favourites, placeholder: "heart.fill", tint: CarPlayArtwork.accent)]
+            var pinned = [row(favourites, placeholder: "heart.fill", tint: CarPlayArtwork.accent)]
+            var others: [CPListItem] = []
             if let server = ServerManager.shared.currentServer {
                 do {
                     let found = try await SubsonicClient.shared.getPlaylists(server: server)
-                    rows += found.prefix(max(0, Self.rowLimit - 1))
-                        .map { row(LibraryCatalog.item($0), placeholder: "music.note.list") }
+                    let settings = AppSettings.shared
+                    let playlistRow = { (playlist: Playlist) in
+                        self.row(LibraryCatalog.item(playlist), placeholder: "music.note.list")
+                    }
+                    pinned += Self.pinnedFirst(found.filter { settings.isPinned($0.id) }).map(playlistRow)
+                    others = found.filter { !settings.isPinned($0.id) }
+                        .sorted { ($0.changed ?? "") > ($1.changed ?? "") }
+                        .map(playlistRow)
                 } catch {
                     AppLogger.shared.log("🚗 Playlists not loaded: \(error.localizedDescription)")
                 }
             }
-            fill(template, with: [CPListSection(items: rows)])
+            fill(template, with: [CPListSection(items: pinned), CPListSection(items: others)])
         }
         return template
     }
@@ -108,6 +118,14 @@ final class CarPlayBrowser {
 
     // MARK: - Made For You
 
+    /// The pinned playlists in the order they were pinned in, as the phone lists them.
+    private static func pinnedFirst(_ playlists: [Playlist]) -> [Playlist] {
+        let order = AppSettings.shared.pinnedPlaylistOrder
+        return playlists.sorted {
+            (order.firstIndex(of: $0.id) ?? .max) < (order.firstIndex(of: $1.id) ?? .max)
+        }
+    }
+
     /// The Home's shelf: the generated mixes, the radar first once it has found something,
     /// no two covers on the same artist's face.
     private func madeForYou() async -> [Mix] {
@@ -126,12 +144,12 @@ final class CarPlayBrowser {
         for mix in mixes {
             covers.append(await CarPlayArtwork.mixCover(mix, photo: false, scale: scale))
         }
-        let row = CPListImageRowItem(text: String(localized: "Made For You"), elements: Self.elements(covers),
-                                     allowsMultipleLines: true)
-        row.listImageRowHandler = { [weak self] _, index, completion in
+        let row = CPListImageRowItem(text: nil, elements: Self.elements(covers), allowsMultipleLines: true)
+        row.listImageRowHandler = { [weak self] row, index, completion in
             guard let self, mixes.indices.contains(index) else { return completion() }
+            let cover = row.elements.indices.contains(index) ? row.elements[index].image : nil
             Task {
-                await self.open(LibraryCatalog.item(mixes[index]))
+                await self.open(LibraryCatalog.item(mixes[index]), cover: cover)
                 completion()
             }
         }
@@ -152,18 +170,19 @@ final class CarPlayBrowser {
     // MARK: - Detail
 
     /// A mix, a playlist, the favourites or an album, as its page on the phone: Play and
-    /// Shuffle, then its songs.
-    func open(_ item: WatchItem) async {
+    /// Shuffle, then its songs. From iOS 26.4 the cover heads the page, Play and Shuffle
+    /// under it as Apple Music has them; before, they are its first two rows.
+    func open(_ item: WatchItem, cover: UIImage? = nil) async {
         let songs = await LibraryCatalog.songs(of: item)
         // One song has no page to browse: it plays.
         if songs.count == 1 { return await play(songs, of: item, at: 0, shuffled: false) }
         let template = CPListTemplate(title: item.title, sections: [])
         template.emptyViewTitleVariants = [String(localized: "Nothing to play")]
         if !songs.isEmpty {
-            let play = action(String(localized: "Play"), symbol: "play.fill") { [weak self] in
+            let playAll: () async -> Void = { [weak self] in
                 await self?.play(songs, of: item, at: 0, shuffled: false)
             }
-            let shuffle = action(String(localized: "Shuffle"), symbol: "shuffle") { [weak self] in
+            let shuffleAll: () async -> Void = { [weak self] in
                 await self?.play(songs, of: item, at: 0, shuffled: true)
             }
             // Every song on an album shares its cover: the rows go without.
@@ -172,9 +191,41 @@ final class CarPlayBrowser {
                     await self?.play(songs, of: item, at: index, shuffled: false)
                 }
             }
-            fill(template, with: [CPListSection(items: [play, shuffle]), CPListSection(items: rows)])
+            var sections = [CPListSection(items: rows)]
+            if #available(iOS 26.4, *) {
+                template.listHeader = await header(item, cover: cover, play: playAll, shuffle: shuffleAll)
+            } else {
+                sections.insert(CPListSection(items: [
+                    action(String(localized: "Play"), symbol: "play.fill", perform: playAll),
+                    action(String(localized: "Shuffle"), symbol: "shuffle", perform: shuffleAll),
+                ]), at: 0)
+            }
+            fill(template, with: sections)
         }
         interfaceController?.pushTemplate(template, animated: true, completion: nil)
+    }
+
+    /// The page's head: its cover — the favourites' heart where it has none — its name, and
+    /// Play and Shuffle, over a background drawn from the cover.
+    @available(iOS 26.4, *)
+    private func header(_ item: WatchItem, cover: UIImage?, play: @escaping () async -> Void,
+                        shuffle: @escaping () async -> Void) async -> CPListTemplateDetailsHeader {
+        var picture = cover
+        if picture == nil { picture = await CarPlayArtwork.cover(item.coverArt) }
+        let thumbnail = picture ?? (item.kind == .favorites
+            ? CarPlayArtwork.glyph("heart.fill", tint: CarPlayArtwork.accent)
+            : CarPlayArtwork.glyph("music.note.list"))
+        let buttons = [(String(localized: "Play"), "play.fill", play),
+                       (String(localized: "Shuffle"), "shuffle", shuffle)].map { title, symbol, perform in
+            let button = CPButton(image: CarPlayArtwork.symbol(symbol)) { _ in Task { await perform() } }
+            button.title = title
+            return button
+        }
+        let header = CPListTemplateDetailsHeader(thumbnail: CPThumbnailImage(image: thumbnail), title: item.title,
+                                                 subtitle: item.subtitle.isEmpty ? nil : item.subtitle,
+                                                 actionButtons: buttons)
+        header.wantsAdaptiveBackgroundStyle = picture != nil
+        return header
     }
 
     // MARK: - Up Next
@@ -314,7 +365,7 @@ final class CarPlayBrowser {
     }
 
     private func action(_ title: String, symbol: String, perform: @escaping () async -> Void) -> CPListItem {
-        let row = CPListItem(text: title, detailText: nil, image: UIImage(systemName: symbol))
+        let row = CPListItem(text: title, detailText: nil, image: CarPlayArtwork.symbol(symbol))
         row.handler = { _, completion in
             Task {
                 await perform()

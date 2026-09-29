@@ -45,6 +45,18 @@ enum CarPlayArtwork {
         }
     }
 
+    /// A bare symbol that stays legible in both of the car's appearances. The car draws a
+    /// template image as it comes — black, lost on the dark list — so each look gets its own.
+    static func symbol(_ name: String) -> UIImage {
+        guard let base = UIImage(systemName: name) else { return glyph(name) }
+        let asset = UIImageAsset()
+        asset.register(base.withTintColor(.black, renderingMode: .alwaysOriginal),
+                       with: UITraitCollection(userInterfaceStyle: .light))
+        asset.register(base.withTintColor(.white, renderingMode: .alwaysOriginal),
+                       with: UITraitCollection(userInterfaceStyle: .dark))
+        return asset.image(with: UITraitCollection(userInterfaceStyle: .dark))
+    }
+
     static var accent: UIColor {
         UIColor(AppSettings.shared.activeTheme.accentColor)
     }
