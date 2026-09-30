@@ -15,14 +15,19 @@ enum LyricsOnServer {
     enum Failure: LocalizedError {
         case notSignedIn, refusedSignIn, songUnknown, songNotFound, refused(Int)
 
+        // Never shown in the App Store build, which doesn't write to the server: kept out of it.
         var errorDescription: String? {
-            switch self {
+            #if APPSTORE_BUILD
+            return nil
+            #else
+            return switch self {
             case .notSignedIn: String(localized: "Add the File Browser sign-in in Settings.")
             case .refusedSignIn: String(localized: "File Browser didn't accept the sign-in.")
             case .songUnknown: String(localized: "The server didn't say where the song is.")
             case .songNotFound: String(localized: "The song's file wasn't found through File Browser.")
             case .refused(let status): String(localized: "File Browser refused the lyrics (HTTP \(status)).")
             }
+            #endif
         }
     }
 

@@ -157,6 +157,9 @@ enum LyricsVersion {
 
     // MARK: NetEase
 
+    // Sideload only: the App Store binary carries no trace of NetEase.
+    #if !APPSTORE_BUILD
+
     /// What NetEase's catalogue had for the recording.
     enum RecordingSheet: Equatable {
         /// Its timed lyrics, as LRC, a line per timestamp.
@@ -309,6 +312,8 @@ enum LyricsVersion {
             return nil
         }
     }
+
+    #endif
 
     // MARK: Verdicts
 
