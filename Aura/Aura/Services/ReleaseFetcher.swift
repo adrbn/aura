@@ -36,14 +36,21 @@ struct ReleaseFetch: Codable, Identifiable, Equatable {
     var wanted: [String: Int] = [:]
     var total: Int64 = 0
     var trackCount = 0
+    /// The songs a library album is missing, when it's being completed rather than a release
+    /// or one song got — and the album they're to join.
+    var missing: [SoulseekPick.Track]? = nil
+    var album: String? = nil
 
-    var id: String { Self.id(release.id, track: track?.id) }
+    var id: String { missing != nil ? Self.restId(release.id) : Self.id(release.id, track: track?.id) }
     var title: String { track?.title ?? release.title }
     var isActive: Bool { stage != .ready && stage != .failed }
 
     static func id(_ releaseId: String, track trackId: Int?) -> String {
         trackId.map { "\(releaseId)/\($0)" } ?? releaseId
     }
+
+    /// The fetch of the songs a library album is missing from a release.
+    static func restId(_ releaseId: String) -> String { "\(releaseId)/rest" }
 }
 
 /// Gets a radar release onto the server without anyone choosing files: searches Soulseek,
@@ -116,6 +123,19 @@ final class ReleaseFetcher {
         let fetch = ReleaseFetch(release: release, track: track, liked: title)
         if let existing = self.fetch(for: fetch.id), existing.stage != .failed { return }
         if track != nil, let whole = self.fetch(for: release.id), whole.stage != .failed { return }
+        fetches.removeAll { $0.id == fetch.id }
+        fetches.insert(fetch, at: 0)
+        save()
+        start(fetch.id)
+    }
+
+    /// Starts fetching the songs a library album is missing, as the release it's a copy of —
+    /// or does nothing if they're already on their way.
+    func complete(_ release: RadarRelease, missing tracks: [SoulseekPick.Track], album albumId: String) {
+        guard isAvailable, !tracks.isEmpty else { return }
+        let fetch = ReleaseFetch(release: release, track: nil, liked: nil, missing: tracks, album: albumId)
+        // A finished one may have left some out: asking again goes for what's still missing.
+        if let existing = self.fetch(for: fetch.id), existing.isActive { return }
         fetches.removeAll { $0.id == fetch.id }
         fetches.insert(fetch, at: 0)
         save()
@@ -221,6 +241,8 @@ final class ReleaseFetcher {
         let tracks: [SoulseekPick.Track]
         if let track = fetch.track {
             tracks = [track]
+        } else if let missing = fetch.missing {
+            tracks = missing
         } else {
             guard let deezer = await RadarService.shared.tracks(of: fetch.release) else {
                 fail(id, String(localized: "Deezer couldn't be reached"))
@@ -418,8 +440,29 @@ final class ReleaseFetcher {
 
     /// What the server has of a fetch: the release, or the one song. Nil until it's there.
     func songs(of fetch: ReleaseFetch) async -> [Song]? {
+        if fetch.missing != nil { return await filed(fetch) }
         guard let track = fetch.track else { return await RadarService.shared.lookUp(fetch.release) }
         return await RadarService.shared.lookUp(song: track.title, of: fetch.release)
+    }
+
+    /// A library album's missing songs, once the server has enough of them: filed in the
+    /// album, or beside it — songs added since the download, before the server has made the
+    /// two one album.
+    private func filed(_ fetch: ReleaseFetch) async -> [Song]? {
+        guard let missing = fetch.missing, let albumId = fetch.album, let server = ServerManager.shared.currentServer,
+              let album = try? await SubsonicClient.shared.getAlbum(server: server, id: albumId) else { return nil }
+        let required = SoulseekPick.required(of: missing.count)
+        var songs = (album.song ?? []).filter { song in missing.contains { RadarRules.sameTitle($0.title, song.title) } }
+        if songs.count < required, let downloaded = fetch.downloaded {
+            // A copy the library already had elsewhere, a single say, isn't the one fetched.
+            let since = String(ISO8601DateFormatter().string(from: downloaded.addingTimeInterval(-60)).prefix(19))
+            for track in missing where !songs.contains(where: { RadarRules.sameTitle($0.title, track.title) }) {
+                guard let song = await RadarService.shared.lookUp(song: track.title, of: fetch.release)?.first,
+                      let created = song.created, String(created.prefix(19)) >= since else { continue }
+                songs.append(song)
+            }
+        }
+        return songs.count >= required ? songs : nil
     }
 
     private func finish(_ id: String, songs: [Song]) async {

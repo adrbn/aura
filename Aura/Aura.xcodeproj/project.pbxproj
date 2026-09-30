@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0031110FB412232B510DA63F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332E4899162985D5A2BE70F9 /* Foundation.framework */; };
 		00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7507C823E9A1C89305C77937 /* MacHomeView.swift */; };
+		016B640B9D48D7E4C4EED3A0 /* MissingSongsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B9C92CA58D03F28FB04AFA4 /* MissingSongsSection.swift */; };
 		04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
 		06665240EFF5CFD599AC09F2 /* WatchLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4729DBCE407138E2BDA845 /* WatchLink.swift */; };
 		08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */; };
@@ -42,6 +43,7 @@
 		4C739EA1B9AD12C6CCB78F46 /* MacSongTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184924427443C74B467EA233 /* MacSongTable.swift */; };
 		5231BD9F05833F1D0842D467 /* SubsonicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000010 /* SubsonicClient.swift */; };
 		5375DDB39A738A3F48D581DB /* EqualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */; };
+		55D7F49CF50EACF1E3CE7127 /* AlbumCompletion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FF14467AF6F8D18111DBF21 /* AlbumCompletion.swift */; };
 		5763435ECEB5A36E2B551C1F /* DayGlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */; };
 		5AEBDDA3941D7AAD77C9C22A /* AuraMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE3D80459B5E6E9F51A99CA /* AuraMacApp.swift */; };
 		5DACC2F94E2FBAC2FA1E5506 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
@@ -299,6 +301,7 @@
 		32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchProtocol.swift; sourceTree = "<group>"; };
 		332E4899162985D5A2BE70F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		35045E0AAD1E88D70B5D26E9 /* WatchChrome.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchChrome.swift; sourceTree = "<group>"; };
+		3B9C92CA58D03F28FB04AFA4 /* MissingSongsSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MissingSongsSection.swift; sourceTree = "<group>"; };
 		3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQueryTests.swift; sourceTree = "<group>"; };
 		40E8E704D9B72925B6B94399 /* ImageCropView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ImageCropView.swift; sourceTree = "<group>"; };
 		41DF74C93207494A7E1F1347 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -334,6 +337,7 @@
 		993444593E7509462E6F7CB1 /* LyricsPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsPage.swift; sourceTree = "<group>"; };
 		9C50ECA7916A55ECF9EE4962 /* CoverMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CoverMenu.swift; sourceTree = "<group>"; };
 		9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DayGlow.swift; sourceTree = "<group>"; };
+		9FF14467AF6F8D18111DBF21 /* AlbumCompletion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlbumCompletion.swift; sourceTree = "<group>"; };
 		A114C4B8E0319934E5F90216 /* MacRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRootView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
 		A31E6A5950E5B49121F1EDCD /* MacSidebar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSidebar.swift; sourceTree = "<group>"; };
@@ -708,6 +712,7 @@
 				6920AE6BB3294A386042C0CE /* SoulSyncWatchlist.swift */,
 				4FB20C2630F70AD51EC1D03F /* LyricsOverrides.swift */,
 				B473B77C7F39B4A0C89FD065 /* LyricsOnServer.swift */,
+				9FF14467AF6F8D18111DBF21 /* AlbumCompletion.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -756,6 +761,7 @@
 				76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */,
 				8A9B259A7C1405CA806A2C51 /* UnfollowedArtistsView.swift */,
 				FFB810DD93B73BC5A1020C86 /* LyricsSyncView.swift */,
+				3B9C92CA58D03F28FB04AFA4 /* MissingSongsSection.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1297,6 +1303,8 @@
 				C6452DC241C5EED3F6814897 /* LyricsOverrides.swift in Sources */,
 				91B2BAF8EE76DC4ECF906DF5 /* LyricsSyncView.swift in Sources */,
 				3A7733BE80C898D602ACA160 /* LyricsOnServer.swift in Sources */,
+				55D7F49CF50EACF1E3CE7127 /* AlbumCompletion.swift in Sources */,
+				016B640B9D48D7E4C4EED3A0 /* MissingSongsSection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

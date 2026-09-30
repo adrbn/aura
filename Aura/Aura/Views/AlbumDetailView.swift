@@ -9,6 +9,10 @@ struct AlbumDetailView: View {
     @State private var album: AlbumWithSongs?
     @State private var isLoading = true
     @State private var isStarred = false
+    #if !APPSTORE_BUILD
+    /// The release the album is a copy of, when the sideload build can get what it's missing.
+    @State private var edition: AlbumCompletion.Edition?
+    #endif
 
     var body: some View {
         Group {
@@ -155,6 +159,12 @@ struct AlbumDetailView: View {
                         ListSummaryRow(text: ListSummaryRow.text(year: album.year, songs: songs, seconds: album.duration))
                     }
 
+                    #if !APPSTORE_BUILD
+                    if let edition {
+                        MissingSongsSection(album: album, edition: edition)
+                    }
+                    #endif
+
                     ListEndSpacer()
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
@@ -185,7 +195,22 @@ struct AlbumDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadAlbum() }
+        #if !APPSTORE_BUILD
+        .task(id: album?.id) {
+            guard let album, ReleaseFetcher.shared.isAvailable else { return }
+            edition = await AlbumCompletion.edition(of: album)
+        }
+        // Songs got for it join the list as soon as the server has them.
+        .onChange(of: arrivals) { _, _ in Task { await loadAlbum() } }
+        #endif
     }
+
+    #if !APPSTORE_BUILD
+    private var arrivals: Int {
+        guard let id = edition?.release.id else { return 0 }
+        return ReleaseFetcher.shared.fetches.filter { $0.release.id == id && $0.stage == .ready }.count
+    }
+    #endif
 
 
     /// Shown when the album couldn't be loaded (e.g. the server is unreachable)

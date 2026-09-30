@@ -367,7 +367,9 @@ struct SongGetControl: View {
         let fetcher = ReleaseFetcher.shared
         let own = fetcher.fetch(for: ReleaseFetch.id(release.id, track: track.id))
         let whole = fetcher.fetch(for: release.id)
-        let shown = (whole?.stage != .failed ? whole : nil) ?? own
+        // An album being completed: its fetch covers the song when the song is among those missing.
+        let rest = fetcher.fetch(for: ReleaseFetch.restId(release.id)).flatMap { $0.missing?.contains(track) == true ? $0 : nil }
+        let shown = [whole, rest].compactMap { $0 }.first { $0.stage != .failed } ?? own
         switch shown?.stage {
         case .searching?, .downloading?, .importing?:
             FetchRing(fetch: shown!)
