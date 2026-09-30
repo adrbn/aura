@@ -20,6 +20,7 @@ struct UnfollowedArtistsView: View {
                 Text("Their new releases come back to the radar at its next daily pass.")
             }
         }
+        .endsAboveBottomChrome()
         .navigationTitle("Unfollowed Artists")
         .navigationBarTitleDisplayMode(.inline)
     }

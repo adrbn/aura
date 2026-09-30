@@ -55,6 +55,7 @@ struct LyricsTranslationSettingsView: View {
                 Text("On Google's free tier, what you send may be used to improve Google's products.")
             }
         }
+        .endsAboveBottomChrome()
         .navigationTitle("Lyrics Translation")
         .navigationBarTitleDisplayMode(.inline)
     }
