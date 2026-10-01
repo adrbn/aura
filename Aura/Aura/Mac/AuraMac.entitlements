@@ -6,6 +6,6 @@
 	     app's own identifier, which would give the Mac app a store of its own and defeat the
 	     entire point: the phone and the Mac have to read and write the same one. -->
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
-	<string>$(TeamIdentifierPrefix)com.aura.goldian</string>
+	<string>$(TeamIdentifierPrefix)com.adrbn.aura</string>
 </dict>
 </plist>

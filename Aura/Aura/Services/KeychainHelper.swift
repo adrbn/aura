@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 enum KeychainHelper {
-    private static let service = "com.aura.goldian"
+    private static let service = "com.adrbn.aura"
 
     static func save(password: String, for serverID: String) {
         guard let data = password.data(using: .utf8) else { return }

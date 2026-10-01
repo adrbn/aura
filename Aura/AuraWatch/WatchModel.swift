@@ -3,7 +3,7 @@ import SwiftUI
 import UIKit
 import WatchConnectivity
 
-private let log = Logger(subsystem: "com.aura.goldian.watchkitapp", category: "link")
+private let log = Logger(subsystem: "com.adrbn.aura.watchkitapp", category: "link")
 
 /// The watch's view of the player on the iPhone, and the way back to it.
 ///

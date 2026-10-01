@@ -23,7 +23,7 @@ set -euo pipefail
 
 DEVICE_NAME="iPhone 17 Pro Max"
 RUNTIME="iOS27.0"                      # adjust if your installed runtime differs
-BUNDLE_ID="com.aura.goldian"
+BUNDLE_ID="com.adrbn.aura"
 SCHEME="Aura"                          # Debug scheme is fine for screenshots
 OUT_DIR="$(cd "$(dirname "$0")/.." && pwd)/appstore_screenshots"
 DD="/tmp/aura_dd_screens"
