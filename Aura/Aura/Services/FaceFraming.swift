@@ -52,6 +52,18 @@ enum FaceFraming {
         cache.object(forKey: key as NSString)
     }
 
+    /// For a picture that took the place of the one first analysed under `key`.
+    static func remember(_ analysis: Analysis, for key: String) {
+        cache.setObject(analysis, forKey: key as NSString)
+    }
+
+    /// Whether the photo crops the head: less than half a face of room above the face, so
+    /// the hair runs off the top. No zoom brings such a face down — there is nothing above it.
+    static func cutsTheHead(_ face: CGRect?) -> Bool {
+        guard let face else { return false }
+        return face.minY < face.height / 2
+    }
+
     /// Analyses once per image key; Vision runs off the main thread.
     static func analyse(_ image: UIImage, key: String) async -> Analysis {
         if let hit = cached(key) { return hit }
@@ -133,6 +145,44 @@ enum FaceFraming {
         return CGRect(origin: CGPoint(x: x, y: y), size: size)
     }
 }
+
+#if !APPSTORE_BUILD
+// Read off music.apple.com's page, which Apple's site terms don't allow an app to do: the
+// sideload build only. The App Store build keeps the server's photo, zoomed.
+extension FaceFraming {
+    /// Apple Music's portrait of an artist, for when the server's crops the head off — Kygo's
+    /// press shot has his hair on the top edge; Apple's is composed for a header, with room
+    /// above. Nil unless Apple has an artist of exactly that name with a picture.
+    static func appleMusicPortrait(of name: String) async -> UIImage? {
+        var search = URLComponents(string: "https://itunes.apple.com/search")!
+        search.queryItems = [URLQueryItem(name: "term", value: name),
+                             URLQueryItem(name: "entity", value: "musicArtist"),
+                             URLQueryItem(name: "limit", value: "5")]
+        struct Results: Decodable {
+            struct Artist: Decodable { let artistName: String; let artistLinkUrl: String? }
+            let results: [Artist]
+        }
+        guard let url = search.url,
+              let found = try? JSONDecoder().decode(Results.self, from: await data(from: url)),
+              let page = found.results
+                .first(where: { $0.artistName.caseInsensitiveCompare(name) == .orderedSame })?
+                .artistLinkUrl.flatMap(URL.init(string:)),
+              let html = String(data: await data(from: page), encoding: .utf8),
+              // The page's preview image is the portrait cropped to 1200×630; the same path
+              // ending in another size serves it whole.
+              let og = html.firstMatch(of: #/property="og:image" content="([^"]+)/[0-9]+x[0-9]+[a-z]*\.(?:png|jpg)"/#),
+              let picture = URL(string: "\(og.1)/1500x1500bb.jpg")
+        else { return nil }
+        return UIImage(data: await data(from: picture))
+    }
+
+    private static func data(from url: URL) async -> Data {
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 8
+        return (try? await ArtworkCache.shared.imageSession.data(for: request).0) ?? Data()
+    }
+}
+#endif
 
 /// A photo filling its frame, framed — and if need be enlarged — on the face.
 struct FaceFramedPhoto: View {

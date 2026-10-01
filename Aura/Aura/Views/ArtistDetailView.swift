@@ -469,7 +469,7 @@ struct ArtistHero: View {
             // The pull grows the header upward, so the face target moves down with it: the
             // photo zooms in as it is pulled, the face riding down with the page.
             ArtistImageView(coverArt: coverArt, artistImageURL: artistImageURL, fillsFrame: true,
-                            faceTarget: .init(faceCenterY: stretch + Self.faceCenterY))
+                            faceTarget: .init(faceCenterY: stretch + Self.faceCenterY), artistName: name)
                 .frame(maxWidth: .infinity)
                 .frame(height: height + stretch)
                 .clipped()
@@ -542,6 +542,8 @@ struct ArtistImageView: View {
     /// With `fillsFrame`, frames the picture on the face instead of on its centre — see
     /// `FaceFraming`. Nil keeps the plain centred fill.
     var faceTarget: FaceFraming.Target? = nil
+    /// With `faceTarget`, whose portrait to look for elsewhere when this one crops the head.
+    var artistName: String? = nil
 
     @State private var image: UIImage?
     /// The `cacheKey` that `image` was loaded for. The key can change under the same view —
@@ -699,6 +701,20 @@ struct ArtistImageView: View {
     private func analyseFace() async {
         guard fillsFrame, faceTarget != nil, let key = cacheKey, let img = currentImage else { return }
         let result = await FaceFraming.analyse(img, key: key)
+        #if !APPSTORE_BUILD
+        // Framed, such a face stays under the clock and the buttons: Apple Music's portrait
+        // takes its place, under the same key, so the page opened again shows it at once.
+        if FaceFraming.cutsTheHead(result.face), let artistName,
+           let portrait = await FaceFraming.appleMusicPortrait(of: artistName) {
+            let its = await FaceFraming.analyse(portrait, key: "\(key)_apple")
+            if its.face != nil, !FaceFraming.cutsTheHead(its.face) {
+                ArtworkCache.shared.store(portrait, for: key)
+                FaceFraming.remember(its, for: key)
+                await MainActor.run { show(portrait, for: key); analysis = (key, its) }
+                return
+            }
+        }
+        #endif
         await MainActor.run { analysis = (key, result) }
     }
 
