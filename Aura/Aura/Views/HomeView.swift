@@ -77,6 +77,10 @@ struct HomeView: View {
     }
 
     private var homeTitle: String {
+        #if DEBUG
+        // A screenshot doesn't name the server.
+        if Shot.name != nil { return "Home" }
+        #endif
         switch appSettings.homeTitleStyle {
         case .none:
             return ""

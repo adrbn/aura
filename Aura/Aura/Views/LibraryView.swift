@@ -95,7 +95,12 @@ struct LibraryView: View {
                 SongsListView(title: "Frequently Played", fetchType: .frequentSongs)
             }
         }
-        .onAppear { consumeAllPending() }
+        .onAppear {
+            consumeAllPending()
+            #if DEBUG
+            if Shot.name == "downloads", navPath.isEmpty { navPath.append(LibraryCategory.downloaded) }
+            #endif
+        }
         .onChange(of: player.pendingArtistId) { _, _ in consumePendingArtist() }
         .onChange(of: player.pendingAlbumId) { _, _ in consumePendingAlbum() }
         .onChange(of: player.pendingFavoritesOpen) { _, _ in consumePendingFavorites() }

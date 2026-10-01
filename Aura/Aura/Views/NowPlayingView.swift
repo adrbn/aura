@@ -122,6 +122,9 @@ struct NowPlayingView: View {
                 AlbumDetailView(albumId: albumId)
             }
             .onAppear {
+                #if DEBUG
+                if Shot.name == "lyrics" { showLyrics = true }
+                #endif
                 // Start preloading playlist membership and song links for current song
                 if let song = player.currentSong {
                     if !song.isPreview { PlaylistMembershipCache.shared.preloadMembership(for: song.id) }

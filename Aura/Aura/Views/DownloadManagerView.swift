@@ -1,6 +1,12 @@
 import SwiftUI
 
 struct DownloadManagerView: View {
+    #if DEBUG
+    private static let inScreenshot = Shot.name != nil
+    #else
+    private static let inScreenshot = false
+    #endif
+
     @State private var dm = DownloadManager.shared
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
@@ -131,7 +137,7 @@ struct DownloadManagerView: View {
                 }
             }
 
-            if !failedItems.isEmpty {
+            if !failedItems.isEmpty, !Self.inScreenshot {
                 Section("Failed") {
                     ForEach(failedItems) { item in
                         downloadQueueRow(item)

@@ -91,6 +91,9 @@ struct ContentView: View {
             guard newId != nil else { return }
             switchToLibraryTab()
         }
+        #if DEBUG
+        .task { await shoot() }
+        #endif
         .onChange(of: audioPlayer.pendingAlbumId) { _, newId in
             guard newId != nil else { return }
             switchToLibraryTab()
@@ -243,6 +246,50 @@ struct ContentView: View {
         case .search: SearchView()
         }
     }
+
+    #if DEBUG
+    /// Puts the app on an App Store screenshot's screen: tools/app-store-shots/shoot.sh
+    /// launches it with `-shot`, `-shotQuery` and `-shotAt`.
+    private func shoot() async {
+        guard let shot = Shot.name else { return }
+        try? FileManager.default.removeItem(at: Shot.ready)
+        guard let server = serverManager.currentServer else { return Shot.note("no server") }
+        let query = UserDefaults.standard.string(forKey: "shotQuery") ?? ""
+        switch shot {
+        case "library", "downloads":
+            switchToLibraryTab()
+        case "artist":
+            let artists = (try? await SubsonicClient.shared.search3(server: server, query: query, artistCount: 20).artist) ?? []
+            // The search can put "Avicii, CAZZETTE" and four others before "Avicii".
+            guard let artist = artists.first(where: { $0.name.caseInsensitiveCompare(query) == .orderedSame }) ?? artists.first
+            else { return }
+            audioPlayer.pendingArtistId = artist.id
+        case "album":
+            guard let album = try? await SubsonicClient.shared.search3(server: server, query: query).album?.first else { return }
+            audioPlayer.pendingAlbumId = album.id
+        case "radio":
+            guard let song = try? await SubsonicClient.shared.search3(server: server, query: query).song?.first
+            else { return }
+            // Playing it keeps the mini player on a short title, not mid-scroll through the last.
+            audioPlayer.playSong(song, fromQueue: [song], startIndex: 0)
+            audioPlayer.startRadioFromSong(song)
+        case "nowPlaying", "lyrics":
+            guard let songs = try? await SubsonicClient.shared.search3(server: server, query: query).song,
+                  let song = songs.first else { return }
+            audioPlayer.playSong(song, fromQueue: songs, startIndex: 0)
+            audioPlayer.isShowingNowPlaying = true
+            try? await Task.sleep(for: .seconds(2))
+            audioPlayer.seek(to: UserDefaults.standard.double(forKey: "shotAt"))
+        default:
+            break
+        }
+        // The script captures the screen only once this says "active": never another app.
+        try? await Task.sleep(for: .seconds(3))
+        #if os(iOS)
+        Shot.note(UIApplication.shared.applicationState == .active ? "active" : "background")
+        #endif
+    }
+    #endif
 
     private func switchToLibraryTab() {
         if let idx = appSettings.tabOrder.firstIndex(of: .library) {
@@ -482,3 +529,12 @@ struct LoadErrorView: View {
     }
 }
 
+
+#if DEBUG
+/// The screen an App Store screenshot is taken of, from the launch arguments; nil otherwise.
+enum Shot {
+    static let name = UserDefaults.standard.string(forKey: "shot")
+    static let ready = URL.documentsDirectory.appending(path: "shot-ready")
+    static func note(_ state: String) { try? Data(state.utf8).write(to: ready) }
+}
+#endif
