@@ -27,6 +27,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Previews show their lyrics, from LRCLIB, as a sheet: a preview is thirty seconds from somewhere in the song and nothing says where, so timed lines would run out of step
 - The Get It countdown follows the server's real pace, learnt from the last few releases it added, instead of a fixed twenty minutes
 - The veil behind the tab bar and the mini player rises behind the Get It card too, so its glass reads the same dark page as the mini player's
+- Sideload build — an album the library has only part of lists the songs it's missing, under its own and faded: a tap plays a song's preview, its button gets it alone, and **Get All** gets the lot, fetched from Soulseek as the Deezer release they come from. The fetch is done once the server has them, filed in the album or beside it
 
 ### Fixed — Mixes
 - The mixes no longer come back with the same songs: each genre was always read from its first page, so a regeneration drew from the same few dozen songs. Genre pages now start at a random point, and songs served in the last two generations go last, used only to fill a mix up. Made For You says when the mixes were last made ("Updated 14:32")

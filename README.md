@@ -128,6 +128,8 @@ If you run [slskd](https://github.com/slskd/slskd) next to your server, the side
 
 If you also run **SoulSync**, the Radar follows its watchlist, so what the Radar shows is what SoulSync will download: your favourite and most-played artists are added to it once each, stopping following an artist in Aura takes them off it too, and a release SoulSync is going to fetch says *On its way*.
 
+An album you have only part of lists the songs it's missing under its own, faded, each playing its preview. Get one on its own, or all of them with **Get All**: Aura fetches them from Soulseek as the release they come from, and the fetch is done once your server has filed them — in the album, or beside it.
+
 With **File Browser** pointed at your music, lyrics you time by hand can be written beside the song on your server as an `.lrc` — word timings included — so every device and every app gets them. Put `.lrc` first in Navidrome's lyrics order (`ND_LYRICSPRIORITY`) for it to serve them over the rest.
 
 A remix or an edit keeps the original's words but not its clock — the verses it drops, the minute of intro before the first line — and the lyrics sources often file the original's timing under it. The sideload build asks NetEase's catalogue, which lists each recording with its length, for the sheet timed for this one, and shows it when the lyrics found run to another clock.
