@@ -22,6 +22,8 @@ enum WrappedPeriod: Hashable, Codable {
             return String(y)
         case .month(let y, let m):
             let f = DateFormatter()
+            // In the interface's language: "Your September 2026 Wrapped", not "Your septembre".
+            f.locale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
             f.dateFormat = "LLLL yyyy"
             var comps = DateComponents()
             comps.year = y; comps.month = m; comps.day = 1
