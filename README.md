@@ -17,7 +17,7 @@ Lossless streaming, lyrics that light up word by word, a real equalizer — and 
 
 [![Platform: iOS 26+](https://img.shields.io/badge/iOS-26%2B-000000?logo=apple&logoColor=white)](https://github.com/adrbn/aura/releases)
 [![Built with SwiftUI](https://img.shields.io/badge/SwiftUI-F05138?logo=swift&logoColor=white)](https://developer.apple.com/xcode/swiftui/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-3DA639)](LICENSE)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-3DA639)](LICENSE)
 
 <br/>
 
@@ -200,6 +200,6 @@ Aura is free, and stays free. If it earns a place on your home screen:
 
 ## License
 
-[MIT](LICENSE) © 2026 Adrien Robino
+[GPL-3.0](LICENSE) © 2026 adrbn. You may share and change Aura under the same license; a modified version you distribute must stay open under GPL-3.0.
 
 <sub>Aura is not affiliated with Navidrome, Subsonic, Apple, or any server project mentioned. All trademarks belong to their respective owners.</sub>
