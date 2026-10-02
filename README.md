@@ -81,22 +81,10 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 ## Screenshots
 
 <p align="center">
-  <img src="docs/assets/shot-1-hero.webp" width="200" alt="Now Playing over the album's colours" />
-  <img src="docs/assets/shot-2-mixes.webp" width="200" alt="Home with Year Wrapped, Made For You mixes and favourite artists" />
-  <img src="docs/assets/shot-3-radio.webp" width="200" alt="A radio started from one song, with its cover and Play, Shuffle and Save as Playlist" />
-  <img src="docs/assets/shot-4-lyrics.webp" width="200" alt="Synced lyrics over the blurred cover" />
+  <img src="docs/assets/shots-ios.webp" width="100%" alt="The iPhone app: Now Playing, Home with mixes, a radio, synced lyrics, an artist page, the Library, downloads with CarPlay and Apple Watch, and privacy" />
 </p>
 <p align="center">
-  <img src="docs/assets/shot-5-artist.webp" width="200" alt="An artist page with play count, Instant Mix, Shuffle and Top Songs" />
-  <img src="docs/assets/shot-6-library.webp" width="200" alt="The Library tab: songs, albums, favourites, genres, artists and Radar" />
-  <img src="docs/assets/shot-7-anywhere.webp" width="200" alt="Downloads, CarPlay and Apple Watch" />
-  <img src="docs/assets/shot-8-private.webp" width="200" alt="No account, no tracking" />
-</p>
-<p align="center">
-  <img src="docs/assets/watch-1-now-playing.webp" width="180" alt="Apple Watch: Now Playing with the transport over the blurred cover" />
-  <img src="docs/assets/watch-2-lyrics.webp" width="180" alt="Apple Watch: lyrics" />
-  <img src="docs/assets/watch-3-up-next.webp" width="180" alt="Apple Watch: Up Next" />
-  <img src="docs/assets/watch-4-library.webp" width="180" alt="Apple Watch: the library with search and Made For You" />
+  <img src="docs/assets/shots-watch.webp" width="64%" alt="The Apple Watch app: Now Playing, lyrics, Up Next and the Library" />
 </p>
 
 ## Two builds

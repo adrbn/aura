@@ -3,7 +3,8 @@ import SwiftUI
 
 // Draws the watch app's pages side by side, at a 46 mm watch's size, into one PNG — or, given
 // a folder (a path ending in "/"), each page alone and unframed, as App Store screenshots.
-// Everything shown is made up: the song, its words, the queue.
+// Everything shown is made up: the song, its words, the queue — unless WATCH_SCENE points at a
+// JSON file of real songs (see `Scene`), which the README's pictures use.
 
 let screen = CGSize(width: 208, height: 248)
 let output = CommandLine.arguments.dropFirst().first ?? "aura-watch.png"
@@ -12,6 +13,7 @@ let root = CommandLine.arguments.dropFirst(2).first ?? "."
 @MainActor
 func cover() -> NSImage {
     // WATCH_COVER=<image> draws the pages around a real cover (with WATCH_TITLE / WATCH_ARTIST).
+    if let scene, let image = NSImage(contentsOfFile: sceneFile(scene.playing.cover)) { return image }
     if let path = ProcessInfo.processInfo.environment["WATCH_COVER"], let image = NSImage(contentsOfFile: path) {
         return image
     }
@@ -47,9 +49,36 @@ func item(_ kind: WatchItem.Kind, _ id: String, _ title: String, _ subtitle: Str
     WatchItem(kind: kind, id: id, title: title, subtitle: subtitle, coverArt: cover)
 }
 
+/// Real songs for the pages: the one playing (cover, synced lyrics as an .lrc file, the second
+/// it is at), the queue and the Made For You shelf. Paths are relative to the JSON file.
+struct Scene: Decodable {
+    struct Song: Decodable { let title: String; let artist: String; let cover: String }
+    struct Mix: Decodable { let title: String; let subtitle: String; let cover: String }
+    let playing: Song
+    let lyrics: String
+    let position: Double
+    let duration: Double
+    let upNext: [Song]
+    let mixes: [Mix]
+}
+
+let scenePath = ProcessInfo.processInfo.environment["WATCH_SCENE"]
+let scene = scenePath.map { try! JSONDecoder().decode(Scene.self, from: Data(contentsOf: URL(fileURLWithPath: $0))) }
+func sceneFile(_ name: String) -> String { URL(fileURLWithPath: scenePath!).deletingLastPathComponent().appendingPathComponent(name).path }
+
+/// "[mm:ss.xx] words" lines.
+func lrc(_ path: String) -> [WatchNowPlaying.Line] {
+    (try! String(contentsOfFile: path, encoding: .utf8)).split(separator: "\n").compactMap { row in
+        guard row.hasPrefix("["), let close = row.firstIndex(of: "]") else { return nil }
+        let stamp = row[row.index(after: row.startIndex)..<close].split(separator: ":")
+        guard stamp.count == 2, let m = Double(stamp[0]), let sec = Double(stamp[1]) else { return nil }
+        return .init(time: m * 60 + sec, text: row[row.index(after: close)...].trimmingCharacters(in: .whitespaces))
+    }
+}
+
 let lateNight = item(.mix, "m2", "Late Night", "Slow songs for after midnight", "c2")
 
-let shelf = WatchShelf(
+let madeUpShelf = WatchShelf(
     mixes: [
         item(.mix, "radar", "Radar", "New releases from your artists", "c1"),
         lateNight,
@@ -61,6 +90,11 @@ let shelf = WatchShelf(
         item(.playlist, "p1", "Road Trip", "42 songs", "c5"),
         item(.playlist, "p2", "Sunday Morning", "18 songs", "c6"),
     ])
+
+let shelf = scene.map { scene in
+    WatchShelf(mixes: scene.mixes.enumerated().map { item(.mix, "real\($0.offset)", $0.element.title, $0.element.subtitle, "rm\($0.offset)") },
+               playlists: [item(.favorites, "favorites", "Favorites", "Your starred songs")])
+} ?? madeUpShelf
 
 let lateNightSongs = WatchListing(songs: [
     item(.song, "s1", "Midnight Signals", "Neon Harbour", "c"),
@@ -77,7 +111,7 @@ let neon = WatchSearchResults(
     albums: [item(.album, "a1", "Harbour Lights", "Neon Harbour", "c5")],
     artists: [item(.artist, "r1", "Neon Harbour", "Artist", "c")])
 
-let lyrics: [WatchNowPlaying.Line] = [
+let madeUpLyrics: [WatchNowPlaying.Line] = [
     .init(time: 12, text: "Streetlights hum a quiet tune"),
     .init(time: 17, text: "Every window holds a moon"),
     .init(time: 22, text: "I keep your signal on repeat"),
@@ -88,17 +122,23 @@ let lyrics: [WatchNowPlaying.Line] = [
     .init(time: 48, text: "Harbour lights are fading out"),
 ]
 
-let upNext: [WatchNowPlaying.Upcoming] = [
+let madeUpNext: [WatchNowPlaying.Upcoming] = [
     .init(songId: "1", title: "Paper Lanterns", artist: "Neon Harbour", slot: 0, isQueued: true),
     .init(songId: "2", title: "Low Tide (Extended Mix)", artist: "Mira Vale", slot: 5, isQueued: false),
     .init(songId: "3", title: "Coastline", artist: "The Quiet Hours", slot: 6, isQueued: false),
     .init(songId: "4", title: "Glasshouse", artist: "Ada Lune", slot: 7, isQueued: false),
 ]
 
+let lyrics = scene.map { lrc(sceneFile($0.lyrics)) } ?? madeUpLyrics
+let upNext = scene.map { scene in
+    scene.upNext.enumerated().map { WatchNowPlaying.Upcoming(songId: "u\($0.offset)", title: $0.element.title,
+                                                           artist: $0.element.artist, slot: $0.offset, isQueued: $0.offset == 0) }
+} ?? madeUpNext
+
 let playing = WatchNowPlaying(
-    songId: "0", title: ProcessInfo.processInfo.environment["WATCH_TITLE"] ?? "Midnight Signals",
-    artist: ProcessInfo.processInfo.environment["WATCH_ARTIST"] ?? "Neon Harbour", artworkId: "c",
-    isPlaying: true, position: 23, positionDate: Date(), duration: 214,
+    songId: "0", title: scene?.playing.title ?? ProcessInfo.processInfo.environment["WATCH_TITLE"] ?? "Midnight Signals",
+    artist: scene?.playing.artist ?? ProcessInfo.processInfo.environment["WATCH_ARTIST"] ?? "Neon Harbour", artworkId: "c",
+    isPlaying: true, position: scene?.position ?? 23, positionDate: Date(), duration: scene?.duration ?? 214,
     isFavorite: true, canFavorite: true, lyrics: lyrics, upNext: upNext,
     accent: [0.98, 0.26, 0.4], karaoke: true)
 
@@ -213,6 +253,7 @@ MainActor.assumeIsolated {
         "c5": sampleCover(.yellow, .orange, .white, "RT"),
         "c6": sampleCover(.pink, .indigo, .orange, "SM"),
     ]
+    for (i, mix) in (scene?.mixes ?? []).enumerated() { live.covers["rm\(i)"] = NSImage(contentsOfFile: sceneFile(mix.cover)) }
     if output.hasSuffix("/") {
         // 416 × 496: what App Store Connect takes for a 46 mm watch.
         writePNG(WatchScreen(label: "", model: live, clock: .center, library: true) { NowPlayingPage() }.face, to: output + "1-now-playing.png")

@@ -83,22 +83,10 @@ reprend le tout.
 ## Captures d'écran
 
 <p align="center">
-  <img src="docs/assets/shot-1-hero.webp" width="200" alt="En cours de lecture, aux couleurs de l'album" />
-  <img src="docs/assets/shot-2-mixes.webp" width="200" alt="L'accueil avec le Wrapped de l'année, les mix Pour vous et les artistes favoris" />
-  <img src="docs/assets/shot-3-radio.webp" width="200" alt="Une radio lancée depuis un morceau, avec sa pochette et Lecture, Aléatoire et Enregistrer comme playlist" />
-  <img src="docs/assets/shot-4-lyrics.webp" width="200" alt="Des paroles synchronisées sur la pochette floutée" />
+  <img src="docs/assets/shots-ios.webp" width="100%" alt="L'app iPhone : En cours de lecture, l'accueil et ses mix, une radio, les paroles synchronisées, une page artiste, la bibliothèque, les téléchargements avec CarPlay et l'Apple Watch, et la confidentialité" />
 </p>
 <p align="center">
-  <img src="docs/assets/shot-5-artist.webp" width="200" alt="Une page d'artiste avec le nombre d'écoutes, le Mix instantané, l'aléatoire et les titres phares" />
-  <img src="docs/assets/shot-6-library.webp" width="200" alt="L'onglet Bibliothèque : morceaux, albums, favoris, genres, artistes et Radar" />
-  <img src="docs/assets/shot-7-anywhere.webp" width="200" alt="Les téléchargements, CarPlay et l'Apple Watch" />
-  <img src="docs/assets/shot-8-private.webp" width="200" alt="Pas de compte, pas de pistage" />
-</p>
-<p align="center">
-  <img src="docs/assets/watch-1-now-playing.webp" width="180" alt="Apple Watch : En cours de lecture, les commandes sur la pochette floutée" />
-  <img src="docs/assets/watch-2-lyrics.webp" width="180" alt="Apple Watch : les paroles" />
-  <img src="docs/assets/watch-3-up-next.webp" width="180" alt="Apple Watch : la file d'attente" />
-  <img src="docs/assets/watch-4-library.webp" width="180" alt="Apple Watch : la bibliothèque avec la recherche et Pour vous" />
+  <img src="docs/assets/shots-watch.webp" width="64%" alt="L'app Apple Watch : En cours de lecture, les paroles, À suivre et la bibliothèque" />
 </p>
 
 ## Deux versions
