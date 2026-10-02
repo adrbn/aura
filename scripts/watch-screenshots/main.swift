@@ -1,7 +1,8 @@
 import AppKit
 import SwiftUI
 
-// Draws the watch app's pages side by side, at a 46 mm watch's size, into one PNG.
+// Draws the watch app's pages side by side, at a 46 mm watch's size, into one PNG — or, given
+// a folder (a path ending in "/"), each page alone and unframed, as App Store screenshots.
 // Everything shown is made up: the song, its words, the queue.
 
 let screen = CGSize(width: 208, height: 248)
@@ -114,6 +115,17 @@ struct WatchScreen<Page: View>: View {
 
     var body: some View {
         VStack(spacing: 14) {
+            face
+            .clipShape(RoundedRectangle(cornerRadius: 42, style: .continuous))
+            .padding(9)
+            .background(RoundedRectangle(cornerRadius: 51, style: .continuous).fill(Color(white: 0.07)))
+            .overlay(RoundedRectangle(cornerRadius: 51, style: .continuous).stroke(Color(white: 0.2), lineWidth: 1))
+            Text(label).font(.system(size: 13, weight: .medium)).foregroundStyle(Color(white: 0.6))
+        }
+    }
+
+    /// The screen alone, edge to edge, as the watch itself would capture it.
+    var face: some View {
             ZStack(alignment: .top) {
                 Color.black
                 Backdrop()
@@ -161,13 +173,17 @@ struct WatchScreen<Page: View>: View {
             .environment(model)
             .environment(\.isLuminanceReduced, dimmed)
             .frame(width: screen.width, height: screen.height)
-            .clipShape(RoundedRectangle(cornerRadius: 42, style: .continuous))
-            .padding(9)
-            .background(RoundedRectangle(cornerRadius: 51, style: .continuous).fill(Color(white: 0.07)))
-            .overlay(RoundedRectangle(cornerRadius: 51, style: .continuous).stroke(Color(white: 0.2), lineWidth: 1))
-            Text(label).font(.system(size: 13, weight: .medium)).foregroundStyle(Color(white: 0.6))
-        }
     }
+}
+
+@MainActor
+func writePNG(_ view: some View, to path: String) {
+    let renderer = ImageRenderer(content: view.environment(\.colorScheme, .dark))
+    renderer.scale = 2
+    guard let image = renderer.cgImage else { fatalError("Nothing rendered") }
+    let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
+    try! png!.write(to: URL(fileURLWithPath: path))
+    print(path)
 }
 
 MainActor.assumeIsolated {
@@ -192,6 +208,15 @@ MainActor.assumeIsolated {
         "c5": sampleCover(.yellow, .orange, .white, "RT"),
         "c6": sampleCover(.pink, .indigo, .orange, "SM"),
     ]
+    if output.hasSuffix("/") {
+        // 416 × 496: what App Store Connect takes for a 46 mm watch.
+        writePNG(WatchScreen(label: "", model: live, clock: .center, library: true) { NowPlayingPage() }.face, to: output + "1-now-playing.png")
+        writePNG(WatchScreen(label: "", model: live) { NowPlayingPage(showsLyrics: true) }.face, to: output + "2-lyrics.png")
+        writePNG(WatchScreen(label: "", model: live, pushed: true) { UpNextPage() }.face, to: output + "3-up-next.png")
+        writePNG(WatchScreen(label: "", model: live, pushed: true) { LibraryPage() }.face, to: output + "4-library.png")
+        writePNG(WatchScreen(label: "", model: live, pushed: true) { ItemPage(item: lateNight) }.face, to: output + "5-mix.png")
+        return
+    }
     let sheet = VStack(alignment: .leading, spacing: 28) {
         HStack(alignment: .top, spacing: 28) {
             WatchScreen(label: "Now Playing", model: live, clock: .center, library: true) { NowPlayingPage() }
@@ -213,10 +238,5 @@ MainActor.assumeIsolated {
     .background(Color(red: 0.11, green: 0.11, blue: 0.12))
     .environment(\.colorScheme, .dark)
 
-    let renderer = ImageRenderer(content: sheet)
-    renderer.scale = 2
-    guard let image = renderer.cgImage else { fatalError("Nothing rendered") }
-    let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
-    try! png!.write(to: URL(fileURLWithPath: output))
-    print(output)
+    writePNG(sheet, to: output)
 }
