@@ -66,6 +66,16 @@ final class ServerManager {
            let decoded = try? JSONDecoder().decode(ServerConfig.self, from: data) {
             currentServer = decoded
         }
+        #if DEBUG
+        // tools/app-store-shots/shoot.sh points a fresh install at a demo server, past onboarding:
+        // `-shotServer <url> -shotUser <name> -shotPassword <password>`.
+        let defaults = UserDefaults.standard
+        if servers.isEmpty, let url = defaults.string(forKey: "shotServer") {
+            addServer(ServerConfig(url: url, username: defaults.string(forKey: "shotUser") ?? "",
+                                   password: defaults.string(forKey: "shotPassword") ?? "", friendlyName: "Demo"))
+            defaults.set(true, forKey: "hasCompletedOnboarding")
+        }
+        #endif
     }
 
     func saveServers() {
