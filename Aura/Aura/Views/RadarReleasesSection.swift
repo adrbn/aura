@@ -16,14 +16,6 @@ struct RadarReleaseRows: View {
                 .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
                                           bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 16))
                 .listRowBackground(Color.clear)
-                // A deliberate tap on the X, not a full swipe: there's no list to bring it back from.
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        withAnimation { RadarService.shared.hide(release) }
-                    } label: {
-                        Label("Hide", systemImage: "xmark")
-                    }
-                }
         }
     }
 }
@@ -89,7 +81,34 @@ struct RadarReleaseRow: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { Task { await tap() } }
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            Button { Task { await enqueue(next: false) } } label: { Image(systemName: "text.append") }
+                .accessibilityLabel("Add to Queue").tint(.orange)
+        }
+        // Play Next on a full swipe; Hide only on a deliberate tap — there's no list to bring
+        // it back from.
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button { Task { await enqueue(next: true) } } label: { Image(systemName: "text.insert") }
+                .accessibilityLabel("Play Next").tint(.blue)
+            #if !APPSTORE_BUILD
+            if canSearchSoulseek && !isHeld && ReleaseFetcher.shared.fetch(for: release.id) == nil {
+                Button { ReleaseFetcher.shared.get(release) } label: { Image(systemName: "arrow.down.circle") }
+                    .accessibilityLabel("Get It").tint(accentColor)
+            }
+            #endif
+            Button(role: .destructive) {
+                withAnimation { RadarService.shared.hide(release) }
+            } label: {
+                Label("Hide", systemImage: "xmark")
+            }
+        }
         .contextMenu {
+            Button { Task { await enqueue(next: true) } } label: {
+                Label("Play Next", systemImage: "text.insert")
+            }
+            Button { Task { await enqueue(next: false) } } label: {
+                Label("Add to Queue", systemImage: "text.append")
+            }
             if isHeld {
                 Button { Task { await tap() } } label: {
                     Label(heldSingle == nil ? "Open" : "Play", systemImage: "play.circle")
@@ -186,6 +205,25 @@ struct RadarReleaseRow: View {
         player.playSong(first, fromQueue: queue, startIndex: index,
                         source: .mix(id: "radar", name: String(localized: "Radar")))
         if !fromRow { player.isShowingNowPlaying = true }
+    }
+
+    /// The release's songs for the queue: the server's copies when it has it whole, its
+    /// previews otherwise.
+    private func enqueue(next: Bool) async {
+        var songs = isHeld ? RadarService.shared.current?.inLibrary[release.id] ?? [] : []
+        if songs.isEmpty {
+            guard let tracks = await RadarService.shared.tracks(of: release) else {
+                ToastManager.shared.show(String(localized: "Deezer couldn't be reached"), icon: "wifi.exclamationmark")
+                return
+            }
+            songs = tracks.compactMap { $0.previewSong(of: release) }
+        }
+        guard !songs.isEmpty else {
+            ToastManager.shared.show(String(localized: "No previews for this release"), icon: "speaker.slash")
+            return
+        }
+        // Play Next one by one would land them in reverse.
+        if next { songs.reversed().forEach(player.playNext) } else { player.addToQueue(songs) }
     }
 
     /// Gets the release in one tap, then shows how far along it is.

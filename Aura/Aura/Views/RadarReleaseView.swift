@@ -281,6 +281,9 @@ private struct RadarTrackRow: View {
         return current == "deezer-\(track.id)" || current == librarySong?.id
     }
 
+    /// What the queue gets: the server's copy, or the preview.
+    private var song: Song? { librarySong ?? track.previewSong(of: release) }
+
     private var subtitle: String {
         var parts: [String] = []
         if let name = track.artist?.name, !release.isBy(name) { parts.append(name) }
@@ -315,9 +318,33 @@ private struct RadarTrackRow: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: play)
         .opacity(track.previewURL == nil && librarySong == nil ? 0.5 : 1)
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            if let song {
+                Button { player.addToQueue(song) } label: { Image(systemName: "text.append") }
+                    .accessibilityLabel("Add to Queue").tint(.orange)
+            }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            if let song {
+                Button { player.playNext(song) } label: { Image(systemName: "text.insert") }
+                    .accessibilityLabel("Play Next").tint(.blue)
+            }
+            #if !APPSTORE_BUILD
+            if canFetch && librarySong == nil {
+                Button { ReleaseFetcher.shared.get(release, track: SoulseekPick.Track(track)) } label: {
+                    Image(systemName: "arrow.down.circle")
+                }
+                .accessibilityLabel("Get This Song").tint(accentColor)
+            }
+            #endif
+        }
         .contextMenu {
             Button(action: play) {
                 Label(librarySong == nil ? "Play Preview" : "Play", systemImage: "play.circle")
+            }
+            if let song {
+                Button { player.playNext(song) } label: { Label("Play Next", systemImage: "text.insert") }
+                Button { player.addToQueue(song) } label: { Label("Add to Queue", systemImage: "text.append") }
             }
             #if !APPSTORE_BUILD
             if canFetch && librarySong == nil {
