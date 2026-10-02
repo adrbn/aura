@@ -110,6 +110,10 @@ final class ReleaseFetcher {
                                                object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { ReleaseFetcher.shared.leaving() }
         }
+        NotificationCenter.default.addObserver(forName: UIApplication.willEnterForegroundNotification,
+                                               object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { ReleaseFetcher.shared.returning() }
+        }
     }
 
     func fetch(for id: String) -> ReleaseFetch? { fetches.first { $0.id == id } }
@@ -543,6 +547,13 @@ final class ReleaseFetcher {
         guard !running.isEmpty else { return }
         for fetch in running { activities.show(fetch, force: true) }
         BackgroundGrace().hold(for: 25)
+    }
+
+    /// Back on screen: whatever iOS suspended mid-step stalls there for good — a search
+    /// cut off in the background never asks again, and its card kept saying it was looking.
+    /// Each one picks up afresh; a download in flight is followed, not asked for twice.
+    private func returning() {
+        for fetch in fetches where fetch.isActive { start(fetch.id) }
     }
 
     private static func load() -> [ReleaseFetch] {
