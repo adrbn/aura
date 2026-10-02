@@ -7,7 +7,7 @@ Everything is SMIL (<animate>, <animateTransform>), so it plays inside GitHub's 
 external files, no webfonts. Pictures go in as base64 data URIs.
 
   - Hero: two iPhones and an Apple Watch drawn as frames; everything on their screens is a real capture
-    (readme-src/phone-*.jpg, the watch-*.webp renders of the watch app's own views), crossfading slowly.
+    (readme-src/phone-*.jpg, readme-src/watch-now-playing.jpg, the watch app's own page around the same song), crossfading slowly.
   - Made For You card: real covers cut from the Home shelf (readme-src/cover-*.jpg).
   - The other cards are drawn after the app: the equalizer's five bands at ±12 dB and real preset gains
     (Components/EqualizerView.swift, Models.swift), lyrics word by word with unsung words at 35 %, the editorial
@@ -395,7 +395,9 @@ def hero(light):
     uid = "hl" if light else "hd"
     W, H, T = 860, 560, 18.0
     pic = {k: data_uri(SRC / f"phone-{k}.jpg") for k in ("now-playing", "lyrics", "home", "radio", "offline")}
-    wpic = [data_uri(OUT / f) for f in ("watch-1-now-playing.webp", "watch-2-lyrics.webp")]
+    # The watch app's own Now Playing page, drawn by scripts/watch-screenshots.sh around the same song
+    # (WATCH_COVER / WATCH_TITLE / WATCH_ARTIST), so the wrist and the phone agree.
+    wpic = data_uri(SRC / "watch-now-playing.jpg")
     py = (H - PHONE_H - 2 * PHONE_BEZEL) / 2
     gap, wgap = 36, 56
     x1 = (W - (2 * (PHONE_W + 2 * PHONE_BEZEL) + gap + wgap + WATCH_W + 16 + 7)) / 2
@@ -405,7 +407,7 @@ def hero(light):
     body = iphone(uid + "a", x1, py, light, crossfade([phone_pic("now-playing"), phone_pic("lyrics")], T))
     body += iphone(uid + "b", x2, py, light, crossfade([phone_pic(k) for k in ("home", "radio", "offline")], T))
     body += watch(uid + "w", xw, H / 2 - (WATCH_H + 16) / 2, WATCH_W, WATCH_H, light,
-                  crossfade([picture(u, WATCH_W, WATCH_H) for u in wpic], T))
+                  picture(wpic, WATCH_W, WATCH_H))
     return svg(W, H, body, "Aura on two iPhones and an Apple Watch: Now Playing, synced lyrics, Home, a radio and "
                            "an album ready offline, captured from the app")
 

@@ -11,6 +11,10 @@ let root = CommandLine.arguments.dropFirst(2).first ?? "."
 
 @MainActor
 func cover() -> NSImage {
+    // WATCH_COVER=<image> draws the pages around a real cover (with WATCH_TITLE / WATCH_ARTIST).
+    if let path = ProcessInfo.processInfo.environment["WATCH_COVER"], let image = NSImage(contentsOfFile: path) {
+        return image
+    }
     let art = ZStack {
         LinearGradient(colors: [Color(red: 0.05, green: 0.35, blue: 0.45), Color(red: 0.55, green: 0.1, blue: 0.4)],
                        startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -92,7 +96,8 @@ let upNext: [WatchNowPlaying.Upcoming] = [
 ]
 
 let playing = WatchNowPlaying(
-    songId: "0", title: "Midnight Signals", artist: "Neon Harbour", artworkId: "c",
+    songId: "0", title: ProcessInfo.processInfo.environment["WATCH_TITLE"] ?? "Midnight Signals",
+    artist: ProcessInfo.processInfo.environment["WATCH_ARTIST"] ?? "Neon Harbour", artworkId: "c",
     isPlaying: true, position: 23, positionDate: Date(), duration: 214,
     isFavorite: true, canFavorite: true, lyrics: lyrics, upNext: upNext,
     accent: [0.98, 0.26, 0.4], karaoke: true)
