@@ -48,13 +48,13 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 <table>
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="A five-band equalizer curve moving between presets" width="100%"><br><b>Lossless, with a real equalizer</b><br><sub>FLAC and ALAC stay lossless, or 128, 192 or 320 kbps on a slow line. Five bands from 60 Hz to 14 kHz, one curve you drag, 15 presets, ReplayGain.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="Synced lyrics lighting up word by word" width="100%"><br><b>Lyrics in time</b><br><sub>Word by word when your server has per-word timing, line by line otherwise. From your server first, then <a href="https://lrclib.net">LRCLIB</a>. Tap a line to jump to it.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Real Made For You covers from Aura sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover. Instant Mix starts a radio from any song or artist. Year Wrapped counts your year on the iPhone.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="The lyrics screen, captured from the app" width="100%"><br><b>Lyrics in time</b><br><sub>Word by word when your server has per-word timing, line by line otherwise. From your server first, then <a href="https://lrclib.net">LRCLIB</a>. Tap a line to jump to it.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Made For You covers from the app sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover. Instant Mix starts a radio from any song or artist. Year Wrapped counts your year on the iPhone.</sub></td>
   </tr>
   <tr>
-    <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="The Radar listing new releases, one playing its preview" width="100%"><br><b>Radar</b><br><sub>This month's releases from the artists you play most. What your server has plays in full; the rest plays as 30-second previews.</sub></td>
-    <td align="center" valign="top"><img src="docs/assets/card-offline.svg" alt="Albums downloading, their progress rings filling" width="100%"><br><b>Offline, all of it</b><br><sub>Download a song, an album, a playlist or the whole library, each at its own quality. With no signal, the library, search and playback keep working.</sub></td>
-    <td align="center" valign="top"><img src="docs/assets/card-devices.svg" alt="CarPlay and an Apple Watch showing the same song" width="100%"><br><b>Apple Watch and CarPlay</b><br><sub>Now Playing, lyrics, Up Next and the library on your wrist, the Digital Crown on the volume. CarPlay in the App Store build.</sub></td>
+    <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="The Radar listing new releases from your artists, captured from the app" width="100%"><br><b>Radar</b><br><sub>This month's releases from the artists you play most. What your server has plays in full; the rest plays as 30-second previews.</sub></td>
+    <td align="center" valign="top"><img src="docs/assets/card-offline.svg" alt="A downloaded album, captured from the app" width="100%"><br><b>Offline, all of it</b><br><sub>Download a song, an album, a playlist or the whole library, each at its own quality. With no signal, the library, search and playback keep working.</sub></td>
+    <td align="center" valign="top"><img src="docs/assets/card-devices.svg" alt="The Apple Watch app and the iPhone playing the same song, both captured from the app" width="100%"><br><b>Apple Watch and CarPlay</b><br><sub>Now Playing, lyrics, Up Next and the library on your wrist, the Digital Crown on the volume. CarPlay in the App Store build.</sub></td>
   </tr>
 </table>
 
@@ -165,7 +165,7 @@ open Aura/Aura.xcodeproj
 The fonts (Vavin and Archivo, both SIL OFL 1.1) are in the repository, so a fresh clone builds with nothing to add.
 
 The art on this page is made by [`docs/assets/make_svgs.py`](docs/assets/make_svgs.py) (Python, standard library
-only): `python3 docs/assets/make_svgs.py` regenerates every SVG. The hero and the Made For You card embed real captures
+only): `python3 docs/assets/make_svgs.py` regenerates every SVG. Every picture embeds real captures
 of the app, kept small in `docs/assets/readme-src/`.
 
 ## Privacy
@@ -198,6 +198,6 @@ distribute must stay open under GPL-3.0.
 - [LRCLIB](https://lrclib.net) for lyrics, [MusicBrainz](https://musicbrainz.org) for song credits, [Deezer](https://www.deezer.com)'s public catalogue for covers, artist photos, the Radar and previews, and the iTunes Search API for share links.
 - Optional, with your own key: [Google Gemini](https://ai.google.dev) for lyrics translation and [Last.fm](https://www.last.fm) for listening statistics.
 - Fonts: [Archivo](https://github.com/Omnibus-Type/Archivo) and Vavin, both under the SIL Open Font License 1.1.
-- The release titles in the Radar and Downloads pictures are freely licensed albums from the Navidrome demo library: Nine Inch Nails, *The Slip* (CC BY-NC-SA 3.0 US); Brad Sucks, *I Don't Know What I'm Doing* (CC BY-NC-SA 2.5); The Polish Ambassador, *Pushing Through The Pavement* (CC BY-NC-SA 3.0); Natasha Beller, *Fairytale* (CC BY-NC-SA 4.0). The hero and the Made For You covers are real captures of the app on the developer's own library; the song and artist names drawn in the other cards are made up.
+- Every picture on this page is a real capture of the app, playing the developer's own library.
 
 <sub>Aura is not affiliated with Navidrome, Subsonic or Apple. All trademarks belong to their respective owners.</sub>

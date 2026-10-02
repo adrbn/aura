@@ -50,13 +50,13 @@ reprend le tout.
 <table>
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="La courbe d'un égaliseur cinq bandes qui passe d'un préréglage à l'autre" width="100%"><br><b>Sans perte, avec un vrai égaliseur</b><br><sub>Le FLAC et l'ALAC restent sans perte, ou en 128, 192 ou 320 kbit/s sur une connexion lente. Cinq bandes de 60 Hz à 14 kHz, une seule courbe à tirer, 15 préréglages, ReplayGain.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="Des paroles synchronisées qui s'allument mot à mot" width="100%"><br><b>Les paroles en rythme</b><br><sub>Mot à mot quand votre serveur a le minutage de chaque mot, ligne par ligne sinon. D'abord votre serveur, puis <a href="https://lrclib.net">LRCLIB</a>. Touchez une ligne pour y sauter.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="De vraies pochettes Pour vous d'Aura qui défilent" width="100%"><br><b>Pour vous</b><br><sub>Des mix selon l'heure, l'humeur et le genre, chacun avec sa pochette. Le Mix instantané lance une radio depuis n'importe quel morceau ou artiste. Le Wrapped fait le bilan de votre année, calculé sur l'iPhone.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="L'écran des paroles, capturé dans l'app" width="100%"><br><b>Les paroles en rythme</b><br><sub>Mot à mot quand votre serveur a le minutage de chaque mot, ligne par ligne sinon. D'abord votre serveur, puis <a href="https://lrclib.net">LRCLIB</a>. Touchez une ligne pour y sauter.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Des pochettes Pour vous de l'app qui défilent" width="100%"><br><b>Pour vous</b><br><sub>Des mix selon l'heure, l'humeur et le genre, chacun avec sa pochette. Le Mix instantané lance une radio depuis n'importe quel morceau ou artiste. Le Wrapped fait le bilan de votre année, calculé sur l'iPhone.</sub></td>
   </tr>
   <tr>
-    <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="Le Radar qui liste les nouveautés, l'une jouant son extrait" width="100%"><br><b>Radar</b><br><sub>Les sorties du mois des artistes que vous écoutez le plus. Ce que votre serveur a se lit en entier ; le reste, en extraits de 30 secondes.</sub></td>
-    <td align="center" valign="top"><img src="docs/assets/card-offline.svg" alt="Des albums en téléchargement, leurs anneaux de progression qui se remplissent" width="100%"><br><b>Tout, hors ligne</b><br><sub>Téléchargez un morceau, un album, une playlist ou toute la bibliothèque, chacun dans sa qualité. Sans réseau, la bibliothèque, la recherche et la lecture continuent.</sub></td>
-    <td align="center" valign="top"><img src="docs/assets/card-devices.svg" alt="CarPlay et une Apple Watch qui affichent le même morceau" width="100%"><br><b>Apple Watch et CarPlay</b><br><sub>En cours de lecture, les paroles, la file d'attente et la bibliothèque au poignet, la Digital Crown sur le volume. CarPlay dans la version App Store.</sub></td>
+    <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="Le Radar qui liste les nouveautés de vos artistes, capturé dans l'app" width="100%"><br><b>Radar</b><br><sub>Les sorties du mois des artistes que vous écoutez le plus. Ce que votre serveur a se lit en entier ; le reste, en extraits de 30 secondes.</sub></td>
+    <td align="center" valign="top"><img src="docs/assets/card-offline.svg" alt="Un album téléchargé, capturé dans l'app" width="100%"><br><b>Tout, hors ligne</b><br><sub>Téléchargez un morceau, un album, une playlist ou toute la bibliothèque, chacun dans sa qualité. Sans réseau, la bibliothèque, la recherche et la lecture continuent.</sub></td>
+    <td align="center" valign="top"><img src="docs/assets/card-devices.svg" alt="L'app Apple Watch et l'iPhone qui jouent le même morceau, tous deux capturés dans l'app" width="100%"><br><b>Apple Watch et CarPlay</b><br><sub>En cours de lecture, les paroles, la file d'attente et la bibliothèque au poignet, la Digital Crown sur le volume. CarPlay dans la version App Store.</sub></td>
   </tr>
 </table>
 
@@ -170,8 +170,8 @@ Les polices (Vavin et Archivo, toutes deux sous SIL OFL 1.1) sont dans le dépô
 ajouter.
 
 Les illustrations de cette page sont faites par [`docs/assets/make_svgs.py`](docs/assets/make_svgs.py) (Python,
-bibliothèque standard seulement) : `python3 docs/assets/make_svgs.py` régénère tous les SVG. L'illustration du haut
-et la carte Pour vous intègrent de vraies captures de l'app, gardées en petit dans `docs/assets/readme-src/`.
+bibliothèque standard seulement) : `python3 docs/assets/make_svgs.py` régénère tous les SVG. Toutes les illustrations
+intègrent de vraies captures de l'app, gardées en petit dans `docs/assets/readme-src/`.
 
 ## Confidentialité
 
@@ -203,6 +203,6 @@ vous distribuez doit rester ouverte, sous GPL-3.0.
 - [LRCLIB](https://lrclib.net) pour les paroles, [MusicBrainz](https://musicbrainz.org) pour les crédits des morceaux, le catalogue public de [Deezer](https://www.deezer.com) pour les pochettes, les photos d'artistes, le Radar et les extraits, et l'API iTunes Search pour les liens de partage.
 - En option, avec votre propre clé : [Google Gemini](https://ai.google.dev) pour la traduction des paroles et [Last.fm](https://www.last.fm) pour les statistiques d'écoute.
 - Polices : [Archivo](https://github.com/Omnibus-Type/Archivo) et Vavin, toutes deux sous SIL Open Font License 1.1.
-- Les titres du Radar et des téléchargements dans les illustrations sont des albums sous licence libre de la bibliothèque de démo de Navidrome : Nine Inch Nails, *The Slip* (CC BY-NC-SA 3.0 US) ; Brad Sucks, *I Don't Know What I'm Doing* (CC BY-NC-SA 2.5) ; The Polish Ambassador, *Pushing Through The Pavement* (CC BY-NC-SA 3.0) ; Natasha Beller, *Fairytale* (CC BY-NC-SA 4.0). L'illustration du haut et les pochettes Pour vous sont de vraies captures de l'app sur la bibliothèque du développeur ; les noms de morceaux et d'artistes dessinés dans les autres cartes sont inventés.
+- Toutes les illustrations de cette page sont de vraies captures de l'app, sur la bibliothèque du développeur.
 
 <sub>Aura n'est affilié ni à Navidrome, ni à Subsonic, ni à Apple. Toutes les marques appartiennent à leurs propriétaires respectifs.</sub>
