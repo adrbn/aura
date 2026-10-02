@@ -17,7 +17,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 <a href="#deux-versions"><img src="docs/assets/btn-builds-fr.svg" alt="Deux versions" height="40"></a>&nbsp;
 <a href="#compiler-depuis-les-sources"><img src="docs/assets/btn-source-fr.svg" alt="Compiler" height="40"></a>
 <br><br>
-<a href="https://ko-fi.com/adrbn"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Me soutenir sur Ko-fi" height="36"></a>
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-kofi-fr.svg" alt="Offrir un café sur Ko-fi" height="64"></a>
 
 <br>
 
