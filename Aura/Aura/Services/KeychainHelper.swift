@@ -2,7 +2,12 @@ import Foundation
 import Security
 
 enum KeychainHelper {
-    private static let service = "com.adrbn.aura"
+    /// The iOS app's identifier, which the Mac build shares: the sideloaded build and the
+    /// App Store build each keep their own.
+    private static let service: String = {
+        let id = Bundle.main.bundleIdentifier ?? "com.adrbn.aura"
+        return id.hasSuffix(".mac") ? String(id.dropLast(4)) : id
+    }()
 
     static func save(password: String, for serverID: String) {
         guard let data = password.data(using: .utf8) else { return }

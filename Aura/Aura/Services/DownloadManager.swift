@@ -77,7 +77,7 @@ final class DownloadManager: NSObject {
     /// survive a system kill (iOS relaunches us via handleEventsForBackgroundURLSession).
     @ObservationIgnored
     private lazy var session: URLSession = {
-        let config = URLSessionConfiguration.background(withIdentifier: "com.adrbn.aura.downloads")
+        let config = URLSessionConfiguration.background(withIdentifier: "\(Bundle.main.bundleIdentifier ?? "com.adrbn.aura").downloads")
         config.isDiscretionary = false
         config.sessionSendsLaunchEvents = true
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
