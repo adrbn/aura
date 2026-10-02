@@ -15,8 +15,9 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
 <a href="#what-it-does"><img src="docs/assets/btn-features.svg" alt="Features" height="40"></a>&nbsp;
 <a href="#two-builds"><img src="docs/assets/btn-builds.svg" alt="Two builds" height="40"></a>&nbsp;
-<a href="#build-from-source"><img src="docs/assets/btn-source.svg" alt="Build from source" height="40"></a>&nbsp;
-<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-kofi.svg" alt="Tip on Ko-fi" height="40"></a>
+<a href="#build-from-source"><img src="docs/assets/btn-source.svg" alt="Build from source" height="40"></a>
+<br><br>
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-kofi.svg" alt="Tip on Ko-fi" height="52"></a>
 
 <br>
 

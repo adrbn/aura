@@ -787,7 +787,9 @@ def kofi(fr):
            f'stroke-linejoin="round"><path d="M-11 -5H7V4A7 7 0 0 1 0 11H-4A7 7 0 0 1 -11 4Z" fill="#fff" '
            f'fill-opacity=".18"/><path d="M7 -2H9.5A3.5 3.5 0 0 1 9.5 5H7"/><path d="M-6 -10.5Q-4 -12.5 -6 -14.5'
            f'M-1 -10.5Q1 -12.5 -1 -14.5" stroke-width="2"/></g>')
-    body = (f'<rect width="{w}" height="{h}" rx="{h / 2}" fill="{ACCENT}"/>' + cup
+    # Ko-fi's own blue, not the coral of the buttons above it: it's a different ask, and it
+    # should read as one.
+    body = (f'<rect width="{w}" height="{h}" rx="{h / 2}" fill="#1E90C8"/>' + cup
             + text(60, 30, top, 17, weight=700) + text(60, 48, sub, 12.5, weight=500, op=0.9))
     return svg(w, h, body, f"{top} on Ko-fi")
 
