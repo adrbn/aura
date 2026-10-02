@@ -19,7 +19,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 <a href="#what-it-does"><img src="../assets/btn-features.svg" alt="Features" height="40"></a>&nbsp;
 <a href="#two-builds"><img src="../assets/btn-builds.svg" alt="Two builds" height="40"></a>&nbsp;
 <a href="#build-from-source"><img src="../assets/btn-source.svg" alt="Build from source" height="40"></a>&nbsp;
-<a href="https://ko-fi.com/adrbn"><img src="../assets/btn-kofi.svg" alt="Tip on Ko-fi" height="40"></a>
+<a href="https://ko-fi.com/adrbn"><img src="../assets/btn-tip.svg" alt="Tip on Ko-fi" height="40"></a>
 
 <br>
 
@@ -187,7 +187,7 @@ welcome. The [changelog](../../CHANGELOG.md) describes what changed and why.
 
 Aura is free, and stays free. If it earns a place on your home screen:
 
-<a href="https://ko-fi.com/adrbn"><img src="../assets/btn-kofi.svg" height="64" alt="Buy me a coffee on Ko-fi"></a>
+<a href="https://ko-fi.com/adrbn"><img src="../assets/btn-tip.svg" height="64" alt="Buy me a coffee on Ko-fi"></a>
 
 A star on the repo helps other people find it too.
 

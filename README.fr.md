@@ -17,7 +17,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 <a href="#deux-versions"><img src="docs/assets/btn-builds-fr.svg" alt="Deux versions" height="40"></a>&nbsp;
 <a href="#compiler-depuis-les-sources"><img src="docs/assets/btn-source-fr.svg" alt="Compiler" height="40"></a>
 <br><br>
-<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-kofi-fr.svg" alt="Offrir un café sur Ko-fi" height="64"></a>
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" alt="Offrir un café sur Ko-fi" height="64"></a>
 
 <br>
 
@@ -190,7 +190,7 @@ sont les bienvenues. Le [journal des modifications](CHANGELOG.md) (en anglais) d
 
 Aura est gratuit, et le restera. S'il mérite sa place sur votre écran d'accueil :
 
-<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-kofi-fr.svg" height="64" alt="Offrir un café sur Ko-fi"></a>
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" height="64" alt="Offrir un café sur Ko-fi"></a>
 
 Une étoile sur le dépôt aide aussi d'autres personnes à le trouver.
 

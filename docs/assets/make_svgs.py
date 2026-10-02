@@ -827,7 +827,7 @@ def main():
         "aura-hero.svg": hero(False), "aura-hero-light.svg": hero(True),
         "card-eq.svg": card_eq(), "card-lyrics.svg": card_lyrics(), "card-mixes.svg": card_mixes(),
         "card-radar.svg": card_radar(), "card-offline.svg": card_offline(), "card-devices.svg": card_devices(),
-        "btn-kofi.svg": kofi(False), "btn-kofi-fr.svg": kofi(True),
+        "btn-tip.svg": kofi(False), "btn-tip-fr.svg": kofi(True),
     }
     for key, (ic, en, fr, accent) in BUTTONS.items():
         files[f"btn-{key}.svg"] = button(ic, en, accent)
