@@ -15,7 +15,8 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download-fr.svg" alt="Télécharger l'IPA" height="40"></a>&nbsp;
 <a href="#ce-que-fait-aura"><img src="docs/assets/btn-features-fr.svg" alt="Fonctions" height="40"></a>&nbsp;
 <a href="#deux-versions"><img src="docs/assets/btn-builds-fr.svg" alt="Deux versions" height="40"></a>&nbsp;
-<a href="#compiler-depuis-les-sources"><img src="docs/assets/btn-source-fr.svg" alt="Compiler" height="40"></a>
+<a href="#compiler-depuis-les-sources"><img src="docs/assets/btn-source-fr.svg" alt="Compiler" height="40"></a>&nbsp;
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-kofi-fr.svg" alt="Un pourboire sur Ko-fi" height="40"></a>
 
 <br>
 
