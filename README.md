@@ -1,30 +1,80 @@
 <div align="center">
 
-<img src="docs/assets/icon.png" width="128" height="128" alt="Aura app icon" />
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
+  <img src="docs/assets/aura-hero.svg" alt="Aura on an iPhone and an Apple Watch: Now Playing over the cover's colours, with synced lyrics beside it lighting up word by word" width="860">
+</picture>
+
+<img src="docs/assets/icon.png" width="72" height="72" alt="Aura app icon">
 
 # Aura
 
-### A native iPhone and Apple Watch player for your Navidrome or Subsonic server.
+**Your music server, on your iPhone.** A native iPhone and Apple Watch player for Navidrome and Subsonic:
+lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
 
-Lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
+<a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
+<a href="#what-it-does"><img src="docs/assets/btn-features.svg" alt="Features" height="40"></a>&nbsp;
+<a href="#two-builds"><img src="docs/assets/btn-builds.svg" alt="Two builds" height="40"></a>&nbsp;
+<a href="#build-from-source"><img src="docs/assets/btn-source.svg" alt="Build from source" height="40"></a>
 
-<br/>
+<br>
 
-<a href="https://github.com/adrbn/aura/releases/latest"><img alt="Download the IPA" src="https://img.shields.io/badge/Download%20the%20IPA-Releases-0D1117?style=for-the-badge&logo=github&logoColor=white" /></a>
+[![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#requirements)
+[![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#requirements)
+[![Navidrome / Subsonic](https://img.shields.io/badge/server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#requirements)
+[![No tracking](https://img.shields.io/badge/tracking-none-EB534D?style=flat-square&labelColor=121212)](#privacy)
+[![Latest release](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&style=flat-square&labelColor=121212&color=EB534D&label=release)](https://github.com/adrbn/aura/releases/latest)
+[![License GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-EB534D?style=flat-square&labelColor=121212)](LICENSE)
 
 <sub>App Store: coming soon, as <b>Aura: Self-Hosted Music</b> · Free and open source · Bring your own server</sub>
 
-[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-3DA639)](LICENSE)
-[![Platform: iOS 26+](https://img.shields.io/badge/iOS-26%2B-000000?logo=apple&logoColor=white)](#requirements)
-[![Latest release](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&label=release)](https://github.com/adrbn/aura/releases/latest)
-
-<br/>
-
-<img src="docs/assets/preview.webp" width="300" alt="Aura's App Store slides in turn: Home, Made For You mixes, an artist radio, synced lyrics, an artist page, the library, downloads with CarPlay and Apple Watch, and the privacy promise" />
+English · [Français](README.fr.md)
 
 </div>
 
-> **Aura is a client, not a music service.** Point it at a Navidrome or Subsonic-compatible server you own or have access to. It plays your library; it doesn't host, provide or find music for you.
+---
+
+Aura plays the music on your own server. Point it at Navidrome, or any server that speaks the Subsonic API, and your
+library is on your iPhone: streamed in its original quality, with lyrics in time, mixes built from what you actually
+play, a Radar of new releases from your artists, and everything you download still there with no signal. The Apple
+Watch app is a remote and a library on your wrist; in the car, CarPlay lays it all out again.
+
+> **Aura is a client, not a music service.** Point it at a Navidrome or Subsonic-compatible server you own or have
+> access to. It plays your library; it doesn't host, provide or find music for you.
+
+## What it does
+
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="docs/assets/card-eq.svg" alt="A five-band equalizer curve moving between presets" width="100%"><br><b>Lossless, with a real equalizer</b><br><sub>FLAC and ALAC stay lossless, or 128, 192 or 320 kbps on a slow line. Five bands from 60 Hz to 14 kHz, one curve you drag, 15 presets, ReplayGain.</sub></td>
+    <td align="center" width="33%"><img src="docs/assets/card-lyrics.svg" alt="Synced lyrics lighting up word by word" width="100%"><br><b>Lyrics in time</b><br><sub>Word by word when your server has per-word timing, line by line otherwise. From your server first, then <a href="https://lrclib.net">LRCLIB</a>. Tap a line to jump to it.</sub></td>
+    <td align="center" width="33%"><img src="docs/assets/card-mixes.svg" alt="Made For You mix covers sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover. Instant Mix starts a radio from any song or artist. Year Wrapped counts your year on the iPhone.</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/assets/card-radar.svg" alt="The Radar listing new releases, one playing its preview" width="100%"><br><b>Radar</b><br><sub>This month's releases from the artists you play most. What your server has plays in full; the rest plays as 30-second previews.</sub></td>
+    <td align="center"><img src="docs/assets/card-offline.svg" alt="Albums downloading, their progress rings filling" width="100%"><br><b>Offline, all of it</b><br><sub>Download a song, an album, a playlist or the whole library, each at its own quality. With no signal, the library, search and playback keep working.</sub></td>
+    <td align="center"><img src="docs/assets/card-devices.svg" alt="CarPlay and an Apple Watch showing the same song" width="100%"><br><b>Apple Watch and CarPlay</b><br><sub>Now Playing, lyrics, Up Next and the library on your wrist, the Digital Crown on the volume. CarPlay in the App Store build.</sub></td>
+  </tr>
+</table>
+
+**And also**
+
+- **An editable queue.** Play next, add to the end, drag to reorder. When it runs out, autoplay carries on with similar songs.
+- **Shuffle, repeat one or all, and a sleep timer** that stops after a set time or at the end of the song.
+- **Scrobbling.** Plays go to your server, and are held on the iPhone while you're offline.
+- **Lyrics you can fix.** Shift the timing if your Bluetooth headphones lag, or put a song's lyrics in time yourself: tap *Now* as each marked line starts. Your timing stays on the iPhone and wins over every other source. For a duet, a remix or another version, Aura checks that the lyrics match the version playing.
+- **Lyrics translation**, optional, under each line, by Google's Gemini with a free API key of your own (Settings → Lyrics → Translation). A song is sent only when you tap translate, and only its lines, title and artist. Translations are kept for offline use.
+- **Save a radio as a playlist** on your server, and its cover goes with it.
+- **One search** across songs, albums, artists and playlists that forgives typos, with a Recently Searched list of what you played.
+- **Playlists your way.** A grid or a list, filtered to pinned, radios, mixes, yours, shared or downloaded. Create them, reorder them and give them a cover from your photos; changes go to your server.
+- **Pages in the colour of their artwork.** When your server has no cover for an album, Aura finds it in Deezer's catalogue.
+- **A stream cache.** What you stream is kept as it plays, up to a size you set, and an offline mode you switch on stays on across launches.
+- **Several servers**, switched from the Home title, and libraries split across music folders.
+- **On the Lock Screen**, in Control Center and in the Dynamic Island, with AirPlay.
+- **Siri and Shortcuts** in English and French: play, pause, skip, go back, shuffle, repeat, favourite a song, play a playlist or album by name, or play your favourites.
+- **Share links.** Share a song as links that open it on other services.
+- **Yours to arrange.** Light or dark, any accent colour, and tabs and Home sections in the order you choose.
+- **A nightstand clock.** Switch it on, turn the phone sideways while music plays, and the artwork, the time or the lyrics fill the screen.
 
 ## Screenshots
 
@@ -47,58 +97,6 @@ Lossless streaming, lyrics that light up word by word, mixes built from your own
   <img src="docs/assets/watch-4-library.webp" width="180" alt="Apple Watch: the library with search and Made For You" />
 </p>
 
-## Features
-
-### Playback
-- Streams your original files, FLAC and ALAC kept lossless, or at 128, 192 or 320 kbps on a slow connection. Formats iOS can't open (OGG, Opus, WMA) are converted by the server.
-- A five-band equalizer from 60 Hz to 14 kHz, drawn as one curve you drag, with 15 presets. ReplayGain is a switch in Settings.
-- An editable queue: play next, add to the end, drag to reorder. When it runs out, autoplay carries on with similar songs.
-- Shuffle, repeat one or all, and a sleep timer that stops after a set time or at the end of the song.
-- Plays are scrobbled to your server, and held on the iPhone while you're offline.
-
-### Lyrics
-- From your server first (OpenSubsonic lyrics extension), then [LRCLIB](https://lrclib.net) when it has none.
-- Word by word when the server has per-word timing, line by line otherwise. Tap a line to jump to it; shift the timing if your Bluetooth headphones lag.
-- Put lyrics in time yourself: tap *Now* as each marked line starts. The result stays on the iPhone and wins over every other source.
-- For a duet, a remix or another version of a song, Aura checks that the lyrics match the version playing.
-- Optional translation under each line by Google's Gemini, with a free API key of your own (Settings → Lyrics → Translation). A song is sent only when you tap translate, and only its lines, title and artist. Translations are kept for offline use.
-
-### Mixes & Radar
-- Instant Mix starts a radio from any song or artist. Save it as a playlist on your server and its cover goes with it.
-- Made For You builds mixes from your library by time of day, mood and genre, each with its own cover.
-- Radar lists this month's releases from the artists you play most. What your server has plays in full; the rest plays as 30-second Deezer previews. It can be switched off in Settings.
-- Year Wrapped shows your top songs, artists and genres, counted on your iPhone.
-
-### Offline
-- Download a song, an album, a playlist or the whole library, each at its own quality.
-- What you stream is cached as it plays, up to a size you set.
-- With no connection, the library, search and playback keep working with what's on the iPhone. An offline mode you switch on stays on across launches.
-
-### Library & Search
-- One search across songs, albums, artists and playlists that forgives typos, with a Recently Searched list of what you played.
-- Playlists as a grid or a list, filtered to pinned, radios, mixes, yours, shared or downloaded. Create them, reorder them and give them a cover from your photos; changes go to your server.
-- Album, playlist and mix pages take the colour of their artwork. When your server has no cover for an album, Aura finds it in Deezer's catalogue.
-- Several servers, switched from the Home title, and libraries split across music folders.
-
-### iPhone integration
-- Controls on the Lock Screen, in Control Center and in the Dynamic Island, with AirPlay.
-- Siri and Shortcuts in English and French: play, pause, skip, go back, shuffle, repeat, favourite a song, play a playlist or album by name, or play your favourites.
-- Share a song as links that open it on other services.
-- Light or dark, any accent colour, and tabs and Home sections in the order you choose.
-- A nightstand clock: switch it on, turn the phone sideways while music plays, and the artwork, the time or the lyrics fill the screen.
-
-### Apple Watch
-- A remote for the iPhone's player: Now Playing over the blurred cover, lyrics, Up Next, and the Digital Crown on the phone's volume.
-- The library from the wrist: search, Made For You with the Radar, favourites and playlists, each with Play and Shuffle.
-
-### CarPlay
-- The library laid out as on the phone: Home with the mixes and the Radar, Playlists with your favourites first, and the newest albums. Each page opens under its cover with Play and Shuffle.
-- Now Playing keeps the heart, Up Next and the album a tap away. CarPlay is in the App Store build only (see below).
-
-### Privacy
-- No account, no analytics, nothing sent to the developer. Server passwords are kept in the iOS Keychain.
-- Lyrics, credits, covers, artist photos, the Radar and share links come from public services, each listed in the [privacy policy](https://adrbn.github.io/aura-site/privacy.html).
-
 ## Two builds
 
 Both are free, and everything not listed here is the same in both.
@@ -109,11 +107,17 @@ Both are free, and everything not listed here is the same in both.
 | Get It (Soulseek via your own [slskd](https://github.com/slskd/slskd)) | No | Opt-in, under Settings → Beta Features |
 | NetEase lyrics-timing check for remixes and edits | No | Yes |
 
-**Get It** fetches what your library is missing: a Radar release, a Deezer result in Search, the missing songs of an album you have only part of (one by one, or with Get All), or the heart on a preview in Now Playing. Aura finds the release on Soulseek through your slskd, downloads it, and waits for your server to add it, with a card above the mini player and a Live Activity following each step. Nothing goes through anyone else's server. Only download music you have the right to.
+**Get It** fetches what your library is missing: a Radar release, a Deezer result in Search, the missing songs of an
+album you have only part of (one by one, or with Get All), or the heart on a preview in Now Playing. Aura finds the
+release on Soulseek through your slskd, downloads it, and waits for your server to add it, with a card above the mini
+player and a Live Activity following each step. Nothing goes through anyone else's server. Only download music you
+have the right to.
 
-The **NetEase check** asks NetEase's catalogue, by title, artist and length, for lyrics timed to the exact recording, since lyrics sources often file a remix under the original's timing.
+The **NetEase check** asks NetEase's catalogue, by title, artist and length, for lyrics timed to the exact recording,
+since lyrics sources often file a remix under the original's timing.
 
-The sideload build can also follow a SoulSync watchlist from the Radar, and write lyrics you time by hand to your server as `.lrc` files through File Browser.
+The sideload build can also follow a SoulSync watchlist from the Radar, and write lyrics you time by hand to your
+server as `.lrc` files through File Browser.
 
 ## Install
 
@@ -125,7 +129,8 @@ The sideload build can also follow a SoulSync watchlist from the Radar, and writ
 4. On first launch iOS blocks the app: go to **Settings → General → VPN & Device Management** and trust the developer profile.
 5. Open Aura and enter your server's address, username and password.
 
-Installing a new IPA over an earlier sideload keeps your servers, passwords, downloads and pins. With a free Apple ID, the signature expires after 7 days and the sideloading tool has to refresh it; that's an iOS limit, not Aura's.
+Installing a new IPA over an earlier sideload keeps your servers, passwords, downloads and pins. With a free Apple ID,
+the signature expires after 7 days and the sideloading tool has to refresh it; that's an iOS limit, not Aura's.
 
 ### App Store
 
@@ -158,29 +163,38 @@ open Aura/Aura.xcodeproj
 
 The fonts (Vavin and Archivo, both SIL OFL 1.1) are in the repository, so a fresh clone builds with nothing to add.
 
+The art at the top of this page is drawn by [`docs/assets/make_svgs.py`](docs/assets/make_svgs.py) (Python, standard
+library only): `python3 docs/assets/make_svgs.py` regenerates every SVG.
+
 ## Privacy
 
-Aura has no account and no analytics, and sends nothing to the developer. It talks to your server and to the public services listed in the [privacy policy](https://adrbn.github.io/aura-site/privacy.html), which says exactly what each one receives.
+Aura has no account and no analytics, and sends nothing to the developer. Server passwords are kept in the iOS
+Keychain. It talks to your server and to the public services listed in the
+[privacy policy](https://adrbn.github.io/aura-site/privacy.html), which says exactly what each one receives: lyrics,
+credits, covers, artist photos, the Radar and share links.
 
 ## Contributing
 
-Bugs and feature requests: [github.com/adrbn/aura/issues](https://github.com/adrbn/aura/issues). Pull requests are welcome. The [changelog](CHANGELOG.md) describes what changed and why.
+Bugs and feature requests: [github.com/adrbn/aura/issues](https://github.com/adrbn/aura/issues). Pull requests are
+welcome. The [changelog](CHANGELOG.md) describes what changed and why.
 
 ## Support
 
 Aura is free, and stays free. If it earns a place on your home screen:
 
-<a href="https://ko-fi.com/adrbn"><img alt="Ko-fi" src="https://img.shields.io/badge/Ko--fi-Support-FF5E5B?logo=ko-fi&logoColor=white" /></a> &nbsp;
-<a href="https://github.com/sponsors/adrbn"><img alt="GitHub Sponsors" src="https://img.shields.io/badge/GitHub-Sponsors-EA4AAA?logo=githubsponsors&logoColor=white" /></a> &nbsp;, or star the repo.
+<a href="https://ko-fi.com/adrbn"><img alt="Ko-fi" src="https://img.shields.io/badge/Ko--fi-Support-EB534D?style=flat-square&labelColor=121212&logo=ko-fi&logoColor=white" /></a> &nbsp;
+<a href="https://github.com/sponsors/adrbn"><img alt="GitHub Sponsors" src="https://img.shields.io/badge/GitHub-Sponsors-EB534D?style=flat-square&labelColor=121212&logo=githubsponsors&logoColor=white" /></a> &nbsp;, or star the repo.
 
 ## License
 
-[GPL-3.0](LICENSE) © 2026 adrbn. You may share and change Aura under the same license; a modified version you distribute must stay open under GPL-3.0.
+[GPL-3.0](LICENSE) © 2026 adrbn. You may share and change Aura under the same license; a modified version you
+distribute must stay open under GPL-3.0.
 
 ## Credits
 
 - [LRCLIB](https://lrclib.net) for lyrics, [MusicBrainz](https://musicbrainz.org) for song credits, [Deezer](https://www.deezer.com)'s public catalogue for covers, artist photos, the Radar and previews, and the iTunes Search API for share links.
 - Optional, with your own key: [Google Gemini](https://ai.google.dev) for lyrics translation and [Last.fm](https://www.last.fm) for listening statistics.
 - Fonts: [Archivo](https://github.com/Omnibus-Type/Archivo) and Vavin, both under the SIL Open Font License 1.1.
+- The release titles in the Radar and Downloads pictures are freely licensed albums from the Navidrome demo library: Nine Inch Nails, *The Slip* (CC BY-NC-SA 3.0 US); Brad Sucks, *I Don't Know What I'm Doing* (CC BY-NC-SA 2.5); The Polish Ambassador, *Pushing Through The Pavement* (CC BY-NC-SA 3.0); Natasha Beller, *Fairytale* (CC BY-NC-SA 4.0). The other song and artist names in the pictures are made up.
 
 <sub>Aura is not affiliated with Navidrome, Subsonic or Apple. All trademarks belong to their respective owners.</sub>
