@@ -2,19 +2,17 @@
 
     python3 docs/assets/make_svgs.py              # stdlib only, from docs/assets/readme-src/
     python3 docs/assets/make_svgs.py --sources    # first rebuilds readme-src/ from the full captures (Pillow)
-    python3 docs/assets/make_svgs.py --demo       # the made-up card set, into docs/assets/demo/
 
 Everything is SMIL (<animate>, <animateTransform>), so it plays inside GitHub's <img> sandbox: no scripts, no
 external files, no webfonts. Pictures go in as base64 data URIs.
 
   - Hero: two iPhones and an Apple Watch drawn as frames; everything on their screens is a real capture
     (readme-src/phone-*.jpg, readme-src/watch-now-playing.jpg, the watch app's own page around the same song), crossfading slowly.
-  - Cards (the README's set): only real content. Lyrics, Radar and Downloads are real captures panning slowly in a
-    window (readme-src/card-*.jpg); the devices card is the real watch page beside the iPhone playing the same song;
-    Made For You shows real covers cut from the Home shelf (readme-src/cover-*.jpg); the equalizer is drawn from its
-    real bands and preset gains (Components/EqualizerView.swift, Models.swift) and names no song.
-  - Demo set (--demo): the same six cards drawn after the app with entirely made-up songs, artists and lyrics (no
-    real names), kept in docs/assets/demo/ in case the real captures ever have to go.
+  - Made For You card: real covers cut from the Home shelf (readme-src/cover-*.jpg).
+  - The other cards are drawn after the app: the equalizer's five bands at ±12 dB and real preset gains
+    (Components/EqualizerView.swift, Models.swift), lyrics word by word with unsung words at 35 %, the editorial
+    covers' lockup and block letters (Components/Covers/). Their song and artist names are made up, except the
+    Radar and Downloads releases, freely licensed albums from the Navidrome demo library.
 
 Writes aura-hero.svg, aura-hero-light.svg, card-*.svg and btn-*.svg (plus -fr buttons) and prints sizes.
 """
@@ -325,40 +323,29 @@ def watch(uid, x, y, w, h, light, inner, band=34):
 SRC = OUT / "readme-src"
 # `--sources` rebuilds readme-src/ from the full-size device captures, which live outside the repository
 # (the 'Aura Screenshots' folders at the repo root are local-only); it needs Pillow. Everything else is stdlib.
-PHONE_PX, COVER_PX, CARD_PX = 480, 240, 400
-FULL = (0, 0, 1206, 2622)          # a whole iPhone capture
-BELOW_BAR = (0, 300, 1206, 2622)   # the same without the status bar
-CAPTURES = {  # name: (capture, crop box, width in px)
-    "phone-now-playing.jpg": ("Aura Screenshots 2026-10-01/1-now-playing.png", FULL, PHONE_PX),
-    "phone-lyrics.jpg": ("Aura Screenshots 2026-10-01/4-lyrics.png", FULL, PHONE_PX),
-    "phone-home.jpg": ("Aura Screenshots 2026-10-02/home-real.png", FULL, PHONE_PX),
-    "phone-radio.jpg": ("Aura Screenshots 2026-10-01/3-radio.png", FULL, PHONE_PX),
-    "phone-offline.jpg": ("Aura Screenshots 2026-10-01/7-offline.png", FULL, PHONE_PX),
+CAPTURES = {
+    "phone-now-playing.jpg": ("Aura Screenshots 2026-10-01/1-now-playing.png", None),
+    "phone-lyrics.jpg": ("Aura Screenshots 2026-10-01/4-lyrics.png", None),
+    "phone-home.jpg": ("Aura Screenshots 2026-10-02/home-real.png", None),
+    "phone-radio.jpg": ("Aura Screenshots 2026-10-01/3-radio.png", None),
+    "phone-offline.jpg": ("Aura Screenshots 2026-10-01/7-offline.png", None),
     # Made For You covers, cut from raw Home captures: the shelf's two fully visible squares
-    "cover-radar-1.jpg": ("Aura Screenshots 2026-10-02/home-real-raw.png", (48, 950, 498, 1400), COVER_PX),
-    "cover-afternoon-1.jpg": ("Aura Screenshots 2026-10-02/home-real-raw.png", (540, 950, 990, 1400), COVER_PX),
-    "cover-radar-2.jpg": ("Aura Screenshots 2026-10-01/2-home-raw.png", (48, 950, 498, 1400), COVER_PX),
-    "cover-afternoon-2.jpg": ("Aura Screenshots 2026-10-01/2-home-raw.png", (540, 950, 990, 1400), COVER_PX),
-    # the cards' screens: raw captures, the status bar cut where a card shows the screen bare
-    "card-lyrics.jpg": ("Aura Screenshots 2026-10-01/4-lyrics-raw.png", (0, 330, 1206, 2430), CARD_PX),
-    "card-radar.jpg": ("Aura Screenshots 2026-09-26/2-radar.png", BELOW_BAR, CARD_PX),
-    "card-offline.jpg": ("Aura Screenshots 2026-10-01/7-offline-raw.png", BELOW_BAR, CARD_PX),
-    "card-now-playing.jpg": ("Aura Screenshots 2026-10-01/1-now-playing-raw.png", FULL, 240),
+    "cover-radar-1.jpg": ("Aura Screenshots 2026-10-02/home-real-raw.png", (48, 950, 498, 1400)),
+    "cover-afternoon-1.jpg": ("Aura Screenshots 2026-10-02/home-real-raw.png", (540, 950, 990, 1400)),
+    "cover-radar-2.jpg": ("Aura Screenshots 2026-10-01/2-home-raw.png", (48, 950, 498, 1400)),
+    "cover-afternoon-2.jpg": ("Aura Screenshots 2026-10-01/2-home-raw.png", (540, 950, 990, 1400)),
 }
-
-
-def aspect(name):
-    """height / width of a readme-src picture, from its crop box (no image library needed)."""
-    x0, y0, x1, y1 = CAPTURES[name][1]
-    return (y1 - y0) / (x1 - x0)
+PHONE_PX, COVER_PX = 480, 240
 
 
 def make_sources():
     from PIL import Image
     root = OUT.parent.parent
     SRC.mkdir(exist_ok=True)
-    for name, (path, box, w) in CAPTURES.items():
-        im = Image.open(root / path).convert("RGB").crop(box)
+    for name, (path, box) in CAPTURES.items():
+        im = Image.open(root / path).convert("RGB")
+        im = im.crop(box) if box else im
+        w = COVER_PX if box else PHONE_PX
         im = im.resize((w, round(im.height * w / im.width)), Image.LANCZOS)
         im.save(SRC / name, "JPEG", quality=80, optimize=True, progressive=True)
         print(f"readme-src/{name:24} {(SRC / name).stat().st_size / 1024:5.1f} KB")
@@ -507,7 +494,7 @@ def mini_cover(uid, x, y, s):
                        art=f'<circle cx="{s * .6:.1f}" cy="{s * .4:.1f}" r="{s * .27:.1f}" fill="{SUN[1]}"/>')
 
 
-def demo_lyrics():
+def card_lyrics():
     ld, lb, _ = lyrics("ly", LINES, M, 236, 16, 38, 3.2, "#fff", reach=4)
     defs = ld + fade_mask("ly", 0, 76, CW, CH - 76, 56)
     body = (mini_cover("lyc", M, 20, 38) + text(68, 35, SONG[0], 12.5, weight=700) + text(68, 51, SONG[1], 11, op=0.6)
@@ -515,35 +502,23 @@ def demo_lyrics():
     return card("ly", body, "Synced lyrics lighting up word by word", defs)
 
 
-def real_cover(f):
-    return lambda uid, s: (f'<clipPath id="{uid}"><rect width="{s}" height="{s}" rx="{s * 0.09:.1f}"/></clipPath>'
-                           f'<g clip-path="url(#{uid})">{picture(data_uri(SRC / f), s, s)}</g>')
+MIXES = [("cover-radar-1.jpg", "Radar", "New releases from your artists"),
+         ("cover-afternoon-1.jpg", "Afternoon", "Mix for this time of day"),
+         ("cover-radar-2.jpg", "Radar", "New releases from your artists"),
+         ("cover-afternoon-2.jpg", "Afternoon", "Mix for this time of day")]
 
 
-def demo_cover(dark, light, words):
-    return lambda uid, s: cover_genre(uid, 0, 0, s, dark, light, words)
-
-
-MIXES = [(real_cover("cover-radar-1.jpg"), "Radar", "New releases from your artists"),
-         (real_cover("cover-afternoon-1.jpg"), "Afternoon", "Mix for this time of day"),
-         (real_cover("cover-radar-2.jpg"), "Radar", "New releases from your artists"),
-         (real_cover("cover-afternoon-2.jpg"), "Afternoon", "Mix for this time of day")]
-DEMO_MIXES = [(demo_cover("#1A1150", "#FF6FB5", ["Late", "Drive"]), "Late Drive", "Mix for this time of day"),
-              (demo_cover("#0E1B4D", "#6FF0C4", ["Deep", "Focus"]), "Deep Focus", "Mix for your mood"),
-              (demo_cover("#3A0D12", "#FF9F45", ["Golden", "Hour"]), "Golden Hour", "Mix for this time of day"),
-              (demo_cover("#10261C", "#C8F25A", ["Slow", "Bloom"]), "Slow Bloom", "Mix for your genres")]
-
-
-def card_mixes(mixes=MIXES):
+def card_mixes():
     s, gap, y0 = CW - 2 * M, 12, 64
     slot = s + gap
     hold, move = 2.2, 0.7
-    n = len(mixes)
+    n = len(MIXES)
     T = round(n * (hold + move), 3)
+    defs = f'<clipPath id="mxc"><rect width="{s}" height="{s}" rx="{s * 0.09:.1f}"/></clipPath>'
     items = ""
-    for i, (cover, title, sub) in enumerate(mixes + mixes[:1]):
+    for i, (f, title, sub) in enumerate(MIXES + MIXES[:1]):
         x = M + i * slot
-        items += (f'<g transform="translate({x} {y0})">{cover(f"mxc{i}", s)}</g>'
+        items += (f'<g transform="translate({x} {y0})"><g clip-path="url(#mxc)">{picture(data_uri(SRC / f), s, s)}</g></g>'
                   + text(x, y0 + s + 28, title, 14, weight=700) + text(x, y0 + s + 46, sub, 11, op=0.55))
     kf = [(0, (0, 0))]
     for k in range(n):
@@ -559,14 +534,13 @@ def card_mixes(mixes=MIXES):
     dots += f'<circle cx="{d0:g}" cy="{CH - 34}" r="3.2" fill="{ACCENT}">{slide(dkf, T)}</circle>'
     body = (heading("Made For You") + icon("play", CW - M - 6, 36, 15, ACCENT)
             + f'<g>{slide(kf, T)}{items}</g>' + dots)
-    return card("mx", body, "Made For You: mix covers sliding past")
+    return card("mx", body, "Made For You: real mix covers from Aura sliding past", defs)
 
 
-# demo releases: invented titles and artists, gradient art (no real names)
-RADAR = [("Glass Orchard", "Marine Vale", "Album · 2025", ("#FF6FB5", "#8C5CFF")),
-         ("Low Tide Radio", "Holloway Static", "Album · 2025", ("#E9E6E0", "#6B6B6B")),
-         ("Every Small Light Left On", "Juniper Coast", "Single · 2025", ("#6FF0C4", "#2F5BFF")),
-         ("Northbound Hours", "Odile Fen", "Album · 2025", ("#FF7A1A", "#FF3B30"))]
+RADAR = [("Fairytale", "Natasha Beller", "Album · 2018", ("#FF6FB5", "#8C5CFF")),
+         ("The Slip", "Nine Inch Nails", "Album · 2008", ("#E9E6E0", "#6B6B6B")),
+         ("Pushing Through The Pavement", "The Polish Ambassador", "Album · 2014", ("#6FF0C4", "#2F5BFF")),
+         ("I Don’t Know What I’m Doing", "Brad Sucks", "Album · 2003", ("#FF7A1A", "#FF3B30"))]
 
 
 def bars(x, y, h, color, durs=(0.9, 1.15, 0.8)):
@@ -595,7 +569,7 @@ def art(uid, x, y, s, c1, c2):
             f'<rect x="{x}" y="{y}" width="{s}" height="{s}" rx="{s * 0.14:.1f}" fill="url(#{uid})"/>')
 
 
-def demo_radar():
+def card_radar():
     T, y0, row, a = 9.0, 70, 56, 42
     body = lockup(M, 16, "New Releases", 190, "#fff") + heading("Radar")
     body += text(CW - M, 42, "This month", 10.5, op=0.5, anchor="end")
@@ -627,12 +601,15 @@ def demo_radar():
     return card("rd", body, "Radar: this month's releases appearing, one playing its preview")
 
 
-DOWNLOADS = [(t, a, c, steps) for (t, a, _, c), steps in zip(RADAR, [
-    [(0.3, 0), (1.2, .35), (1.8, .45), (3.0, 1)], [(0.6, 0), (2.0, .3), (3.1, .7), (4.6, 1)],
-    [(1.0, 0), (2.6, .2), (4.4, .62), (6.2, 1)], [(1.6, 0), (3.4, .25), (5.6, .7), (7.2, 1)]])]
+DOWNLOADS = [("The Slip", "Nine Inch Nails", ("#E9E6E0", "#6B6B6B"), [(0.3, 0), (1.2, .35), (1.8, .45), (3.0, 1)]),
+             ("Fairytale", "Natasha Beller", ("#FF6FB5", "#8C5CFF"), [(0.6, 0), (2.0, .3), (3.1, .7), (4.6, 1)]),
+             ("Pushing Through The Pavement", "The Polish Ambassador", ("#6FF0C4", "#2F5BFF"),
+              [(1.0, 0), (2.6, .2), (4.4, .62), (6.2, 1)]),
+             ("I Don’t Know What I’m Doing", "Brad Sucks", ("#FF7A1A", "#FF3B30"),
+              [(1.6, 0), (3.4, .25), (5.6, .7), (7.2, 1)])]
 
 
-def demo_offline():
+def card_offline():
     T, y0, row, r, a = 9.0, 70, 74, 10.5, 46
     circ = 2 * 3.1416 * r
     body = heading("Downloads") + text(CW - M, 42, "On this iPhone", 10.5, op=0.5, anchor="end")
@@ -691,7 +668,7 @@ def mini_cover_duo(uid, x, y, s, duo, title):
                        art=f'<circle cx="{s * .6:.1f}" cy="{s * .38:.1f}" r="{s * .26:.1f}" fill="{duo[1]}"/>')
 
 
-def demo_devices():
+def card_devices():
     T, half = 8.0, 4.0
     cw, ch, ww, wh = 180, 112, 92, 113
     groups_cp, groups_w = "", ""
@@ -712,51 +689,6 @@ def demo_devices():
     body += watch("wch", (CW - ww - 16) / 2, 216, ww, wh, False, groups_w, band=14)
     body += text(CW / 2, 380, "Apple Watch", 10.5, weight=600, op=0.6, anchor="middle")
     return card("dv", body, "CarPlay and Apple Watch mirroring Now Playing")
-
-
-# --- real cards: a capture of the app in a window, panning slowly top to bottom and back ----------------------
-WIN_Y, WIN_H = 60, 320
-
-
-def window(uid, name, T=14.0, hold=2.5):
-    w = CW - 2 * M
-    h = w * aspect(name)
-    travel = max(0.0, h - WIN_H)
-    move = T / 2 - hold
-    pan = slide([(0, (0, 0)), (hold, (0, 0)), (hold + move, (0, -travel)), (2 * hold + move, (0, -travel)),
-                 (T, (0, 0))], T) if travel else ""
-    return (f'<clipPath id="{uid}w"><rect x="{M}" y="{WIN_Y}" width="{w}" height="{WIN_H}" rx="20"/></clipPath>'
-            f'<g clip-path="url(#{uid}w)"><g transform="translate({M} {WIN_Y})"><g>{pan}'
-            f'{picture(data_uri(SRC / name), w, h)}</g></g></g>'
-            f'<rect x="{M + .5}" y="{WIN_Y + .5}" width="{w - 1}" height="{WIN_H - 1}" rx="19.5" fill="none" '
-            f'stroke="#fff" stroke-opacity=".08"/>')
-
-
-def card_lyrics():
-    return card("ly", heading("Lyrics") + icon("quote", CW - M - 8, 36, 18, ACCENT, sw=2) + window("ly", "card-lyrics.jpg"),
-                "The lyrics screen of Aura, captured from the app")
-
-
-def card_radar():
-    return card("rd", heading("Radar") + window("rd", "card-radar.jpg"),
-                "The Radar in Aura, captured from the app: new releases from your artists")
-
-
-def card_offline():
-    return card("dl", heading("Downloads") + icon("download", CW - M - 8, 36, 18, ACCENT, sw=2.2)
-                + window("dl", "card-offline.jpg"), "An album downloaded in Aura, captured from the app")
-
-
-def card_devices():
-    """The watch app's real Now Playing (scripts/watch-screenshots.sh) over the iPhone playing the same song."""
-    pw, ph, b = 130, round(130 * aspect("card-now-playing.jpg")), 6
-    island = f'<rect x="{pw / 2 - 18}" y="5" width="36" height="10" rx="5" fill="#000"/>'
-    body = heading("iPhone and Watch")
-    body += shell("dvp", M, 62, pw, ph, 17, b, False, picture(data_uri(SRC / "card-now-playing.jpg"), pw, ph) + island)
-    ww, wh = 92, round(92 * 496 / 416)
-    body += watch("dvw", CW - M - ww - 23, 62 + ph + 2 * b - wh - 30, ww, wh, False,
-                  picture(data_uri(SRC / "watch-now-playing.jpg"), ww, wh), band=16)
-    return card("dv", body, "Aura on an Apple Watch and an iPhone playing the same song, both captured from the app")
 
 
 # --- buttons -------------------------------------------------------------------------------------------------
@@ -787,9 +719,7 @@ def kofi(fr):
            f'stroke-linejoin="round"><path d="M-11 -5H7V4A7 7 0 0 1 0 11H-4A7 7 0 0 1 -11 4Z" fill="#fff" '
            f'fill-opacity=".18"/><path d="M7 -2H9.5A3.5 3.5 0 0 1 9.5 5H7"/><path d="M-6 -10.5Q-4 -12.5 -6 -14.5'
            f'M-1 -10.5Q1 -12.5 -1 -14.5" stroke-width="2"/></g>')
-    # Ko-fi's own blue, not the coral of the buttons above it: it's a different ask, and it
-    # should read as one.
-    body = (f'<rect width="{w}" height="{h}" rx="{h / 2}" fill="#1E90C8"/>' + cup
+    body = (f'<rect width="{w}" height="{h}" rx="{h / 2}" fill="{ACCENT}"/>' + cup
             + text(60, 30, top, 17, weight=700) + text(60, 48, sub, 12.5, weight=500, op=0.9))
     return svg(w, h, body, f"{top} on Ko-fi")
 
@@ -797,15 +727,6 @@ def kofi(fr):
 def main():
     if "--sources" in sys.argv:
         make_sources()
-    if "--demo" in sys.argv:
-        demo = OUT / "demo"
-        demo.mkdir(exist_ok=True)
-        files = {"card-eq.svg": card_eq(), "card-lyrics.svg": demo_lyrics(), "card-mixes.svg": card_mixes(DEMO_MIXES),
-                 "card-radar.svg": demo_radar(), "card-offline.svg": demo_offline(), "card-devices.svg": demo_devices()}
-        for name, body in files.items():
-            (demo / name).write_text(body)
-            print(f"demo/{name:21} {len(body.encode()) / 1024:7.1f} KB")
-        return
     files = {
         "aura-hero.svg": hero(False), "aura-hero-light.svg": hero(True),
         "card-eq.svg": card_eq(), "card-lyrics.svg": card_lyrics(), "card-mixes.svg": card_mixes(),
