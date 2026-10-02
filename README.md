@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura on an iPhone and an Apple Watch: Now Playing over the cover's colours, with synced lyrics beside it lighting up word by word" width="860">
+  <img src="docs/assets/aura-hero.svg" alt="Aura on two iPhones and an Apple Watch, captured from the app: Now Playing and synced lyrics, Home, a radio and an album" width="860">
 </picture>
 
 <img src="docs/assets/icon.png" width="72" height="72" alt="Aura app icon">
@@ -48,7 +48,7 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
   <tr>
     <td align="center" width="33%"><img src="docs/assets/card-eq.svg" alt="A five-band equalizer curve moving between presets" width="100%"><br><b>Lossless, with a real equalizer</b><br><sub>FLAC and ALAC stay lossless, or 128, 192 or 320 kbps on a slow line. Five bands from 60 Hz to 14 kHz, one curve you drag, 15 presets, ReplayGain.</sub></td>
     <td align="center" width="33%"><img src="docs/assets/card-lyrics.svg" alt="Synced lyrics lighting up word by word" width="100%"><br><b>Lyrics in time</b><br><sub>Word by word when your server has per-word timing, line by line otherwise. From your server first, then <a href="https://lrclib.net">LRCLIB</a>. Tap a line to jump to it.</sub></td>
-    <td align="center" width="33%"><img src="docs/assets/card-mixes.svg" alt="Made For You mix covers sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover. Instant Mix starts a radio from any song or artist. Year Wrapped counts your year on the iPhone.</sub></td>
+    <td align="center" width="33%"><img src="docs/assets/card-mixes.svg" alt="Real Made For You covers from Aura sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover. Instant Mix starts a radio from any song or artist. Year Wrapped counts your year on the iPhone.</sub></td>
   </tr>
   <tr>
     <td align="center"><img src="docs/assets/card-radar.svg" alt="The Radar listing new releases, one playing its preview" width="100%"><br><b>Radar</b><br><sub>This month's releases from the artists you play most. What your server has plays in full; the rest plays as 30-second previews.</sub></td>
@@ -163,8 +163,9 @@ open Aura/Aura.xcodeproj
 
 The fonts (Vavin and Archivo, both SIL OFL 1.1) are in the repository, so a fresh clone builds with nothing to add.
 
-The art at the top of this page is drawn by [`docs/assets/make_svgs.py`](docs/assets/make_svgs.py) (Python, standard
-library only): `python3 docs/assets/make_svgs.py` regenerates every SVG.
+The art on this page is made by [`docs/assets/make_svgs.py`](docs/assets/make_svgs.py) (Python, standard library
+only): `python3 docs/assets/make_svgs.py` regenerates every SVG. The hero and the Made For You card embed real captures
+of the app, kept small in `docs/assets/readme-src/`.
 
 ## Privacy
 
@@ -182,8 +183,9 @@ welcome. The [changelog](CHANGELOG.md) describes what changed and why.
 
 Aura is free, and stays free. If it earns a place on your home screen:
 
-<a href="https://ko-fi.com/adrbn"><img alt="Ko-fi" src="https://img.shields.io/badge/Ko--fi-Support-EB534D?style=flat-square&labelColor=121212&logo=ko-fi&logoColor=white" /></a> &nbsp;
-<a href="https://github.com/sponsors/adrbn"><img alt="GitHub Sponsors" src="https://img.shields.io/badge/GitHub-Sponsors-EB534D?style=flat-square&labelColor=121212&logo=githubsponsors&logoColor=white" /></a> &nbsp;, or star the repo.
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-kofi.svg" height="64" alt="Buy me a coffee on Ko-fi"></a>
+
+A star on the repo helps other people find it too.
 
 ## License
 
@@ -195,6 +197,6 @@ distribute must stay open under GPL-3.0.
 - [LRCLIB](https://lrclib.net) for lyrics, [MusicBrainz](https://musicbrainz.org) for song credits, [Deezer](https://www.deezer.com)'s public catalogue for covers, artist photos, the Radar and previews, and the iTunes Search API for share links.
 - Optional, with your own key: [Google Gemini](https://ai.google.dev) for lyrics translation and [Last.fm](https://www.last.fm) for listening statistics.
 - Fonts: [Archivo](https://github.com/Omnibus-Type/Archivo) and Vavin, both under the SIL Open Font License 1.1.
-- The release titles in the Radar and Downloads pictures are freely licensed albums from the Navidrome demo library: Nine Inch Nails, *The Slip* (CC BY-NC-SA 3.0 US); Brad Sucks, *I Don't Know What I'm Doing* (CC BY-NC-SA 2.5); The Polish Ambassador, *Pushing Through The Pavement* (CC BY-NC-SA 3.0); Natasha Beller, *Fairytale* (CC BY-NC-SA 4.0). The other song and artist names in the pictures are made up.
+- The release titles in the Radar and Downloads pictures are freely licensed albums from the Navidrome demo library: Nine Inch Nails, *The Slip* (CC BY-NC-SA 3.0 US); Brad Sucks, *I Don't Know What I'm Doing* (CC BY-NC-SA 2.5); The Polish Ambassador, *Pushing Through The Pavement* (CC BY-NC-SA 3.0); Natasha Beller, *Fairytale* (CC BY-NC-SA 4.0). The hero and the Made For You covers are real captures of the app on the developer's own library; the song and artist names drawn in the other cards are made up.
 
 <sub>Aura is not affiliated with Navidrome, Subsonic or Apple. All trademarks belong to their respective owners.</sub>

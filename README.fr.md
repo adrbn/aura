@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura sur un iPhone et une Apple Watch : l'écran En cours de lecture aux couleurs de la pochette, et à côté des paroles synchronisées qui s'allument mot à mot" width="860">
+  <img src="docs/assets/aura-hero.svg" alt="Aura sur deux iPhone et une Apple Watch, en captures de l'app : En cours de lecture et paroles synchronisées, Accueil, une radio et un album" width="860">
 </picture>
 
 <img src="docs/assets/icon.png" width="72" height="72" alt="Icône de l'app Aura">
@@ -50,7 +50,7 @@ reprend le tout.
   <tr>
     <td align="center" width="33%"><img src="docs/assets/card-eq.svg" alt="La courbe d'un égaliseur cinq bandes qui passe d'un préréglage à l'autre" width="100%"><br><b>Sans perte, avec un vrai égaliseur</b><br><sub>Le FLAC et l'ALAC restent sans perte, ou en 128, 192 ou 320 kbit/s sur une connexion lente. Cinq bandes de 60 Hz à 14 kHz, une seule courbe à tirer, 15 préréglages, ReplayGain.</sub></td>
     <td align="center" width="33%"><img src="docs/assets/card-lyrics.svg" alt="Des paroles synchronisées qui s'allument mot à mot" width="100%"><br><b>Les paroles en rythme</b><br><sub>Mot à mot quand votre serveur a le minutage de chaque mot, ligne par ligne sinon. D'abord votre serveur, puis <a href="https://lrclib.net">LRCLIB</a>. Touchez une ligne pour y sauter.</sub></td>
-    <td align="center" width="33%"><img src="docs/assets/card-mixes.svg" alt="Les pochettes des mix Pour vous qui défilent" width="100%"><br><b>Pour vous</b><br><sub>Des mix selon l'heure, l'humeur et le genre, chacun avec sa pochette. Le Mix instantané lance une radio depuis n'importe quel morceau ou artiste. Le Wrapped fait le bilan de votre année, calculé sur l'iPhone.</sub></td>
+    <td align="center" width="33%"><img src="docs/assets/card-mixes.svg" alt="De vraies pochettes Pour vous d'Aura qui défilent" width="100%"><br><b>Pour vous</b><br><sub>Des mix selon l'heure, l'humeur et le genre, chacun avec sa pochette. Le Mix instantané lance une radio depuis n'importe quel morceau ou artiste. Le Wrapped fait le bilan de votre année, calculé sur l'iPhone.</sub></td>
   </tr>
   <tr>
     <td align="center"><img src="docs/assets/card-radar.svg" alt="Le Radar qui liste les nouveautés, l'une jouant son extrait" width="100%"><br><b>Radar</b><br><sub>Les sorties du mois des artistes que vous écoutez le plus. Ce que votre serveur a se lit en entier ; le reste, en extraits de 30 secondes.</sub></td>
@@ -168,8 +168,9 @@ open Aura/Aura.xcodeproj
 Les polices (Vavin et Archivo, toutes deux sous SIL OFL 1.1) sont dans le dépôt : un clone tout neuf compile sans rien
 ajouter.
 
-Les illustrations en haut de cette page sont dessinées par [`docs/assets/make_svgs.py`](docs/assets/make_svgs.py)
-(Python, bibliothèque standard seulement) : `python3 docs/assets/make_svgs.py` régénère tous les SVG.
+Les illustrations de cette page sont faites par [`docs/assets/make_svgs.py`](docs/assets/make_svgs.py) (Python,
+bibliothèque standard seulement) : `python3 docs/assets/make_svgs.py` régénère tous les SVG. L'illustration du haut
+et la carte Pour vous intègrent de vraies captures de l'app, gardées en petit dans `docs/assets/readme-src/`.
 
 ## Confidentialité
 
@@ -187,8 +188,9 @@ sont les bienvenues. Le [journal des modifications](CHANGELOG.md) (en anglais) d
 
 Aura est gratuit, et le restera. S'il mérite sa place sur votre écran d'accueil :
 
-<a href="https://ko-fi.com/adrbn"><img alt="Ko-fi" src="https://img.shields.io/badge/Ko--fi-Soutenir-EB534D?style=flat-square&labelColor=121212&logo=ko-fi&logoColor=white" /></a> &nbsp;
-<a href="https://github.com/sponsors/adrbn"><img alt="GitHub Sponsors" src="https://img.shields.io/badge/GitHub-Sponsors-EB534D?style=flat-square&labelColor=121212&logo=githubsponsors&logoColor=white" /></a> &nbsp;, ou mettez une étoile au dépôt.
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-kofi-fr.svg" height="64" alt="Offrir un café sur Ko-fi"></a>
+
+Une étoile sur le dépôt aide aussi d'autres personnes à le trouver.
 
 ## Licence
 
@@ -200,6 +202,6 @@ vous distribuez doit rester ouverte, sous GPL-3.0.
 - [LRCLIB](https://lrclib.net) pour les paroles, [MusicBrainz](https://musicbrainz.org) pour les crédits des morceaux, le catalogue public de [Deezer](https://www.deezer.com) pour les pochettes, les photos d'artistes, le Radar et les extraits, et l'API iTunes Search pour les liens de partage.
 - En option, avec votre propre clé : [Google Gemini](https://ai.google.dev) pour la traduction des paroles et [Last.fm](https://www.last.fm) pour les statistiques d'écoute.
 - Polices : [Archivo](https://github.com/Omnibus-Type/Archivo) et Vavin, toutes deux sous SIL Open Font License 1.1.
-- Les titres du Radar et des téléchargements dans les illustrations sont des albums sous licence libre de la bibliothèque de démo de Navidrome : Nine Inch Nails, *The Slip* (CC BY-NC-SA 3.0 US) ; Brad Sucks, *I Don't Know What I'm Doing* (CC BY-NC-SA 2.5) ; The Polish Ambassador, *Pushing Through The Pavement* (CC BY-NC-SA 3.0) ; Natasha Beller, *Fairytale* (CC BY-NC-SA 4.0). Les autres noms de morceaux et d'artistes des illustrations sont inventés.
+- Les titres du Radar et des téléchargements dans les illustrations sont des albums sous licence libre de la bibliothèque de démo de Navidrome : Nine Inch Nails, *The Slip* (CC BY-NC-SA 3.0 US) ; Brad Sucks, *I Don't Know What I'm Doing* (CC BY-NC-SA 2.5) ; The Polish Ambassador, *Pushing Through The Pavement* (CC BY-NC-SA 3.0) ; Natasha Beller, *Fairytale* (CC BY-NC-SA 4.0). L'illustration du haut et les pochettes Pour vous sont de vraies captures de l'app sur la bibliothèque du développeur ; les noms de morceaux et d'artistes dessinés dans les autres cartes sont inventés.
 
 <sub>Aura n'est affilié ni à Navidrome, ni à Subsonic, ni à Apple. Toutes les marques appartiennent à leurs propriétaires respectifs.</sub>

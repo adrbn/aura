@@ -1,26 +1,23 @@
-"""Regenerates the README art in docs/assets/: animated SVGs drawn after Aura's own layouts.
+"""Regenerates the README art in docs/assets/: an animated hero of real captures, and animated SVG cards.
 
-    python3 docs/assets/make_svgs.py
+    python3 docs/assets/make_svgs.py              # stdlib only, from docs/assets/readme-src/
+    python3 docs/assets/make_svgs.py --sources    # first rebuilds readme-src/ from the full captures (Pillow)
 
-Stdlib only. Every picture is hand-built SVG, animated with SMIL (<animate>, <animateTransform>), so it plays
-inside GitHub's <img> sandbox: no scripts, no external CSS, no webfonts. Text uses the system font stack;
-the covers' block letters are that stack in its heaviest weight, squeezed with textLength the way Archivo
-Extra Condensed sits on the app's covers.
+Everything is SMIL (<animate>, <animateTransform>), so it plays inside GitHub's <img> sandbox: no scripts, no
+external files, no webfonts. Pictures go in as base64 data URIs.
 
-Proportions come from the app:
-  - Now Playing (Views/NowPlayingView.swift): 30 pt side padding, the cover the full column, title2 bold,
-    artist at 70 % white, a capsule progress bar at 22 % white, the transport 36 pt apart, repeat in the accent.
-  - Lyrics: 30 pt bold, left-aligned; unsung words at 35 %; other lines dimmer, smaller and blurred.
-  - Covers (Components/Covers/): margin 0.06 s, column 0.88 s, lockup ▶ + label at 0.042 s, mix title band
-    with a cap height up to 0.15 s, artist strip at 0.032 s, genre words up to 0.3 s, the band palette.
-  - Equalizer (Components/EqualizerView.swift, Models.swift): five bands at ±12 dB, Catmull-Rom curve
-    run flat to both edges, the real preset gains.
-
-Song and artist names in Now Playing, the lyrics and the devices are made up. The Radar and Downloads cards
-use the freely licensed releases from the Navidrome demo library that the website also shows.
+  - Hero: two iPhones and an Apple Watch drawn as frames; everything on their screens is a real capture
+    (readme-src/phone-*.jpg, the watch-*.webp renders of the watch app's own views), crossfading slowly.
+  - Made For You card: real covers cut from the Home shelf (readme-src/cover-*.jpg).
+  - The other cards are drawn after the app: the equalizer's five bands at ±12 dB and real preset gains
+    (Components/EqualizerView.swift, Models.swift), lyrics word by word with unsung words at 35 %, the editorial
+    covers' lockup and block letters (Components/Covers/). Their song and artist names are made up, except the
+    Radar and Downloads releases, freely licensed albums from the Navidrome demo library.
 
 Writes aura-hero.svg, aura-hero-light.svg, card-*.svg and btn-*.svg (plus -fr buttons) and prints sizes.
 """
+import base64
+import sys
 import unicodedata
 from pathlib import Path
 
@@ -142,20 +139,6 @@ PLAY_MARK = "M0 3.5Q0 0 3.05 1.72L19.95 11.28Q23 13 19.95 14.72L3.05 24.28Q0 26 
 FIGURE = '<circle cx="50" cy="39" r="17"/><path d="M13 104C13 76 29 63 50 63S87 76 87 104Z"/>'  # viewBox 100
 
 
-def lum(hex_):
-    r, g, b = (int(hex_[i:i + 2], 16) / 255 for i in (1, 3, 5))
-    return 0.299 * r + 0.587 * g + 0.114 * b
-
-
-def ink(hex_):
-    return "#000" if lum(hex_) > 0.55 else "#fff"
-
-
-def mix(a, b, t):
-    ca, cb = ([int(h[i:i + 2], 16) for i in (1, 3, 5)] for h in (a, b))
-    return "#" + "".join(f"{round(x + (y - x) * t):02X}" for x, y in zip(ca, cb))
-
-
 def fit(s, column, max_cap, squeeze=COND):
     """CoverMetrics.fit: the cap height that makes `s` span the column, capped."""
     return min(max_cap, column / (width(s, 1, True) * squeeze) * CAP)
@@ -181,48 +164,10 @@ def lockup(x, top, label, s, color, mark=COVER_RED):
     return out
 
 
-def strip(x, bottom, line, s, fg, bg):
-    """The artists on a strip at 0.032 s (bottom = its lower edge). Returns (svg, height)."""
-    cap = s * 0.032 * CAP
-    h = cap + 2 * s * 0.017
-    t, w = cap_text(x + s * 0.02, bottom - h + s * 0.017, line, cap, fg, 1.08, 700, s * 0.002)
-    return f'<rect x="{x:.2f}" y="{bottom - h:.2f}" width="{w + s * 0.04:.2f}" height="{h:.2f}" fill="{bg}"/>' + t, h
-
-
-def artists_line(names, s, room):
-    for n in range(min(3, len(names)), 0, -1):
-        line = " · ".join(names[:n]).upper()
-        if width(line, s * 0.032, True) * 1.08 <= room:
-            return line
-    return None
-
-
 def framed(uid, x, y, s, body, r=None):
     r = s * 0.07 if r is None else r
     return (f'<clipPath id="{uid}"><rect width="{s:g}" height="{s:g}" rx="{r:.1f}"/></clipPath>'
             f'<g transform="translate({x:g} {y:g})"><g clip-path="url(#{uid})">{body}</g></g>')
-
-
-def title_band(s, title, column, max_cap, fg, bg, bottom):
-    """A black band bleeding off the left edge that ends with the word (MixCoverTemplate)."""
-    m = s * 0.06
-    cap = fit(title, column, max_cap)
-    h = cap + 2 * s * 0.032
-    t, w = cap_text(m, bottom - h + s * 0.032, title, cap, fg)
-    return f'<rect y="{bottom - h:.2f}" width="{m + w + s * 0.035:.2f}" height="{h:.2f}" fill="{bg}"/>' + t, h
-
-
-def cover_mix(uid, x, y, s, band, kicker, title, artists):
-    m, col = s * 0.06, s * 0.88
-    body = f'<rect width="{s:g}" height="{s:g}" fill="{band}"/>' + lockup(m, m, kicker, s, ink(band))
-    line = artists_line(artists, s, col - s * 0.04)
-    bottom = s - m
-    if line:
-        st, h = strip(m, bottom, line, s, "#fff", "#000")
-        body += st
-        bottom -= h
-    body += title_band(s, title.upper(), col, s * 0.15, band, "#000", bottom)[0]
-    return framed(uid, x, y, s, body)
 
 
 def cover_genre(uid, x, y, s, dark, light, words, kicker="Mix", art=None):
@@ -242,77 +187,13 @@ def cover_genre(uid, x, y, s, dark, light, words, kicker="Mix", art=None):
     return framed(uid, x, y, s, body)
 
 
-def cover_year(uid, x, y, s, period, kicker="Wrapped"):
-    m, col = s * 0.06, s * 0.88
-    cap = fit(period, col, s * 0.42)
-    top = m + s * 0.042 * CAP * 1.3 + s * 0.035
-    body = (f'<linearGradient id="{uid}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6B2C"/>'
-            f'<stop offset=".5" stop-color="#C2185B"/><stop offset="1" stop-color="#311B92"/></linearGradient>'
-            f'<rect width="{s:g}" height="{s:g}" fill="url(#{uid}g)"/>' + cap_text(m, top, period, cap, "#fff")[0]
-            + f'<g transform="translate({s * 0.14:.1f} {top + cap * 0.5:.1f}) scale({s * 0.0072:.4f})" '
-              f'fill="#24104F">{FIGURE}</g>' + lockup(m, m, kicker, s, "#fff", "#fff"))
-    return framed(uid, x, y, s, body)
-
-
-def cover_radio(uid, x, y, s, field, name, artists):
-    m, col = s * 0.06, s * 0.88
-    hx, hy = s * 0.5, s * 0.4
-    tone = mix(field, "#000000", 0.16)
-    k = ink(field)
-    rings = "".join(
-        f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="{s * (0.40 + i * 0.12):.1f}" fill="none" stroke="{k}" '
-        f'stroke-opacity="{0.16 * min(1, max(0, (0.95 - (0.40 + i * 0.12)) / 0.25)):.3f}" stroke-width="{s * 0.005:.2f}"/>'
-        for i in range(5) if (0.40 + i * 0.12) * s > s * 0.31)
-
-    def disc(cx, cy, side, tint, rim=False):
-        d = s * side
-        out = f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{d / 2 + (s * 0.014 if rim else 0):.1f}" fill="{field}"/>' if rim else ""
-        out += (f'<clipPath id="{uid}d{side}{int(cx)}"><circle cx="{cx:.1f}" cy="{cy:.1f}" r="{d / 2:.1f}"/></clipPath>'
-                f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{d / 2:.1f}" fill="{tone}"/>'
-                f'<g clip-path="url(#{uid}d{side}{int(cx)})"><g transform="translate({cx - d / 2:.1f} {cy - d / 2 + d * 0.08:.1f}) '
-                f'scale({d / 100:.4f})" fill="{tint}">{FIGURE}</g></g>')
-        return out
-
-    body = (f'<radialGradient id="{uid}r" cx=".5" cy=".4" r=".9"><stop offset=".42" stop-color="{field}"/>'
-            f'<stop offset="1" stop-color="{mix(field, "#000000", 0.3)}"/></radialGradient>'
-            f'<rect width="{s:g}" height="{s:g}" fill="url(#{uid}r)"/>{rings}'
-            + disc(s * 0.11, s * 0.49, 0.36, mix(field, "#FFFFFF", 0.45))
-            + disc(s * 0.88, s * 0.25, 0.36, mix(field, "#FFFFFF", 0.45))
-            + disc(hx, hy, 0.62, "#F4EFEA", rim=True)
-            + lockup(m, m, "Radio", s, k))
-    bottom = s - m
-    line = artists_line(artists, s, col - s * 0.04)
-    if line:
-        st, h = strip(m, bottom, line, s, "#000", "#fff")
-        body += st
-        bottom -= h
-    body += title_band(s, name.upper(), col - s * 0.035, s * 0.14, field, "#000", bottom)[0]
-    return framed(uid, x, y, s, body)
-
-
-def sunset(uid, s, dark, light):
-    """The hero's album art: a striped sun over water, in the genre covers' duotone."""
-    cx, cy, r = s * 0.6, s * 0.42, s * 0.27
-    bars = "".join(f'<rect x="0" y="{cy + i * s * 0.045 - s * 0.01:.1f}" width="{s:g}" height="{s * (0.008 + i * 0.006):.1f}" '
-                   f'fill="{dark}"/>' for i in range(1, 6))
-    waves = "".join(f'<path d="M{s * 0.12:.1f} {cy + r + s * (0.05 + i * 0.05):.1f}h{s * (0.76 - i * 0.12):.1f}" '
-                    f'transform="translate({s * i * 0.06:.1f} 0)" stroke="{light}" stroke-opacity="{0.5 - i * 0.1:.1f}" '
-                    f'stroke-width="{s * 0.012:.1f}" stroke-linecap="round"/>' for i in range(4))
-    return (f'<linearGradient id="{uid}sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{light}"/>'
-            f'<stop offset="1" stop-color="{ACCENT}"/></linearGradient>'
-            f'<linearGradient id="{uid}sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B0A3D"/>'
-            f'<stop offset="1" stop-color="{dark}"/></linearGradient>'
-            f'<rect width="{s:g}" height="{s:g}" fill="url(#{uid}sky)"/>'
-            f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r:.1f}" fill="url(#{uid}sun)"/>{bars}{waves}')
-
-
 # --- lyrics (word by word, the line in focus sharp, the others dimmed and blurred) ---------------------------
-OPACITY = {0: 1, 1: 0.42, 2: 0.16}
-BLUR = {0: 0, 1: 1.1, 2: 2.2}
+OPACITY = {0: 1, 1: 0.42, 2: 0.2, 3: 0.1, 4: 0.05}
+BLUR = {0: 0, 1: 1.1, 2: 2.2, 3: 2.8, 4: 3.2}
 UNSUNG = 0.35
 
 
-def lyrics(uid, lines, x, yc, size, lh, step, fill, move=0.55, lead=0.35):
+def lyrics(uid, lines, x, yc, size, lh, step, fill, move=0.55, lead=0.35, reach=2):
     """Scrolls `lines` round and round, one per `step` seconds; returns (defs, body, total)."""
     n = len(lines)
     total = round(n * step, 3)
@@ -321,12 +202,12 @@ def lyrics(uid, lines, x, yc, size, lh, step, fill, move=0.55, lead=0.35):
         ts += [k * step - move, k * step]
         ss += [k - 1, k]
     defs, body = "", ""
-    for j in range(-2, n + 3):
-        ops = [OPACITY.get(abs(j - s), 0) for s in ss]
+    for j in range(-reach, n + reach + 1):
+        ops = [OPACITY.get(abs(j - s), 0) if abs(j - s) <= reach else 0 for s in ss]
         if not any(ops):
             continue
         blur = [BLUR.get(abs(j - s), 3) for s in ss]
-        defs += (f'<filter id="{uid}b{j + 2}" x="-5%" y="-60%" width="110%" height="220%"><feGaussianBlur '
+        defs += (f'<filter id="{uid}b{j + reach}" x="-5%" y="-60%" width="110%" height="220%"><feGaussianBlur '
                  f'stdDeviation="{blur[0]}">{anim("stdDeviation", list(zip(ts, blur)), total)}</feGaussianBlur></filter>')
         words = lines[j % n].split()
         chars = [len(w) + 1 for w in words]
@@ -343,9 +224,9 @@ def lyrics(uid, lines, x, yc, size, lh, step, fill, move=0.55, lead=0.35):
                 kf = None
             a = anim("fill-opacity", kf, total, ease=False) if kf else ""
             spans += f'<tspan fill-opacity="{kf[0][1] if kf else 1}">{esc(w)}{a}</tspan> '
-        body += (f'<g filter="url(#{uid}b{j + 2})" opacity="{ops[0]}">{anim("opacity", list(zip(ts, ops)), total)}'
+        body += (f'<g filter="url(#{uid}b{j + reach})" opacity="{ops[0]}">{anim("opacity", list(zip(ts, ops)), total)}'
                  f'<text x="{x:g}" y="{yc + j * lh + size * 0.36:.1f}" font-family="{FONT}" font-size="{size:g}" '
-                 f'font-weight="700" fill="{fill}" letter-spacing="-.2">{spans.rstrip()}</text></g>')
+                 f'font-weight="700" fill="{fill}">{spans.rstrip()}</text></g>')
     scroll = slide([(t, (0, -s * lh)) for t, s in zip(ts, ss)], total)
     return defs, f'<g>{scroll}{body}</g>', total
 
@@ -390,53 +271,6 @@ def shell(uid, x, y, w, h, r, bezel, light, inner):
             f'<rect x="{x + bezel - 3}" y="{y + bezel - 3}" width="{w + 6}" height="{h + 6}" rx="{r + 3}" fill="#000"/>'
             f'<clipPath id="{uid}sc"><rect width="{w}" height="{h}" rx="{r}"/></clipPath>'
             f'<g transform="translate({x + bezel} {y + bezel})"><g clip-path="url(#{uid}sc)">{inner}</g></g>')
-
-
-def phone_now_playing(uid, w, h):
-    k = w / 393  # points → pixels
-    pad = 30 * k
-    s = w - 2 * pad
-    cy = 66
-    out = backdrop(uid, w, h, BLOBS)
-    out += text(26, 21, "9:41", 11, weight=600)
-    out += f'<rect x="{w / 2 - 40}" y="9" width="80" height="22" rx="11" fill="#000"/>'
-    out += "".join(f'<rect x="{w - 62 + i * 4}" y="{17 - i * 1.6:.1f}" width="2.6" height="{3 + i * 1.6:.1f}" rx=".8" fill="#fff"/>'
-                   for i in range(4))
-    out += (f'<rect x="{w - 40}" y="12.5" width="19" height="9" rx="2.6" fill="none" stroke="#fff" stroke-opacity=".5"/>'
-            f'<rect x="{w - 38.5}" y="14" width="13" height="6" rx="1.4" fill="#fff"/>')
-    out += f'<rect x="{w / 2 - 18}" y="40" width="36" height="4.5" rx="2.25" fill="#fff" fill-opacity=".35"/>'
-    art = sunset(uid + "c", s, *SUN)
-    m, col = s * 0.06, s * 0.88
-    caps = [fit(wd.upper(), col, s * 0.3) for wd in ("Midnight", "Signals")]
-    top = s - m - sum(caps) - s * 0.03
-    words = ""
-    for wd, c in zip(("MIDNIGHT", "SIGNALS"), caps):
-        words += cap_text(m, top, wd, c, "#fff")[0]
-        top += c + s * 0.03
-    cover = (art + f'<linearGradient id="{uid}cv" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="{SUN[0]}" '
-             f'stop-opacity="0"/><stop offset=".95" stop-color="{SUN[0]}" stop-opacity=".9"/></linearGradient>'
-             f'<rect width="{s:g}" height="{s:g}" fill="url(#{uid}cv)"/>' + lockup(m, m, SONG[1], s, "#fff") + words)
-    out += (f'<rect x="{pad:.1f}" y="{cy + 6}" width="{s:.1f}" height="{s:.1f}" rx="10" fill="#000" fill-opacity=".35" '
-            f'filter="url(#{uid}bd)"/>' + framed(uid + "cover", pad, cy, s, cover, r=7))
-    ty = cy + s + 32
-    out += text(w / 2, ty, SONG[0], 16, weight=700, anchor="middle")
-    out += text(w / 2, ty + 19, SONG[1], 12.5, op=0.7, anchor="middle")
-    out += text(pad, ty + 44, "2024 · Electronic", 8.5, op=0.5)
-    out += icon("heart", w - pad - 30, ty + 41, 15, sw=2) + icon("dots", w - pad - 7, ty + 41, 15)
-    by = ty + 56
-    out += (f'<rect x="{pad:.1f}" y="{by}" width="{s:.1f}" height="4" rx="2" fill="#fff" fill-opacity=".22"/>'
-            f'<rect x="{pad:.1f}" y="{by}" width="{s * 0.38:.1f}" height="4" rx="2" fill="#fff"/>')
-    out += text(pad, by + 16, "1:31", 8, op=0.5) + text(w - pad, by + 16, "-2:16", 8, op=0.5, anchor="end")
-    ry = by + 50
-    gap = 36 * k + 24
-    for i, (name, size, col_, op) in enumerate((("shuffle", 17, "#fff", .7), ("back", 25, "#fff", 1),
-                                                ("pause", 38, "#fff", 1), ("fwd", 25, "#fff", 1),
-                                                ("repeat", 17, ACCENT, 1))):
-        out += icon(name, w / 2 + (i - 2) * gap, ry, size, col_, sw=2.2, op=op)
-    out += "".join(icon(n, w / 2 + (i - 1) * 74, h - 46, 17, sw=1.9, op=.75)
-                   for i, n in enumerate(("quote", "airplay", "list")))
-    out += f'<rect x="{w / 2 - 50}" y="{h - 10}" width="100" height="4" rx="2" fill="#fff" fill-opacity=".8"/>'
-    return out
 
 
 def watch_now_playing(uid, w, h, title, artist, blobs=BLOBS, prog=((0, 0.32),)):
@@ -485,45 +319,112 @@ def watch(uid, x, y, w, h, light, inner, band=34):
     return band + crown + shell(uid, x, y, w, h, w * 0.22, 8, light, inner)
 
 
-# --- hero ----------------------------------------------------------------------------------------------------
+# --- real captures (docs/assets/readme-src/) -----------------------------------------------------------------
+SRC = OUT / "readme-src"
+# `--sources` rebuilds readme-src/ from the full-size device captures, which live outside the repository
+# (the 'Aura Screenshots' folders at the repo root are local-only); it needs Pillow. Everything else is stdlib.
+CAPTURES = {
+    "phone-now-playing.jpg": ("Aura Screenshots 2026-10-01/1-now-playing.png", None),
+    "phone-lyrics.jpg": ("Aura Screenshots 2026-10-01/4-lyrics.png", None),
+    "phone-home.jpg": ("Aura Screenshots 2026-10-02/home-real.png", None),
+    "phone-radio.jpg": ("Aura Screenshots 2026-10-01/3-radio.png", None),
+    "phone-offline.jpg": ("Aura Screenshots 2026-10-01/7-offline.png", None),
+    # Made For You covers, cut from raw Home captures: the shelf's two fully visible squares
+    "cover-radar-1.jpg": ("Aura Screenshots 2026-10-02/home-real-raw.png", (48, 950, 498, 1400)),
+    "cover-afternoon-1.jpg": ("Aura Screenshots 2026-10-02/home-real-raw.png", (540, 950, 990, 1400)),
+    "cover-radar-2.jpg": ("Aura Screenshots 2026-10-01/2-home-raw.png", (48, 950, 498, 1400)),
+    "cover-afternoon-2.jpg": ("Aura Screenshots 2026-10-01/2-home-raw.png", (540, 950, 990, 1400)),
+}
+PHONE_PX, COVER_PX = 480, 240
+
+
+def make_sources():
+    from PIL import Image
+    root = OUT.parent.parent
+    SRC.mkdir(exist_ok=True)
+    for name, (path, box) in CAPTURES.items():
+        im = Image.open(root / path).convert("RGB")
+        im = im.crop(box) if box else im
+        w = COVER_PX if box else PHONE_PX
+        im = im.resize((w, round(im.height * w / im.width)), Image.LANCZOS)
+        im.save(SRC / name, "JPEG", quality=80, optimize=True, progressive=True)
+        print(f"readme-src/{name:24} {(SRC / name).stat().st_size / 1024:5.1f} KB")
+
+
+def data_uri(path):
+    kind = "webp" if path.suffix == ".webp" else "jpeg"
+    return f"data:image/{kind};base64," + base64.b64encode(path.read_bytes()).decode()
+
+
+def picture(uri, w, h, extra=""):
+    return f'<image href="{uri}" width="{w:g}" height="{h:g}" preserveAspectRatio="xMidYMid slice"{extra}/>'
+
+
+def crossfade(layers, T, fade=1.0):
+    """Shows `layers` in turn, T / n seconds each. The first stays underneath; each later one fades in over the
+    one before, which drops away once covered; the last fades out to reveal the first again."""
+    n, seg = len(layers), T / len(layers)
+    out = layers[0]
+    for k in range(1, n):
+        on = k * seg
+        if k < n - 1:
+            off = (k + 1) * seg
+            kf = [(0, 0), (on - fade, 0), (on, 1), (off, 1), (off + 0.01, 0), (T, 0)]
+        else:
+            kf = [(0, 0), (on - fade, 0), (on, 1), (T - fade, 1), (T, 0)]
+        out += f'<g opacity="0">{anim("opacity", kf, T)}{layers[k]}</g>'
+    return out
+
+
+# --- hero: two iPhones and an Apple Watch, real captures crossfading inside them ---------------------------
+PHONE_W, PHONE_H, PHONE_R, PHONE_BEZEL = 230, 500, 33, 9   # 1206 × 2622 captures
+WATCH_W, WATCH_H = 150, 179                                # 416 × 496 renders
+
+
+def iphone(uid, x, y, light, inner):
+    w, h, b = PHONE_W, PHONE_H, PHONE_BEZEL
+    side = "#BDBDC3" if light else "#2C2C2F"
+    buttons = (f'<rect x="{x - 3}" y="{y + 96}" width="4" height="24" rx="1.5" fill="{side}"/>'
+               f'<rect x="{x - 3}" y="{y + 134}" width="4" height="44" rx="1.5" fill="{side}"/>'
+               f'<rect x="{x + w + 2 * b - 1}" y="{y + 144}" width="4" height="66" rx="1.5" fill="{side}"/>')
+    island = f'<rect x="{w / 2 - 36}" y="11" width="72" height="21" rx="10.5" fill="#000"/>'
+    return buttons + shell(uid, x, y, w, h, PHONE_R, b, light, inner + island)
+
+
 def hero(light):
     uid = "hl" if light else "hd"
-    W, H = 960, 600
-    fg = "#121212" if light else "#FFFFFF"
-    glow_op = 0.16 if light else 0.4
-    ld, lb, T = lyrics(uid + "l", LINES, 404, 300, 27, 50, 3.4, fg)
-    defs = (f'<filter id="{uid}glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="50"/></filter>'
-            + ld + fade_mask(uid, 380, 150, 380, 300, 70))
-    glow = (f'<g filter="url(#{uid}glow)" opacity="{glow_op}">'
-            f'<ellipse cx="300" cy="300" rx="120" ry="120" fill="{ACCENT}">'
-            f'{anim("cx", [(0, 290), (T / 2, 340), (T, 290)], T)}</ellipse>'
-            f'<ellipse cx="720" cy="300" rx="110" ry="110" fill="#8C5CFF">'
-            f'{anim("cy", [(0, 320), (T / 2, 280), (T, 320)], T)}</ellipse></g>')
-    pw, ph = 252, 546
-    phone = shell(uid + "p", 76, 17, pw, ph, 40, 10, light, phone_now_playing(uid + "p", pw, ph))
-    side = "#BDBDC3" if light else "#2C2C2F"
-    phone = (f'<rect x="73" y="140" width="4" height="26" rx="1.5" fill="{side}"/><rect x="73" y="180" width="4" '
-             f'height="46" rx="1.5" fill="{side}"/><rect x="{76 + pw + 19}" y="190" width="4" height="70" rx="1.5" '
-             f'fill="{side}"/>' + phone)
-    caption = (f'<g opacity=".55">' + lockup(404, 140, "Synced lyrics", 260, fg, ACCENT) + "</g>")
-    ww, wh = 150, 182
-    wt = watch(uid + "w", 788, 300 - wh / 2 - 8, ww, wh, light, watch_now_playing(uid + "w", ww, wh, *SONG))
-    body = glow + phone + caption + f'<g mask="url(#{uid}m)">{lb}</g>' + wt
-    return svg(W, H, body, "Aura on iPhone and Apple Watch: Now Playing with an editorial cover, and synced lyrics "
-                           "lighting up word by word", defs)
+    W, H, T = 860, 560, 18.0
+    pic = {k: data_uri(SRC / f"phone-{k}.jpg") for k in ("now-playing", "lyrics", "home", "radio", "offline")}
+    wpic = [data_uri(OUT / f) for f in ("watch-1-now-playing.webp", "watch-2-lyrics.webp")]
+    py = (H - PHONE_H - 2 * PHONE_BEZEL) / 2
+    gap, wgap = 36, 56
+    x1 = (W - (2 * (PHONE_W + 2 * PHONE_BEZEL) + gap + wgap + WATCH_W + 16 + 7)) / 2
+    x2 = x1 + PHONE_W + 2 * PHONE_BEZEL + gap
+    xw = x2 + PHONE_W + 2 * PHONE_BEZEL + wgap
+    phone_pic = lambda k: picture(pic[k], PHONE_W, PHONE_H)
+    body = iphone(uid + "a", x1, py, light, crossfade([phone_pic("now-playing"), phone_pic("lyrics")], T))
+    body += iphone(uid + "b", x2, py, light, crossfade([phone_pic(k) for k in ("home", "radio", "offline")], T))
+    body += watch(uid + "w", xw, H / 2 - (WATCH_H + 16) / 2, WATCH_W, WATCH_H, light,
+                  crossfade([picture(u, WATCH_W, WATCH_H) for u in wpic], T))
+    return svg(W, H, body, "Aura on two iPhones and an Apple Watch: Now Playing, synced lyrics, Home, a radio and "
+                           "an album ready offline, captured from the app")
 
 
-# --- cards ---------------------------------------------------------------------------------------------------
-CW, CH = 320, 200
+# --- cards (portrait, like the app's screens) ----------------------------------------------------------------
+CW, CH, M = 240, 400, 20    # card size and its margin
 
 
 def card(uid, body, title, defs=""):
-    panel = (f'<clipPath id="{uid}pc"><rect width="{CW}" height="{CH}" rx="18"/></clipPath>'
+    panel = (f'<clipPath id="{uid}pc"><rect width="{CW}" height="{CH}" rx="28"/></clipPath>'
              f'<linearGradient id="{uid}pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#171717"/>'
              f'<stop offset="1" stop-color="{BG2}"/></linearGradient>')
     return svg(CW, CH, f'<g clip-path="url(#{uid}pc)"><rect width="{CW}" height="{CH}" fill="url(#{uid}pg)"/>{body}</g>'
-                       f'<rect x=".5" y=".5" width="{CW - 1}" height="{CH - 1}" rx="17.5" fill="none" stroke="{EDGE}"/>',
+                       f'<rect x=".5" y=".5" width="{CW - 1}" height="{CH - 1}" rx="27.5" fill="none" stroke="{EDGE}"/>',
                title, panel + defs)
+
+
+def heading(s):
+    return text(M, 42, s, 18, weight=700)
 
 
 PRESETS = [("Flat", [0, 0, 0, 0, 0]), ("Bass Boost", [10, 7, 0, -1, -2]), ("Vocal", [-4, 0, 8, 6, 2]),
@@ -531,8 +432,8 @@ PRESETS = [("Flat", [0, 0, 0, 0, 0]), ("Bass Boost", [10, 7, 0, -1, -2]), ("Voca
 
 
 def card_eq():
-    x0, x1, y_top, y_bot = 46, 300, 54, 154
-    xs = [x0 + 20 + i * (x1 - x0 - 40) / 4 for i in range(5)]
+    x0, x1, y_top, y_bot = 48, CW - M, 104, 324
+    xs = [x0 + 14 + i * (x1 - x0 - 28) / 4 for i in range(5)]
     gy = lambda db: y_top + (12 - db) / 24 * (y_bot - y_top)
 
     def curve(gains):
@@ -557,8 +458,9 @@ def card_eq():
     grid = "".join(f'<path d="M{x0} {gy(db):.1f}H{x1}" stroke="#fff" stroke-opacity="{.2 if db == 0 else .07}" '
                    + (' stroke-dasharray="4 4"' if db == 0 else "") + "/>" for db in (-12, -6, 0, 6, 12))
     grid += "".join(text(x0 - 6, gy(db) + 3, lab, 8, op=0.4, anchor="end") for db, lab in ((12, "+12"), (0, "0"), (-12, "−12")))
-    grid += "".join(text(x, 178, f"{lab} Hz", 8.5, op=0.5, anchor="middle")
+    grid += "".join(text(x, 350, lab, 8.5, op=0.5, anchor="middle")
                     for x, lab in zip(xs, ["60", "230", "910", "3.6k", "14k"]))
+    grid += text(x1, 370, "Hz", 8.5, op=0.35, anchor="end")
     nodes = "".join(f'<circle cx="{x:.1f}" cy="{gy(g0[i]):.1f}" r="5.5" fill="#fff" stroke="{ACCENT}" stroke-width="2.6">'
                     f'{anim("cy", [(t, round(gy(g[i]), 1)) for t, (_, g) in times], T)}</circle>' for i, x in enumerate(xs))
     chips = ""
@@ -571,14 +473,14 @@ def card_eq():
             vis = [(0, "hidden"), (on, "visible"), (on + hold + morph, "hidden"), (T, "hidden")]
         vals = ";".join(v for _, v in vis)
         kts = ";".join(kt(t, T) for t, _ in vis)
-        cw = width(name, 10, True) + 20
+        cw = width(name, 10.5, True) + 22
         chips += (f'<g visibility="{vis[0][1]}"><animate attributeName="visibility" values="{vals}" keyTimes="{kts}" '
                   f'dur="{T:g}s" calcMode="discrete" repeatCount="indefinite"/>'
-                  f'<rect x="{300 - cw:.1f}" y="16" width="{cw:.1f}" height="21" rx="10.5" fill="{ACCENT}"/>'
-                  + text(300 - cw / 2, 30, name, 10, weight=600, anchor="middle") + "</g>")
+                  f'<rect x="{M}" y="58" width="{cw:.1f}" height="23" rx="11.5" fill="{ACCENT}"/>'
+                  + text(M + cw / 2, 73.5, name, 10.5, weight=600, anchor="middle") + "</g>")
     defs = (f'<linearGradient id="eqf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{ACCENT}" '
             f'stop-opacity=".32"/><stop offset="1" stop-color="{ACCENT}" stop-opacity="0"/></linearGradient>')
-    body = (text(20, 31, "Equalizer", 15, weight=700) + chips + grid
+    body = (heading("Equalizer") + chips + grid
             + f'<path d="{curve(g0)}L{x1} {y_bot + 8}L{x0} {y_bot + 8}Z" fill="url(#eqf)">{area}</path>'
             + f'<path d="{curve(g0)}" fill="none" stroke="{ACCENT}" stroke-width="2.6" stroke-linecap="round" '
               f'stroke-linejoin="round">{line}</path>' + nodes)
@@ -591,57 +493,52 @@ def mini_cover(uid, x, y, s):
 
 
 def card_lyrics():
-    ld, lb, _ = lyrics("ly", LINES, 20, 122, 19.5, 33, 3.2, "#fff")
-    defs = ld + fade_mask("ly", 0, 58, CW, 142, 34)
-    body = (mini_cover("lyc", 20, 16, 32) + text(62, 29, SONG[0], 12, weight=700) + text(62, 43, SONG[1], 10.5, op=0.6)
-            + icon("quote", 292, 32, 17, ACCENT, sw=2) + f'<g mask="url(#lym)">{lb}</g>')
+    ld, lb, _ = lyrics("ly", LINES, M, 236, 16, 38, 3.2, "#fff", reach=4)
+    defs = ld + fade_mask("ly", 0, 76, CW, CH - 76, 56)
+    body = (mini_cover("lyc", M, 20, 38) + text(68, 35, SONG[0], 12.5, weight=700) + text(68, 51, SONG[1], 11, op=0.6)
+            + icon("quote", CW - M - 8, 39, 18, ACCENT, sw=2) + f'<g mask="url(#lym)">{lb}</g>')
     return card("ly", body, "Synced lyrics lighting up word by word", defs)
 
 
-MIXES = [
-    ("mix", "#F7E11B", "New Releases", "Radar", ["Natasha Beller", "Nine Inch Nails"], "Radar", "New releases"),
-    ("mix", "#FF7A1A", "Mix", "Evening", ["Natasha Beller", "Brad Sucks"], "Evening Mix", "Wind down"),
-    ("genre", ("#1A1150", "#FF6FB5"), "Mix", ["Soul", "Jazz"], None, "Soul Jazz Mix", "Your favourites"),
-    ("radio", "#3DCBFF", None, "Brad Sucks", ["Nine Inch Nails", "Natasha Beller"], "Brad Sucks Radio", "Similar artists"),
-    ("mix", "#6FF0C4", "Mix", "Chill", ["The Polish Ambassador"], "Chill Mix", "Calm, laid-back"),
-    ("year", None, "Wrapped", "2025", None, "Your 2025 Wrapped", "Your year"),
-]
-
-
-def any_cover(uid, x, y, s, spec):
-    kind, color, kicker, title, artists = spec[:5]
-    if kind == "mix":
-        return cover_mix(uid, x, y, s, color, kicker, title, artists)
-    if kind == "genre":
-        return cover_genre(uid, x, y, s, color[0], color[1], title, kicker)
-    if kind == "radio":
-        return cover_radio(uid, x, y, s, color, title, artists)
-    return cover_year(uid, x, y, s, title, kicker)
+MIXES = [("cover-radar-1.jpg", "Radar", "New releases from your artists"),
+         ("cover-afternoon-1.jpg", "Afternoon", "Mix for this time of day"),
+         ("cover-radar-2.jpg", "Radar", "New releases from your artists"),
+         ("cover-afternoon-2.jpg", "Afternoon", "Mix for this time of day")]
 
 
 def card_mixes():
-    s, gap, x0, y0 = 104, 14, 20, 46
+    s, gap, y0 = CW - 2 * M, 12, 64
     slot = s + gap
-    hold, move = 1.9, 0.7
+    hold, move = 2.2, 0.7
     n = len(MIXES)
     T = round(n * (hold + move), 3)
+    defs = f'<clipPath id="mxc"><rect width="{s}" height="{s}" rx="{s * 0.09:.1f}"/></clipPath>'
     items = ""
-    for i, spec in enumerate(MIXES + MIXES[:3]):
-        x = x0 + i * slot
-        items += (any_cover(f"mx{i}", x, y0, s, spec) + text(x, y0 + s + 17, spec[5], 11, weight=700)
-                  + text(x, y0 + s + 31, spec[6], 9.5, op=0.55))
+    for i, (f, title, sub) in enumerate(MIXES + MIXES[:1]):
+        x = M + i * slot
+        items += (f'<g transform="translate({x} {y0})"><g clip-path="url(#mxc)">{picture(data_uri(SRC / f), s, s)}</g></g>'
+                  + text(x, y0 + s + 28, title, 14, weight=700) + text(x, y0 + s + 46, sub, 11, op=0.55))
     kf = [(0, (0, 0))]
     for k in range(n):
         kf += [(k * (hold + move) + hold, (-k * slot, 0)), ((k + 1) * (hold + move), (-(k + 1) * slot, 0))]
-    body = (text(20, 31, "Made For You", 15, weight=700) + icon("play", 296, 26, 14, ACCENT)
-            + f'<g>{slide(kf, T)}{items}</g>')
-    return card("mx", body, "Made For You: Aura's editorial mix covers in rotation")
+    dots, dx = "", 14
+    d0 = CW / 2 - (n - 1) * dx / 2
+    for k in range(n):
+        dots += f'<circle cx="{d0 + k * dx:g}" cy="{CH - 34}" r="3.2" fill="#fff" fill-opacity=".22"/>'
+    dkf = [(0, (0, 0))]
+    for k in range(n):
+        nxt = ((k + 1) % n) * dx
+        dkf += [(k * (hold + move) + hold, (k * dx, 0)), ((k + 1) * (hold + move), (nxt, 0))]
+    dots += f'<circle cx="{d0:g}" cy="{CH - 34}" r="3.2" fill="{ACCENT}">{slide(dkf, T)}</circle>'
+    body = (heading("Made For You") + icon("play", CW - M - 6, 36, 15, ACCENT)
+            + f'<g>{slide(kf, T)}{items}</g>' + dots)
+    return card("mx", body, "Made For You: real mix covers from Aura sliding past", defs)
 
 
-RADAR = [("Fairytale", "Natasha Beller · Album · 2018", ("#FF6FB5", "#8C5CFF")),
-         ("The Slip", "Nine Inch Nails · Album · 2008", ("#E9E6E0", "#6B6B6B")),
-         ("Pushing Through The Pavement", "The Polish Ambassador · Album · 2014", ("#6FF0C4", "#2F5BFF")),
-         ("I Don’t Know What I’m Doing", "Brad Sucks · Album · 2003", ("#FF7A1A", "#FF3B30"))]
+RADAR = [("Fairytale", "Natasha Beller", "Album · 2018", ("#FF6FB5", "#8C5CFF")),
+         ("The Slip", "Nine Inch Nails", "Album · 2008", ("#E9E6E0", "#6B6B6B")),
+         ("Pushing Through The Pavement", "The Polish Ambassador", "Album · 2014", ("#6FF0C4", "#2F5BFF")),
+         ("I Don’t Know What I’m Doing", "Brad Sucks", "Album · 2003", ("#FF7A1A", "#FF3B30"))]
 
 
 def bars(x, y, h, color, durs=(0.9, 1.15, 0.8)):
@@ -664,53 +561,71 @@ def clip_text(s, size, room, bold):
     return s.rstrip() + "…"
 
 
+def art(uid, x, y, s, c1, c2):
+    return (f'<linearGradient id="{uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{c1}"/>'
+            f'<stop offset="1" stop-color="{c2}"/></linearGradient>'
+            f'<rect x="{x}" y="{y}" width="{s}" height="{s}" rx="{s * 0.14:.1f}" fill="url(#{uid})"/>')
+
+
 def card_radar():
-    T, y0, row = 9.0, 54, 35
-    defs, body = "", lockup(20, 16, "New Releases", 190, "#fff") + text(20, 42, "Radar", 17, weight=700)
-    body += text(300, 42, "This month", 10, op=0.5, anchor="end")
-    for i, (title, meta, (c1, c2)) in enumerate(RADAR):
+    T, y0, row, a = 9.0, 70, 56, 42
+    body = lockup(M, 16, "New Releases", 190, "#fff") + heading("Radar")
+    body += text(CW - M, 42, "This month", 10.5, op=0.5, anchor="end")
+    tx = M + a + 12
+    for i, (title, artist, meta, (c1, c2)) in enumerate(RADAR):
         y = y0 + i * row
         # all rows show at t = 0 (a still render shows the full list), clear, then arrive one by one
         on = 7.0 + i * 0.4
         op = anim("opacity", [(0, 1), (6.4, 1), (6.9, 0), (on, 0), (on + 0.5, 1), (T, 1)], T)
         mv = slide([(0, (0, 0)), (6.9, (0, 0)), (6.91, (0, 10)), (on, (0, 10)), (on + 0.5, (0, 0)), (T, (0, 0))], T)
-        defs += (f'<linearGradient id="rd{i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{c1}"/>'
-                 f'<stop offset="1" stop-color="{c2}"/></linearGradient>')
-        tx = 60 + (16 if i == 0 else 0)
-        row_svg = (f'<rect x="20" y="{y}" width="30" height="30" rx="5" fill="url(#rd{i})"/>'
-                   + (bars(60, y + 13.5, 10, ACCENT) if i == 0 else "")
-                   + text(tx, y + 12.5, clip_text(title, 11.5, 230 - tx, True), 11.5, weight=700)
-                   + text(60, y + 26, meta, 9.5, op=0.55))
-        row_svg += (icon("heart", 296, y + 15, 15, ACCENT, sw=2) if i == 0 else
-                    f'<circle cx="296" cy="{y + 15}" r="10" fill="#fff" fill-opacity=".1"/>' + icon("play", 297, y + 15, 10, "#fff", op=.8))
+        room = CW - M - 26 - tx
+        row_svg = (art(f"rd{i}", M, y, a, c1, c2)
+                   + text(tx, y + 13, clip_text(title, 12, room, True), 12, weight=700)
+                   + text(tx, y + 27, clip_text(artist, 10, room, False), 10, op=0.6)
+                   + text(tx, y + 40, meta, 9.5, op=0.4))
+        row_svg += (icon("heart", CW - M - 8, y + a / 2, 16, ACCENT, sw=2) if i == 0 else
+                    f'<circle cx="{CW - M - 8}" cy="{y + a / 2}" r="10" fill="#fff" fill-opacity=".1"/>'
+                    + icon("play", CW - M - 7, y + a / 2, 10, "#fff", op=.8))
         body += f'<g>{op}<g>{mv}{row_svg}</g></g>'
-    return card("rd", body, "Radar: this month's releases appearing, one playing its preview", defs)
+    # the preview playing: a mini player with its 30-second bar
+    py, pw = CH - 78, CW - 2 * M
+    title, artist, _, (c1, c2) = RADAR[0]
+    body += (f'<rect x="{M}" y="{py}" width="{pw}" height="58" rx="14" fill="#fff" fill-opacity=".07"/>'
+             + art("rdp", M + 10, py + 10, 38, c1, c2) + bars(M + 58, py + 26, 10, ACCENT)
+             + text(M + 74, py + 25, title, 12, weight=700) + text(M + 58, py + 40, "Preview · 0:30", 9.5, op=0.5)
+             + f'<rect x="{M + 58}" y="{py + 47}" width="{pw - 72}" height="3" rx="1.5" fill="#fff" fill-opacity=".18"/>'
+             + f'<rect x="{M + 58}" y="{py + 47}" width="0" height="3" rx="1.5" fill="{ACCENT}">'
+               f'{anim("width", [(0, 0), (T, pw - 72)], T, ease=False)}</rect>')
+    return card("rd", body, "Radar: this month's releases appearing, one playing its preview")
 
 
 DOWNLOADS = [("The Slip", "Nine Inch Nails", ("#E9E6E0", "#6B6B6B"), [(0.3, 0), (1.2, .35), (1.8, .45), (3.0, 1)]),
              ("Fairytale", "Natasha Beller", ("#FF6FB5", "#8C5CFF"), [(0.6, 0), (2.0, .3), (3.1, .7), (4.6, 1)]),
              ("Pushing Through The Pavement", "The Polish Ambassador", ("#6FF0C4", "#2F5BFF"),
-              [(1.0, 0), (2.6, .2), (4.4, .62), (6.2, 1)])]
+              [(1.0, 0), (2.6, .2), (4.4, .62), (6.2, 1)]),
+             ("I Don’t Know What I’m Doing", "Brad Sucks", ("#FF7A1A", "#FF3B30"),
+              [(1.6, 0), (3.4, .25), (5.6, .7), (7.2, 1)])]
 
 
 def card_offline():
-    T, y0, row, r = 9.0, 50, 48, 10.5
+    T, y0, row, r, a = 9.0, 70, 74, 10.5, 46
     circ = 2 * 3.1416 * r
-    defs = ""
-    body = text(20, 31, "Downloads", 15, weight=700) + text(300, 31, "On this iPhone", 10, op=0.5, anchor="end")
+    body = heading("Downloads") + text(CW - M, 42, "On this iPhone", 10.5, op=0.5, anchor="end")
+    tx = M + a + 12
+    cx = CW - M - 10
     for i, (title, artist, (c1, c2), steps) in enumerate(DOWNLOADS):
         y = y0 + i * row
-        cx, cy = 292, y + 19
+        cy = y + a / 2
         done = steps[-1][0]
-        defs += (f'<linearGradient id="dl{i}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{c1}"/>'
-                 f'<stop offset="1" stop-color="{c2}"/></linearGradient>')
+        room = cx - r - 10 - tx
         dash = ([(0, circ)] + [(t, round(circ * (1 - p), 2)) for t, p in steps]
                 + [(T - 0.5, 0), (T - 0.5, circ), (T, circ)])
         ring_op = anim("opacity", [(0, 1), (done, 1), (done + 0.2, 0), (T - 0.5, 0), (T - 0.2, 1), (T, 1)], T)
         tick_op = anim("opacity", [(0, 0), (done, 0), (done + 0.2, 1), (T - 0.7, 1), (T - 0.4, 0), (T, 0)], T)
-        body += (f'<rect x="20" y="{y}" width="38" height="38" rx="6" fill="url(#dl{i})"/>'
-                 + text(70, y + 16, clip_text(title, 12, 190, True), 12, weight=700)
-                 + text(70, y + 31, f"{artist} · Album", 10, op=0.55)
+        body += (art(f"dl{i}", M, y, a, c1, c2)
+                 + text(tx, y + 15, clip_text(title, 12, room, True), 12, weight=700)
+                 + text(tx, y + 30, clip_text(artist, 10, room, False), 10, op=0.6)
+                 + text(tx, y + 43, "Album", 9.5, op=0.4)
                  + f'<g>{ring_op}<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="#fff" stroke-opacity=".14" '
                    f'stroke-width="2.6"/><circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{ACCENT}" stroke-width="2.6" '
                    f'stroke-linecap="round" stroke-dasharray="{circ:.2f}" stroke-dashoffset="{circ:.2f}" '
@@ -718,9 +633,9 @@ def card_offline():
                    f'<rect x="{cx - 3}" y="{cy - 3}" width="6" height="6" rx="1.2" fill="{ACCENT}"/></g>'
                  + f'<g opacity="0">{tick_op}<circle cx="{cx}" cy="{cy}" r="{r + 1.3}" fill="{ACCENT}"/>'
                    + icon("check", cx, cy, 17, "#fff", sw=2.6) + "</g>")
-        if i < 2:
-            body += f'<path d="M70 {y + row - 5}H300" stroke="#fff" stroke-opacity=".07"/>'
-    return card("dl", body, "Offline: albums downloading, progress rings filling", defs)
+        if i < len(DOWNLOADS) - 1:
+            body += f'<path d="M{tx} {y + row - 14}H{CW - M}" stroke="#fff" stroke-opacity=".07"/>'
+    return card("dl", body, "Offline: albums downloading, progress rings filling")
 
 
 TRACKS = [(SONG[0], SONG[1], BLOBS, SUN), ("Paper Lanterns", "Marine Vale",
@@ -753,7 +668,7 @@ def mini_cover_duo(uid, x, y, s, duo, title):
 
 def card_devices():
     T, half = 8.0, 4.0
-    cw, ch, ww, wh = 180, 112, 76, 94
+    cw, ch, ww, wh = 180, 112, 92, 113
     groups_cp, groups_w = "", ""
     for i, (title, artist, blobs, duo) in enumerate(TRACKS):
         # crossfade at the change; each track's bar runs while it shows and resets out of sight
@@ -766,10 +681,11 @@ def card_devices():
         o = anim("opacity", op, T)
         groups_cp += f'<g opacity="{op[0][1]}">{o}{carplay_screen(f"cp{i}", cw, ch, title, artist, blobs, duo, prog)}</g>'
         groups_w += f'<g opacity="{op[0][1]}">{o}{watch_now_playing(f"wn{i}", ww, wh, title, artist, blobs, prog)}</g>'
-    body = shell("cps", 14, 36, cw, ch, 10, 6, False, groups_cp)
-    body += watch("wch", 218, 99 - wh / 2 - 8, ww, wh, False, groups_w, band=14)
-    body += text(14 + cw / 2 + 6, 182, "CarPlay", 10.5, weight=600, op=0.6, anchor="middle")
-    body += text(218 + (ww + 16) / 2, 182, "Apple Watch", 10.5, weight=600, op=0.6, anchor="middle")
+    cx = (CW - cw - 12) / 2
+    body = shell("cps", cx, 28, cw, ch, 10, 6, False, groups_cp)
+    body += text(CW / 2, 178, "CarPlay", 10.5, weight=600, op=0.6, anchor="middle")
+    body += watch("wch", (CW - ww - 16) / 2, 216, ww, wh, False, groups_w, band=14)
+    body += text(CW / 2, 380, "Apple Watch", 10.5, weight=600, op=0.6, anchor="middle")
     return card("dv", body, "CarPlay and Apple Watch mirroring Now Playing")
 
 
@@ -792,18 +708,35 @@ def button(icon_name, label, accent):
     return svg(w, h, body, label)
 
 
+def kofi(fr):
+    """The Support button: a taller pill with a cup and two lines, after liveloop's Ko-fi button."""
+    top, sub = (("Offrir un café", "Soutenir le dev sur Ko-fi") if fr else ("Buy me a coffee", "Tip the dev on Ko-fi"))
+    tw = max(width(top, 17, True), width(sub, 12.5))
+    w, h = round(tw + 82), 64
+    cup = (f'<g transform="translate(34 34)" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" '
+           f'stroke-linejoin="round"><path d="M-11 -5H7V4A7 7 0 0 1 0 11H-4A7 7 0 0 1 -11 4Z" fill="#fff" '
+           f'fill-opacity=".18"/><path d="M7 -2H9.5A3.5 3.5 0 0 1 9.5 5H7"/><path d="M-6 -10.5Q-4 -12.5 -6 -14.5'
+           f'M-1 -10.5Q1 -12.5 -1 -14.5" stroke-width="2"/></g>')
+    body = (f'<rect width="{w}" height="{h}" rx="{h / 2}" fill="{ACCENT}"/>' + cup
+            + text(60, 30, top, 17, weight=700) + text(60, 48, sub, 12.5, weight=500, op=0.9))
+    return svg(w, h, body, f"{top} on Ko-fi")
+
+
 def main():
+    if "--sources" in sys.argv:
+        make_sources()
     files = {
         "aura-hero.svg": hero(False), "aura-hero-light.svg": hero(True),
         "card-eq.svg": card_eq(), "card-lyrics.svg": card_lyrics(), "card-mixes.svg": card_mixes(),
         "card-radar.svg": card_radar(), "card-offline.svg": card_offline(), "card-devices.svg": card_devices(),
+        "btn-kofi.svg": kofi(False), "btn-kofi-fr.svg": kofi(True),
     }
     for key, (ic, en, fr, accent) in BUTTONS.items():
         files[f"btn-{key}.svg"] = button(ic, en, accent)
         files[f"btn-{key}-fr.svg"] = button(ic, fr, accent)
     for name, body in files.items():
         (OUT / name).write_text(body)
-        print(f"{name:26} {len(body.encode()) / 1024:5.1f} KB")
+        print(f"{name:26} {len(body.encode()) / 1024:7.1f} KB")
 
 
 if __name__ == "__main__":
