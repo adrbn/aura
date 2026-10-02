@@ -275,6 +275,8 @@ private struct RadarTrackRow: View {
 
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
+    @State private var showAddToPlaylist = false
+    @State private var showShare = false
 
     private var isCurrent: Bool {
         guard let current = player.currentSong?.id else { return false }
@@ -338,13 +340,34 @@ private struct RadarTrackRow: View {
             }
             #endif
         }
+        // The library's song menu, in its order; a preview keeps what a preview can do.
         .contextMenu {
-            Button(action: play) {
-                Label(librarySong == nil ? "Play Preview" : "Play", systemImage: "play.circle")
-            }
             if let song {
                 Button { player.playNext(song) } label: { Label("Play Next", systemImage: "text.insert") }
                 Button { player.addToQueue(song) } label: { Label("Add to Queue", systemImage: "text.append") }
+                Divider()
+            }
+            Button(action: play) {
+                Label(librarySong == nil ? "Play Preview" : "Play", systemImage: "play.circle")
+            }
+            if let librarySong {
+                Button { showAddToPlaylist = true } label: {
+                    Label("Add to Playlist", systemImage: "text.badge.plus")
+                }
+                Divider()
+                Button { showShare = true } label: { Label("Share", systemImage: "square.and.arrow.up") }
+                Button { player.startRadioFromSong(librarySong) } label: {
+                    Label("Start Radio", systemImage: "antenna.radiowaves.left.and.right")
+                }
+                if let albumId = librarySong.albumId {
+                    Divider()
+                    Button { player.pendingAlbumId = albumId } label: {
+                        Label("Go to Album", systemImage: "square.stack")
+                    }
+                }
+            }
+            if let artistId = librarySong?.artistId ?? release.artist.libraryId {
+                Button { player.pendingArtistId = artistId } label: { Label("Go to Artist", systemImage: "person") }
             }
             #if !APPSTORE_BUILD
             if canFetch && librarySong == nil {
@@ -355,6 +378,12 @@ private struct RadarTrackRow: View {
             #endif
         }
         .accessibilityElement(children: .combine)
+        .sheet(isPresented: $showAddToPlaylist) {
+            if let librarySong { AddToPlaylistView(song: librarySong) }
+        }
+        .sheet(isPresented: $showShare) {
+            if let librarySong { SongShareSheet(song: librarySong) }
+        }
         .accessibilityLabel("\(number). \(track.title)")
         .accessibilityHint(librarySong == nil ? "Plays its preview" : "Plays it from your library")
         .accessibilityAddTraits(.isButton)

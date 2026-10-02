@@ -109,6 +109,7 @@ struct RadarReleaseRow: View {
             Button { Task { await enqueue(next: false) } } label: {
                 Label("Add to Queue", systemImage: "text.append")
             }
+            Divider()
             if isHeld {
                 Button { Task { await tap() } } label: {
                     Label(heldSingle == nil ? "Open" : "Play", systemImage: "play.circle")
