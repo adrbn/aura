@@ -419,12 +419,44 @@ struct HomeView: View {
                             EditorialMixCover(mix: mix, size: 150, cornerRadius: 12)
                         }
                         .buttonStyle(.plain)
+                        .contextMenu { mixMenu(mix) }
                         .accessibilityLabel(Text("\(mix.title), \(mix.subtitle)"))
                     }
                 }
                 .padding(.horizontal)
             }
         }
+    }
+
+    /// A mix's long press, as a playlist's: play it, or slot its songs into the queue.
+    @ViewBuilder
+    private func mixMenu(_ mix: Mix) -> some View {
+        let source = PlaybackSource.mix(id: mix.id, name: mix.title)
+        Button { Task { if let songs = await songs(of: mix) { player.playSong(songs[0], fromQueue: songs, startIndex: 0, source: source) } } } label: {
+            Label("Play", systemImage: "play.fill")
+        }
+        Button { Task { if let songs = await songs(of: mix) { player.playShuffled(songs, source: source) } } } label: {
+            Label("Shuffle", systemImage: "shuffle")
+        }
+        Divider()
+        // Play Next one by one would land them in reverse.
+        Button { Task { await songs(of: mix)?.reversed().forEach(player.playNext) } } label: {
+            Label("Play Next", systemImage: "text.insert")
+        }
+        Button { Task { if let songs = await songs(of: mix) { player.addToQueue(songs) } } } label: {
+            Label("Add to Queue", systemImage: "text.append")
+        }
+    }
+
+    /// The mix's songs — the radar's as its page plays them, previews fetched afresh, since
+    /// their addresses only last a quarter of an hour. Nil when there's nothing to play.
+    private func songs(of mix: Mix) async -> [Song]? {
+        var songs = mix.songs
+        if mix.kind == .radar {
+            await RadarService.shared.loadTrackLists()
+            songs = RadarService.shared.queue
+        }
+        return songs.isEmpty ? nil : songs
     }
 
     @ViewBuilder

@@ -114,7 +114,9 @@ final class RadarService {
         return radar
     }
 
-    func refreshIfNeeded() async {
+    /// `force`: a pull on the radar — what the server has is looked up again at once, a song
+    /// filed there by hand included.
+    func refreshIfNeeded(force: Bool = false) async {
         // One refresh at a time; once it lands, check again — it may have been another
         // server's, the active one having changed meanwhile.
         if let refreshTask { await refreshTask.value }
@@ -126,7 +128,7 @@ final class RadarService {
         let staleCatalogue = radar.map {
             now.timeIntervalSince($0.fetched) > Self.catalogueAge || $0.releases.contains { $0.credits == nil }
         } ?? true || SoulSyncWatchlist.isEnabled && UserDefaults.standard.string(forKey: Self.followingKey) == nil
-        let staleLibrary = radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge || $0.lacking == nil || $0.whole == nil } ?? true
+        let staleLibrary = force || radar.map { now.timeIntervalSince($0.matched) > Self.libraryAge || $0.lacking == nil || $0.whole == nil } ?? true
         guard staleCatalogue || staleLibrary else {
             await fillMissingCovers()
             return

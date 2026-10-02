@@ -124,6 +124,11 @@ struct MixDetailView: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $openedRelease) { RadarReleaseView(release: $0) }
+        .refreshable {
+            guard mix.kind == .radar else { return }
+            await radarService.refreshIfNeeded(force: true)
+            await radarService.loadTrackLists()
+        }
         .task(id: shown.songs.map(\.id)) { isSaved = MixGenerator.shared.isSavedAsPlaylist(shown) }
         .task {
             guard mix.kind == .radar else { return }
