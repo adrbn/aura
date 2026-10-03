@@ -145,6 +145,12 @@ func refreshTabContent(_ reload: () async -> Void) async {
 /// glass band.
 struct TopEdgeVeil: View {
     let scrollY: CGFloat
+    /// How far below the status bar it reaches: the clock's height on a tab root, the
+    /// navigation bar's on a pushed page.
+    var depth: CGFloat = 34
+
+    /// Down past the back button and the bar's title on a pushed page.
+    static let barDepth: CGFloat = 70
 
     var body: some View {
         LinearGradient(
@@ -155,7 +161,7 @@ struct TopEdgeVeil: View {
             ],
             startPoint: .top, endPoint: .bottom
         )
-        .frame(height: TabChrome.windowSafeTop + 34)
+        .frame(height: TabChrome.windowSafeTop + depth)
         .opacity(min(max(scrollY / 16, 0), 1))
         .allowsHitTesting(false)
         .ignoresSafeArea(.container, edges: .top)

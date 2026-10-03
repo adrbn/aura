@@ -1745,6 +1745,30 @@ struct SongActionsRow: View {
     }
     #endif
 
+    #if !APPSTORE_BUILD
+    /// Experimental: the song a semitone at a time up or down, speed and all, as on a turntable.
+    private var pitchMenu: some View {
+        Menu {
+            ControlGroup {
+                Button { player.pitchSemitones -= 1 } label: {
+                    Label("Down", systemImage: "minus")
+                }
+                .disabled(player.pitchSemitones <= -6)
+                Button { player.pitchSemitones = 0 } label: {
+                    Text(player.pitchSemitones == 0 ? "0" : player.pitchSemitones.formatted(.number.sign(strategy: .always())))
+                }
+                Button { player.pitchSemitones += 1 } label: {
+                    Label("Up", systemImage: "plus")
+                }
+                .disabled(player.pitchSemitones >= 6)
+            }
+            .menuActionDismissBehavior(.disabled)
+        } label: {
+            Label("Pitch (Experimental)", systemImage: "tuningfork")
+        }
+    }
+    #endif
+
     private var actions: some View {
         HStack(spacing: 2) {
             favoriteButton
@@ -1777,6 +1801,9 @@ struct SongActionsRow: View {
                 Button { showCredits = true } label: {
                     Label("Credits", systemImage: "person.text.rectangle")
                 }
+                #if !APPSTORE_BUILD
+                pitchMenu
+                #endif
                 Divider()
                 Button { player.playNext(song) } label: {
                     Label("Play Next", systemImage: "text.insert")

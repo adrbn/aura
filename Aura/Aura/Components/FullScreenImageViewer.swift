@@ -18,14 +18,24 @@ struct FullScreenImageViewer: View {
 
     private var displayImage: UIImage { hiResImage ?? initialImage }
 
+    /// The buttons hide on a single tap, as in Photos, to leave the picture alone.
+    @State private var showsChrome = true
+
+    /// 0 at rest, 1 once the picture has been pulled far enough to let go.
+    private var dragProgress: CGFloat { min(1, abs(dragOffset.height) / 300) }
+
     var body: some View {
         ZStack {
             Color.black
                 .opacity(backgroundOpacity)
                 .ignoresSafeArea()
 
-            ZoomableImageView(image: displayImage, isZoomed: $isZoomed)
+            ZoomableImageView(image: displayImage, isZoomed: $isZoomed) {
+                withAnimation(.easeOut(duration: 0.2)) { showsChrome.toggle() }
+            }
                 .ignoresSafeArea()
+                // Pulled down, the picture shrinks a little as it goes, like a photo in Photos.
+                .scaleEffect(1 - dragProgress * 0.25)
                 .offset(dragOffset)
                 .gesture(
                     // Drag-to-dismiss only kicks in when not pinch-zoomed
@@ -34,8 +44,7 @@ struct FullScreenImageViewer: View {
                             guard !isZoomed else { return }
                             // Resist horizontal motion, allow vertical
                             dragOffset = CGSize(width: value.translation.width / 4, height: value.translation.height)
-                            let progress = min(1, abs(value.translation.height) / 300)
-                            backgroundOpacity = max(0.2, 1 - Double(progress))
+                            backgroundOpacity = max(0.2, 1 - Double(dragProgress))
                         }
                         .onEnded { value in
                             guard !isZoomed else {
@@ -55,28 +64,54 @@ struct FullScreenImageViewer: View {
                         }
                 )
 
-            VStack {
-                HStack {
-                    Spacer()
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .padding(10)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                    .padding(.trailing, 16)
-                    .padding(.top, 8)
-                }
-                Spacer()
-            }
-            .opacity(backgroundOpacity)
+            chrome
+                .opacity(showsChrome && dragOffset == .zero ? 1 : 0)
+                .allowsHitTesting(showsChrome)
+
+            ToastOverlay()
         }
         .statusBarHidden()
         .preferredColorScheme(.dark)   // full-bleed black photo viewer
+        .sensoryFeedback(.impact(weight: .light), trigger: isZoomed)
         .task { await loadHiRes() }
+    }
+
+    private var chrome: some View {
+        VStack {
+            HStack {
+                Spacer()
+                Button {
+                    isPresented = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.glass)
+                .buttonBorderShape(.circle)
+                .accessibilityLabel("Close")
+            }
+            Spacer()
+            HStack(spacing: 12) {
+                ShareLink(item: Image(uiImage: displayImage),
+                          preview: SharePreview("Image", image: Image(uiImage: displayImage))) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .frame(minHeight: 34)
+                }
+                Button {
+                    // The sharpest copy we have: the 1500 px one once it's in, else the thumbnail.
+                    Task { await CoverArtSaver.save(displayImage) }
+                } label: {
+                    Label("Save", systemImage: "square.and.arrow.down")
+                        .frame(minHeight: 34)
+                }
+            }
+            .font(.subheadline.weight(.semibold))
+            .buttonStyle(.glass)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .foregroundStyle(.white)
     }
 
     /// Fetch a larger version of the artwork for crisp pinch-zoom detail.
@@ -116,6 +151,7 @@ struct FullScreenImageViewer: View {
 private struct ZoomableImageView: UIViewRepresentable {
     let image: UIImage
     @Binding var isZoomed: Bool
+    let onSingleTap: () -> Void
 
     func makeUIView(context: Context) -> UIScrollView {
         let scroll = UIScrollView()
@@ -139,6 +175,10 @@ private struct ZoomableImageView: UIViewRepresentable {
         doubleTap.numberOfTapsRequired = 2
         scroll.addGestureRecognizer(doubleTap)
 
+        let singleTap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleSingleTap))
+        singleTap.require(toFail: doubleTap)
+        scroll.addGestureRecognizer(singleTap)
+
         return scroll
     }
 
@@ -153,17 +193,21 @@ private struct ZoomableImageView: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(isZoomed: $isZoomed)
+        Coordinator(isZoomed: $isZoomed, onSingleTap: onSingleTap)
     }
 
     final class Coordinator: NSObject, UIScrollViewDelegate {
         weak var imageView: UIImageView?
         weak var scrollView: UIScrollView?
         @Binding var isZoomed: Bool
+        let onSingleTap: () -> Void
 
-        init(isZoomed: Binding<Bool>) {
+        init(isZoomed: Binding<Bool>, onSingleTap: @escaping () -> Void) {
             self._isZoomed = isZoomed
+            self.onSingleTap = onSingleTap
         }
+
+        @objc func handleSingleTap() { onSingleTap() }
 
         /// Size and center the image to fit the scroll view bounds (aspect-fit at 1x zoom).
         func layoutImage(in scrollView: UIScrollView) {

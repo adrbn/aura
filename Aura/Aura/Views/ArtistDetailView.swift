@@ -28,6 +28,13 @@ struct ArtistDetailView: View {
     private struct HeroScroll: Equatable {
         var stretch: CGFloat = 0
         var showsTitle = false
+        /// How far the top fade has come in, 0 to 1: zero while the portrait is under the bar.
+        var veil: CGFloat = 0
+    }
+
+    /// Scroll offset at which the foot of the portrait reaches the foot of the top fade.
+    private static var veilStart: CGFloat {
+        ArtistHero.height - TabChrome.windowSafeTop - TopEdgeVeil.barDepth
     }
 
     private var allAlbumsDownloaded: Bool {
@@ -249,9 +256,16 @@ struct ArtistDetailView: View {
         .contentMargins(.top, 0, for: .scrollContent)
         .onScrollGeometryChange(for: HeroScroll.self) { geo in
             let y = geo.contentOffset.y + geo.contentInsets.top
-            return HeroScroll(stretch: max(0, -y), showsTitle: y > ArtistHero.height - 90)
+            return HeroScroll(stretch: max(0, -y), showsTitle: y > ArtistHero.height - 90,
+                              veil: min(max((y - Self.veilStart) / 16, 0), 1))
         } action: { _, new in
             heroScroll = new
+        }
+        // Our own fade where the songs meet the bar, not the system's edge effect: that one
+        // switched itself off part-way down the page, when the bar took the artist's name.
+        .scrollEdgeEffectHidden(true, for: .top)
+        .overlay(alignment: .top) {
+            TopEdgeVeil(scrollY: heroScroll.veil * 16, depth: TopEdgeVeil.barDepth)
         }
         .background(Color.themeBg)
         // Once the portrait has scrolled away, the bar says whose page this is.

@@ -97,6 +97,23 @@ final class AudioPlayer {
     var isBuildingQueue = false  // True while fetching similar songs for autoplay
 
     private var player: AVPlayer?
+
+    /// Experimental, sideload only: the song played up or down by whole semitones. It is a
+    /// turntable's pitch — the speed goes with it — since AVPlayer can't move one without the
+    /// other. Held for the session, back to 0 at the next launch.
+    var pitchSemitones = 0 {
+        didSet { applyPitch() }
+    }
+
+    // ponytail: the Lock Screen and the car still count song time at 1×, so their progress bar
+    // drifts from the real one while the pitch is off zero. Pass the rate on if this ever ships.
+    private func applyPitch() {
+        guard let player else { return }
+        if pitchSemitones != 0 { player.currentItem?.audioTimePitchAlgorithm = .varispeed }
+        let rate = Float(pow(2, Double(pitchSemitones) / 12))
+        player.defaultRate = rate
+        if player.rate != 0 { player.rate = rate }
+    }
     private var timeObserver: Any?
     private var originalQueue: [Song] = []
     #if os(iOS)
@@ -488,6 +505,7 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVPlayer(playerItem: playerItem)
+        applyPitch()
         applyOutputVolume(for: song)
         resetScrobbleProgress()
         player?.pause()
@@ -895,6 +913,7 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVPlayer(playerItem: playerItem)
+        applyPitch()
         // This path never applied the fader: every song started from here played at full
         // level until the fader was next touched.
         applyOutputVolume(for: song)
@@ -1503,6 +1522,7 @@ final class AudioPlayer {
         EqualizerManager.shared.attachToPlayerItem(item)
         watchEnd(of: item)
         player?.replaceCurrentItem(with: item)
+        applyPitch()
         if isPlaying { player?.play() }
         return true
     }
@@ -2244,6 +2264,7 @@ final class AudioPlayer {
         bufferProgress = 0
         incoming.automaticallyWaitsToMinimizeStalling = true
         player = incoming
+        applyPitch()
         observePlayerItem(item, song: full)
         observeBuffer(item, songId: full.id)
         watchPlayback(of: item)

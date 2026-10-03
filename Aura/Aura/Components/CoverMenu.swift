@@ -132,7 +132,7 @@ enum CoverArtSaver {
         Task { await save(image) }
     }
 
-    private static func save(_ image: UIImage) async {
+    static func save(_ image: UIImage) async {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
         guard status == .authorized || status == .limited else {
             ToastManager.shared.show("Allow Aura to add photos in Settings", icon: "photo.badge.exclamationmark")
