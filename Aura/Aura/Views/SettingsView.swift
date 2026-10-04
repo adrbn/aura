@@ -379,9 +379,8 @@ struct SettingsView: View {
 
             Toggle("ReplayGain", isOn: $appSettings.replayGain)
 
-            // Gapless and Crossfade used to sit here, as switches wired to nothing. Both
-            // need the player to hold the next song ready while the current one plays,
-            // which it does not yet; they return with that work rather than pretending.
+            // No Gapless switch: the player always lines the next song up behind the
+            // current one. Crossfade has no switch until it exists.
 
             Toggle("Landscape Clock", isOn: $appSettings.landscapeClockEnabled)
 

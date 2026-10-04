@@ -446,6 +446,7 @@ final class AudioPlayer {
         saveLastPlayback()                 // capture outgoing server's queue/track under ITS key
         playHistoryTask?.cancel()
         player?.pause()
+        dropQueuedNext()
         player?.replaceCurrentItem(with: nil)
         isPlaying = false
         isBuffering = false
@@ -486,6 +487,7 @@ final class AudioPlayer {
         let bitRate = AppSettings.shared.streamingQuality.bitRate
 
         player?.pause()
+        dropQueuedNext()
         player?.replaceCurrentItem(with: nil)
         streamOffset = 0
         isSeeking = false
@@ -504,7 +506,7 @@ final class AudioPlayer {
         observePlayerItem(playerItem, song: song)
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
-        player = AVPlayer(playerItem: playerItem)
+        player = AVQueuePlayer(playerItem: playerItem)
         applyPitch()
         applyOutputVolume(for: song)
         resetScrobbleProgress()
@@ -760,6 +762,11 @@ final class AudioPlayer {
     }
 
     private var hasPrefetchedNext = false
+    /// The song lined up behind this one in the queue player, so it starts on the very
+    /// sample this one ends.
+    private var queuedNext: (item: AVPlayerItem, songId: String)?
+    /// How long before the end the next song is lined up: enough for a stream to buffer.
+    private static let gaplessLead: Double = 15
 
     // MARK: - Offline playability
 
@@ -885,6 +892,12 @@ final class AudioPlayer {
             return
         }
         playbackErrorHandled = false
+        if let queued = queuedNext, queued.songId == song.id,
+           let queuePlayer = player as? AVQueuePlayer, queuePlayer.items().contains(queued.item) {
+            continueGapless(into: queued.item, song: song, on: queuePlayer)
+            return
+        }
+        queuedNext = nil
         let bitRate = AppSettings.shared.streamingQuality.bitRate
         AppLogger.shared.log("▶️ Playing: \(song.title) by \(song.artist ?? "Unknown") | bitRate: \(bitRate) | id: \(song.id)")
         currentTime = 0
@@ -912,7 +925,7 @@ final class AudioPlayer {
         observePlayerItem(playerItem, song: song)
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
-        player = AVPlayer(playerItem: playerItem)
+        player = AVQueuePlayer(playerItem: playerItem)
         applyPitch()
         // This path never applied the fader: every song started from here played at full
         // level until the fader was next touched.
@@ -958,6 +971,7 @@ final class AudioPlayer {
                 self.hasPrefetchedNext = true
                 self.prefetchNextTrack()
             }
+            self.queueSuccessor()
             self.scrobbleIfDue()
         }
 
@@ -973,6 +987,95 @@ final class AudioPlayer {
             self, selector: #selector(playerItemNewErrorLogEntry(_:)),
             name: .AVPlayerItemNewErrorLogEntry, object: playerItem
         )
+    }
+
+    /// The song that will follow this one when it ends — the same choice
+    /// `handlePlayerDidFinish` makes — or nil when that end does something else: stops,
+    /// pauses for the sleep timer, waits for a radio fetch, or plays a preview.
+    private var gaplessSuccessor: Song? {
+        guard !sleepTimerEndOfSong, let current = currentSong, !current.isPreview else { return nil }
+        let candidate: Song?
+        switch repeatMode {
+        case .one:
+            candidate = current
+        case .all:
+            candidate = userQueue.first ?? (queue.count > 1 ? queue[(queueIndex + 1) % queue.count] : nil)
+        case .off:
+            guard queueIndex < queue.count - 1 || isRadioMode else { return nil }
+            candidate = userQueue.first ?? (queueIndex + 1 < queue.count ? queue[queueIndex + 1] : nil)
+        }
+        guard let song = candidate, !song.isPreview,
+              !isEffectivelyOffline || isPlayableOffline(song) else { return nil }
+        return song
+    }
+
+    /// Lines the next song up behind this one near its end, and takes it back out when the
+    /// queue changes under it, so the queue player runs straight from one into the other.
+    private func queueSuccessor() {
+        guard let queuePlayer = player as? AVQueuePlayer else { return }
+        let successor = gaplessSuccessor
+        if let queued = queuedNext, queued.songId != successor?.id, queued.item !== queuePlayer.currentItem {
+            dropQueuedNext()
+        }
+        guard queuedNext == nil, let song = successor, hasPrefetchedNext, !isSeeking,
+              duration > 0, duration - currentTime <= Self.gaplessLead,
+              let current = queuePlayer.currentItem,
+              let server = ServerManager.shared.currentServer else { return }
+        let item = makePlayerItem(for: song, server: server, bitRate: AppSettings.shared.streamingQuality.bitRate)
+        if pitchSemitones != 0 { item.audioTimePitchAlgorithm = .varispeed }
+        EqualizerManager.shared.attachToPlayerItem(item)
+        queuePlayer.insert(item, after: current)
+        queuePlayer.actionAtItemEnd = .advance
+        queuedNext = (item, song.id)
+        AppLogger.shared.log("⏭ Gapless: \(song.title) lined up")
+    }
+
+    private func dropQueuedNext() {
+        guard let queued = queuedNext else { return }
+        if let queuePlayer = player as? AVQueuePlayer {
+            queuePlayer.remove(queued.item)
+            queuePlayer.actionAtItemEnd = .pause
+        }
+        queuedNext = nil
+    }
+
+    /// The queued song is already playing, or next in line for a skip: no new player, no
+    /// gap — only the watching moves over to it.
+    private func continueGapless(into item: AVPlayerItem, song: Song, on queuePlayer: AVQueuePlayer) {
+        AppLogger.shared.log("▶️ Playing gapless: \(song.title) | id: \(song.id)")
+        if queuePlayer.currentItem !== item { queuePlayer.advanceToNextItem() }
+        queuePlayer.actionAtItemEnd = .pause
+        queuedNext = nil
+        if let observer = timeObserver {
+            queuePlayer.removeTimeObserver(observer)
+            timeObserver = nil
+        }
+        playerItemStatusObservation?.invalidate()
+        playerItemStatusObservation = nil
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemFailedToPlayToEndTime, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemNewErrorLogEntry, object: nil)
+
+        hasPrefetchedNext = false
+        resetScrobbleProgress()
+        isSeeking = false
+        streamOffset = 0
+        bufferProgress = 0
+        currentTime = 0
+        duration = Double(max(song.duration ?? 0, 0))
+        observePlayerItem(item, song: song)
+        observeBuffer(item, songId: song.id)
+        applyOutputVolume(for: song)
+        watchPlayback(of: item)
+
+        activateAudioSession()
+        queuePlayer.play()
+        applyPitch()
+        isPlaying = true
+        currentSong = song
+        publishPlaybackState()
+        confirmPlaybackStarted()
+        announce(song)
     }
 
     /// What follows a song starting: history, lyrics, artwork, the Lock Screen, the radio.
