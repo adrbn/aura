@@ -21,6 +21,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 
 <br>
 
+[![App Store](https://img.shields.io/badge/App%20Store-free-EB534D?style=flat-square&labelColor=121212&logo=appstore&logoColor=white)](https://apps.apple.com/app/id6818241470)
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#configuration-requise)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#configuration-requise)
 [![Navidrome / Subsonic](https://img.shields.io/badge/serveur-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#configuration-requise)
@@ -28,7 +29,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 [![Dernière version](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&style=flat-square&labelColor=121212&color=EB534D&label=version)](https://github.com/adrbn/aura/releases/latest)
 [![Licence GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-EB534D?style=flat-square&labelColor=121212)](LICENSE)
 
-<sub>App Store : bientôt, sous le nom <b>Aura: Self-Hosted Music</b> · Gratuit et libre · Apportez votre serveur</sub>
+<sub><a href="https://apps.apple.com/app/id6818241470">Sur l'App Store</a> sous le nom <b>Aura: Self-Hosted Music</b> · Gratuit et libre · Apportez votre serveur</sub>
 
 [English](README.md) · Français
 
@@ -127,7 +128,7 @@ limite d'iOS, pas d'Aura.
 
 ### App Store
 
-Aura est en cours d'examen par Apple sous le nom **Aura: Self-Hosted Music**. L'app sera gratuite, sans achats intégrés.
+[Installez **Aura: Self-Hosted Music** depuis l'App Store](https://apps.apple.com/app/id6818241470). Gratuite, sans achats intégrés.
 
 ## Configuration requise
 

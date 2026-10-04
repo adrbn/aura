@@ -21,6 +21,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 
 <br>
 
+[![App Store](https://img.shields.io/badge/App%20Store-free-EB534D?style=flat-square&labelColor=121212&logo=appstore&logoColor=white)](https://apps.apple.com/app/id6818241470)
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#requirements)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#requirements)
 [![Navidrome / Subsonic](https://img.shields.io/badge/server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#requirements)
@@ -28,7 +29,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 [![Latest release](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&style=flat-square&labelColor=121212&color=EB534D&label=release)](https://github.com/adrbn/aura/releases/latest)
 [![License GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-EB534D?style=flat-square&labelColor=121212)](LICENSE)
 
-<sub>App Store: coming soon, as <b>Aura: Self-Hosted Music</b> · Free and open source · Bring your own server</sub>
+<sub><a href="https://apps.apple.com/app/id6818241470">On the App Store</a> as <b>Aura: Self-Hosted Music</b> · Free and open source · Bring your own server</sub>
 
 English · [Français](README.fr.md)
 
@@ -124,7 +125,7 @@ the signature expires after 7 days and the sideloading tool has to refresh it; t
 
 ### App Store
 
-Aura is in App Review as **Aura: Self-Hosted Music**. It will be free, with no in-app purchases.
+[Get **Aura: Self-Hosted Music** on the App Store](https://apps.apple.com/app/id6818241470). Free, with no in-app purchases.
 
 ## Requirements
 
