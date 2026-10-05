@@ -12,6 +12,8 @@
 **Your music server, on your iPhone.** A native iPhone and Apple Watch player for Navidrome and Subsonic:
 lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
 
+<a href="https://apps.apple.com/app/id6818241470"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="56"></a>
+<br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
 <a href="#what-it-does"><img src="docs/assets/btn-features.svg" alt="Features" height="40"></a>&nbsp;
 <a href="#two-builds"><img src="docs/assets/btn-builds.svg" alt="Two builds" height="40"></a>&nbsp;
@@ -21,7 +23,6 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 
 <br>
 
-[![App Store](https://img.shields.io/badge/App%20Store-free-EB534D?style=flat-square&labelColor=121212&logo=appstore&logoColor=white)](https://apps.apple.com/app/id6818241470)
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#requirements)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#requirements)
 [![Navidrome / Subsonic](https://img.shields.io/badge/server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#requirements)

@@ -12,6 +12,8 @@
 **Votre serveur de musique, sur votre iPhone.** Un lecteur natif pour iPhone et Apple Watch, pour Navidrome et Subsonic :
 streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vous écoutez vraiment, et toute votre bibliothèque hors ligne.
 
+<a href="https://apps.apple.com/app/id6818241470"><img src="docs/assets/badge-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>
+<br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download-fr.svg" alt="Télécharger l'IPA" height="40"></a>&nbsp;
 <a href="#ce-que-fait-aura"><img src="docs/assets/btn-features-fr.svg" alt="Fonctions" height="40"></a>&nbsp;
 <a href="#deux-versions"><img src="docs/assets/btn-builds-fr.svg" alt="Deux versions" height="40"></a>&nbsp;
@@ -21,7 +23,6 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 
 <br>
 
-[![App Store](https://img.shields.io/badge/App%20Store-free-EB534D?style=flat-square&labelColor=121212&logo=appstore&logoColor=white)](https://apps.apple.com/app/id6818241470)
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#configuration-requise)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#configuration-requise)
 [![Navidrome / Subsonic](https://img.shields.io/badge/serveur-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#configuration-requise)
