@@ -313,11 +313,11 @@ struct NowPlayingView: View {
                 .overlay(alignment: .trailing) {
                     if showLyrics && translator.isAvailable {
                         translateButton
-                            // Gone at once on close: the cover grows back over this corner, and
-                            // a fading button let it visibly slide underneath.
+                            // A quick fade on close, done before the cover grows back over this
+                            // corner: the slower one let it visibly slide underneath.
                             .transition(.asymmetric(
                                 insertion: .opacity.animation(.easeOut(duration: 0.25).delay(0.15)),
-                                removal: .identity))
+                                removal: .opacity.animation(.easeOut(duration: 0.1))))
                     }
                 }
                 .padding(.horizontal, horizontalPadding)
