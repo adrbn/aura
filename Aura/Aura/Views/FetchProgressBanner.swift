@@ -211,8 +211,22 @@ private struct FetchCard: View {
             }
             .buttonStyle(.plain)
         default:
-            FetchStepsRing(fetch: fetch, tint: accentColor)
-                .frame(width: 30, height: 30)
+            HStack(spacing: 4) {
+                FetchStepsRing(fetch: fetch, tint: accentColor)
+                    .frame(width: 30, height: 30)
+                // Past the server's usual pace, the wait may be for nothing — a release filed
+                // under another name, say: it can be let go without a long press.
+                if fetch.stage == .importing, let end = fetch.importEnd, end < .now {
+                    Button { fetcher.dismiss(fetch.id) } label: {
+                        Image(systemName: "xmark")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 26, height: 30)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Dismiss")
+                }
+            }
         }
     }
 

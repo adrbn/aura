@@ -28,6 +28,7 @@ struct ReleaseFetch: Codable, Identifiable, Equatable {
     var queuePlace: Int?
     var downloaded: Date?
     var failure: String?
+    var failedAt: Date?
     /// The peers already asked, so a second attempt goes to someone else.
     var tried: [String] = []
     /// The download under way — who from, and which file is which track — so a relaunch
@@ -90,6 +91,7 @@ final class ReleaseFetcher {
     private static let importLimit: TimeInterval = 90 * 60
     private static let readyKept: TimeInterval = 30 * 60
     private static let readyShown: TimeInterval = 10 * 60
+    private static let failedKept: TimeInterval = 24 * 60 * 60
 
     /// Soulseek is the sideload build's, behind its beta switch.
     var isAvailable: Bool { AppSettings.shared.betaFeaturesEnabled }
@@ -101,8 +103,12 @@ final class ReleaseFetcher {
 
     private init() {
         let now = Date()
-        fetches = Self.load().filter { $0.isActive || $0.stage == .failed
+        fetches = Self.load().filter { $0.isActive
+            || $0.stage == .failed && now.timeIntervalSince($0.failedAt ?? .distantPast) < Self.failedKept
             || now.timeIntervalSince($0.downloaded ?? now) < Self.readyKept }
+        // Cards left on the Lock Screen by an earlier run — a fetch since finished, failed
+        // or forgotten — have nobody left to end them.
+        activities.endAll(except: Set(fetches.filter(\.isActive).map(\.id)))
         picked = Set(UserDefaults.standard.stringArray(forKey: Self.pickedKey) ?? [])
         // Whatever was under way when the app last quit picks up where it was.
         for fetch in fetches where fetch.isActive { start(fetch.id) }
@@ -514,7 +520,7 @@ final class ReleaseFetcher {
     }
 
     private func fail(_ id: String, _ reason: String) {
-        update(id) { $0.stage = .failed; $0.failure = reason }
+        update(id) { $0.stage = .failed; $0.failure = reason; $0.failedAt = Date() }
         AppLogger.shared.log("⬇️ Fetch of \(id) failed: \(reason)")
     }
 
@@ -547,12 +553,20 @@ final class ReleaseFetcher {
         guard !running.isEmpty else { return }
         for fetch in running { activities.show(fetch, force: true) }
         BackgroundGrace().hold(for: 25)
+        // Asleep, the app can't move the cards on: each goes once its step should be over,
+        // rather than saying "Adding to your library" for hours.
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(24))
+            guard let self, UIApplication.shared.applicationState == .background else { return }
+            for fetch in self.fetches where fetch.isActive { self.activities.letGo(fetch) }
+        }
     }
 
     /// Back on screen: whatever iOS suspended mid-step stalls there for good — a search
     /// cut off in the background never asks again, and its card kept saying it was looking.
     /// Each one picks up afresh; a download in flight is followed, not asked for twice.
     private func returning() {
+        activities.isAsleep = false
         for fetch in fetches where fetch.isActive { start(fetch.id) }
     }
 
@@ -660,8 +674,12 @@ private final class BackgroundGrace {
 private final class ReleaseFetchActivities {
     private var running: [String: Activity<ReleaseFetchAttributes>] = [:]
     private var shown: [String: (state: ReleaseFetchAttributes.ContentState, at: Date)] = [:]
+    /// Set once the cards are let go for the night: nothing starts a new one until the app
+    /// is back on screen.
+    var isAsleep = false
 
     func show(_ fetch: ReleaseFetch, force: Bool = false) {
+        guard !isAsleep else { return }
         let window = fetch.downloadWindow
         let state = ReleaseFetchAttributes.ContentState(
             step: fetch.step, headline: fetch.headline, detail: fetch.detail,
@@ -674,13 +692,15 @@ private final class ReleaseFetchActivities {
         shown[fetch.id] = (state, Date())
 
         let activity = running[fetch.id] ?? Activity<ReleaseFetchAttributes>.activities
-            .first { $0.attributes.releaseId == fetch.id }
+            .first { $0.attributes.releaseId == fetch.id && $0.activityState == .active }
         // Past its expected end with no word from the app, the card says it may be behind.
         let stale = fetch.isActive ? state.waitEnd?.addingTimeInterval(5 * 60) : nil
         let content = ActivityContent(state: state, staleDate: stale)
         if !fetch.isActive {
             if let activity {
-                let policy: ActivityUIDismissalPolicy = fetch.stage == .ready ? .after(.now + 15 * 60) : .default
+                // A failure is told on the card in the app, with its retry; the Lock Screen
+                // keeps only good news, and not for long.
+                let policy: ActivityUIDismissalPolicy = fetch.stage == .ready ? .after(.now + 5 * 60) : .immediate
                 Task { await activity.end(content, dismissalPolicy: policy) }
             }
             running[fetch.id] = nil
@@ -694,6 +714,24 @@ private final class ReleaseFetchActivities {
             let attributes = ReleaseFetchAttributes(releaseId: fetch.id, title: fetch.title,
                                                     artist: fetch.release.artist.name)
             running[fetch.id] = try? Activity.request(attributes: attributes, content: content, pushType: nil)
+        }
+    }
+
+    /// Ends the card with what it shows now, left up until the step should be over — the
+    /// countdown runs out on its own — and a few minutes past it.
+    func letGo(_ fetch: ReleaseFetch) {
+        isAsleep = true
+        guard let activity = running[fetch.id] ?? Activity<ReleaseFetchAttributes>.activities
+            .first(where: { $0.attributes.releaseId == fetch.id && $0.activityState == .active }) else { return }
+        let until = max(shown[fetch.id]?.state.waitEnd ?? .now, .now).addingTimeInterval(5 * 60)
+        running[fetch.id] = nil
+        shown[fetch.id] = nil
+        Task { await activity.end(nil, dismissalPolicy: .after(until)) }
+    }
+
+    func endAll(except kept: Set<String>) {
+        for activity in Activity<ReleaseFetchAttributes>.activities where !kept.contains(activity.attributes.releaseId) {
+            Task { await activity.end(nil, dismissalPolicy: .immediate) }
         }
     }
 
