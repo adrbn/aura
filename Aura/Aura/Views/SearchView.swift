@@ -120,7 +120,7 @@ struct SearchResultsContainer: View {
         // What turns a look into a listen. An album or artist opened from search sits armed
         // until something from it actually plays.
         .onChange(of: player.playbackSource) { _, source in
-            history.commitIfPlaying(source: source)
+            if !navPath.isEmpty { history.commitIfPlaying(source: source) }
         }
         // Back at the root without having played anything — the entry was just browsing.
         .onChange(of: navPath.count) { _, depth in
@@ -198,7 +198,8 @@ struct SearchResultsContainer: View {
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets(top: appSettings.listDensity.verticalPadding + 2,
                                                   leading: 16, bottom: appSettings.listDensity.verticalPadding + 2, trailing: 16))
-                        .swipeActions(edge: .trailing) {
+                        // No full swipe: a tap that drifted sideways was deleting the row.
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) { history.remove(entry) } label: {
                                 Image(systemName: "xmark")
                             }
@@ -206,9 +207,9 @@ struct SearchResultsContainer: View {
                 }
             } header: {
                 HStack {
-                    Text("Recently Searched").foregroundStyle(accentColor)
+                    Text("Recently Searched").foregroundStyle(.white)
                     Spacer()
-                    Button("Clear") { history.clear() }.foregroundStyle(accentColor)
+                    Button("Clear") { history.clear() }.foregroundStyle(.white)
                 }
             }
         }
@@ -219,8 +220,8 @@ struct SearchResultsContainer: View {
         switch entry {
         case .song(let song):
             Button {
+                // Left where it is: moved to the top under the finger, it looked deleted.
                 player.playSong(song, source: .search(query: ""))
-                history.record(entry) // bump to top
             } label: { recentEntryLabel(entry) }
             .buttonStyle(.plain)
         case .artist(let artist):
@@ -229,12 +230,20 @@ struct SearchResultsContainer: View {
             Button { history.arm(entry); navPath.append(album) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
         case .playlist(let playlist):
             Button { history.arm(entry); navPath.append(playlist) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
+        case .mix(let mix):
+            // Today's mix of that id when there is one; the saved copy once it's gone.
+            let current = MixGenerator.shared.mixes.first { $0.id == mix.id } ?? mix
+            Button { history.arm(.mix(current)); navPath.append(current) } label: { recentEntryLabel(entry) }.buttonStyle(.plain)
         }
     }
 
     private func recentEntryLabel(_ entry: RecentSearchEntry) -> some View {
         HStack(spacing: 12) {
-            CoverArtImage(coverArt: entry.coverArt, size: 48, cornerRadius: entry.isCircular ? 24 : 6)
+            if case .mix(let mix) = entry {
+                EditorialMixCover(mix: mix, size: 48, cornerRadius: 6)
+            } else {
+                CoverArtImage(coverArt: entry.coverArt, size: 48, cornerRadius: entry.isCircular ? 24 : 6)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.title).font(.subheadline.weight(.medium)).lineLimit(1)
                 if let subtitle = entry.subtitle {
@@ -301,7 +310,7 @@ struct SearchResultsContainer: View {
             }
 
             ForEach(matchingMixes) { mix in
-                Button { navPath.append(mix) } label: { mixRow(mix) }
+                Button { history.arm(.mix(mix)); navPath.append(mix) } label: { mixRow(mix) }
                     .buttonStyle(.plain)
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: appSettings.listDensity.verticalPadding + 2, leading: 16,

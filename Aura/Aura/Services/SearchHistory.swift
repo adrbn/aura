@@ -7,6 +7,7 @@ enum RecentSearchEntry: Codable, Hashable, Identifiable {
     case album(Album)
     case song(Song)
     case playlist(Playlist)
+    case mix(Mix)
 
     /// Stable id namespaced by kind (the same id can exist as both an album and a playlist).
     var id: String {
@@ -15,6 +16,7 @@ enum RecentSearchEntry: Codable, Hashable, Identifiable {
         case .album(let a): return "album:\(a.id)"
         case .song(let s): return "song:\(s.id)"
         case .playlist(let p): return "playlist:\(p.id)"
+        case .mix(let m): return "mix:\(m.id)"
         }
     }
 
@@ -24,6 +26,7 @@ enum RecentSearchEntry: Codable, Hashable, Identifiable {
         case .album(let a): return a.name
         case .song(let s): return s.title
         case .playlist(let p): return p.name
+        case .mix(let m): return m.title
         }
     }
 
@@ -33,6 +36,7 @@ enum RecentSearchEntry: Codable, Hashable, Identifiable {
         case .album(let a): return a.artist ?? String(localized: "Album")
         case .song(let s): return s.artist ?? String(localized: "Song")
         case .playlist(let p): return p.songCount.map { String(localized: "\($0) songs") } ?? String(localized: "Playlist")
+        case .mix(let m): return m.subtitle
         }
     }
 
@@ -42,6 +46,7 @@ enum RecentSearchEntry: Codable, Hashable, Identifiable {
         case .album(let a): return a.coverArt
         case .song(let s): return s.coverArt
         case .playlist(let p): return p.coverArt
+        case .mix: return nil
         }
     }
 
@@ -78,21 +83,18 @@ final class SearchHistory {
     /// Called when the user comes back without having played anything.
     func disarm() { pending = nil }
 
-    /// Commits the armed entry, but only if playback has actually started from that same
-    /// entity — matched on id, so leaving search open and playing something unrelated
-    /// somewhere else can't quietly write a row nobody asked for.
+    /// Commits the armed entry once something plays from the pages it opened — the album
+    /// itself, or an album reached through the artist it led to. Search calls this only
+    /// while one of its pages is open, so playing from another tab can't write a row.
     func commitIfPlaying(source: PlaybackSource) {
-        guard let entry = pending, Self.matches(entry: entry, source: source) else { return }
+        guard let entry = pending, Self.isLibrary(source) else { return }
         pending = nil
         record(entry)
     }
 
-    private static func matches(entry: RecentSearchEntry, source: PlaybackSource) -> Bool {
-        switch (entry, source) {
-        case (.album(let a), .album(let id, _)): return a.id == id
-        case (.artist(let a), .artist(let id, _)): return a.id == id
-        case (.playlist(let p), .playlist(let id, _)): return p.id == id
-        // Songs never go through this: playing one from search records it outright.
+    private static func isLibrary(_ source: PlaybackSource) -> Bool {
+        switch source {
+        case .album, .artist, .playlist, .mix, .genre: return true
         default: return false
         }
     }
