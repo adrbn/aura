@@ -1,4 +1,4 @@
-import UIKit
+import Foundation
 
 /// A playlist's own picture on the server, through Navidrome's native API — Subsonic has no
 /// call for it. Signs in for a token on each change: changes are rare, tokens short-lived.

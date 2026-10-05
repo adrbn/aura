@@ -18,6 +18,7 @@
 		0A3112A686D5D037ACD3FFCC /* CarPlayArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7027618C0439D47187558051 /* CarPlayArtwork.swift */; };
 		0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
 		0CF35D1498580545AAB8E5CF /* MacArtistLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */; };
+		0DD7E850D3FA7DC35FC4AB8C /* LyricsOverrides.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB20C2630F70AD51EC1D03F /* LyricsOverrides.swift */; };
 		1098ACD0A4306A067B6F7DBC /* AuraWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 46EB97B0FBEAA4C3113B875E /* AuraWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		125F7988574B0686E951FB7C /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
 		169403C7846F4989E4392CEF /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
@@ -90,9 +91,11 @@
 		B588F5C510ADD0E5A079AF5D /* MixCollageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D820F136A08B02A6A30ED8 /* MixCollageView.swift */; };
 		B5FD446B4105F41FB7E47BB2 /* GeminiLyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */; };
 		BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000070 /* Localizable.xcstrings */; };
+		BC53C870BB1A0B5438F7E37E /* LyricsOnServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B473B77C7F39B4A0C89FD065 /* LyricsOnServer.swift */; };
 		BD810962312AF0BE4C7E7884 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DC88F51AFE7480355DB58E /* WatchModel.swift */; };
 		BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E789F4384A074A1B5C0CC509 /* PinSync.swift */; };
 		C03D99F693D04E563B0F59C5 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
+		C1C5793381313E62BF02811A /* PlaylistCovers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A012 /* PlaylistCovers.swift */; };
 		C4A06B22916E4B2EEB2E9205 /* ListeningStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009A /* ListeningStats.swift */; };
 		C4C2E0968A314AF534FA406D /* MacCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE0E8DD48DEACB25983419C /* MacCommands.swift */; };
 		C6452DC241C5EED3F6814897 /* LyricsOverrides.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB20C2630F70AD51EC1D03F /* LyricsOverrides.swift */; };
@@ -1158,6 +1161,9 @@
 				08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */,
 				B225BE723A71BD7C8986CD35 /* MacWindowChrome.swift in Sources */,
 				0CF35D1498580545AAB8E5CF /* MacArtistLinks.swift in Sources */,
+				0DD7E850D3FA7DC35FC4AB8C /* LyricsOverrides.swift in Sources */,
+				BC53C870BB1A0B5438F7E37E /* LyricsOnServer.swift in Sources */,
+				C1C5793381313E62BF02811A /* PlaylistCovers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1624,10 +1630,9 @@
 		E1000000A000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				/* The sideloaded build keeps the identifier it was first installed under, so an update keeps its data; the App Store build has its own. */
-				AURA_BUNDLE_BASE = com.aura.goldian;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				AURA_BUNDLE_BASE = com.aura.goldian;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -1689,10 +1694,9 @@
 		E1000000A000000000000002 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				/* The sideloaded build keeps the identifier it was first installed under, so an update keeps its data; the App Store build has its own. */
-				AURA_BUNDLE_BASE = com.aura.goldian;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				AURA_BUNDLE_BASE = com.aura.goldian;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -1861,10 +1865,9 @@
 		E744B08084CF6A7F6A933FE9 /* Release-AppStore */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				/* The sideloaded build keeps the identifier it was first installed under, so an update keeps its data; the App Store build has its own. */
-				AURA_BUNDLE_BASE = com.adrbn.aura;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				AURA_BUNDLE_BASE = com.adrbn.aura;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
