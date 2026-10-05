@@ -124,9 +124,8 @@ struct NowPlayingView: View {
                 #if DEBUG
                 if Shot.name == "lyrics" { showLyrics = true }
                 #endif
-                // Start preloading playlist membership and song links for current song
+                // Start preloading song links for the current song (which playlists hold it is looked up when Add to Playlist opens)
                 if let song = player.currentSong {
-                    if !song.isPreview { PlaylistMembershipCache.shared.preloadMembership(for: song.id) }
                     SongLinkService.shared.preloadLinks(title: song.title, artist: song.artist ?? "")
                 }
             }
@@ -172,9 +171,8 @@ struct NowPlayingView: View {
                     }
                 }
             }
-            // Pre-fetch playlist membership and song links for the new song in background
+            // Pre-fetch song links for the new song in background
             if let newId, let song = player.currentSong {
-                if !song.isPreview { PlaylistMembershipCache.shared.preloadMembership(for: newId) }
                 PlaylistMembershipCache.shared.trimCache(keeping: newId)
                 SongLinkService.shared.preloadLinks(title: song.title, artist: song.artist ?? "")
                 SongLinkService.shared.trimCache(keeping: song.title, artist: song.artist ?? "")
