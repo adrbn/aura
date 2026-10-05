@@ -20,7 +20,7 @@ struct MacEqualizerView: View {
             }
 
             Picker("Preset", selection: presetBinding) {
-                ForEach(EQPreset.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                ForEach(EQPreset.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
             }
             .labelsHidden()
 

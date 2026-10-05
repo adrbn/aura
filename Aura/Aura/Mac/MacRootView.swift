@@ -10,12 +10,12 @@ enum MacSection: String, Hashable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .home: return "Home"
-        case .mixes: return "Made For You"
-        case .albums: return "Albums"
-        case .artists: return "Artists"
-        case .songs: return "Songs"
-        case .playlists: return "Playlists"
+        case .home: return String(localized: "Home")
+        case .mixes: return String(localized: "Made For You")
+        case .albums: return String(localized: "Albums")
+        case .artists: return String(localized: "Artists")
+        case .songs: return String(localized: "Songs")
+        case .playlists: return String(localized: "Playlists")
         }
     }
 

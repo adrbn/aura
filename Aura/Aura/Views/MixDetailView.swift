@@ -163,14 +163,14 @@ struct MixDetailView: View {
             )
             MixGenerator.shared.markSavedAsPlaylist(shown)
             isSaved = true
-            ToastManager.shared.show("Saved “\(shown.title)” to your playlists")
+            ToastManager.shared.show(String(localized: "Saved “\(shown.title)” to your playlists"))
             // The mix's cover goes along, photo in, instead of the server's collage of its songs.
             if let cover = await EditorialMixCover.jpeg(of: shown) {
                 await PlaylistCovers.upload(cover, playlistId: existingId ?? saved.id, server: server)
             }
         } catch {
             AppLogger.shared.log("❌ Failed to save mix: \(error.localizedDescription)")
-            ToastManager.shared.show("Couldn’t save mix", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "Couldn’t save mix"), icon: "exclamationmark.triangle.fill")
         }
     }
 

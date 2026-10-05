@@ -256,7 +256,7 @@ struct DownloadManagerView: View {
                         .font(.subheadline.weight(.medium))
                         .lineLimit(1)
                     HStack(spacing: 4) {
-                        Text(downloaded.song.artist ?? "Unknown")
+                        Text(downloaded.song.artist ?? String(localized: "Unknown"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -330,7 +330,7 @@ struct DownloadManagerView: View {
                 Text(item.song.title)
                     .font(.subheadline.weight(.medium))
                     .lineLimit(1)
-                Text(item.song.artist ?? "Unknown")
+                Text(item.song.artist ?? String(localized: "Unknown"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

@@ -94,7 +94,7 @@ struct AddServerView: View {
               let scheme = comps.scheme?.lowercased(), scheme == "http" || scheme == "https",
               let host = comps.host, !host.isEmpty else {
             await MainActor.run {
-                error = "Enter a valid server address (e.g. https://music.example.com)"
+                error = String(localized: "Enter a valid server address (e.g. https://music.example.com)")
                 isTesting = false
             }
             return
@@ -119,13 +119,13 @@ struct AddServerView: View {
                 await MainActor.run { serverManager.addServer(server); dismiss() }
             } else {
                 await MainActor.run {
-                    error = "Server rejected the connection — check your credentials"
+                    error = String(localized: "Server rejected the connection — check your credentials")
                     isTesting = false
                 }
             }
         } catch is ConnectionError {
             await MainActor.run {
-                error = "Connection timed out — is the server address correct and reachable?"
+                error = String(localized: "Connection timed out — is the server address correct and reachable?")
                 isTesting = false
             }
         } catch let urlError as URLError {
@@ -135,7 +135,7 @@ struct AddServerView: View {
             }
         } catch {
             await MainActor.run {
-                self.error = "Connection failed: \(error.localizedDescription)"
+                self.error = String(localized: "Connection failed: \(error.localizedDescription)")
                 isTesting = false
             }
         }
@@ -144,19 +144,19 @@ struct AddServerView: View {
     private static func friendlyMessage(for error: URLError) -> String {
         switch error.code {
         case .notConnectedToInternet:
-            return "No internet connection"
+            return String(localized: "No internet connection")
         case .cannotFindHost:
-            return "Server not found — check the address"
+            return String(localized: "Server not found — check the address")
         case .cannotConnectToHost:
-            return "Cannot reach server — is it running?"
+            return String(localized: "Cannot reach server — is it running?")
         case .timedOut:
-            return "Connection timed out — is the server address correct and reachable?"
+            return String(localized: "Connection timed out — is the server address correct and reachable?")
         case .secureConnectionFailed:
-            return "SSL/TLS error — try using http:// instead of https://"
+            return String(localized: "SSL/TLS error — try using http:// instead of https://")
         case .serverCertificateUntrusted, .serverCertificateHasBadDate, .serverCertificateHasUnknownRoot, .serverCertificateNotYetValid:
-            return "Server certificate is not trusted — try using http://"
+            return String(localized: "Server certificate is not trusted — try using http://")
         default:
-            return "Connection failed: \(error.localizedDescription)"
+            return String(localized: "Connection failed: \(error.localizedDescription)")
         }
     }
 }

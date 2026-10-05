@@ -17,7 +17,7 @@ struct SettingsView: View {
     static var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         guard let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String else { return version }
-        return "\(version) · build \(build)"
+        return String(localized: "\(version) · build \(build)")
     }
 
     struct ServerStats {
@@ -133,7 +133,7 @@ struct SettingsView: View {
         }
     }
 
-    private func quickTile(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func quickTile(icon: String, label: LocalizedStringKey, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Image(systemName: icon)
@@ -298,7 +298,7 @@ struct SettingsView: View {
                 Picker("Music Folder", selection: $appSettings.selectedMusicFolderId) {
                     Text("All Folders").tag(Int?.none)
                     ForEach(musicFolders) { folder in
-                        Text(folder.name ?? "Folder \(folder.id)").tag(Int?.some(folder.id))
+                        Text(folder.name ?? String(localized: "Folder \(folder.id)")).tag(Int?.some(folder.id))
                     }
                 }
             } header: {
@@ -579,7 +579,7 @@ struct SettingsView: View {
                 HStack {
                     Label("Equalizer", systemImage: "slider.vertical.3")
                     Spacer()
-                    Text(appSettings.eqPreset.rawValue)
+                    Text(LocalizedStringKey(appSettings.eqPreset.rawValue))
                         .foregroundStyle(.secondary)
                     Image(systemName: "chevron.right")
                         .font(.caption)
@@ -600,7 +600,7 @@ struct SettingsView: View {
 
             Picker("Download Quality", selection: $appSettings.downloadQuality) {
                 ForEach(DownloadQuality.allCases, id: \.self) { q in
-                    Text(q.rawValue).tag(q)
+                    Text(LocalizedStringKey(q.rawValue)).tag(q)
                 }
             }
 
@@ -712,11 +712,25 @@ struct SettingsView: View {
                 // Text, not Label: a Label renders its icon in the collapsed row too,
                 // which crowds the value and squeezes the rows below.
                 ForEach(AppearanceMode.allCases, id: \.self) { mode in
-                    Text(mode.rawValue).tag(mode)
+                    Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                 }
             } label: {
                 Text("Theme")
             }
+
+            // iOS owns the per-app language: its page switches every string at once,
+            // where a locale forced from inside reached SwiftUI text and nothing else.
+            Button {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                LabeledContent("Language",
+                               value: Bundle.main.preferredLocalizations.first
+                                   .flatMap { Locale.current.localizedString(forLanguageCode: $0) }?
+                                   .localizedCapitalized ?? "")
+            }
+            .foregroundStyle(.primary)
 
             NavigationLink("Tab Bar Order") {
                 TabOrderView()
@@ -734,7 +748,7 @@ struct SettingsView: View {
             NavigationLink {
                 LyricsTranslationSettingsView()
             } label: {
-                LabeledContent("Translation", value: GeminiLyricsTranslator.isConfigured ? "Gemini" : "Off")
+                LabeledContent("Translation", value: GeminiLyricsTranslator.isConfigured ? "Gemini" : String(localized: "Off"))
             }
             Toggle("Word-by-Word Highlight", isOn: $appSettings.betaKaraokeLyrics)
             VStack(alignment: .leading, spacing: 2) {
@@ -764,7 +778,7 @@ struct SettingsView: View {
         Section("Home Screen") {
             Picker("Title", selection: $appSettings.homeTitleStyle) {
                 ForEach(HomeTitleStyle.allCases, id: \.self) { style in
-                    Text(style.rawValue).tag(style)
+                    Text(LocalizedStringKey(style.rawValue)).tag(style)
                 }
             }
             Toggle("Library Stats", isOn: $appSettings.showStatsOnHome)
@@ -979,7 +993,7 @@ struct SettingsView: View {
         guard let server = serverManager.currentServer else { return }
         await MainActor.run {
             isDownloadingLibrary = true
-            libraryDownloadProgress = "Scanning library..."
+            libraryDownloadProgress = String(localized: "Scanning library...")
         }
         do {
             // Fetch all songs in batches
@@ -993,7 +1007,7 @@ struct SettingsView: View {
                 allSongs.append(contentsOf: songs)
                 offset += songs.count
                 await MainActor.run {
-                    libraryDownloadProgress = "Found \(allSongs.count) songs..."
+                    libraryDownloadProgress = String(localized: "Found \(allSongs.count) songs...")
                 }
                 if songs.count < batchSize { break }
             }
@@ -1006,25 +1020,25 @@ struct SettingsView: View {
                 await MainActor.run {
                     isDownloadingLibrary = false
                     libraryDownloadProgress = nil
-                    ToastManager.shared.show("All songs already downloaded!", icon: "checkmark.circle.fill")
+                    ToastManager.shared.show(String(localized: "All songs already downloaded!"), icon: "checkmark.circle.fill")
                 }
                 return
             }
             await MainActor.run {
-                libraryDownloadProgress = "Downloading \(toDownload.count) songs..."
+                libraryDownloadProgress = String(localized: "Downloading \(toDownload.count) songs...")
             }
             await downloadManager.downloadAlbum(toDownload, groupId: "library-all")
             await MainActor.run {
                 isDownloadingLibrary = false
                 libraryDownloadProgress = nil
-                ToastManager.shared.show("Download complete!", icon: "checkmark.circle.fill")
+                ToastManager.shared.show(String(localized: "Download complete!"), icon: "checkmark.circle.fill")
             }
         } catch {
             AppLogger.shared.log("Download All failed: \(error.localizedDescription)")
             await MainActor.run {
                 isDownloadingLibrary = false
                 libraryDownloadProgress = nil
-                ToastManager.shared.show("Download failed", icon: "xmark.circle")
+                ToastManager.shared.show(String(localized: "Download failed"), icon: "xmark.circle")
             }
         }
     }
@@ -1032,14 +1046,14 @@ struct SettingsView: View {
     private func exportEntireLibrary(to folderURL: URL) async {
         guard let server = serverManager.currentServer else { return }
         guard folderURL.startAccessingSecurityScopedResource() else {
-            ToastManager.shared.show("Cannot access selected folder", icon: "xmark.circle")
+            ToastManager.shared.show(String(localized: "Cannot access selected folder"), icon: "xmark.circle")
             return
         }
         defer { folderURL.stopAccessingSecurityScopedResource() }
 
         await MainActor.run {
             isDownloadingLibrary = true
-            libraryDownloadProgress = "Scanning library..."
+            libraryDownloadProgress = String(localized: "Scanning library...")
         }
         do {
             // Fetch all songs in batches
@@ -1053,7 +1067,7 @@ struct SettingsView: View {
                 allSongs.append(contentsOf: songs)
                 offset += songs.count
                 await MainActor.run {
-                    libraryDownloadProgress = "Found \(allSongs.count) songs..."
+                    libraryDownloadProgress = String(localized: "Found \(allSongs.count) songs...")
                 }
                 if songs.count < batchSize { break }
             }
@@ -1062,7 +1076,7 @@ struct SettingsView: View {
                 await MainActor.run {
                     isDownloadingLibrary = false
                     libraryDownloadProgress = nil
-                    ToastManager.shared.show("No songs found", icon: "xmark.circle")
+                    ToastManager.shared.show(String(localized: "No songs found"), icon: "xmark.circle")
                 }
                 return
             }
@@ -1071,7 +1085,7 @@ struct SettingsView: View {
             var failed = 0
             for song in allSongs {
                 await MainActor.run {
-                    libraryDownloadProgress = "Exporting \(exported + 1)/\(allSongs.count): \(song.title)"
+                    libraryDownloadProgress = String(localized: "Exporting \(exported + 1)/\(allSongs.count): \(song.title)")
                 }
                 do {
                     guard let url = DownloadManager.shared.buildExportURL(server: server, id: song.id) else { continue }
@@ -1094,9 +1108,9 @@ struct SettingsView: View {
                 isDownloadingLibrary = false
                 libraryDownloadProgress = nil
                 if failed == 0 {
-                    ToastManager.shared.show("Exported \(exported) songs!", icon: "checkmark.circle.fill")
+                    ToastManager.shared.show(String(localized: "Exported \(exported) songs!"), icon: "checkmark.circle.fill")
                 } else {
-                    ToastManager.shared.show("Exported \(exported), \(failed) failed", icon: "exclamationmark.triangle")
+                    ToastManager.shared.show(String(localized: "Exported \(exported), \(failed) failed"), icon: "exclamationmark.triangle")
                 }
             }
         } catch {
@@ -1104,7 +1118,7 @@ struct SettingsView: View {
             await MainActor.run {
                 isDownloadingLibrary = false
                 libraryDownloadProgress = nil
-                ToastManager.shared.show("Export failed", icon: "xmark.circle")
+                ToastManager.shared.show(String(localized: "Export failed"), icon: "xmark.circle")
             }
         }
     }
@@ -1191,11 +1205,11 @@ struct CacheAudit: Equatable {
     var summary: String {
         var lines: [String] = []
         lines.append(songs == 1
-            ? "1 recently played song (\(size(audioBytes)))"
-            : "\(songs) recently played songs (\(size(audioBytes)))")
-        lines.append("Cover art (\(size(artworkBytes)))")
+            ? String(localized: "1 recently played song (\(size(audioBytes)))")
+            : String(localized: "\(songs) recently played songs (\(size(audioBytes)))"))
+        lines.append(String(localized: "Cover art (\(size(artworkBytes)))"))
         lines.append("")
-        lines.append("Your downloads are not touched, and anything cleared is fetched again next time you play it.")
+        lines.append(String(localized: "Your downloads are not touched, and anything cleared is fetched again next time you play it."))
         return lines.joined(separator: "\n")
     }
 }
@@ -1218,7 +1232,7 @@ extension View {
                     URLCache.shared.removeAllCachedResponses()
                     try? await Task.sleep(for: .milliseconds(500))
                     isClearing.wrappedValue = false
-                    ToastManager.shared.show("Cache cleared — \(freed) freed", icon: "trash")
+                    ToastManager.shared.show(String(localized: "Cache cleared — \(freed) freed"), icon: "trash")
                 }
             }
         } message: { audit in

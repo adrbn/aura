@@ -850,7 +850,7 @@ final class AudioPlayer {
         player?.pause()
         isPlaying = false
         endLiveActivity()
-        ToastManager.shared.show("No offline songs in queue", icon: "wifi.slash")
+        ToastManager.shared.show(String(localized: "No offline songs in queue"), icon: "wifi.slash")
     }
 
     /// Warm the hero artwork for the tracks on either side of the current one.
@@ -911,7 +911,7 @@ final class AudioPlayer {
         // Offline guard: never silently hand AVPlayer a stream URL it can't load.
         if isEffectivelyOffline && !isPlayableOffline(song) {
             AppLogger.shared.log("📴 Not available offline: \(song.title) — skipping")
-            ToastManager.shared.show("Not available offline", icon: "wifi.slash")
+            ToastManager.shared.show(String(localized: "Not available offline"), icon: "wifi.slash")
             skipToNextPlayableOffline()
             return
         }
@@ -1246,16 +1246,16 @@ final class AudioPlayer {
                     self.consecutiveFailures += 1
                     if self.consecutiveFailures >= 3 {
                         AppLogger.shared.log("🛑 Stopping playback: \(self.consecutiveFailures) consecutive failures (server may be unreachable)")
-                        ToastManager.shared.show("Playback stopped — server unreachable", icon: "exclamationmark.icloud")
+                        ToastManager.shared.show(String(localized: "Playback stopped — server unreachable"), icon: "exclamationmark.icloud")
                         self.isPlaying = false
                         self.consecutiveFailures = 0
                     } else if self.queueIndex < self.queue.count - 1 {
                         AppLogger.shared.log("⏭ Auto-skipping failed track (\(self.consecutiveFailures)/3): \(song.title)")
-                        ToastManager.shared.show("Couldn't play \"\(song.title)\" — skipped", icon: "forward.fill")
+                        ToastManager.shared.show(String(localized: "Couldn't play \"\(song.title)\" — skipped"), icon: "forward.fill")
                         self.next()
                     } else {
                         AppLogger.shared.log("⏸ No more tracks after failed: \(song.title)")
-                        ToastManager.shared.show("Couldn't play \"\(song.title)\"", icon: "exclamationmark.triangle")
+                        ToastManager.shared.show(String(localized: "Couldn't play \"\(song.title)\""), icon: "exclamationmark.triangle")
                         self.isPlaying = false
                     }
                 }
@@ -1294,7 +1294,7 @@ final class AudioPlayer {
         guard isEffectivelyOffline, !playbackErrorHandled else { return }
         playbackErrorHandled = true
         AppLogger.shared.log("📴 Playback error while offline — advancing to next playable song")
-        ToastManager.shared.show("Not available offline", icon: "wifi.slash")
+        ToastManager.shared.show(String(localized: "Not available offline"), icon: "wifi.slash")
         skipToNextPlayableOffline()
     }
 
@@ -1599,7 +1599,7 @@ final class AudioPlayer {
             }
             guard targetIndex >= 0 else {
                 AppLogger.shared.log("⏮ previous(): no offline-playable song before current → restart")
-                ToastManager.shared.show("Not available offline", icon: "wifi.slash")
+                ToastManager.shared.show(String(localized: "Not available offline"), icon: "wifi.slash")
                 seek(to: 0)
                 return
             }
@@ -1772,20 +1772,20 @@ final class AudioPlayer {
     func playNext(_ song: Song) {
         AppLogger.shared.log("➕ playNext: \(song.title)")
         userQueue.insert(song, at: 0)
-        ToastManager.shared.show("Playing next: \(song.title)", icon: "text.insert")
+        ToastManager.shared.show(String(localized: "Playing next: \(song.title)"), icon: "text.insert")
     }
 
     func addToQueue(_ song: Song) {
         AppLogger.shared.log("➕ addToQueue: \(song.title)")
         userQueue.append(song)
-        ToastManager.shared.show("Added to queue: \(song.title)", icon: "text.append")
+        ToastManager.shared.show(String(localized: "Added to queue: \(song.title)"), icon: "text.append")
     }
 
     func addToQueue(_ songs: [Song]) {
         guard !songs.isEmpty else { return }
         AppLogger.shared.log("➕ addToQueue: \(songs.count) songs")
         userQueue.append(contentsOf: songs)
-        ToastManager.shared.show("Added \(songs.count) songs to queue", icon: "text.append")
+        ToastManager.shared.show(String(localized: "Added \(songs.count) songs to queue"), icon: "text.append")
     }
 
     func removeFromQueue(at index: Int) {
@@ -2431,7 +2431,7 @@ final class AudioPlayer {
         lyricsGeneration += 1
         let generation = lyricsGeneration
         lyrics = []
-        lyricsStatus = "Loading lyrics..."
+        lyricsStatus = String(localized: "Loading lyrics...")
         isLoadingLyrics = true
         AppLogger.shared.log("🎤 loadLyrics: \(song.title) by \(song.artist ?? "?")")
         lyricsTask = Task {
@@ -2445,7 +2445,7 @@ final class AudioPlayer {
             await publishLyrics(generation) {
                 if !found {
                     self.lyrics = []
-                    self.lyricsStatus = "No lyrics found"
+                    self.lyricsStatus = String(localized: "No lyrics found")
                 }
                 self.isLoadingLyrics = false
             }
@@ -2619,7 +2619,7 @@ final class AudioPlayer {
     }
 
     private func tryLRCLIB(song: Song, generation: Int, timed: Bool = true) async -> Bool {
-        await publishLyrics(generation) { self.lyricsStatus = "Trying LRCLIB..." }
+        await publishLyrics(generation) { self.lyricsStatus = String(localized: "Trying LRCLIB...") }
         guard let artist = song.artist, !artist.isEmpty else { return false }
 
         // 1. Try exact match first via /api/get
@@ -2734,7 +2734,7 @@ final class AudioPlayer {
     }
 
     private func lrclibSearch(artist: String, title: String, duration: Int?, generation: Int) async -> [String: Any]? {
-        await publishLyrics(generation) { self.lyricsStatus = "Searching LRCLIB..." }
+        await publishLyrics(generation) { self.lyricsStatus = String(localized: "Searching LRCLIB...") }
         var components = URLComponents(string: "https://lrclib.net/api/search")
         components?.queryItems = [
             URLQueryItem(name: "track_name", value: title),
@@ -2758,7 +2758,7 @@ final class AudioPlayer {
     }
 
     private func lrclibFreeTextSearch(query: String, duration: Int?, generation: Int) async -> [String: Any]? {
-        await publishLyrics(generation) { self.lyricsStatus = "Searching LRCLIB (broad)..." }
+        await publishLyrics(generation) { self.lyricsStatus = String(localized: "Searching LRCLIB (broad)...") }
         var components = URLComponents(string: "https://lrclib.net/api/search")
         components?.queryItems = [
             URLQueryItem(name: "q", value: query)
@@ -2826,7 +2826,7 @@ final class AudioPlayer {
 
     private func tryStructuredLyrics(server: ServerConfig, song: Song, generation: Int) async -> Bool {
         do {
-            await publishLyrics(generation) { self.lyricsStatus = "Trying synced lyrics..." }
+            await publishLyrics(generation) { self.lyricsStatus = String(localized: "Trying synced lyrics...") }
             let structured = try await SubsonicClient.shared.getLyricsBySongId(server: server, id: song.id)
             let synced = structured.first(where: { $0.synced == true }) ?? structured.first
             if let synced = synced, let lines = synced.line, !lines.isEmpty {
@@ -2865,16 +2865,16 @@ final class AudioPlayer {
                     return true
                 }
             }
-            await publishLyrics(generation) { self.lyricsStatus = "Synced lyrics empty" }
+            await publishLyrics(generation) { self.lyricsStatus = String(localized: "Synced lyrics empty") }
         } catch {
-            await publishLyrics(generation) { self.lyricsStatus = "Synced: \(error.localizedDescription)" }
+            await publishLyrics(generation) { self.lyricsStatus = String(localized: "Synced: \(error.localizedDescription)") }
         }
         return false
     }
 
     private func tryLegacyLyrics(server: ServerConfig, song: Song, generation: Int) async -> Bool {
         do {
-            await publishLyrics(generation) { self.lyricsStatus = "Trying legacy lyrics..." }
+            await publishLyrics(generation) { self.lyricsStatus = String(localized: "Trying legacy lyrics...") }
             let lrcText = try await SubsonicClient.shared.getLyrics(
                 server: server, artist: song.artist ?? "", title: song.title
             )
@@ -2897,9 +2897,9 @@ final class AudioPlayer {
                 }
                 return true
             }
-            await publishLyrics(generation) { self.lyricsStatus = "Legacy lyrics empty" }
+            await publishLyrics(generation) { self.lyricsStatus = String(localized: "Legacy lyrics empty") }
         } catch {
-            await publishLyrics(generation) { self.lyricsStatus = "Legacy: \(error.localizedDescription)" }
+            await publishLyrics(generation) { self.lyricsStatus = String(localized: "Legacy: \(error.localizedDescription)") }
         }
         return false
     }
@@ -2983,8 +2983,8 @@ final class AudioPlayer {
         guard let song = currentSong else { return }
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: song.title,
-            MPMediaItemPropertyArtist: song.artist ?? "Unknown",
-            MPMediaItemPropertyAlbumTitle: song.album ?? "Unknown",
+            MPMediaItemPropertyArtist: song.artist ?? String(localized: "Unknown"),
+            MPMediaItemPropertyAlbumTitle: song.album ?? String(localized: "Unknown"),
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
@@ -3114,8 +3114,8 @@ final class AudioPlayer {
         let state = MusicPlaybackAttributes.ContentState(
             isPlaying: isPlaying,
             songTitle: song.title,
-            artist: song.artist ?? "Unknown",
-            album: song.album ?? "Unknown",
+            artist: song.artist ?? String(localized: "Unknown"),
+            album: song.album ?? String(localized: "Unknown"),
             elapsed: currentTime,
             duration: duration,
             coverArtURL: coverURLString

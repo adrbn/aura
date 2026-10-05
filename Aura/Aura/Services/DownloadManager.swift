@@ -191,7 +191,7 @@ final class DownloadManager: NSObject {
                 networkPausedIds.insert(item.id)
                 if let idx = queueItems.firstIndex(where: { $0.id == item.id }) {
                     queueItems[idx].state = .paused
-                    queueItems[idx].error = "Network unavailable"
+                    queueItems[idx].error = String(localized: "Network unavailable")
                 }
             }
             AppLogger.shared.log("📴 Parked \(waiting.count) download(s) — network unavailable")
@@ -277,11 +277,11 @@ final class DownloadManager: NSObject {
             AppLogger.shared.log("❌ Download blocked (low disk space): \(song.title)")
             if let idx = queueItems.firstIndex(where: { $0.id == song.id }) {
                 queueItems[idx].state = .failed
-                queueItems[idx].error = "Not enough free storage"
+                queueItems[idx].error = String(localized: "Not enough free storage")
             } else {
-                queueItems.append(DownloadQueueItem(id: song.id, song: song, state: .failed, progress: 0, error: "Not enough free storage"))
+                queueItems.append(DownloadQueueItem(id: song.id, song: song, state: .failed, progress: 0, error: String(localized: "Not enough free storage")))
             }
-            ToastManager.shared.show("Not enough free storage to download", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "Not enough free storage to download"), icon: "exclamationmark.triangle.fill")
             return
         }
 
@@ -633,7 +633,7 @@ final class DownloadManager: NSObject {
         }
         guard hasSufficientDiskSpace() else {
             AppLogger.shared.log("❌ Album download blocked (low disk space): \(songs.count) songs")
-            ToastManager.shared.show("Not enough free storage to download", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "Not enough free storage to download"), icon: "exclamationmark.triangle.fill")
             return
         }
         let gid = groupId ?? UUID().uuidString

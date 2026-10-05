@@ -352,7 +352,7 @@ struct OnboardingView: View {
         }
     }
 
-    private func serverField(placeholder: String, text: Binding<String>, icon: String, keyboard: UIKeyboardType) -> some View {
+    private func serverField(placeholder: LocalizedStringKey, text: Binding<String>, icon: String, keyboard: UIKeyboardType) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .medium))
@@ -371,7 +371,7 @@ struct OnboardingView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    private func serverSecureField(placeholder: String, text: Binding<String>, icon: String) -> some View {
+    private func serverSecureField(placeholder: LocalizedStringKey, text: Binding<String>, icon: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .medium))
@@ -477,7 +477,7 @@ struct OnboardingView: View {
             url = "https://\(url)"
         }
         let typedName = friendlyName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let name = typedName.isEmpty ? (URL(string: url)?.host ?? "My Server") : typedName
+        let name = typedName.isEmpty ? (URL(string: url)?.host ?? String(localized: "My Server")) : typedName
         let server = ServerConfig(url: url, username: username, password: password, friendlyName: name)
 
         do {
@@ -501,7 +501,7 @@ struct OnboardingView: View {
                 }
             } else {
                 await MainActor.run {
-                    serverError = "Server rejected the connection — check your credentials"
+                    serverError = String(localized: "Server rejected the connection — check your credentials")
                     isTesting = false
                 }
             }
@@ -512,7 +512,7 @@ struct OnboardingView: View {
             }
         } catch {
             await MainActor.run {
-                serverError = "Connection failed: \(error.localizedDescription)"
+                serverError = String(localized: "Connection failed: \(error.localizedDescription)")
                 isTesting = false
             }
         }
@@ -520,15 +520,15 @@ struct OnboardingView: View {
 
     private func friendlyMessage(for error: URLError) -> String {
         switch error.code {
-        case .notConnectedToInternet: return "No internet connection"
-        case .cannotFindHost: return "Server not found — check the address"
-        case .cannotConnectToHost: return "Cannot reach server — is it running?"
-        case .timedOut: return "Connection timed out — check the address"
-        case .secureConnectionFailed: return "SSL/TLS error — try http:// instead"
+        case .notConnectedToInternet: return String(localized: "No internet connection")
+        case .cannotFindHost: return String(localized: "Server not found — check the address")
+        case .cannotConnectToHost: return String(localized: "Cannot reach server — is it running?")
+        case .timedOut: return String(localized: "Connection timed out — check the address")
+        case .secureConnectionFailed: return String(localized: "SSL/TLS error — try http:// instead")
         case .serverCertificateUntrusted, .serverCertificateHasBadDate,
              .serverCertificateHasUnknownRoot, .serverCertificateNotYetValid:
-            return "Certificate not trusted — try http://"
-        default: return "Connection failed: \(error.localizedDescription)"
+            return String(localized: "Certificate not trusted — try http://")
+        default: return String(localized: "Connection failed: \(error.localizedDescription)")
         }
     }
 }

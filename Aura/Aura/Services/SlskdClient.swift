@@ -163,11 +163,11 @@ enum SlskdError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidURL: return "Invalid slskd URL"
-        case .authFailed: return "Authentication failed — check credentials"
+        case .invalidURL: return String(localized: "Invalid slskd URL")
+        case .authFailed: return String(localized: "Authentication failed — check credentials")
         case .authFailedDetail(let base, let code):
-            return "Auth failed (HTTP \(code)) at \(base) — check host, port & credentials in Settings"
-        case .requestFailed: return "Request failed"
+            return String(localized: "Auth failed (HTTP \(code)) at \(base) — check host, port & credentials in Settings")
+        case .requestFailed: return String(localized: "Request failed")
         }
     }
 }

@@ -518,9 +518,9 @@ enum SubsonicClientError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidURL: return "Invalid server URL"
-        case .serverError: return "Server returned an error"
-        case .decodingError: return "Failed to decode response"
+        case .invalidURL: return String(localized: "Invalid server URL")
+        case .serverError: return String(localized: "Server returned an error")
+        case .decodingError: return String(localized: "Failed to decode response")
         case .apiError(let msg): return msg
         }
     }

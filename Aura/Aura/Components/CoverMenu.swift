@@ -114,7 +114,7 @@ enum CoverArtSaver {
             let size = ArtworkCache.fullSize
             guard let image = await ArtworkCache.shared.fetchImage(coverArt: coverArt, requestSize: size,
                                                                    key: "\(coverArt)_\(size)") else {
-                ToastManager.shared.show("Couldn’t load the cover", icon: "exclamationmark.triangle.fill")
+                ToastManager.shared.show(String(localized: "Couldn’t load the cover"), icon: "exclamationmark.triangle.fill")
                 return
             }
             await save(image)
@@ -126,7 +126,7 @@ enum CoverArtSaver {
         let renderer = ImageRenderer(content: cover)
         renderer.scale = 3
         guard let image = renderer.uiImage else {
-            ToastManager.shared.show("Couldn’t save the cover", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "Couldn’t save the cover"), icon: "exclamationmark.triangle.fill")
             return
         }
         Task { await save(image) }
@@ -135,17 +135,17 @@ enum CoverArtSaver {
     static func save(_ image: UIImage) async {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
         guard status == .authorized || status == .limited else {
-            ToastManager.shared.show("Allow Aura to add photos in Settings", icon: "photo.badge.exclamationmark")
+            ToastManager.shared.show(String(localized: "Allow Aura to add photos in Settings"), icon: "photo.badge.exclamationmark")
             return
         }
         do {
             try await PHPhotoLibrary.shared().performChanges {
                 PHAssetChangeRequest.creationRequestForAsset(from: image)
             }
-            ToastManager.shared.show("Saved to Photos", icon: "checkmark")
+            ToastManager.shared.show(String(localized: "Saved to Photos"), icon: "checkmark")
         } catch {
             AppLogger.shared.log("❌ Save cover art failed: \(error.localizedDescription)")
-            ToastManager.shared.show("Couldn’t save the cover", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "Couldn’t save the cover"), icon: "exclamationmark.triangle.fill")
         }
     }
 }

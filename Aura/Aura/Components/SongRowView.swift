@@ -49,14 +49,14 @@ struct SongRowView: View {
                 if showArtist {
                     if tappableArtist {
                         TappableArtistText(
-                            artistString: song.artist ?? "Unknown Artist",
+                            artistString: song.artist ?? String(localized: "Unknown Artist"),
                             primaryArtistId: song.artistId,
                             font: .caption,
                             foregroundStyle: AnyShapeStyle(.secondary),
                             tappableStyle: AnyShapeStyle(.secondary)
                         )
                     } else {
-                        Text(song.artist ?? "Unknown Artist")
+                        Text(song.artist ?? String(localized: "Unknown Artist"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -74,7 +74,7 @@ struct SongRowView: View {
         .contentShape(Rectangle())
         .onTapGesture { onTap?() }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(song.title), \(song.artist ?? "Unknown Artist"), \(song.durationFormatted)")
+        .accessibilityLabel("\(song.title), \(song.artist ?? String(localized: "Unknown Artist")), \(song.durationFormatted)")
         .accessibilityHint("Double tap to play")
         // A plain List paints its rows `systemBackground`, pure black, below the page's
         // own canvas; clear, the row sits on whatever the page is.

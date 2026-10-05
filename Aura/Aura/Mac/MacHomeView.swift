@@ -54,10 +54,10 @@ struct MacHomeView: View {
 
     private var salutation: String {
         switch Calendar.current.component(.hour, from: Date()) {
-        case 0..<5: return "Still up"
-        case 5..<12: return "Good morning"
-        case 12..<18: return "Good afternoon"
-        default: return "Good evening"
+        case 0..<5: return String(localized: "Still up")
+        case 5..<12: return String(localized: "Good morning")
+        case 12..<18: return String(localized: "Good afternoon")
+        default: return String(localized: "Good evening")
         }
     }
 
@@ -130,7 +130,7 @@ struct MacHomeView: View {
         }
     }
 
-    private func albumShelf(_ title: String, _ albums: [Album]) -> some View {
+    private func albumShelf(_ title: LocalizedStringKey, _ albums: [Album]) -> some View {
         MacShelf(title: title, items: albums) { album in
             NavigationLink(value: album) {
                 MacPlayableCard(
@@ -151,7 +151,7 @@ struct MacHomeView: View {
                 MacPlayableCard(
                     coverArt: playlist.coverArt,
                     title: playlist.name,
-                    subtitle: playlist.songCount.map { "\($0) songs" },
+                    subtitle: playlist.songCount.map { String(localized: "\($0) songs") },
                     placeholderName: playlist.name,
                     play: { Task { await playPlaylist(playlist) } }
                 )

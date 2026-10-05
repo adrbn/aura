@@ -182,7 +182,7 @@ struct LandscapeClockView: View {
                     Text(song.title)
                         .font(.headline)
                         .foregroundStyle(.white)
-                    Text(song.artist ?? "Unknown Artist")
+                    Text(song.artist ?? String(localized: "Unknown Artist"))
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.6))
                 }
@@ -410,7 +410,7 @@ private struct LandscapeLyrics: View {
     /// The song and a play button, small, under the lyrics.
     private func footer(_ song: Song) -> some View {
         HStack(spacing: 12) {
-            Text("\(song.title) — \(song.artist ?? "Unknown Artist")")
+            Text("\(song.title) — \(song.artist ?? String(localized: "Unknown Artist"))")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.45))
                 .lineLimit(1)

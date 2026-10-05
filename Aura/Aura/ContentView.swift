@@ -391,7 +391,7 @@ struct DownloadIndicatorView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(dm.currentDownloadTitle ?? "Downloading…")
+                    Text(dm.currentDownloadTitle ?? String(localized: "Downloading…"))
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
                     HStack(spacing: 4) {

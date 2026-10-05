@@ -179,7 +179,7 @@ final class ServerManager {
                         // Offline mode was enabled automatically — leave it automatically
                         // too. Manual offline (user toggle) is never overridden.
                         self.goBackOnline(manual: false)
-                        ToastManager.shared.show("Back online", icon: "wifi")
+                        ToastManager.shared.show(String(localized: "Back online"), icon: "wifi")
                         AppLogger.shared.log("🟢 Server back online — auto-resumed online mode")
                     }
                     ScrobbleQueue.shared.flush()
@@ -251,7 +251,7 @@ final class ServerManager {
         AppSettings.shared.offlineMode = true
         AppSettings.shared.save()
         wasAutoOffline = true
-        if announce { ToastManager.shared.show("Switched to offline mode", icon: "wifi.slash") }
+        if announce { ToastManager.shared.show(String(localized: "Switched to offline mode"), icon: "wifi.slash") }
         AppLogger.shared.log("📴 Offline mode — \(hasNetwork ? "server unreachable" : "no network") (\(consecutiveFailures) failures)")
     }
 

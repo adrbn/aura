@@ -268,7 +268,7 @@ struct PlaylistDetailView: View {
     /// "12 songs · 48 min".
     private static func summary(of songs: [Song]) -> String {
         let seconds = songs.compactMap(\.duration).reduce(0, +)
-        let count = "\(songs.count) \(songs.count == 1 ? "song" : "songs")"
+        let count = songs.count == 1 ? String(localized: "1 song") : String(localized: "\(songs.count) songs")
         guard seconds > 0 else { return count }
         let length = Duration.seconds(max(seconds, 60))
             .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
@@ -463,7 +463,7 @@ struct PlaylistDetailView: View {
     private func removePlaylistCoverArt() async {
         guard let server = serverManager.currentServer else { return }
         guard await PlaylistCovers.remove(playlistId: playlistId, server: server) else {
-            ToastManager.shared.show("Couldn’t remove cover art", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "Couldn’t remove cover art"), icon: "exclamationmark.triangle.fill")
             return
         }
         if let coverArt = playlist?.coverArt {
@@ -471,7 +471,7 @@ struct PlaylistDetailView: View {
         }
         await loadPlaylist()
         coverArtRefreshId = UUID()
-        ToastManager.shared.show("Cover art removed", icon: "checkmark")
+        ToastManager.shared.show(String(localized: "Cover art removed"), icon: "checkmark")
     }
 }
 

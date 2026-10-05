@@ -35,7 +35,7 @@ struct MacSongRow: View {
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(isCurrent ? Color.appAccent : .primary)
                     .lineLimit(1)
-                Text(song.artist ?? "Unknown Artist")
+                Text(song.artist ?? String(localized: "Unknown Artist"))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

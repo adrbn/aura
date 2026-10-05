@@ -29,10 +29,10 @@ enum LastfmError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notConfigured: return "Add your Last.fm username and API key in Settings."
-        case .http(let c): return "Last.fm request failed (HTTP \(c))."
-        case .api(_, let m): return m.isEmpty ? "Last.fm rejected the request." : m
-        case .decode: return "Couldn't read the Last.fm response."
+        case .notConfigured: return String(localized: "Add your Last.fm username and API key in Settings.")
+        case .http(let c): return String(localized: "Last.fm request failed (HTTP \(c)).")
+        case .api(_, let m): return m.isEmpty ? String(localized: "Last.fm rejected the request.") : m
+        case .decode: return String(localized: "Couldn't read the Last.fm response.")
         }
     }
 }

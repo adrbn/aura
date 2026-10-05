@@ -377,7 +377,7 @@ struct NowPlayingView: View {
                                 isActive: !showLyrics)
                 }
                 TappableArtistText(
-                    artistString: song.artist ?? "Unknown Artist",
+                    artistString: song.artist ?? String(localized: "Unknown Artist"),
                     primaryArtistId: song.artistId,
                     font: .body,
                     foregroundStyle: AnyShapeStyle(.white.opacity(0.7)),
@@ -770,7 +770,7 @@ struct NowPlayingView: View {
                     .foregroundStyle(.white.opacity(0.6))
                     .lineLimit(1)
             } else {
-                MarqueeText(text: song.artist ?? "Unknown Artist",
+                MarqueeText(text: song.artist ?? String(localized: "Unknown Artist"),
                             font: .caption,
                             color: .white.opacity(0.6),
                             alignment: .leading)

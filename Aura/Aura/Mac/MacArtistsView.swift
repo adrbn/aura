@@ -15,7 +15,7 @@ struct MacArtistsView: View {
         MacGrid(title: "Artists", items: shown, isLoading: isLoading, emptyMessage: "No artists") { artist in
             NavigationLink(value: artist) {
                 MacCoverTile(coverArt: artist.coverArt, title: artist.name,
-                             subtitle: artist.albumCount.map { "\($0) albums" },
+                             subtitle: artist.albumCount.map { String(localized: "\($0) albums") },
                              placeholderName: artist.name, circular: true)
             }
             .buttonStyle(.plain)
@@ -48,7 +48,7 @@ struct MacArtistDetailView: View {
                 MacDetailHeader(
                     coverArt: artist.coverArt,
                     title: artist.name,
-                    subtitle: "\(albums.count) albums",
+                    subtitle: String(localized: "\(albums.count) albums"),
                     placeholderName: artist.name
                 ) {
                     Button { play() } label: { Label("Play", systemImage: "play.fill") }
@@ -84,7 +84,7 @@ struct MacArtistDetailView: View {
         .task { await load() }
     }
 
-    private func sectionTitle(_ text: String) -> some View {
+    private func sectionTitle(_ text: LocalizedStringKey) -> some View {
         Text(text).auraDisplay(34).padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 8)
     }
 

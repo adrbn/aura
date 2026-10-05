@@ -134,7 +134,7 @@ struct SiriPlayFavouritesIntent: AudioStartingIntent {
             throw AuraIntentError.unreachable
         }
         let songs = starred.song ?? []
-        guard !songs.isEmpty else { throw AuraIntentError.empty("Favourites") }
+        guard !songs.isEmpty else { throw AuraIntentError.empty(String(localized: "Favourites")) }
         await MainActor.run { AudioPlayer.shared.playShuffled(songs, source: .favorites) }
         return .result()
     }

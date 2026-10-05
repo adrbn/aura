@@ -27,13 +27,13 @@ struct AlbumCardView: View {
                 CoverArtImage(coverArt: album.coverArt, size: size, cornerRadius: 10,
                               placeholderName: album.name, placeholderKind: .album)
                 Text(album.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
-                Text(album.artist ?? "Unknown Artist").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                Text(album.artist ?? String(localized: "Unknown Artist")).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
             }
             .frame(width: size)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(album.name), \(album.artist ?? "Unknown Artist")")
+        .accessibilityLabel("\(album.name), \(album.artist ?? String(localized: "Unknown Artist"))")
         .accessibilityHint("Double tap to view album")
         .contextMenu {
             Button {
@@ -89,11 +89,11 @@ struct SongCardView: View {
             CoverArtImage(coverArt: song.coverArt, size: size, cornerRadius: 10,
                           placeholderName: song.title, placeholderKind: .song)
             Text(song.title).font(.caption.weight(.medium)).lineLimit(1)
-            Text(song.artist ?? "Unknown Artist").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            Text(song.artist ?? String(localized: "Unknown Artist")).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
         }
         .frame(width: size)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(song.title), \(song.artist ?? "Unknown Artist")")
+        .accessibilityLabel("\(song.title), \(song.artist ?? String(localized: "Unknown Artist"))")
     }
 }
 

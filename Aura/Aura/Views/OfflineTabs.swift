@@ -222,7 +222,7 @@ struct OfflineHomeView: View {
                 CoverArtImage(coverArt: song.coverArt, size: 50, cornerRadius: 6)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(song.title).font(.subheadline.weight(.medium)).lineLimit(1)
-                    Text(song.artist ?? "Unknown Artist").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(song.artist ?? String(localized: "Unknown Artist")).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
             .frame(width: 220, alignment: .leading)

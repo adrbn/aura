@@ -4,8 +4,8 @@ import SwiftUI
 /// out of, because it lets a home page offer a dozen starting points without a single one
 /// of them demanding a scroll.
 struct MacShelf<Item: Identifiable, Card: View>: View {
-    let title: String
-    var subtitle: String?
+    let title: LocalizedStringKey
+    var subtitle: LocalizedStringKey?
     let items: [Item]
     @ViewBuilder var card: (Item) -> Card
 

@@ -26,8 +26,8 @@ struct OfflineAlbum: Identifiable {
             let sorted = items.sorted { ($0.track ?? 0) < ($1.track ?? 0) }
             return OfflineAlbum(
                 id: key,
-                name: items.first?.album ?? "Unknown Album",
-                artist: items.first?.artist ?? "Unknown Artist",
+                name: items.first?.album ?? String(localized: "Unknown Album"),
+                artist: items.first?.artist ?? String(localized: "Unknown Artist"),
                 coverArt: items.first?.coverArt,
                 songs: sorted
             )
@@ -57,7 +57,7 @@ struct OfflineArtist: Identifiable {
             let items = map[key]!
             return OfflineArtist(
                 id: key,
-                name: items.first?.artist ?? "Unknown Artist",
+                name: items.first?.artist ?? String(localized: "Unknown Artist"),
                 coverArt: items.first?.coverArt,
                 songs: items
             )

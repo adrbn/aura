@@ -58,7 +58,7 @@ struct MacNowPlayingView: View {
             CoverArtImage(coverArt: player.currentSong?.coverArt, size: 380, cornerRadius: 16)
                 .shadow(color: .black.opacity(0.5), radius: 30, y: 14)
             VStack(spacing: 6) {
-                Text(player.currentSong?.title ?? "Nothing playing")
+                Text(player.currentSong?.title ?? String(localized: "Nothing playing"))
                     .auraDisplay(30)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
@@ -96,7 +96,7 @@ struct MacNowPlayingView: View {
                     Image(systemName: "quote.bubble")
                         .font(.system(size: 26))
                         .foregroundStyle(.white.opacity(0.35))
-                    Text(player.lyricsStatus.isEmpty ? "No lyrics for this song" : player.lyricsStatus)
+                    Text(player.lyricsStatus.isEmpty ? String(localized: "No lyrics for this song") : player.lyricsStatus)
                         .font(.system(size: 13))
                         .foregroundStyle(.white.opacity(0.55))
                     Button("Try again") { player.refetchLyrics() }

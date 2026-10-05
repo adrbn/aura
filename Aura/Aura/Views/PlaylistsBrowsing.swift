@@ -235,6 +235,6 @@ struct PlaylistRowView: View {
     private static func length(_ seconds: Int) -> String {
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
-        return hours > 0 ? "\(hours) h \(minutes) min" : "\(max(minutes, 1)) min"
+        return hours > 0 ? String(localized: "\(hours) h \(minutes) min") : String(localized: "\(max(minutes, 1)) min")
     }
 }

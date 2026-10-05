@@ -77,7 +77,7 @@ struct AboutView: View {
             // Tap to copy — makes it trivial to paste the exact build into a bug report.
             Button {
                 UIPasteboard.general.string = "Aura \(versionString)"
-                ToastManager.shared.show("Version copied", icon: "doc.on.doc")
+                ToastManager.shared.show(String(localized: "Version copied"), icon: "doc.on.doc")
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.seal.fill").font(.caption2)

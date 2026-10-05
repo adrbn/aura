@@ -389,7 +389,7 @@ struct TabTitleRow<Trailing: View>: View {
 /// headers hide the nav bar). Binds to a query string.
 struct SearchFieldBar: View {
     @Binding var text: String
-    var prompt: String = "Search"
+    var prompt: LocalizedStringKey = "Search"
 
     @Environment(\.appAccentColor) private var accentColor
     /// The whole box focuses the field, not just the glyphs in it — see `body`.

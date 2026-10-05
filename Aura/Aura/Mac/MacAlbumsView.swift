@@ -22,7 +22,7 @@ struct MacAlbumsView: View {
                 items: albums, isLoading: isLoading, emptyMessage: "No albums") { album in
             NavigationLink(value: album) {
                 MacCoverTile(coverArt: album.coverArt, title: album.name,
-                             subtitle: album.artist ?? "Unknown Artist", placeholderName: album.name)
+                             subtitle: album.artist ?? String(localized: "Unknown Artist"), placeholderName: album.name)
             }
             .buttonStyle(.plain)
         }
@@ -61,7 +61,7 @@ struct MacAlbumDetailView: View {
                 coverArt: album.coverArt,
                 title: album.name,
                 subtitle: [album.artist, album.year.map(String.init),
-                           songs.isEmpty ? nil : "\(songs.count) songs"]
+                           songs.isEmpty ? nil : String(localized: "\(songs.count) songs")]
                     .compactMap { $0 }.joined(separator: " · "),
                 placeholderName: album.name
             ) {

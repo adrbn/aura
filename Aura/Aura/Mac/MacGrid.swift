@@ -7,11 +7,11 @@ struct MacGrid<Item: Identifiable, Tile: View>: View {
     /// Drawn in the content, because there is nowhere else for it to go: the window has no
     /// toolbar, so `navigationTitle` renders nothing at all and every section but Home was
     /// arriving with no heading whatsoever.
-    var title: String?
+    var title: LocalizedStringKey?
     var trailing: AnyView?
     let items: [Item]
     var isLoading = false
-    var emptyMessage = "Nothing here"
+    var emptyMessage: LocalizedStringKey = "Nothing here"
     @ViewBuilder var tile: (Item) -> Tile
 
     @State private var preferences = MacPreferences.shared

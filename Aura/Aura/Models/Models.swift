@@ -634,11 +634,11 @@ enum TabItem: String, Codable, Identifiable, CaseIterable {
 
     var title: String {
         switch self {
-        case .home: return "Home"
-        case .library: return "Library"
-        case .playlists: return "Playlists"
-        case .settings: return "Settings"
-        case .search: return "Search"
+        case .home: return String(localized: "Home")
+        case .library: return String(localized: "Library")
+        case .playlists: return String(localized: "Playlists")
+        case .settings: return String(localized: "Settings")
+        case .search: return String(localized: "Search")
         }
     }
 
@@ -789,7 +789,7 @@ struct Song: Identifiable, Codable, Hashable {
     var isStarred: Bool { starred != nil }
 
     var fileSizeFormatted: String {
-        guard let s = size else { return "Unknown" }
+        guard let s = size else { return String(localized: "Unknown") }
         if s > 1_000_000 { return String(format: "%.1f MB", Double(s) / 1_000_000) }
         return String(format: "%.0f KB", Double(s) / 1_000)
     }
@@ -879,22 +879,22 @@ enum PlaybackSource: Equatable, Codable {
         case .playlist(_, let name): return name
         // The radar's full name: "Radar" alone, over Now Playing, said nothing of what it is.
         case .mix(let id, let name): return id == "radar" ? String(localized: "Release Radar") : name
-        case .wrapped(let period): return "Wrapped • \(period.title)"
+        case .wrapped(let period): return String(localized: "Wrapped • \(period.title)")
         case .radio(let name): return name
         case .artist(_, let name): return name
         case .genre(let name): return name
-        case .favorites: return "Favorites"
+        case .favorites: return String(localized: "Favorites")
         // Played from the history list there is no query to show, and "Search:" followed
         // by nothing read as a bug. Name the list the song was picked from instead — the
         // same words as the section heading in Search.
         case .search(let query):
             let trimmed = query.trimmingCharacters(in: .whitespaces)
-            return trimmed.isEmpty ? String(localized: "Recently Searched") : "Search: \(trimmed)"
-        case .songs: return "Songs"
-        case .recentlyPlayed: return "Recently Played"
-        case .frequentlyPlayed: return "Frequently Played"
-        case .queue: return "Queue"
-        case .autoplay: return "Autoplay"
+            return trimmed.isEmpty ? String(localized: "Recently Searched") : String(localized: "Search: \(trimmed)")
+        case .songs: return String(localized: "Songs")
+        case .recentlyPlayed: return String(localized: "Recently Played")
+        case .frequentlyPlayed: return String(localized: "Frequently Played")
+        case .queue: return String(localized: "Queue")
+        case .autoplay: return String(localized: "Autoplay")
         case .unknown: return ""
         }
     }
@@ -1073,7 +1073,7 @@ enum AppLanguage: String, Codable, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .english: return "English"
+        case .english: return String(localized: "English")
         }
     }
 

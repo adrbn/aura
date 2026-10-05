@@ -62,7 +62,7 @@ struct DevLogsView: View {
                         Button {
                             let text = logger.exportText()
                             UIPasteboard.general.string = text
-                            ToastManager.shared.show("Logs copied", icon: "doc.on.doc")
+                            ToastManager.shared.show(String(localized: "Logs copied"), icon: "doc.on.doc")
                         } label: {
                             Label("Copy All", systemImage: "doc.on.doc")
                         }

@@ -26,27 +26,27 @@ enum SetupDiagnosis: Equatable {
 
     var headline: String {
         switch self {
-        case .badURL: return "That address doesn't look right"
-        case .unreachable: return "Couldn't reach the server"
-        case .tls: return "The secure connection was refused"
-        case .credentials: return "The server said no"
-        case .notSubsonic: return "Something answered, but it isn't Subsonic"
-        case .other: return "The connection failed"
+        case .badURL: return String(localized: "That address doesn't look right")
+        case .unreachable: return String(localized: "Couldn't reach the server")
+        case .tls: return String(localized: "The secure connection was refused")
+        case .credentials: return String(localized: "The server said no")
+        case .notSubsonic: return String(localized: "Something answered, but it isn't Subsonic")
+        case .other: return String(localized: "The connection failed")
         }
     }
 
     var detail: String {
         switch self {
         case .badURL:
-            return "Give a host name or an IP, with or without https://."
+            return String(localized: "Give a host name or an IP, with or without https://.")
         case .unreachable(let host):
-            return "Nothing answered at \(host). Check the address and the port, and that you're on the right network or VPN."
+            return String(localized: "Nothing answered at \(host). Check the address and the port, and that you're on the right network or VPN.")
         case .tls(let reason):
-            return "\(reason) A self-signed certificate will do this — try http:// if the server is on your own network."
+            return String(localized: "\(reason) A self-signed certificate will do this — try http:// if the server is on your own network.")
         case .credentials:
-            return "The address is right and the server replied, but it rejected that username and password."
+            return String(localized: "The address is right and the server replied, but it rejected that username and password.")
         case .notSubsonic:
-            return "The address answered with something Aura couldn't read. It may be a different app, or a reverse proxy sitting in front of the wrong service."
+            return String(localized: "The address answered with something Aura couldn't read. It may be a different app, or a reverse proxy sitting in front of the wrong service.")
         case .other(let message):
             return message
         }
@@ -163,7 +163,7 @@ struct MacServerSetupView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func field(_ label: String, _ text: Binding<String>, prompt: String,
+    private func field(_ label: LocalizedStringKey, _ text: Binding<String>, prompt: String,
                        field: Field, secure: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(label)
@@ -256,7 +256,7 @@ struct MacServerSetupView: View {
             url: normalisedURL,
             username: username,
             password: password,
-            friendlyName: derivedName.isEmpty ? "Server" : derivedName
+            friendlyName: derivedName.isEmpty ? String(localized: "Server") : derivedName
         )
 
         // Probed BEFORE it is registered. Registering first flips the root view over to the

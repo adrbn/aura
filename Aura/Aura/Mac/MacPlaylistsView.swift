@@ -11,7 +11,7 @@ struct MacPlaylistsView: View {
                 emptyMessage: "No playlists") { playlist in
             NavigationLink(value: playlist) {
                 MacCoverTile(coverArt: playlist.coverArt, title: playlist.name,
-                             subtitle: playlist.songCount.map { "\($0) songs" },
+                             subtitle: playlist.songCount.map { String(localized: "\($0) songs") },
                              placeholderName: playlist.name)
                     .overlay(alignment: .topTrailing) {
                         if settings.isPinned(playlist.id) {
@@ -49,7 +49,7 @@ struct MacPlaylistDetailView: View {
             MacDetailHeader(
                 coverArt: playlist.coverArt,
                 title: playlist.name,
-                subtitle: [playlist.songCount.map { "\($0) songs" },
+                subtitle: [playlist.songCount.map { String(localized: "\($0) songs") },
                            MacFormat.duration(playlist.duration)]
                     .compactMap { $0 }.joined(separator: " · "),
                 placeholderName: playlist.name

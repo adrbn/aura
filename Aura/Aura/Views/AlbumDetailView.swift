@@ -38,7 +38,7 @@ struct AlbumDetailView: View {
                             .padding(.horizontal, 24)
 
                         TappableArtistText(
-                            artistString: album.artist ?? "Unknown Artist",
+                            artistString: album.artist ?? String(localized: "Unknown Artist"),
                             primaryArtistId: album.artistId,
                             font: .subheadline,
                             foregroundStyle: AnyShapeStyle(.secondary),

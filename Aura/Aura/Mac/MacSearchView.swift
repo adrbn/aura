@@ -68,7 +68,7 @@ struct MacSearchView: View {
                     row(results.playlists) { playlist in
                         NavigationLink(value: playlist) {
                             MacCoverTile(coverArt: playlist.coverArt, title: playlist.name,
-                                         subtitle: playlist.songCount.map { "\($0) songs" },
+                                         subtitle: playlist.songCount.map { String(localized: "\($0) songs") },
                                          placeholderName: playlist.name)
                                 .frame(width: 132)
                         }
@@ -91,7 +91,7 @@ struct MacSearchView: View {
         }
     }
 
-    private func header(_ text: String) -> some View {
+    private func header(_ text: LocalizedStringKey) -> some View {
         Text(text).auraDisplay(34)
             .padding(.horizontal, 24).padding(.top, 18).padding(.bottom, 8)
     }

@@ -572,7 +572,7 @@ struct ArtistsFullListView: View {
                         Button {
                             sortOrder = order
                         } label: {
-                            Label(order.rawValue, systemImage: sortOrder == order ? "checkmark" : order.icon)
+                            Label(LocalizedStringKey(order.rawValue), systemImage: sortOrder == order ? "checkmark" : order.icon)
                         }
                     }
                 } label: {

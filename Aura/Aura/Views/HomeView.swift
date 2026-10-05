@@ -89,9 +89,9 @@ struct HomeView: View {
             if !name.isEmpty && name != serverManager.currentServer?.username {
                 return name
             }
-            return "Home"
+            return String(localized: "Home")
         case .home:
-            return "Home"
+            return String(localized: "Home")
         }
     }
 
@@ -485,7 +485,7 @@ struct HomeView: View {
                                         Text(song.title)
                                             .font(.caption.weight(.medium))
                                             .lineLimit(1)
-                                        Text(song.artist ?? "Unknown")
+                                        Text(song.artist ?? String(localized: "Unknown"))
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
                                             .lineLimit(1)
@@ -634,7 +634,7 @@ struct HomeView: View {
                 CoverArtImage(coverArt: song.coverArt, size: 50, cornerRadius: 6)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(song.title).font(.subheadline.weight(.medium)).lineLimit(1)
-                    Text(song.artist ?? "Unknown Artist").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(song.artist ?? String(localized: "Unknown Artist")).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
                 if song.isStarred {
                     Image(systemName: "heart.fill").font(.caption).foregroundStyle(accentColor)

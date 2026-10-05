@@ -420,7 +420,7 @@ struct SlskdSearchView: View {
         results = []
         error = nil
         isSearching = true
-        searchStatus = "Searching..."
+        searchStatus = String(localized: "Searching...")
         downloadingFiles = []
         enqueuedFiles = []
         failedFiles = []
@@ -440,7 +440,7 @@ struct SlskdSearchView: View {
 
                     await MainActor.run {
                         results = responses
-                        searchStatus = "\(status.fileCount) files from \(status.responseCount) users"
+                        searchStatus = String(localized: "\(status.fileCount) files from \(status.responseCount) users")
                     }
 
                     if status.isFinished { break }

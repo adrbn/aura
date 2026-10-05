@@ -197,7 +197,7 @@ struct AddToPlaylistView: View {
                             player.queue[idx] = current
                         }
                     }
-                    ToastManager.shared.show("Removed from Favorites", icon: "heart")
+                    ToastManager.shared.show(String(localized: "Removed from Favorites"), icon: "heart")
                 }
             } else {
                 try await SubsonicClient.shared.star(server: server, id: song.id)
@@ -209,7 +209,7 @@ struct AddToPlaylistView: View {
                             player.queue[idx] = current
                         }
                     }
-                    ToastManager.shared.show("Added to Favorites", icon: "heart.fill")
+                    ToastManager.shared.show(String(localized: "Added to Favorites"), icon: "heart.fill")
                 }
             }
         } catch {
@@ -257,7 +257,7 @@ struct AddToPlaylistView: View {
             AppLogger.shared.log("Added '\(song.title)' to playlist '\(playlist.name)'")
             await MainActor.run {
                 PlaylistMembershipCache.shared.markSongInPlaylist(songId: song.id, playlistId: playlist.id)
-                ToastManager.shared.show("Added to \(playlist.name)", icon: "text.badge.plus")
+                ToastManager.shared.show(String(localized: "Added to \(playlist.name)"), icon: "text.badge.plus")
             }
         } catch {
             AppLogger.shared.log("Failed to add to playlist: \(error.localizedDescription)")
@@ -275,7 +275,7 @@ struct AddToPlaylistView: View {
                 AppLogger.shared.log("Removed '\(song.title)' from playlist '\(playlist.name)'")
                 await MainActor.run {
                     PlaylistMembershipCache.shared.unmarkSongFromPlaylist(songId: song.id, playlistId: playlist.id)
-                    ToastManager.shared.show("Removed from \(playlist.name)", icon: "minus.circle")
+                    ToastManager.shared.show(String(localized: "Removed from \(playlist.name)"), icon: "minus.circle")
                 }
             }
         } catch {
@@ -293,7 +293,7 @@ struct AddToPlaylistView: View {
             // Refresh playlist list to show the new one
             await loadPlaylists()
             await MainActor.run {
-                ToastManager.shared.show("Created \(name)", icon: "plus.circle.fill")
+                ToastManager.shared.show(String(localized: "Created \(name)"), icon: "plus.circle.fill")
             }
         } catch {
             AppLogger.shared.log("Failed to create playlist: \(error.localizedDescription)")

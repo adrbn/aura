@@ -10,8 +10,8 @@ struct SongInfoSheet: View {
             List {
                 Section("Track Info") {
                     infoRow("Title", song.title)
-                    infoRow("Artist", song.artist ?? "Unknown")
-                    infoRow("Album", song.album ?? "Unknown")
+                    infoRow("Artist", song.artist ?? String(localized: "Unknown"))
+                    infoRow("Album", song.album ?? String(localized: "Unknown"))
                     if let track = song.track { infoRow("Track #", "\(track)") }
                     if let year = song.year { infoRow("Year", "\(year)") }
                     if let genre = song.genre { infoRow("Genre", genre) }
@@ -58,11 +58,11 @@ struct SongFileSections: View {
         let suffix = song.suffix?.lowercased() ?? ""
         let needsTranscode = suffix == "ogg" || suffix == "opus" || suffix == "wma"
         if needsTranscode {
-            return "MP3 (Auto-transcoded from \(suffix.uppercased()))"
+            return String(localized: "MP3 (Auto-transcoded from \(suffix.uppercased()))")
         } else if let br = appSettings.effectiveStreamingQuality.bitRate, suffix == "flac" || suffix == "alac" {
-            return "MP3 \(br) kbps (Transcoded from \(suffix.uppercased()))"
+            return String(localized: "MP3 \(br) kbps (Transcoded from \(suffix.uppercased()))")
         } else {
-            return "\(suffix.uppercased()) (Original)"
+            return String(localized: "\(suffix.uppercased()) (Original)")
         }
     }
 
@@ -72,9 +72,9 @@ struct SongFileSections: View {
             let br = appSettings.effectiveStreamingQuality.bitRate ?? 320
             return "\(br) kbps"
         } else if let br = appSettings.effectiveStreamingQuality.bitRate {
-            return "\(br) kbps (max)"
+            return String(localized: "\(br) kbps (max)")
         } else {
-            return "Original"
+            return String(localized: "Original")
         }
     }
 

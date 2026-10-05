@@ -70,7 +70,7 @@ struct SongShareSheet: View {
                         Divider().padding(.horizontal, 4)
 
                         sharePlatformRow(
-                            name: "Universal Link",
+                            name: String(localized: "Universal Link"),
                             icon: "link.circle.fill",
                             iconColor: .blue,
                             link: links.pageUrl.map { SongLinkService.PlatformLink(url: $0, isSearch: false) },
@@ -192,7 +192,7 @@ struct SongShareSheet: View {
                 Button {
                     UIPasteboard.general.string = link.url
                     copiedPlatform = platform
-                    ToastManager.shared.show("Copied \(name) link", icon: "doc.on.doc")
+                    ToastManager.shared.show(String(localized: "Copied \(name) link"), icon: "doc.on.doc")
                 } label: {
                     Image(systemName: copiedPlatform == platform ? "checkmark.circle.fill" : "doc.on.doc")
                         .font(.subheadline)

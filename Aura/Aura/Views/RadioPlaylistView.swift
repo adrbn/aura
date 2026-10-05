@@ -166,11 +166,11 @@ struct RadioPlaylistView: View {
         isSaving = true
         defer { isSaving = false }
         guard let playlistId = await player.saveRadioPlaylist() else {
-            ToastManager.shared.show("Couldn’t save radio", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "Couldn’t save radio"), icon: "exclamationmark.triangle.fill")
             return
         }
         isSaved = true
-        ToastManager.shared.show("Saved to your playlists")
+        ToastManager.shared.show(String(localized: "Saved to your playlists"))
         let spec = RadioCoverSpec(songs: player.radioPlaylistSongs,
                                   fallbackName: player.radioPlaylistName.replacingOccurrences(of: "Radio: ", with: ""))
         guard let cover = await spec.jpeg(), let server = ServerManager.shared.currentServer else { return }

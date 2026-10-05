@@ -98,7 +98,7 @@ final class WatchLink: NSObject {
         return WatchNowPlaying(
             songId: song.id,
             title: song.title,
-            artist: song.artist ?? "Unknown Artist",
+            artist: song.artist ?? String(localized: "Unknown Artist"),
             artworkId: song.coverArt,
             isPlaying: player.isPlaying,
             position: player.currentTime,
@@ -114,7 +114,7 @@ final class WatchLink: NSObject {
     }
 
     private func upcoming(_ song: Song, slot: Int, isQueued: Bool) -> WatchNowPlaying.Upcoming {
-        .init(songId: song.id, title: song.title, artist: song.artist ?? "Unknown Artist",
+        .init(songId: song.id, title: song.title, artist: song.artist ?? String(localized: "Unknown Artist"),
               slot: slot, isQueued: isQueued)
     }
 

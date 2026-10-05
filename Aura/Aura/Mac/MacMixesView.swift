@@ -82,7 +82,7 @@ struct MacMixDetailView: View {
             MacDetailHeader(
                 coverArt: mix.coverArt,
                 title: mix.title,
-                subtitle: "\(mix.subtitle) · \(mix.songs.count) songs",
+                subtitle: String(localized: "\(mix.subtitle) · \(mix.songs.count) songs"),
                 placeholderName: mix.title
             ) {
                 Button { play(shuffled: false) } label: { Label("Play", systemImage: "play.fill") }

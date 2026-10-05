@@ -27,7 +27,7 @@ struct MacSongTable: View {
             }
 
             TableColumn("Artist") { song in
-                Text(song.artist ?? "Unknown Artist").foregroundStyle(.secondary).lineLimit(1)
+                Text(song.artist ?? String(localized: "Unknown Artist")).foregroundStyle(.secondary).lineLimit(1)
             }
 
             TableColumn("Album") { song in

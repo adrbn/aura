@@ -506,7 +506,7 @@ struct PlaylistsView: View {
         appSettings.save()
         isSelecting = false
         selectedPlaylistIds.removeAll()
-        ToastManager.shared.show("Pinned \(count) playlist(s)", icon: "pin.fill")
+        ToastManager.shared.show(String(localized: "Pinned \(count) playlist(s)"), icon: "pin.fill")
     }
 
     private func findAndSelectDuplicates() async {
@@ -525,7 +525,7 @@ struct PlaylistsView: View {
         let duplicateGroups = groups.filter { $0.value.count > 1 }
         guard !duplicateGroups.isEmpty else {
             await MainActor.run {
-                ToastManager.shared.show("No duplicates found", icon: "checkmark")
+                ToastManager.shared.show(String(localized: "No duplicates found"), icon: "checkmark")
             }
             return
         }
@@ -597,9 +597,9 @@ struct PlaylistsView: View {
         await MainActor.run {
             selectedPlaylistIds = idsToSelect
             if idsToSelect.isEmpty {
-                ToastManager.shared.show("No true duplicates found", icon: "checkmark")
+                ToastManager.shared.show(String(localized: "No true duplicates found"), icon: "checkmark")
             } else {
-                ToastManager.shared.show("Selected \(idsToSelect.count) duplicate(s)", icon: "doc.on.doc")
+                ToastManager.shared.show(String(localized: "Selected \(idsToSelect.count) duplicate(s)"), icon: "doc.on.doc")
             }
         }
     }

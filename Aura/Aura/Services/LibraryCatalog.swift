@@ -237,7 +237,7 @@ enum LibraryCatalog {
     }
 
     static func item(_ song: Song) -> WatchItem {
-        WatchItem(kind: .song, id: song.id, title: song.title, subtitle: song.artist ?? "Unknown Artist",
+        WatchItem(kind: .song, id: song.id, title: song.title, subtitle: song.artist ?? String(localized: "Unknown Artist"),
                   coverArt: song.coverArt)
     }
 }

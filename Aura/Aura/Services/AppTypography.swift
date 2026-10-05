@@ -32,7 +32,7 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .system: return "System"
+        case .system: return String(localized: "System")
         case .vavinCondensed: return "Vavin Condensed"
         case .vavinCondensedBold: return "Vavin Condensed Bold"
         }

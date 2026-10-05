@@ -20,7 +20,7 @@ struct MacOptionsMenu: View {
 
             Picker("Accent", selection: $settings.appAccentColor) {
                 ForEach(AppAccentColor.presets, id: \.self) { colour in
-                    Text(colour.rawValue).tag(colour)
+                    Text(LocalizedStringKey(colour.rawValue)).tag(colour)
                 }
             }
             Divider()
@@ -30,14 +30,14 @@ struct MacOptionsMenu: View {
             // against the song playing at that moment.
             Picker("Lyrics Timing", selection: $settings.lyricsOffset) {
                 ForEach([-0.6, -0.4, -0.2, -0.1, 0.0, 0.1, 0.2, 0.4, 0.6], id: \.self) { offset in
-                    Text(offset == 0 ? "In sync" : String(format: "%+.1f s", offset)).tag(offset)
+                    Text(offset == 0 ? String(localized: "In sync") : String(format: "%+.1f s", offset)).tag(offset)
                 }
             }
 
             Divider()
 
             Picker("Streaming Quality", selection: $settings.streamingQuality) {
-                ForEach(StreamingQuality.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                ForEach(StreamingQuality.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
             }
         } label: {
             Image(systemName: "gearshape")

@@ -38,7 +38,7 @@ struct MacServerPicker: View {
                 Circle()
                     .fill(serverManager.isConnected ? Color.green : .orange)
                     .frame(width: 7, height: 7)
-                Text(serverManager.currentServer?.friendlyName ?? "No server")
+                Text(serverManager.currentServer?.friendlyName ?? String(localized: "No server"))
                     .font(.system(size: 12, weight: .medium))
                     .lineLimit(1)
                 Spacer(minLength: 0)

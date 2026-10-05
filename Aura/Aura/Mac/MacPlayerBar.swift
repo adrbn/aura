@@ -60,7 +60,7 @@ struct MacPlayerBar: View {
                 // Both lead somewhere, as they do on the phone. The bar sits outside the
                 // navigation stack, so they set the player's pending id and let
                 // MacPendingNavigation resolve and push it.
-                linkedText(song?.title ?? "Nothing playing",
+                linkedText(song?.title ?? String(localized: "Nothing playing"),
                            size: 13, weight: .semibold, colour: .primary) {
                     guard let albumId = song?.albumId else { return }
                     player.pendingAlbumId = albumId
@@ -198,7 +198,7 @@ struct MacPlayerBar: View {
     }
 
     private func iconButton(_ symbol: String, size: CGFloat = 13, active: Bool = false,
-                            help: String, action: @escaping () -> Void) -> some View {
+                            help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: size))

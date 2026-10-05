@@ -257,7 +257,7 @@ struct WrappedView: View {
             ids = await resolveLastfmSongIds(Array(stats.topSongs.prefix(40)), server: server)
         }
         guard !ids.isEmpty else {
-            ToastManager.shared.show("No matching songs on your server", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "No matching songs on your server"), icon: "exclamationmark.triangle.fill")
             return
         }
         let name = playlistName(for: stats)
@@ -271,10 +271,10 @@ struct WrappedView: View {
             WrappedCovers.remember(playlistId: existingId ?? saved.id, period: stats.period)
             markSaved(stats)
             saveState = .saved
-            ToastManager.shared.show("Saved “\(name)” to your playlists")
+            ToastManager.shared.show(String(localized: "Saved “\(name)” to your playlists"))
         } catch {
             AppLogger.shared.log("❌ Failed to save Wrapped: \(error.localizedDescription)")
-            ToastManager.shared.show("Couldn’t save Wrapped", icon: "exclamationmark.triangle.fill")
+            ToastManager.shared.show(String(localized: "Couldn’t save Wrapped"), icon: "exclamationmark.triangle.fill")
         }
     }
 
@@ -379,7 +379,7 @@ struct WrappedView: View {
 
     private var heroSubtitle: String {
         if let stats, stats.hasData { return stats.personality }
-        return "Your year in music"
+        return String(localized: "Your year in music")
     }
 
     // MARK: - Save as playlist (prominent)

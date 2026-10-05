@@ -49,8 +49,8 @@ enum WrappedPeriod: Hashable, Codable {
     /// Short label for the segmented period switcher.
     var pickerLabel: String {
         switch self {
-        case .year: return "Year"
-        case .month: return "Month"
+        case .year: return String(localized: "Year")
+        case .month: return String(localized: "Month")
         }
     }
 
@@ -156,13 +156,13 @@ struct ListeningStats: Codable {
 
     /// A light-hearted "listener type" derived from the dominant genre's energy.
     var personality: String {
-        guard let top = topGenres.first else { return "The Explorer" }
+        guard let top = topGenres.first else { return String(localized: "The Explorer") }
         let energy = Energy.score(genre: top.name)
         switch energy {
-        case ..<0.3: return "The Calm Listener"
-        case ..<0.55: return "The Easy Rider"
-        case ..<0.75: return "The Groover"
-        default: return "The Energizer"
+        case ..<0.3: return String(localized: "The Calm Listener")
+        case ..<0.55: return String(localized: "The Easy Rider")
+        case ..<0.75: return String(localized: "The Groover")
+        default: return String(localized: "The Energizer")
         }
     }
 

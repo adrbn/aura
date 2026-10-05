@@ -23,7 +23,7 @@ struct MiniPlayerView: View {
                                     color: .primary,
                                     alignment: .leading,
                                     isActive: !player.isShowingNowPlaying)
-                        Text(song.artist ?? "Unknown Artist")
+                        Text(song.artist ?? String(localized: "Unknown Artist"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
