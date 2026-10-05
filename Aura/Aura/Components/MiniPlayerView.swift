@@ -9,7 +9,9 @@ struct MiniPlayerView: View {
                 player.isShowingNowPlaying = true
             } label: {
                 HStack(spacing: 12) {
-                    CoverArtImage(coverArt: song.coverArt, size: 44, cornerRadius: 10,
+                    // Rounded like the 44-point cover beside the lyrics: in proportion to the
+                    // full-size one, so square frames near the artwork's edges stay whole.
+                    CoverArtImage(coverArt: song.coverArt, size: 44, cornerRadius: 1.5,
                                   placeholderName: song.title, placeholderKind: .song)
                         .id("mini-\(song.id)-\(song.coverArt ?? "")")
 
