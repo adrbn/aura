@@ -413,6 +413,9 @@ struct NowPlayingView: View {
             // Unclipped on purpose: the title rides the collapsing frame down as it fades,
             // and back up as it returns — the move is the transition. Clipped to the frame
             // once, it was wiped away top to bottom like a blind instead.
+            // Blurred as it fades, so the title passing over the year row on its way down
+            // reads as dissolving rather than as sharp text sliding across other text.
+            .blur(radius: showLyrics ? 12 : 0)
             .opacity(showLyrics ? 0 : 1)
             // It still owns a coordinate space once collapsed, it just has no height —
             // so make sure nothing invisible can be tapped.
