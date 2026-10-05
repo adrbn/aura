@@ -65,7 +65,6 @@ struct AuraApp: App {
                     .preferredColorScheme(appSettings.appearanceMode.colorScheme)
                     .tint(appSettings.activeTheme.accentColor)
                     .environment(\.appAccentColor, appSettings.activeTheme.accentColor)
-                    .environment(\.locale, Locale(identifier: appSettings.appLanguage.localeIdentifier))
                     .onChange(of: scenePhase) { oldPhase, newPhase in
                         // No auto-open of NowPlayingView on return from background.
                         // Dynamic Island / Control Center / Lock Screen taps already
