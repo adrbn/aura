@@ -7,6 +7,7 @@ private struct SettingsSaveModifier1: ViewModifier {
     func body(content: Content) -> some View {
         content
             .onChange(of: s.streamingQuality) { _, _ in s.save() }
+            .onChange(of: s.cellularQuality) { _, _ in s.save() }
             .onChange(of: s.scrobbleEnabled) { _, _ in s.save() }
             // Re-applied at once, so the toggle is heard on the song already playing.
             .onChange(of: s.replayGain) { _, _ in s.save(); AudioPlayer.shared.applyOutputVolume() }

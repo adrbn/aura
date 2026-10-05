@@ -359,7 +359,14 @@ struct SettingsView: View {
         Section {
             Picker("Transcode Quality", selection: $appSettings.streamingQuality) {
                 ForEach(StreamingQuality.allCases, id: \.self) { q in
-                    Text(q.rawValue).tag(q)
+                    Text(LocalizedStringKey(q.rawValue)).tag(q)
+                }
+            }
+
+            Picker("On Cellular", selection: $appSettings.cellularQuality) {
+                Text("Same as Wi-Fi").tag(StreamingQuality?.none)
+                ForEach(StreamingQuality.allCases, id: \.self) { q in
+                    Text(LocalizedStringKey(q.rawValue)).tag(StreamingQuality?.some(q))
                 }
             }
 

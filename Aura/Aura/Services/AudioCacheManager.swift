@@ -576,7 +576,7 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
     private func shouldTranscodeStream(songSuffix: String?, songContentType: String?) -> Bool {
         let suffix = songSuffix?.lowercased() ?? ""
         let contentType = songContentType?.lowercased() ?? ""
-        let isLossless = AppSettings.shared.streamingQuality == .lossless
+        let isLossless = AppSettings.shared.effectiveStreamingQuality == .lossless
 
         // Lossy formats iOS can play natively — never transcode
         let nativeSuffixes: Set<String> = ["mp3", "m4a", "aac", "wav", "aif", "aiff", "caf", "mp4", "m4b"]

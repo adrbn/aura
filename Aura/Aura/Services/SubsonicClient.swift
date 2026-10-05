@@ -198,6 +198,15 @@ actor SubsonicClient {
         _ = try await fetchData(from: url)
     }
 
+    /// `rating` is 1–5, or 0 to clear it.
+    func setRating(server: ServerConfig, id: String, rating: Int) async throws {
+        guard let url = buildURL(server: server, endpoint: "setRating",
+                                 params: ["id": id, "rating": String(rating)]) else {
+            throw SubsonicClientError.invalidURL
+        }
+        _ = try await fetchData(from: url)
+    }
+
     func scrobble(server: ServerConfig, id: String) async throws {
         guard let url = buildURL(server: server, endpoint: "scrobble", params: ["id": id]) else {
             throw SubsonicClientError.invalidURL
@@ -525,7 +534,7 @@ extension SubsonicClient {
 
         let suffix = songSuffix?.lowercased() ?? ""
         let contentType = songContentType?.lowercased() ?? ""
-        let quality = AppSettings.shared.streamingQuality
+        let quality = AppSettings.shared.effectiveStreamingQuality
 
         let lossySuffixes: Set<String> = ["mp3", "m4a", "aac", "mp4", "m4b", "opus", "ogg"]
         let lossyContentTypes = ["audio/mpeg", "audio/mp3", "audio/mp4", "audio/x-m4a", "audio/aac", "audio/opus", "audio/ogg"]

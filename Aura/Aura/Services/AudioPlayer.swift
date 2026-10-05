@@ -4,6 +4,7 @@ import MediaPlayer
 import SwiftUI
 #if os(iOS)
 import ActivityKit
+import StoreKit
 #endif
 
 @Observable
@@ -484,7 +485,7 @@ final class AudioPlayer {
         // Playing straight after launch is instant.
         ArtworkCache.shared.prefetchNowPlayingCover(coverArt: song.coverArt ?? song.albumId)
         guard let server = ServerManager.shared.currentServer else { return }
-        let bitRate = AppSettings.shared.streamingQuality.bitRate
+        let bitRate = AppSettings.shared.effectiveStreamingQuality.bitRate
 
         player?.pause()
         dropQueuedNext()
@@ -780,7 +781,7 @@ final class AudioPlayer {
     /// or the stream cache has its audio on disk.
     func isPlayableOffline(_ song: Song) -> Bool {
         if DownloadManager.shared.localURL(for: song.id) != nil { return true }
-        let bitRate = AppSettings.shared.streamingQuality.bitRate
+        let bitRate = AppSettings.shared.effectiveStreamingQuality.bitRate
         return AudioCacheManager.shared.hasCachedAudio(for: song, bitRate: bitRate)
     }
 
@@ -898,7 +899,7 @@ final class AudioPlayer {
             return
         }
         queuedNext = nil
-        let bitRate = AppSettings.shared.streamingQuality.bitRate
+        let bitRate = AppSettings.shared.effectiveStreamingQuality.bitRate
         AppLogger.shared.log("▶️ Playing: \(song.title) by \(song.artist ?? "Unknown") | bitRate: \(bitRate) | id: \(song.id)")
         currentTime = 0
         duration = 0
@@ -1021,7 +1022,7 @@ final class AudioPlayer {
               duration > 0, duration - currentTime <= Self.gaplessLead,
               let current = queuePlayer.currentItem,
               let server = ServerManager.shared.currentServer else { return }
-        let item = makePlayerItem(for: song, server: server, bitRate: AppSettings.shared.streamingQuality.bitRate)
+        let item = makePlayerItem(for: song, server: server, bitRate: AppSettings.shared.effectiveStreamingQuality.bitRate)
         if pitchSemitones != 0 { item.audioTimePitchAlgorithm = .varispeed }
         EqualizerManager.shared.attachToPlayerItem(item)
         queuePlayer.insert(item, after: current)
@@ -1360,6 +1361,7 @@ final class AudioPlayer {
         guard !hasScrobbledCurrent, let previous, previous < threshold, fraction >= threshold,
               let song = currentSong, !song.isPreview else { return }
         hasScrobbledCurrent = true
+        askForReviewIfDue()
         guard AppSettings.shared.scrobbleEnabled,
               let server = ServerManager.shared.currentServer else { return }
         Task {
@@ -1370,6 +1372,23 @@ final class AudioPlayer {
                 ScrobbleQueue.shared.enqueue(songId: song.id)
             }
         }
+    }
+
+    /// Asks once for an App Store rating, after the twentieth song listened to past the
+    /// scrobble point, and only while the app is on screen. The App Store build only: a
+    /// sideloaded build would ask its own developer.
+    private func askForReviewIfDue() {
+        #if os(iOS) && APPSTORE_BUILD
+        let defaults = UserDefaults.standard
+        let plays = defaults.integer(forKey: "reviewPromptPlays") + 1
+        defaults.set(plays, forKey: "reviewPromptPlays")
+        guard plays >= 20, !defaults.bool(forKey: "reviewPromptAsked"),
+              let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+        else { return }
+        defaults.set(true, forKey: "reviewPromptAsked")
+        AppStore.requestReview(in: scene)
+        #endif
     }
 
     func play() {
@@ -1462,7 +1481,7 @@ final class AudioPlayer {
     /// Begin caching the next track in queue when the current song is near completion
     private func prefetchNextTrack() {
         guard let server = ServerManager.shared.currentServer else { return }
-        let bitRate = AppSettings.shared.streamingQuality.bitRate
+        let bitRate = AppSettings.shared.effectiveStreamingQuality.bitRate
 
         // Determine next song: user queue first, then main queue
         let nextSong: Song?
@@ -1601,7 +1620,7 @@ final class AudioPlayer {
     private func reopen(at time: TimeInterval) -> Bool {
         guard playsLiveConversion, !hasLoaded(time), let song = currentSong,
               let server = ServerManager.shared.currentServer else { return false }
-        let bitRate = AppSettings.shared.streamingQuality.bitRate
+        let bitRate = AppSettings.shared.effectiveStreamingQuality.bitRate
         let offset = Int(max(0, time))
         let item: AVPlayerItem
         if let stream = AudioCacheManager.shared.streamItem(
@@ -2268,7 +2287,7 @@ final class AudioPlayer {
         guard let server = ServerManager.shared.currentServer,
               let address = preview.preview.flatMap(URL.init(string:)),
               let copy = await AudioCacheManager.shared.localCopy(
-                  of: full, server: server, bitRate: AppSettings.shared.streamingQuality.bitRate)
+                  of: full, server: server, bitRate: AppSettings.shared.effectiveStreamingQuality.bitRate)
         else { return nil }
         defer { if copy.path.hasPrefix(FileManager.default.temporaryDirectory.path) { try? FileManager.default.removeItem(at: copy) } }
         return await PreviewAligner.offset(ofPreviewAt: address, inSongAt: copy)
@@ -2289,7 +2308,7 @@ final class AudioPlayer {
               let outgoing = player, let timebase = outgoing.currentItem?.timebase
         else { return false }
 
-        let item = makePlayerItem(for: full, server: server, bitRate: AppSettings.shared.streamingQuality.bitRate)
+        let item = makePlayerItem(for: full, server: server, bitRate: AppSettings.shared.effectiveStreamingQuality.bitRate)
         await EqualizerManager.shared.attach(to: item)
         let incoming = AVPlayer(playerItem: item)
         // Required for a start set by the host clock.

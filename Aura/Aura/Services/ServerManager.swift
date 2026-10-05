@@ -36,6 +36,8 @@ final class ServerManager {
     private let pathMonitor = NWPathMonitor()
     private let pathMonitorQueue = DispatchQueue(label: "musika.pathmonitor")
     private var lastPathStatus: NWPath.Status = .satisfied
+    /// Cellular data or a personal hotspot: streams at the cellular quality when one is set.
+    private(set) var isExpensiveNetwork = false
     /// False until the monitor has reported the device's network once.
     private var pathKnown = false
     /// How long the network has to stay gone, while the app is in use, before offline mode
@@ -156,6 +158,7 @@ final class ServerManager {
             }
             return false
         }
+        await chooseAddress(for: server)
         AppLogger.shared.log("🖥 testConnection: \(server.baseURL)")
         do {
             let ok = try await SubsonicClient.shared.ping(server: server, timeout: timeout)
@@ -180,6 +183,7 @@ final class ServerManager {
                         AppLogger.shared.log("🟢 Server back online — auto-resumed online mode")
                     }
                     ScrobbleQueue.shared.flush()
+                    SongRatings.shared.flush()
                     // Server reachable again — restart downloads that were parked
                     // for lack of network (never user-paused ones).
                     if !AppSettings.shared.offlineMode {
@@ -208,6 +212,21 @@ final class ServerManager {
             AppLogger.shared.log("❌ testConnection error: \(error.localizedDescription)")
             return false
         }
+    }
+
+    /// Uses the server's home address while it answers within two seconds, its main
+    /// address otherwise. Checked on every connection test, so leaving home Wi-Fi switches
+    /// back at the next network change.
+    private func chooseAddress(for server: ServerConfig) async {
+        guard let local = server.localURL, !local.isEmpty else { return }
+        var probe = server
+        probe.url = local
+        probe.localURL = nil
+        let reachable = (try? await SubsonicClient.shared.ping(server: probe, timeout: 2)) == true
+        if reachable != ServerAddress.isLocal(server.id) {
+            AppLogger.shared.log("🏠 Server address → \(reachable ? "home" : "main")")
+        }
+        ServerAddress.setLocal(reachable, for: server.id)
     }
 
     /// Grace period after the user manually goes online during which auto-offline
@@ -305,6 +324,7 @@ final class ServerManager {
 
             DispatchQueue.main.async {
                 self.hasNetwork = isReachable
+                self.isExpensiveNetwork = path.isExpensive
                 self.pathKnown = true
 
                 if !isReachable {
@@ -370,6 +390,7 @@ final class ServerManager {
         ArtworkRetry.shared.requestRetry()
         AppLogger.shared.log("🟢 Back online")
         ScrobbleQueue.shared.flush()
+        SongRatings.shared.flush()
     }
 
     // MARK: - Periodic Connectivity Check (with exponential backoff while failing)
@@ -474,3 +495,67 @@ final class ScrobbleQueue {
         UserDefaults.standard.set(queue, forKey: key)
     }
 }
+
+// MARK: - Song Ratings
+
+/// Ratings set in Aura. A song carries the server's rating; one set here shows at once,
+/// and waits in the pending list until the server has taken it — offline, until it is
+/// back.
+@Observable
+final class SongRatings {
+    static let shared = SongRatings()
+    private let pendingKey = "aura_pending_ratings"
+    private var local: [String: Int] = [:]
+    @ObservationIgnored private var isFlushing = false
+
+    func rating(for song: Song) -> Int { local[song.id] ?? song.userRating ?? 0 }
+
+    /// `rating` 0 clears it.
+    func set(_ rating: Int, for song: Song) {
+        guard !song.isPreview else { return }
+        local[song.id] = rating
+        var pending = loadPending()
+        pending[song.id] = rating
+        savePending(pending)
+        flush()
+    }
+
+    func flush() {
+        guard !isFlushing, let server = ServerManager.shared.currentServer,
+              !AppSettings.shared.offlineMode else { return }
+        let pending = loadPending()
+        guard !pending.isEmpty else { return }
+        isFlushing = true
+        Task { @MainActor in
+            defer { isFlushing = false }
+            for (id, rating) in pending {
+                do {
+                    try await SubsonicClient.shared.setRating(server: server, id: id, rating: rating)
+                } catch {
+                    AppLogger.shared.log("⭐️ Rating kept for later: \(error.localizedDescription)")
+                    return
+                }
+                // A newer rating set meanwhile stays pending.
+                var now = loadPending()
+                if now[id] == rating { now[id] = nil; savePending(now) }
+            }
+        }
+    }
+
+    private func loadPending() -> [String: Int] {
+        UserDefaults.standard.dictionary(forKey: pendingKey) as? [String: Int] ?? [:]
+    }
+
+    private func savePending(_ pending: [String: Int]) {
+        UserDefaults.standard.set(pending, forKey: pendingKey)
+    }
+}
+
+extension AppSettings {
+    /// The quality to stream at now: the cellular one on cellular data, when it is set.
+    var effectiveStreamingQuality: StreamingQuality {
+        if let cellularQuality, ServerManager.shared.isExpensiveNetwork { return cellularQuality }
+        return streamingQuality
+    }
+}
+

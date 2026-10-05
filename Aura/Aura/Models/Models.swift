@@ -3,19 +3,37 @@ import SwiftUI
 
 // MARK: - Server Config
 
+/// Which servers are being reached on their home-network address right now. Decided by
+/// each connection check (`ServerManager.testConnection`), read by `ServerConfig.baseURL`
+/// from any thread.
+enum ServerAddress {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var local: Set<UUID> = []
+
+    static func isLocal(_ id: UUID) -> Bool { lock.withLock { local.contains(id) } }
+
+    static func setLocal(_ isLocal: Bool, for id: UUID) {
+        lock.withLock { if isLocal { local.insert(id) } else { local.remove(id) } }
+    }
+}
+
 struct ServerConfig: Codable, Identifiable, Hashable {
     var id: UUID = UUID()
     var url: String
     var username: String
     var password: String
     var friendlyName: String
+    /// A second address for the same server on the home network (LAN). While it answers,
+    /// it is used instead of `url`; see `ServerAddress`.
+    var localURL: String?
 
     var baseURL: String {
-        url.hasSuffix("/") ? String(url.dropLast()) : url
+        let chosen = localURL.flatMap { !$0.isEmpty && ServerAddress.isLocal(id) ? $0 : nil } ?? url
+        return chosen.hasSuffix("/") ? String(chosen.dropLast()) : chosen
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, url, username, friendlyName
+        case id, url, username, friendlyName, localURL
     }
 
     private enum LegacyCodingKeys: String, CodingKey {
@@ -36,6 +54,7 @@ struct ServerConfig: Codable, Identifiable, Hashable {
         url = try c.decode(String.self, forKey: .url)
         username = try c.decode(String.self, forKey: .username)
         friendlyName = try c.decode(String.self, forKey: .friendlyName)
+        localURL = try c.decodeIfPresent(String.self, forKey: .localURL)
         // Load from Keychain; fall back to legacy JSON field for migration
         let legacy = try decoder.container(keyedBy: LegacyCodingKeys.self)
         if let keychainPw = KeychainHelper.loadPassword(for: id.uuidString), !keychainPw.isEmpty {
@@ -55,6 +74,7 @@ struct ServerConfig: Codable, Identifiable, Hashable {
         try c.encode(url, forKey: .url)
         try c.encode(username, forKey: .username)
         try c.encode(friendlyName, forKey: .friendlyName)
+        try c.encodeIfPresent(localURL, forKey: .localURL)
         // Don't encode password to JSON — it's in Keychain
         KeychainHelper.save(password: password, for: id.uuidString)
     }
@@ -70,6 +90,8 @@ final class AppSettings {
     var pinnedPlaylistIds: Set<String> = []
     var pinnedPlaylistOrder: [String] = []
     var streamingQuality: StreamingQuality = .high
+    /// The quality on cellular data and personal hotspots; nil streams as on Wi-Fi.
+    var cellularQuality: StreamingQuality? = nil
     var maxBitRate: Int = 320
     var cacheEnabled: Bool = true
     var cacheMaxSize: Int = 2048 // MB
@@ -212,6 +234,7 @@ final class AppSettings {
                 homeSectionOrder = loadedOrder
             }
             landscapeClockEnabled = decoded.landscapeClockEnabled ?? false
+            cellularQuality = decoded.cellularQuality
             displayFont = decoded.displayFont ?? .vavinCondensed
             betaKaraokeLyrics = decoded.betaKaraokeLyrics ?? true
             lyricsOffset = decoded.lyricsOffset ?? 0
@@ -261,6 +284,7 @@ final class AppSettings {
             showPlayCounts: showPlayCounts,
             homeSectionOrder: homeSectionOrder,
             landscapeClockEnabled: landscapeClockEnabled,
+            cellularQuality: cellularQuality,
             displayFont: displayFont,
             betaKaraokeLyrics: betaKaraokeLyrics,
             lyricsOffset: lyricsOffset,
@@ -349,6 +373,7 @@ struct SettingsData: Codable {
     var showPlayCounts: Bool?
     var homeSectionOrder: [HomeSection]?
     var landscapeClockEnabled: Bool?
+    var cellularQuality: StreamingQuality?
     var displayFont: DisplayFont?
     var betaKaraokeLyrics: Bool?
     var lyricsOffset: Double?
@@ -738,6 +763,9 @@ struct Song: Identifiable, Codable, Hashable {
     /// OpenSubsonic loudness data. Absent on servers below the extension and on songs
     /// whose files carry no ReplayGain tags — see `AudioPlayer.replayGainFactor`.
     var replayGain: ReplayGainInfo? = nil
+    /// The user's 1–5 rating on the server, absent when unrated. One set in Aura shows
+    /// through `SongRatings` before the server has it.
+    var userRating: Int? = nil
     /// A song not on the server — a new release's track, from the radar — carries the
     /// address of its thirty-second preview here. Nothing about it can be asked of the
     /// server or told to it: no stream, no star, no scrobble, no lyrics by id.
