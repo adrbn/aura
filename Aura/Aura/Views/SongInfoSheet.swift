@@ -132,8 +132,9 @@ struct SongRatingSection: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    Spacer()
                 }
+                .frame(maxWidth: .infinity)
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                 .sensoryFeedback(.selection, trigger: rating)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Rating")
