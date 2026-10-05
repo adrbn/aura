@@ -81,6 +81,7 @@ struct AuraApp: App {
                         // connection as it is now, not as it was when the app was left.
                         if newPhase == .background {
                             wasInBackground = true
+                            audioPlayer.saveQueueOnServer()
                         } else if newPhase == .active && wasInBackground {
                             wasInBackground = false
                             Task { await serverManager.settleModeOnOpen() }

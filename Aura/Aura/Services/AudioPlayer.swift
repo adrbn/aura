@@ -413,6 +413,26 @@ final class AudioPlayer {
     /// periodic saves elsewhere fire on track changes (position 0), not mid-song.
     func persistPlaybackState() { saveLastPlayback() }
 
+    /// Hands the queue to the server (savePlayQueue) when the app leaves the foreground,
+    /// for other clients to resume. Best effort: offline, it is simply not sent.
+    func saveQueueOnServer() {
+        guard let song = currentSong, !song.isPreview, !AppSettings.shared.offlineMode,
+              let server = ServerManager.shared.currentServer else { return }
+        // ponytail: from the current song, 200 at most — a GET with thousands of ids is
+        // refused by proxies. The whole queue would need OpenSubsonic's form POST.
+        let ahead = queue.indices.contains(queueIndex) ? Array(queue[queueIndex...]) : [song]
+        let ids = ahead.filter { !$0.isPreview }.prefix(200).map(\.id)
+        let position = Int(currentTime * 1000)
+        Task {
+            do {
+                try await SubsonicClient.shared.savePlayQueue(server: server, ids: ids.isEmpty ? [song.id] : ids,
+                                                              current: song.id, position: position)
+            } catch {
+                AppLogger.shared.log("💾 savePlayQueue failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
     private func restoreLastPlayback() {
         guard let data = UserDefaults.standard.data(forKey: lastPlaybackKey),
               let state = try? JSONDecoder().decode(LastPlayback.self, from: data) else { return }

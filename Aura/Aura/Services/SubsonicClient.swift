@@ -198,6 +198,18 @@ actor SubsonicClient {
         _ = try await fetchData(from: url)
     }
 
+    /// Saves the queue on the server, so another client can pick it up where Aura left it.
+    /// `position` is in milliseconds.
+    func savePlayQueue(server: ServerConfig, ids: [String], current: String, position: Int) async throws {
+        var urlString = "\(server.baseURL)/rest/savePlayQueue?\(Self.authQuery(for: server))"
+        for id in ids {
+            urlString += "&id=\(id.addingPercentEncoding(withAllowedCharacters: Self.queryValueAllowed) ?? id)"
+        }
+        urlString += "&current=\(current.addingPercentEncoding(withAllowedCharacters: Self.queryValueAllowed) ?? current)&position=\(position)"
+        guard let url = URL(string: urlString) else { throw SubsonicClientError.invalidURL }
+        _ = try await fetchData(from: url)
+    }
+
     /// `rating` is 1–5, or 0 to clear it.
     func setRating(server: ServerConfig, id: String, rating: Int) async throws {
         guard let url = buildURL(server: server, endpoint: "setRating",
