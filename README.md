@@ -64,7 +64,9 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 **And also**
 
 - **An editable queue.** Play next, add to the end, drag to reorder. When it runs out, autoplay carries on with similar songs.
+- **Gapless playback.** The next song is lined up behind the one playing, so live albums and DJ mixes run on without a gap.
 - **Shuffle, repeat one or all, and a sleep timer** that stops after a set time or at the end of the song.
+- **Ratings.** Rate a song from one to five stars in its Song Info; the rating goes to your server, and waits on the iPhone while you're offline.
 - **Scrobbling.** Plays go to your server, and are held on the iPhone while you're offline.
 - **Lyrics you can fix.** Shift the timing if your Bluetooth headphones lag, or put a song's lyrics in time yourself: tap *Now* as each marked line starts. Your timing stays on the iPhone and wins over every other source. For a duet, a remix or another version, Aura checks that the lyrics match the version playing.
 - **Lyrics translation**, optional, under each line, by Google's Gemini with a free API key of your own (Settings → Lyrics → Translation). A song is sent only when you tap translate, and only its lines, title and artist. Translations are kept for offline use.
@@ -73,7 +75,9 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **Playlists your way.** A grid or a list, filtered to pinned, radios, mixes, yours, shared or downloaded. Create them, reorder them and give them a cover from your photos; changes go to your server.
 - **Pages in the colour of their artwork.** When your server has no cover for an album, Aura finds it in Deezer's catalogue.
 - **A stream cache.** What you stream is kept as it plays, up to a size you set, and an offline mode you switch on stays on across launches.
-- **Several servers**, switched from the Home title, and libraries split across music folders.
+- **Several servers**, switched from the Home title, and libraries split across music folders. A server can have a second, home-network address, used whenever it answers.
+- **A quality for cellular**, apart from the one on Wi-Fi, and the queue saved on your server when you leave the app, for another client to pick up.
+- **In English and in French.**
 - **On the Lock Screen**, in Control Center and in the Dynamic Island, with AirPlay.
 - **Siri and Shortcuts** in English and French: play, pause, skip, go back, shuffle, repeat, favourite a song, play a playlist or album by name, or play your favourites.
 - **Share links.** Share a song as links that open it on other services.
@@ -165,6 +169,13 @@ Aura has no account and no analytics, and sends nothing to the developer. Server
 Keychain. It talks to your server and to the public services listed in the
 [privacy policy](https://adrbn.github.io/aura-site/privacy.html), which says exactly what each one receives: lyrics,
 credits, covers, artist photos, the Radar and share links.
+
+## How AI was used
+
+Aura is a one-person project, built with Claude Code, Anthropic's coding assistant, which wrote most of the code from
+my descriptions. I decided what Aura does and how it looks, read the changes, and tested the builds on my own iPhone,
+playing my own library. Every change is in the commit history, with a message that says what it
+does and why. Bug reports are welcome: they reach a person.
 
 ## Contributing
 

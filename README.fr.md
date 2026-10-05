@@ -66,7 +66,9 @@ reprend le tout.
 **Et aussi**
 
 - **Une file d'attente modifiable.** Lire ensuite, ajouter à la fin, glisser pour réordonner. Quand elle se vide, la lecture automatique enchaîne sur des morceaux proches.
+- **Lecture sans blanc.** Le morceau suivant est préparé derrière celui qui joue : albums live et mix de DJ s'enchaînent sans coupure.
 - **Lecture aléatoire, répétition d'un morceau ou de tout, et un minuteur de veille** qui coupe après un temps donné ou à la fin du morceau.
+- **Des notes.** Notez un morceau de une à cinq étoiles dans ses infos ; la note part sur votre serveur, et attend sur l'iPhone quand vous êtes hors ligne.
 - **Scrobbling.** Les écoutes partent vers votre serveur, et l'iPhone les garde en attendant quand vous êtes hors ligne.
 - **Des paroles que vous pouvez corriger.** Décalez le minutage si votre casque Bluetooth est en retard, ou calez vous-même les paroles d'un morceau : touchez *Now* au début de chaque ligne marquée. Votre minutage reste sur l'iPhone et passe avant toutes les autres sources. Pour un duo, un remix ou une autre version, Aura vérifie que les paroles correspondent à la version qui joue.
 - **La traduction des paroles**, en option, sous chaque ligne, par Gemini de Google avec votre propre clé d'API gratuite (Settings → Lyrics → Translation). Un morceau n'est envoyé que quand vous touchez traduire, et seulement ses lignes, son titre et son artiste. Les traductions sont gardées pour l'écoute hors ligne.
@@ -75,7 +77,9 @@ reprend le tout.
 - **Des playlists à votre façon.** En grille ou en liste, filtrées par épinglées, radios, mix, les vôtres, partagées ou téléchargées. Créez-les, réordonnez-les, donnez-leur une pochette tirée de vos photos ; les changements partent sur votre serveur.
 - **Des pages aux couleurs de leur pochette.** Quand votre serveur n'a pas la pochette d'un album, Aura la trouve dans le catalogue de Deezer.
 - **Un cache de streaming.** Ce que vous écoutez en streaming est gardé au fil de la lecture, jusqu'à la taille que vous fixez, et un mode hors ligne que vous activez le reste d'un lancement à l'autre.
-- **Plusieurs serveurs**, qu'on change depuis le titre de l'accueil, et des bibliothèques réparties en dossiers de musique.
+- **Plusieurs serveurs**, qu'on change depuis le titre de l'accueil, et des bibliothèques réparties en dossiers de musique. Un serveur peut avoir une seconde adresse, celle de la maison, utilisée dès qu'elle répond.
+- **Une qualité pour le réseau cellulaire**, distincte de celle du Wi-Fi, et la file d'attente enregistrée sur votre serveur quand vous quittez l'app, pour qu'un autre client la reprenne.
+- **En français et en anglais.**
 - **Sur l'écran verrouillé**, dans le Centre de contrôle et dans la Dynamic Island, avec AirPlay.
 - **Siri et Raccourcis** en anglais et en français : lecture, pause, morceau suivant ou précédent, aléatoire, répétition, mettre un morceau en favori, lancer une playlist ou un album par son nom, ou vos favoris.
 - **Des liens de partage.** Partagez un morceau sous forme de liens qui l'ouvrent sur d'autres services.
@@ -170,6 +174,14 @@ Aura n'a pas de compte ni de statistiques d'usage, et n'envoie rien au développ
 gardés dans le trousseau d'iOS. L'app parle à votre serveur et aux services publics listés dans la
 [politique de confidentialité](https://adrbn.github.io/aura-site/privacy.html), qui dit exactement ce que chacun reçoit :
 paroles, crédits, pochettes, photos d'artistes, le Radar et les liens de partage.
+
+## Comment l'IA a servi
+
+Aura est le projet d'une seule personne, construit avec Claude Code, l'assistant de programmation d'Anthropic, qui a
+écrit l'essentiel du code à partir de mes descriptions. J'ai décidé de ce que fait Aura et de son allure, relu les
+changements, et testé les versions sur mon propre iPhone, avec ma propre bibliothèque. Chaque
+changement est dans l'historique des commits, avec un message qui dit ce qu'il fait et pourquoi. Les signalements de
+bugs sont les bienvenus : ils arrivent à une personne.
 
 ## Contribuer
 
