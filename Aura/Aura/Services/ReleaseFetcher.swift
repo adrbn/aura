@@ -91,7 +91,9 @@ final class ReleaseFetcher {
     private static let importLimit: TimeInterval = 90 * 60
     private static let readyKept: TimeInterval = 30 * 60
     private static let readyShown: TimeInterval = 10 * 60
-    private static let failedKept: TimeInterval = 24 * 60 * 60
+    // A failure is read once, then it is clutter: a day on the banner kept a card no one
+    // could act on sitting above the player, back again at every launch.
+    private static let failedKept: TimeInterval = 60
 
     /// Soulseek is the sideload build's, behind its beta switch.
     var isAvailable: Bool { AppSettings.shared.betaFeaturesEnabled }
@@ -522,6 +524,12 @@ final class ReleaseFetcher {
     private func fail(_ id: String, _ reason: String) {
         update(id) { $0.stage = .failed; $0.failure = reason; $0.failedAt = Date() }
         AppLogger.shared.log("⬇️ Fetch of \(id) failed: \(reason)")
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(Self.failedKept))
+            guard self?.fetch(for: id)?.stage == .failed else { return }
+            self?.fetches.removeAll { $0.id == id }
+            self?.save()
+        }
     }
 
     // MARK: State
