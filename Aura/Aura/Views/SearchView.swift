@@ -245,7 +245,10 @@ struct SearchResultsContainer: View {
                 CoverArtImage(coverArt: entry.coverArt, size: 48, cornerRadius: entry.isCircular ? 24 : 6)
             }
             VStack(alignment: .leading, spacing: 2) {
+                // The playing song in the accent, as in every other song list.
                 Text(entry.title).font(.subheadline.weight(.medium)).lineLimit(1)
+                    .foregroundStyle(entry.playableSong.map { $0.id == player.currentSong?.id } == true
+                                     ? accentColor : .primary)
                 if let subtitle = entry.subtitle {
                     Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
