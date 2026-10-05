@@ -785,6 +785,7 @@ struct CoverArtAsyncImage: View {
     /// this string (usually the item's name) instead of a grey box.
     var placeholderName: String? = nil
     var placeholderKind: PlaceholderCoverView.Kind = .generic
+    var cornerRadius: CGFloat = 12
 
     @State private var image: PlatformImage?
     /// Track the coverArt we loaded so we can detect changes without re-flashing
@@ -831,11 +832,11 @@ struct CoverArtAsyncImage: View {
                     .aspectRatio(contentMode: .fit)
             } else {
                 PlaceholderCoverView(seed: placeholderName ?? coverArt ?? "music",
-                                     kind: placeholderKind, size: size, cornerRadius: 12)
+                                     kind: placeholderKind, size: size, cornerRadius: cornerRadius)
             }
         }
         .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .onAppear { loadFromCacheSync() }
         .task(id: retryKey) { await loadImage() }
     }
