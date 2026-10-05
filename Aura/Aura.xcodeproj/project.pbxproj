@@ -210,6 +210,7 @@
 		E1000001000000000000A00A /* ReleaseFetchAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00A /* ReleaseFetchAttributes.swift */; };
 		E1000001000000000000A00B /* ReleaseFetchAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00A /* ReleaseFetchAttributes.swift */; };
 		E1000001000000000000A00C /* ReleaseFetchLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00C /* ReleaseFetchLiveActivity.swift */; };
+		E1000001000000000000A0F1 /* NowPlayingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A0F1 /* NowPlayingWidget.swift */; };
 		E1000001000000000000A00D /* FetchProgressBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00D /* FetchProgressBanner.swift */; };
 		E1000001000000000000A00E /* SoulseekPickTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00E /* SoulseekPickTests.swift */; };
 		E1000001000000000000A00F /* WorkshopGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00F /* WorkshopGrid.swift */; };
@@ -454,6 +455,7 @@
 		E1000002000000000000A009 /* ReleaseFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetcher.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00A /* ReleaseFetchAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetchAttributes.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00C /* ReleaseFetchLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetchLiveActivity.swift; sourceTree = "<group>"; };
+		E1000002000000000000A0F1 /* NowPlayingWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingWidget.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00D /* FetchProgressBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchProgressBanner.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00E /* SoulseekPickTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoulseekPickTests.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00F /* WorkshopGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkshopGrid.swift; sourceTree = "<group>"; };
@@ -817,6 +819,7 @@
 			children = (
 				E10000020000000000000041 /* MusicLiveActivity.swift */,
 				E1000002000000000000A00C /* ReleaseFetchLiveActivity.swift */,
+				E1000002000000000000A0F1 /* NowPlayingWidget.swift */,
 				E10000020000000000000042 /* AuraWidgetBundle.swift */,
 			);
 			path = AuraWidget;
@@ -1319,6 +1322,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1000001000000000000A00C /* ReleaseFetchLiveActivity.swift in Sources */,
+				E1000001000000000000A0F1 /* NowPlayingWidget.swift in Sources */,
 				E1000001000000000000A00B /* ReleaseFetchAttributes.swift in Sources */,
 				E10000010000000000000041 /* MusicPlaybackAttributes.swift in Sources */,
 				E10000010000000000000042 /* MusicLiveActivity.swift in Sources */,
@@ -1383,6 +1387,7 @@
 		09645B1D8CA32D293E48C723 /* Release-AppStore */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AuraWidget/AuraWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 230;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
@@ -1813,6 +1818,7 @@
 		E1000000A000000000000005 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AuraWidget/AuraWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 230;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
@@ -1839,6 +1845,7 @@
 		E1000000A000000000000006 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AuraWidget/AuraWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 230;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;

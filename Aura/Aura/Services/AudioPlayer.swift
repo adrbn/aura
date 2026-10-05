@@ -5,6 +5,7 @@ import SwiftUI
 #if os(iOS)
 import ActivityKit
 import StoreKit
+import WidgetKit
 #endif
 
 @Observable
@@ -119,6 +120,8 @@ final class AudioPlayer {
     private var originalQueue: [Song] = []
     #if os(iOS)
     private var currentActivity: Activity<MusicPlaybackAttributes>?
+    private var lastWidgetSnapshot: NowPlayingSnapshot?
+    private var widgetCoverSongId: String?
     #endif
     private var backgroundImage: PlatformImage?
     /// Per-server key so each server profile keeps (and resumes) its own queue/track.
@@ -3008,12 +3011,14 @@ final class AudioPlayer {
             info[MPMediaItemPropertyArtwork] = mpArtwork
             MPNowPlayingInfoCenter.default().nowPlayingInfo = info
             updateLiveActivity()
+            updateWidget(song: song, artwork: artwork)
             return
         }
 
         // No cached artwork yet — set info without artwork once, then fetch
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
         updateLiveActivity()
+        updateWidget(song: song, artwork: nil)
 
         if let coverArt = song.coverArt {
             // Same bucket as the Now Playing hero, so the lock screen usually costs the
@@ -3027,6 +3032,7 @@ final class AudioPlayer {
                 let mpArtwork = MPMediaItemArtwork(boundsSize: cached.size) { _ in cached }
                 info[MPMediaItemPropertyArtwork] = mpArtwork
                 MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+                updateWidget(song: song, artwork: cached)
                 return
             }
             // Fetch through ArtworkCache, NOT URLSession.shared: this fires on every song
@@ -3065,6 +3071,32 @@ final class AudioPlayer {
                 await activity.end(nil, dismissalPolicy: .immediate)
             }
         }
+        #endif
+    }
+
+    /// Hands the song to the Home Screen widget, only when what it shows changes: the song,
+    /// play/pause, or the cover arriving. A new song without its cover yet drops the old
+    /// one, so the widget never pairs a title with the previous song's cover.
+    private func updateWidget(song: Song, artwork: PlatformImage?) {
+        #if os(iOS)
+        let snapshot = NowPlayingSnapshot(songId: song.id, title: song.title,
+                                          artist: song.artist ?? "", isPlaying: isPlaying)
+        let coverArrived = artwork != nil && widgetCoverSongId != song.id
+        guard snapshot != lastWidgetSnapshot || coverArrived else { return }
+        lastWidgetSnapshot = snapshot
+        if let url = NowPlayingSnapshot.coverURL {
+            if coverArrived, let artwork {
+                widgetCoverSongId = song.id
+                let scale = min(1, 400 / max(artwork.size.width, artwork.size.height, 1))
+                let size = CGSize(width: artwork.size.width * scale, height: artwork.size.height * scale)
+                let small = artwork.preparingThumbnail(of: size) ?? artwork
+                try? small.jpegData(compressionQuality: 0.8)?.write(to: url, options: .atomic)
+            } else if widgetCoverSongId != song.id {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+        snapshot.save()
+        WidgetCenter.shared.reloadTimelines(ofKind: NowPlayingSnapshot.widgetKind)
         #endif
     }
 
