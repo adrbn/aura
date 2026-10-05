@@ -27,7 +27,7 @@ struct AccentColourPicker: View {
                     .buttonStyle(.plain)
                     .frame(maxWidth: .infinity, minHeight: 36)
                     .contentShape(Rectangle())
-                    .accessibilityLabel(Text(preset.rawValue))
+                    .accessibilityLabel(Text(LocalizedStringKey(preset.rawValue)))
                     .accessibilityAddTraits(accent == preset ? .isSelected : [])
                 }
                 ColorPicker(selection: custom, supportsOpacity: false) {

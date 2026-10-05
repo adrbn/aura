@@ -148,7 +148,7 @@ struct PlaylistsView: View {
                     Divider()
                     Picker("Sort", selection: $sortOrder) {
                         ForEach(PlaylistSortOrder.allCases, id: \.self) { order in
-                            Label(order.rawValue, systemImage: order.icon).tag(order)
+                            Label(LocalizedStringKey(order.rawValue), systemImage: order.icon).tag(order)
                         }
                     }
                 } label: {

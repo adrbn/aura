@@ -29,10 +29,10 @@ enum RecentSearchEntry: Codable, Hashable, Identifiable {
 
     var subtitle: String? {
         switch self {
-        case .artist: return "Artist"
-        case .album(let a): return a.artist ?? "Album"
-        case .song(let s): return s.artist ?? "Song"
-        case .playlist(let p): return p.songCount.map { "\($0) songs" } ?? "Playlist"
+        case .artist: return String(localized: "Artist")
+        case .album(let a): return a.artist ?? String(localized: "Album")
+        case .song(let s): return s.artist ?? String(localized: "Song")
+        case .playlist(let p): return p.songCount.map { String(localized: "\($0) songs") } ?? String(localized: "Playlist")
         }
     }
 

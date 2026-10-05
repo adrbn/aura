@@ -38,7 +38,7 @@ struct LibraryView: View {
                         // applies to everything ranks nothing — it stops reading as
                         // emphasis and starts reading as the text colour.
                         Label {
-                            Text(category.rawValue).foregroundStyle(.primary)
+                            Text(LocalizedStringKey(category.rawValue)).foregroundStyle(.primary)
                         } icon: {
                             Image(systemName: category.icon).foregroundStyle(accentColor)
                         }
@@ -194,7 +194,7 @@ struct LibraryCategoriesEditor: View {
                         Image(systemName: category.icon)
                             .foregroundStyle(accentColor)
                             .frame(width: 28)
-                        Text(category.rawValue)
+                        Text(LocalizedStringKey(category.rawValue))
                         Spacer()
                         Button {
                             appSettings.enabledLibraryCategories.removeAll { $0 == category }
@@ -218,7 +218,7 @@ struct LibraryCategoriesEditor: View {
                             Image(systemName: category.icon)
                                 .foregroundStyle(.secondary)
                                 .frame(width: 28)
-                            Text(category.rawValue)
+                            Text(LocalizedStringKey(category.rawValue))
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Button {

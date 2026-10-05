@@ -398,7 +398,7 @@ struct SearchResultsContainer: View {
                 sectionHeader("Albums", section: "albums", total: results.albums.count)
                 ForEach(visible) { album in
                     entityRow(value: album, coverArt: album.coverArt, circular: false,
-                              title: album.name, subtitle: album.artist ?? "Unknown") {
+                              title: album.name, subtitle: album.artist ?? String(localized: "Unknown")) {
                         SearchRanking.shared.recordTap(query: trimmedQuery, resultId: album.id)
                         history.arm(.album(album))
                     }
@@ -411,7 +411,7 @@ struct SearchResultsContainer: View {
                 sectionHeader("Playlists", section: "playlists", total: results.playlists.count)
                 ForEach(visible) { playlist in
                     entityRow(value: playlist, coverArt: playlist.coverArt, circular: false,
-                              title: playlist.name, subtitle: playlist.songCount.map { "\($0) songs" }) {
+                              title: playlist.name, subtitle: playlist.songCount.map { String(localized: "\($0) songs") }) {
                         SearchRanking.shared.recordTap(query: trimmedQuery, resultId: playlist.id)
                         history.arm(.playlist(playlist))
                     }

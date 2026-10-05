@@ -426,7 +426,7 @@ struct WrappedView: View {
         }
     }
 
-    private var saveTitle: String {
+    private var saveTitle: LocalizedStringKey {
         switch saveState {
         case .saved: return "Saved to Playlists"
         case .outdated: return "Update Playlist"
@@ -472,9 +472,9 @@ struct WrappedView: View {
 
     private func timeLabel(_ minutes: Int) -> String {
         if minutes <= 0 { return "—" }
-        if minutes < 60 { return "\(minutes) min" }
+        if minutes < 60 { return String(localized: "\(minutes) min") }
         let hours = Double(minutes) / 60.0
-        return hours < 10 ? String(format: "%.1f hrs", hours) : "\(Int(hours.rounded())) hrs"
+        return hours < 10 ? String(format: String(localized: "%.1f hrs"), hours) : String(localized: "\(Int(hours.rounded())) hrs")
     }
 
     private func abbreviate(_ n: Int) -> String {
@@ -486,7 +486,7 @@ struct WrappedView: View {
         VStack(alignment: .leading, spacing: 8) {
             Image(systemName: icon).font(.title3).foregroundStyle(accent)
             Text(value).font(.title.bold()).lineLimit(1).minimumScaleFactor(0.6)
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -699,7 +699,7 @@ struct WrappedView: View {
             .foregroundStyle(.secondary)
     }
 
-    private func cardSection<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+    private func cardSection<Content: View>(title: LocalizedStringKey, icon: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Image(systemName: icon).foregroundStyle(accent)

@@ -171,7 +171,7 @@ struct AboutView: View {
             .padding(.leading, 58)
     }
 
-    private func featureRow(icon: String, title: String, subtitle: String) -> some View {
+    private func featureRow(icon: String, title: LocalizedStringKey, subtitle: LocalizedStringKey) -> some View {
         HStack(spacing: 14) {
             iconBadge(icon)
             VStack(alignment: .leading, spacing: 2) {
@@ -184,7 +184,7 @@ struct AboutView: View {
         .padding(.vertical, 12)
     }
 
-    private func linkRow(icon: String, title: String, detail: String?, url: URL) -> some View {
+    private func linkRow(icon: String, title: LocalizedStringKey, detail: String?, url: URL) -> some View {
         Link(destination: url) {
             HStack(spacing: 14) {
                 iconBadge(icon)

@@ -272,7 +272,7 @@ struct OfflinePlaylistsView: View {
                     ForEach(items, id: \.snapshot.id) { item in
                         NavigationLink(value: OfflineRoute.playlist(item.snapshot.id)) {
                             OfflineRow(title: item.snapshot.name,
-                                       detail: "\(item.available.count) of \(OfflineLibraryView.count(item.snapshot.songCount, "song"))") {
+                                       detail: String(localized: "\(item.available.count) of \(item.snapshot.songCount) songs")) {
                                 PlaylistCoverView(playlistId: item.snapshot.id, coverArt: item.snapshot.coverArt,
                                                   size: 56, cornerRadius: 8, placeholderName: item.snapshot.name)
                             }

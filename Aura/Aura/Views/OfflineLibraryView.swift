@@ -104,7 +104,7 @@ struct OfflineLibraryView: View {
                     if let route = Self.route(for: category) {
                         NavigationLink(value: route) {
                             Label {
-                                Text(category.rawValue).foregroundStyle(.primary)
+                                Text(LocalizedStringKey(category.rawValue)).foregroundStyle(.primary)
                             } icon: {
                                 Image(systemName: category.icon).foregroundStyle(accentColor)
                             }
@@ -176,7 +176,7 @@ struct OfflineLibraryView: View {
     }
 
     static func count(_ n: Int, _ noun: String) -> String {
-        "\(n) \(noun)\(n == 1 ? "" : "s")"
+        noun == "album" ? String(localized: "\(n) albums") : String(localized: "\(n) songs")
     }
 }
 

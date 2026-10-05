@@ -217,7 +217,7 @@ struct OfflineStatusLine: View {
     }
 
     /// A small tinted capsule; a spinner while it runs.
-    private func action(_ title: String?, perform: @escaping () -> Void) -> some View {
+    private func action(_ title: LocalizedStringKey?, perform: @escaping () -> Void) -> some View {
         Button(action: perform) {
             Group {
                 if let title {

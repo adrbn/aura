@@ -77,7 +77,7 @@ struct SongCreditsSheet: View {
                     if !credits.writers.isEmpty {
                         Section("Written By") {
                             ForEach(credits.writers, id: \.self) { writer in
-                                creditPersonRow(writer, role: "Writer")
+                                creditPersonRow(writer, role: String(localized: "Writer"))
                             }
                         }
                     }
@@ -86,7 +86,7 @@ struct SongCreditsSheet: View {
                     if !credits.composers.isEmpty {
                         Section("Composed By") {
                             ForEach(credits.composers, id: \.self) { composer in
-                                creditPersonRow(composer, role: "Composer")
+                                creditPersonRow(composer, role: String(localized: "Composer"))
                             }
                         }
                     }
@@ -95,7 +95,7 @@ struct SongCreditsSheet: View {
                     if !credits.lyricists.isEmpty {
                         Section("Lyrics By") {
                             ForEach(credits.lyricists, id: \.self) { lyricist in
-                                creditPersonRow(lyricist, role: "Lyricist")
+                                creditPersonRow(lyricist, role: String(localized: "Lyricist"))
                             }
                         }
                     }
@@ -104,7 +104,7 @@ struct SongCreditsSheet: View {
                     if !credits.producers.isEmpty {
                         Section("Produced By") {
                             ForEach(credits.producers, id: \.self) { producer in
-                                creditPersonRow(producer, role: "Producer")
+                                creditPersonRow(producer, role: String(localized: "Producer"))
                             }
                         }
                     }
@@ -122,7 +122,7 @@ struct SongCreditsSheet: View {
                     if !credits.mixers.isEmpty {
                         Section("Mixed By") {
                             ForEach(credits.mixers, id: \.self) { mixer in
-                                creditPersonRow(mixer, role: "Mixing")
+                                creditPersonRow(mixer, role: String(localized: "Mixing"))
                             }
                         }
                     }
@@ -131,7 +131,7 @@ struct SongCreditsSheet: View {
                     if !credits.engineers.isEmpty {
                         Section("Engineering") {
                             ForEach(credits.engineers, id: \.self) { engineer in
-                                creditPersonRow(engineer, role: "Engineer")
+                                creditPersonRow(engineer, role: String(localized: "Engineer"))
                             }
                         }
                     }
@@ -140,7 +140,7 @@ struct SongCreditsSheet: View {
                     if !credits.arrangers.isEmpty {
                         Section("Arranged By") {
                             ForEach(credits.arrangers, id: \.self) { arranger in
-                                creditPersonRow(arranger, role: "Arranger")
+                                creditPersonRow(arranger, role: String(localized: "Arranger"))
                             }
                         }
                     }
@@ -149,7 +149,7 @@ struct SongCreditsSheet: View {
                     if !credits.remixers.isEmpty {
                         Section("Remixed By") {
                             ForEach(credits.remixers, id: \.self) { remixer in
-                                creditPersonRow(remixer, role: "Remixer")
+                                creditPersonRow(remixer, role: String(localized: "Remixer"))
                             }
                         }
                     }
@@ -234,7 +234,7 @@ struct SongCreditsSheet: View {
 
     private func creditRow(_ label: String, _ value: String) -> some View {
         HStack {
-            Text(label)
+            Text(LocalizedStringKey(label))
             Spacer()
             Text(value)
                 .foregroundStyle(.secondary)

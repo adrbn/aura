@@ -78,7 +78,7 @@ struct ListSummaryRow: View {
         let length = seconds ?? songs.compactMap(\.duration).reduce(0, +)
         return [
             year.map(String.init),
-            "\(songs.count) \(songs.count == 1 ? "song" : "songs")",
+            songs.count == 1 ? String(localized: "1 song") : String(localized: "\(songs.count) songs"),
             length > 0 ? Duration.seconds(max(length, 60))
                 .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)) : nil,
         ].compactMap { $0 }.joined(separator: " · ")
@@ -361,10 +361,10 @@ extension View {
 /// Being part of the scroll content, it scrolls away naturally (no overlap, no gap), and its
 /// optional `trailing` control sits in the normal hierarchy so menus/buttons work.
 struct TabTitleRow<Trailing: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     @ViewBuilder var trailing: () -> Trailing
 
-    init(_ title: String, @ViewBuilder trailing: @escaping () -> Trailing = { EmptyView() }) {
+    init(_ title: LocalizedStringKey, @ViewBuilder trailing: @escaping () -> Trailing = { EmptyView() }) {
         self.title = title
         self.trailing = trailing
     }

@@ -296,7 +296,7 @@ struct SlskdSearchView: View {
                                 } label: {
                                     HStack {
                                         Image(systemName: opt.icon)
-                                        Text(opt.rawValue)
+                                        Text(LocalizedStringKey(opt.rawValue))
                                         if sortBy == opt { Image(systemName: "checkmark") }
                                     }
                                 }
@@ -356,7 +356,7 @@ struct SlskdSearchView: View {
             let sorted = selectedFormats.sorted()
             return "\(sorted[0])+\(sorted[1])"
         }
-        return "\(selectedFormats.count) fmts"
+        return String(localized: "\(selectedFormats.count) fmts")
     }
 
     private var bitratePillText: String {
@@ -377,7 +377,7 @@ struct SlskdSearchView: View {
                 Image(systemName: icon)
                     .font(.system(size: 8, weight: .bold))
             }
-            Text(label)
+            Text(LocalizedStringKey(label))
                 .font(.system(size: 11, weight: .semibold))
                 .lineLimit(1)
                 .fixedSize()

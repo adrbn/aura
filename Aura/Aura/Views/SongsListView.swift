@@ -77,7 +77,7 @@ final class SongsCache {
 }
 
 struct SongsListView: View {
-    let title: String
+    let title: LocalizedStringKey
     let fetchType: SongFetchType
 
     @Environment(ServerManager.self) private var serverManager
@@ -94,7 +94,7 @@ struct SongsListView: View {
     /// (no reshuffle on every page); the chosen sort applies once loading completes.
     @State private var isStreaming = false
 
-    init(title: String, fetchType: SongFetchType) {
+    init(title: LocalizedStringKey, fetchType: SongFetchType) {
         self.title = title
         self.fetchType = fetchType
 
@@ -392,7 +392,7 @@ struct SongsListView: View {
                 Menu {
                     Picker("Sort By", selection: $sortOrder) {
                         ForEach(SongSortOrder.allCases, id: \.self) { order in
-                            Text(order.rawValue).tag(order)
+                            Text(LocalizedStringKey(order.rawValue)).tag(order)
                         }
                     }
                     Divider()

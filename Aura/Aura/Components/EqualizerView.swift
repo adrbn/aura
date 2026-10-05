@@ -120,7 +120,7 @@ struct EqualizerView: View {
     private func presetChip(_ preset: EQPreset) -> some View {
         let isOn = appSettings.eqPreset == preset
         return Button { choose(preset) } label: {
-            Text(preset.rawValue)
+            Text(LocalizedStringKey(preset.rawValue))
                 .font(.subheadline.weight(isOn ? .semibold : .medium))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)

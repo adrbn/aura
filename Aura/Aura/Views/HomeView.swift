@@ -617,7 +617,7 @@ struct HomeView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         HStack {
-            Text(title).font(Self.sectionFont)
+            Text(LocalizedStringKey(title)).font(Self.sectionFont)
             Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
             Spacer()
         }.padding(.horizontal)

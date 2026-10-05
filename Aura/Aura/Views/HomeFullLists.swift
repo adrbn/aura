@@ -35,7 +35,7 @@ struct AlbumsFullListView: View {
             }
         }
         .scrollIndicators(.hidden)
-        .navigationTitle(title)
+        .navigationTitle(LocalizedStringKey(title))
         .navigationBarTitleDisplayMode(.inline)
         .task { await loadAlbums() }
     }

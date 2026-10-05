@@ -227,19 +227,19 @@ final class MixGenerator {
 
         var title: String {
             switch self {
-            case .morning: return "Morning Mix"
-            case .afternoon: return "Afternoon Mix"
-            case .evening: return "Evening Mix"
-            case .night: return "Late Night Mix"
+            case .morning: return String(localized: "Morning Mix")
+            case .afternoon: return String(localized: "Afternoon Mix")
+            case .evening: return String(localized: "Evening Mix")
+            case .night: return String(localized: "Late Night Mix")
             }
         }
 
         var mood: String {
             switch self {
-            case .morning: return "An easy start to your day"
-            case .afternoon: return "Keep the momentum going"
-            case .evening: return "Wind down your evening"
-            case .night: return "Mellow songs for late hours"
+            case .morning: return String(localized: "An easy start to your day")
+            case .afternoon: return String(localized: "Keep the momentum going")
+            case .evening: return String(localized: "Wind down your evening")
+            case .night: return String(localized: "Mellow songs for late hours")
             }
         }
 
@@ -274,19 +274,19 @@ final class MixGenerator {
 
         var title: String {
             switch self {
-            case .chill: return "Chill Mix"
-            case .focus: return "Focus Mix"
-            case .feelGood: return "Feel Good Mix"
-            case .energy: return "Energy Mix"
+            case .chill: return String(localized: "Chill Mix")
+            case .focus: return String(localized: "Focus Mix")
+            case .feelGood: return String(localized: "Feel Good Mix")
+            case .energy: return String(localized: "Energy Mix")
             }
         }
 
         var subtitle: String {
             switch self {
-            case .chill: return "Calm, laid-back songs"
-            case .focus: return "Steady songs to concentrate"
-            case .feelGood: return "Upbeat songs to lift your mood"
-            case .energy: return "High-energy songs to get moving"
+            case .chill: return String(localized: "Calm, laid-back songs")
+            case .focus: return String(localized: "Steady songs to concentrate")
+            case .feelGood: return String(localized: "Upbeat songs to lift your mood")
+            case .energy: return String(localized: "High-energy songs to get moving")
             }
         }
 
@@ -472,8 +472,8 @@ final class MixGenerator {
         let known = Set((recentSongs + starredSongs).map { $0.id })
         pool = dedupe(pool).filter { !known.contains($0.id) }.shuffled()
         guard pool.count >= 6 else { return nil }
-        let subtitle = recentSongs.isEmpty ? "Fresh songs based on your favorites" : "Fresh songs based on your recent plays"
-        return Mix(id: "discover", title: "New Discoveries", subtitle: subtitle,
+        let subtitle = recentSongs.isEmpty ? String(localized: "Fresh songs based on your favorites") : String(localized: "Fresh songs based on your recent plays")
+        return Mix(id: "discover", title: String(localized: "New Discoveries"), subtitle: subtitle,
                    songs: rested(pool, served: served, limit: 50) { Array($0.prefix($1)) }, kind: .discovery)
     }
 
@@ -503,8 +503,8 @@ final class MixGenerator {
                 Array($0.shuffled().prefix($1))
             }
             guard final.count >= 8 else { continue }
-            mixes.append(Mix(id: "genre_\(genre.lowercased())", title: "\(genre) Mix",
-                             subtitle: "Your \(genre.lowercased()) favorites", songs: final,
+            mixes.append(Mix(id: "genre_\(genre.lowercased())", title: String(localized: "\(genre) Mix"),
+                             subtitle: String(localized: "Your \(genre.lowercased()) favorites"), songs: final,
                              kind: .genre, templateSeed: genre))
             used.formUnion(final.map { $0.id })
         }
@@ -513,7 +513,7 @@ final class MixGenerator {
 
     private func fallbackMix(server: ServerConfig) async -> Mix? {
         guard let random = try? await SubsonicClient.shared.getRandomSongs(server: server, size: 50), random.count >= 8 else { return nil }
-        return Mix(id: "fallback", title: "Your Mix", subtitle: "A fresh shuffle from your library", songs: random)
+        return Mix(id: "fallback", title: String(localized: "Your Mix"), subtitle: String(localized: "A fresh shuffle from your library"), songs: random)
     }
 
     // MARK: Seed helpers

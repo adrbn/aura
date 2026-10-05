@@ -168,7 +168,7 @@ struct QuietChip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                 if isOn && showsClear {
                     Image(systemName: "xmark")
                         .font(.system(size: 9, weight: .bold))
@@ -183,7 +183,7 @@ struct QuietChip: View {
                         in: Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(title)
+        .accessibilityLabel(LocalizedStringKey(title))
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }
@@ -224,7 +224,7 @@ struct PlaylistRowView: View {
     private var subtitle: String? {
         var parts: [String] = []
         if let count = playlist.songCount {
-            parts.append(count == 1 ? "1 song" : "\(count) songs")
+            parts.append(count == 1 ? String(localized: "1 song") : String(localized: "\(count) songs"))
         }
         if let seconds = playlist.duration, seconds > 0 {
             parts.append(Self.length(seconds))

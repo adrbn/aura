@@ -43,7 +43,7 @@ struct HomeSectionOrderView: View {
                 ForEach(appSettings.homeSectionOrder) { section in
                     HStack {
                         Image(systemName: section.icon).foregroundStyle(accentColor).frame(width: 30)
-                        Text(section.rawValue)
+                        Text(LocalizedStringKey(section.rawValue))
                     }
                 }
                 .onMove { source, destination in

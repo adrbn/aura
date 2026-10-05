@@ -72,10 +72,10 @@ struct GeneratedCoverView: View {
 
     private var kicker: String? {
         switch nature {
-        case .genre: return "Genre Mix"
-        case .daypart: return "For Right Now"
-        case .mood: return "Mood"
-        case .retrospective: return "Your Wrapped"
+        case .genre: return String(localized: "Genre Mix")
+        case .daypart: return String(localized: "For Right Now")
+        case .mood: return String(localized: "Mood")
+        case .retrospective: return String(localized: "Your Wrapped")
         }
     }
 
@@ -140,10 +140,10 @@ struct GeneratedCoverView: View {
 
     private static func daypartTitle(_ d: String) -> String {
         switch d {
-        case "morning": return "Morning Mix"
-        case "afternoon": return "Afternoon Mix"
-        case "evening": return "Evening Mix"
-        default: return "Late Night Mix"
+        case "morning": return String(localized: "Morning Mix")
+        case "afternoon": return String(localized: "Afternoon Mix")
+        case "evening": return String(localized: "Evening Mix")
+        default: return String(localized: "Late Night Mix")
         }
     }
 
@@ -173,10 +173,10 @@ struct GeneratedCoverView: View {
 
     private static func moodTitle(_ m: String) -> String {
         switch m {
-        case "chill": return "Chill Mix"
-        case "focus": return "Focus Mix"
-        case "feel_good": return "Feel Good Mix"
-        default: return "Energy Mix"
+        case "chill": return String(localized: "Chill Mix")
+        case "focus": return String(localized: "Focus Mix")
+        case "feel_good": return String(localized: "Feel Good Mix")
+        default: return String(localized: "Energy Mix")
         }
     }
 
