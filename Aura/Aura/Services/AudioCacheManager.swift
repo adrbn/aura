@@ -133,7 +133,15 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
         AppLogger.shared.log("🌐 Streaming directly: \(songId) | mode: \(usesTranscoding ? "mp3" : "source")")
         // Start background cache download
         if AppSettings.shared.cacheEnabled {
-            backgroundCache(songId: songId, realURL: realURL, bitRate: bitRate, transcoded: usesTranscoding)
+            // A converted stream asked for twice at once is converted once: the second request
+            // reads the server's file while it is still being written. Started first, the cache
+            // download left the player that half-empty file, which held no audio track yet
+            // (CoreMedia -12640) and skipped song after song — so the player asks first.
+            // ponytail: fixed head start; tie it to the item's readyToPlay if 3 s proves short.
+            let delay: TimeInterval = usesTranscoding ? 3 : 0
+            DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.backgroundCache(songId: songId, realURL: realURL, bitRate: bitRate, transcoded: usesTranscoding)
+            }
         }
         return AVPlayerItem(url: realURL)
     }
