@@ -38,6 +38,8 @@ struct SongCreditsSheet: View {
                     .listRowBackground(Color.clear)
                 }
 
+                SongRatingSection(song: song)
+
                 // Song info from local metadata
                 Section("Song") {
                     if let artist = song.artist {
