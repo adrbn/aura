@@ -198,6 +198,8 @@ struct SongCreditsSheet: View {
                     }
                 }
 
+                SongFileSections(song: song)
+
                 // Source attribution
                 Section {
                     HStack {
@@ -215,7 +217,7 @@ struct SongCreditsSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Credits").font(.headline)
+                    Text("Song Info").font(.headline)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }

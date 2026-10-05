@@ -2867,11 +2867,6 @@ final class AudioPlayer {
         loadLyrics(for: song)
     }
 
-    func switchLyricsSource() {
-        lyricsSource = lyricsSource == .structured ? .legacy : .structured
-        refetchLyrics()
-    }
-
     private func parseLRC(_ text: String) -> [LyricsLine] {
         var lines: [LyricsLine] = []
         for line in text.components(separatedBy: "\n") {

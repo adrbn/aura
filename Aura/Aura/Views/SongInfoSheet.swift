@@ -5,6 +5,52 @@ import SwiftUI
 struct SongInfoSheet: View {
     let song: Song
     @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Track Info") {
+                    infoRow("Title", song.title)
+                    infoRow("Artist", song.artist ?? "Unknown")
+                    infoRow("Album", song.album ?? "Unknown")
+                    if let track = song.track { infoRow("Track #", "\(track)") }
+                    if let year = song.year { infoRow("Year", "\(year)") }
+                    if let genre = song.genre { infoRow("Genre", genre) }
+                    infoRow("Duration", song.durationFormatted)
+                    if let pc = song.playCount { infoRow("Play Count", "\(pc)") }
+                }
+                SongFileSections(song: song)
+            }
+            .scrollIndicators(.hidden)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("File Info").font(.headline)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func infoRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Text(value)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .multilineTextAlignment(.trailing)
+                .textSelection(.enabled)
+        }
+    }
+}
+
+/// How the song is playing and the file behind it — shared by File Info and the Now
+/// Playing sheet, which shows it under the credits.
+struct SongFileSections: View {
+    let song: Song
     @State private var appSettings = AppSettings.shared
 
     private var playbackFormat: String {
@@ -32,45 +78,20 @@ struct SongInfoSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section("Track Info") {
-                    infoRow("Title", song.title)
-                    infoRow("Artist", song.artist ?? "Unknown")
-                    infoRow("Album", song.album ?? "Unknown")
-                    if let track = song.track { infoRow("Track #", "\(track)") }
-                    if let year = song.year { infoRow("Year", "\(year)") }
-                    if let genre = song.genre { infoRow("Genre", genre) }
-                    infoRow("Duration", song.durationFormatted)
-                    if let pc = song.playCount { infoRow("Play Count", "\(pc)") }
-                }
-                Section("Currently Playing As") {
-                    infoRow("Format", playbackFormat)
-                }
-                Section("Original File") {
-                    if let bitRate = song.bitRate { infoRow("Bitrate", "\(bitRate) kbps") }
-                    if let suffix = song.suffix { infoRow("Format", suffix.uppercased()) }
-                    if let contentType = song.contentType { infoRow("Content Type", contentType) }
-                    infoRow("File Size", song.fileSizeFormatted)
-                    if let path = song.path { infoRow("Path", path) }
-                }
-                Section("IDs") {
-                    infoRow("Song ID", song.id)
-                    if let albumId = song.albumId { infoRow("Album ID", albumId) }
-                    if let artistId = song.artistId { infoRow("Artist ID", artistId) }
-                }
-            }
-            .scrollIndicators(.hidden)
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("File Info").font(.headline)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
+        Section("Currently Playing As") {
+            infoRow("Format", playbackFormat)
+        }
+        Section("Original File") {
+            if let bitRate = song.bitRate { infoRow("Bitrate", "\(bitRate) kbps") }
+            if let suffix = song.suffix { infoRow("Format", suffix.uppercased()) }
+            if let contentType = song.contentType { infoRow("Content Type", contentType) }
+            infoRow("File Size", song.fileSizeFormatted)
+            if let path = song.path { infoRow("Path", path) }
+        }
+        Section("IDs") {
+            infoRow("Song ID", song.id)
+            if let albumId = song.albumId { infoRow("Album ID", albumId) }
+            if let artistId = song.artistId { infoRow("Artist ID", artistId) }
         }
     }
 

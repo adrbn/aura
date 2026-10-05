@@ -25,6 +25,7 @@ struct LyricsSyncView: View {
     @State private var failure: String?
     /// Saved here, but the server's copy failed: closing follows the alert.
     @State private var savedLocally = false
+    @State private var confirmRestore = false
 
     private static let step: TimeInterval = 0.05
 
@@ -61,6 +62,14 @@ struct LyricsSyncView: View {
         } message: {
             Text(failure ?? "")
         }
+        .confirmationDialog("Restore the original timing?", isPresented: $confirmRestore, titleVisibility: .visible) {
+            Button("Restore Original Timing", role: .destructive) {
+                player.restoreFoundLyrics(for: song)
+                dismiss()
+            }
+        } message: {
+            Text("Your timing for this song is deleted and the lyrics are looked up again.")
+        }
     }
 
     // MARK: Header
@@ -88,6 +97,17 @@ struct LyricsSyncView: View {
             }
             .lineLimit(1)
             Spacer(minLength: 8)
+            if LyricsOverrides.has(song.id) {
+                Button { confirmRestore = true } label: {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .frame(width: 36, height: 36)
+                        .glassEffect(.regular, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Restore Original Timing")
+            }
             Button(action: save) {
                 Group {
                     if isSaving {

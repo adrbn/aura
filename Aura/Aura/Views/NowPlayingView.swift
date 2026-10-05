@@ -13,7 +13,6 @@ struct NowPlayingView: View {
     /// How the blurred cover behind everything is corrected: a vibrant tint for dark covers,
     /// a deeper veil for light ones.
     @State private var backdropTone = BackdropTone.plain
-    @State private var showFileInfo = false
     @State private var showClockMode = false
     @State private var clockOrientation: UIDeviceOrientation = .landscapeLeft
     @State private var showAddToPlaylist = false
@@ -186,11 +185,6 @@ struct NowPlayingView: View {
             set: { player.isShowingQueue = $0 }
         )) {
             QueueView()
-        }
-        .sheet(isPresented: $showFileInfo) {
-            if let song = player.currentSong {
-                SongInfoSheet(song: song)
-            }
         }
         .sheet(isPresented: $showAddToPlaylist) {
             if let song = player.currentSong {
@@ -475,7 +469,6 @@ struct NowPlayingView: View {
                     showLyrics: showLyrics,
                     accentColor: accentColor,
                     showAddToPlaylist: $showAddToPlaylist,
-                    showFileInfo: $showFileInfo,
                     showCredits: $showCredits,
                     showEqualizer: $showEqualizer
                 )
@@ -1611,7 +1604,6 @@ struct SongActionsRow: View {
     let showLyrics: Bool
     let accentColor: Color
     @Binding var showAddToPlaylist: Bool
-    @Binding var showFileInfo: Bool
     @Binding var showCredits: Bool
     @Binding var showEqualizer: Bool
 
@@ -1764,7 +1756,7 @@ struct SongActionsRow: View {
             }
             .menuActionDismissBehavior(.disabled)
         } label: {
-            Label("Pitch (Experimental)", systemImage: "tuningfork")
+            Label("Pitch (Beta)", systemImage: "tuningfork")
         }
     }
     #endif
@@ -1773,54 +1765,43 @@ struct SongActionsRow: View {
         HStack(spacing: 2) {
             favoriteButton
             Menu {
+                ControlGroup {
+                    Button { player.playNext(song) } label: {
+                        Label("Play Next", systemImage: "text.insert")
+                    }
+                    Button { player.addToQueue(song) } label: {
+                        Label("Add to Queue", systemImage: "text.append")
+                    }
+                    Button { showAddToPlaylist = true } label: {
+                        Label("Add to Playlist", systemImage: "text.badge.plus")
+                    }
+                }
+                .controlGroupStyle(.compactMenu)
                 if showLyrics {
-                    Button { player.refetchLyrics() } label: {
-                        Label("Refetch Lyrics", systemImage: "arrow.clockwise")
-                    }
-                    Button { player.switchLyricsSource() } label: {
-                        Label("Switch Source (\(player.lyricsSource == .structured ? "Legacy" : "Synced"))",
-                              systemImage: "arrow.triangle.2.circlepath")
-                    }
                     Button { showSync = true } label: {
                         Label("Sync Lyrics", systemImage: "timer")
                     }
                     .disabled(player.lyrics.isEmpty)
-                    if LyricsOverrides.has(song.id) {
-                        Button { player.restoreFoundLyrics(for: song) } label: {
-                            Label("Restore Original Timing", systemImage: "arrow.uturn.backward")
-                        }
+                    Button { player.refetchLyrics() } label: {
+                        Label("Refetch Lyrics", systemImage: "arrow.clockwise")
                     }
-                    Divider()
                 }
-                Button { showFileInfo = true } label: {
-                    Label("File Info", systemImage: "info.circle")
+                Button { showCredits = true } label: {
+                    Label("Song Info", systemImage: "info.circle")
                 }
                 Button { showEqualizer = true } label: {
                     Label("Equalizer", systemImage: "slider.vertical.3")
                 }
-                Button { showCredits = true } label: {
-                    Label("Credits", systemImage: "person.text.rectangle")
-                }
                 #if !APPSTORE_BUILD
                 pitchMenu
                 #endif
-                Divider()
-                Button { player.playNext(song) } label: {
-                    Label("Play Next", systemImage: "text.insert")
+                if !DownloadManager.shared.isDownloaded(song.id) {
+                    Button {
+                        Task { await DownloadManager.shared.downloadSong(song) }
+                    } label: {
+                        Label("Download", systemImage: "arrow.down.circle")
+                    }
                 }
-                Button { player.addToQueue(song) } label: {
-                    Label("Add to Queue", systemImage: "text.append")
-                }
-                Button { showAddToPlaylist = true } label: {
-                    Label("Add to Playlist", systemImage: "text.badge.plus")
-                }
-                Button {
-                    Task { await DownloadManager.shared.downloadSong(song) }
-                } label: {
-                    Label(DownloadManager.shared.isDownloaded(song.id) ? "Downloaded" : "Download",
-                          systemImage: DownloadManager.shared.isDownloaded(song.id) ? "checkmark.circle.fill" : "arrow.down.circle")
-                }
-                .disabled(DownloadManager.shared.isDownloaded(song.id))
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.title3)
