@@ -959,6 +959,11 @@
 				en,
 				Base,
 				fr,
+				it,
+				es,
+				de,
+				ca,
+				nl,
 			);
 			mainGroup = E10000050000000000000001;
 			productRefGroup = E10000050000000000000009 /* Products */;
