@@ -1382,12 +1382,14 @@ final class AudioPlayer {
         let defaults = UserDefaults.standard
         let plays = defaults.integer(forKey: "reviewPromptPlays") + 1
         defaults.set(plays, forKey: "reviewPromptPlays")
-        guard plays >= 20, !defaults.bool(forKey: "reviewPromptAsked"),
-              let scene = UIApplication.shared.connectedScenes
+        guard plays >= 20, !defaults.bool(forKey: "reviewPromptAsked") else { return }
+        Task { @MainActor in
+            guard let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
-        else { return }
-        defaults.set(true, forKey: "reviewPromptAsked")
-        AppStore.requestReview(in: scene)
+            else { return }
+            UserDefaults.standard.set(true, forKey: "reviewPromptAsked")
+            AppStore.requestReview(in: scene)
+        }
         #endif
     }
 
