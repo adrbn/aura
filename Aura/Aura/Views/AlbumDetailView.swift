@@ -20,8 +20,6 @@ struct AlbumDetailView: View {
                 List {
                     // Header with album art
                     VStack(spacing: 12) {
-                        Spacer().frame(height: 16)
-
                         CoverArtAsyncImage(coverArt: album.coverArt, size: 260)
                             .coverMenu(cornerRadius: 12, actions: [
                                 CoverMenuAction(title: String(localized: "Save Cover Art"),
@@ -128,6 +126,8 @@ struct AlbumDetailView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
                     }
+                    // The cover starts where a playlist's, a mix's and a radio's does.
+                    .padding(.top, 12)
                     .padding(.bottom, DetailListLayout.gap)
                     .frame(maxWidth: .infinity)
                     .listRowSeparator(.hidden)
