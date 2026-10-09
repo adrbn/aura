@@ -133,6 +133,9 @@ final class AudioPlayer {
     private var sleepTimerTask: Task<Void, Never>?
     /// Watches a play actually take effect — see `confirmPlaybackStarted`.
     private var playbackWatchdog: Task<Void, Never>?
+    /// When an interruption cut off a song that was playing; nil if it found us paused.
+    private var interruptedWhilePlayingAt: Date?
+    private var interruptionRecovery: Task<Void, Never>?
     private var playHistoryTask: Task<Void, Never>?
     /// Last fraction of the current song seen while playing, and whether it has been
     /// scrobbled — see `scrobbleIfDue`.
@@ -236,22 +239,52 @@ final class AudioPlayer {
         switch type {
         case .began:
             AppLogger.shared.log("🔇 Audio session interrupted — pausing")
-            DispatchQueue.main.async { self.pause() }
+            DispatchQueue.main.async {
+                let wasPlaying = self.isPlaying
+                self.pause()
+                // After the pause, which clears it: a pause of the user's own during the
+                // interruption must still cancel the resume.
+                self.interruptedWhilePlayingAt = wasPlaying ? Date() : nil
+            }
         case .ended:
             let optionsValue = info[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
             let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
-            let shouldResume = options.contains(.shouldResume)
-            AppLogger.shared.log("🔊 Interruption ended — \(shouldResume ? "resuming" : "staying paused")")
             DispatchQueue.main.async {
-                // Reclaim the session either way. Without `.shouldResume` we correctly stay
-                // paused, but the session stays dead too, and the *next* press of play
-                // would have been a silent no-op — which is how one voice message in
-                // another app used to end listening until the app was force-quit.
-                self.activateAudioSession()
-                if shouldResume { self.play() }
+                // A declined call ends without `.shouldResume` often enough that the flag
+                // alone left the music stopped. Something that cut us off mid-song and was
+                // over within a minute is a call turned down or a short clip, not the user
+                // moving on to something else, so that resumes too.
+                let brief = self.interruptedWhilePlayingAt.map { Date().timeIntervalSince($0) < 60 } ?? false
+                let shouldResume = options.contains(.shouldResume) || brief
+                self.interruptedWhilePlayingAt = nil
+                AppLogger.shared.log("🔊 Interruption ended — \(shouldResume ? "resuming" : "staying paused")")
+                self.reclaimSession(resuming: shouldResume)
             }
         @unknown default:
             break
+        }
+    }
+
+    /// Takes the session back once an interruption is over, and plays if asked to.
+    ///
+    /// Reclaimed either way: without it we correctly stay paused, but the session stays
+    /// dead too, and the *next* press of play would be a silent no-op — which is how one
+    /// voice message in another app used to end listening until the app was force-quit.
+    ///
+    /// Tried more than once because a call that has just ended still holds the audio
+    /// hardware for a moment, and the first claim is refused.
+    private func reclaimSession(resuming: Bool) {
+        interruptionRecovery?.cancel()
+        interruptionRecovery = Task { @MainActor [weak self] in
+            for attempt in 1...6 {
+                guard let self, !Task.isCancelled else { return }
+                if self.activateAudioSession() {
+                    if resuming { self.play() }
+                    return
+                }
+                AppLogger.shared.log("⏳ Session not handed back yet (attempt \(attempt))")
+                try? await Task.sleep(for: .milliseconds(500))
+            }
         }
     }
 
@@ -1488,6 +1521,8 @@ final class AudioPlayer {
     func pause() {
         AppLogger.shared.log("⏸ pause()")
         playbackWatchdog?.cancel()
+        interruptionRecovery?.cancel()
+        interruptedWhilePlayingAt = nil
         player?.pause(); isPlaying = false; publishPlaybackState(); updateLiveActivity()
     }
 
