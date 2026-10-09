@@ -136,6 +136,8 @@ final class AudioPlayer {
     /// When an interruption cut off a song that was playing; nil if it found us paused.
     private var interruptedWhilePlayingAt: Date?
     private var interruptionRecovery: Task<Void, Never>?
+    /// Set by an interruption: the player it leaves behind cannot be trusted to play again.
+    private var playerNeedsRebuild = false
     private var playHistoryTask: Task<Void, Never>?
     /// Last fraction of the current song seen while playing, and whether it has been
     /// scrobbled — see `scrobbleIfDue`.
@@ -242,6 +244,7 @@ final class AudioPlayer {
             DispatchQueue.main.async {
                 let wasPlaying = self.isPlaying
                 self.pause()
+                self.playerNeedsRebuild = true
                 // After the pause, which clears it: a pause of the user's own during the
                 // interruption must still cancel the resume.
                 self.interruptedWhilePlayingAt = wasPlaying ? Date() : nil
@@ -536,6 +539,7 @@ final class AudioPlayer {
 
     /// Load the stream URL and set up AVPlayer without starting playback
     private func preparePlayback(_ song: Song) {
+        playerNeedsRebuild = false
         if !song.isPreview { AudioCacheManager.shared.saveMetadata(song) }
         // Restored session (launch / server switch): warm its art too, so opening Now
         // Playing straight after launch is instant.
@@ -1458,8 +1462,24 @@ final class AudioPlayer {
             publishPlaybackState()
             return
         }
+        rebuildPlayerIfInterrupted()
         player?.play(); isPlaying = true; publishPlaybackState(); updateLiveActivity()
         confirmPlaybackStarted()
+    }
+
+    /// Builds a fresh player, at the same position, for the first play after an interruption.
+    ///
+    /// A call can leave the player unable to play in ways it does not report: paused and
+    /// refusing, waiting for ever, or running in silence. Only the first of those can be
+    /// seen from outside, and what cured all three was relaunching the app — that is, a
+    /// new player. So the one an interruption leaves behind is never played again.
+    private func rebuildPlayerIfInterrupted() {
+        guard playerNeedsRebuild, let song = currentSong else { return }
+        playerNeedsRebuild = false
+        AppLogger.shared.log("🔁 First play after an interruption — fresh player at \(Int(currentTime))s")
+        let resume = currentTime
+        preparePlayback(song)
+        if resume > 1 { pendingSeekTime = resume }
     }
 
     /// Checks shortly after a play that sound is actually coming out, and rebuilds the
@@ -1512,6 +1532,15 @@ final class AudioPlayer {
             return true
         } catch {
             AppLogger.shared.log("❌ Could not claim the audio session: \(error.localizedDescription)")
+        }
+        // Once more from scratch: a session a call walked over sometimes only comes back
+        // after its category is stated again.
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+            return true
+        } catch {
+            AppLogger.shared.log("❌ Still refused after restating the category: \(error.localizedDescription)")
             return false
         }
         #else
