@@ -1,0 +1,29 @@
+/* Siri shortcut phrases. Keys repeat the phrases declared in AuraAppShortcuts; every
+   phrase must contain ${applicationName} or the system rejects it. */
+
+"Play ${applicationName}" = "Riproduci ${applicationName}";
+"Play music on ${applicationName}" = "Metti della musica su ${applicationName}";
+"Start ${applicationName}" = "Avvia ${applicationName}";
+"Play or pause ${applicationName}" = "Riproduci o metti in pausa ${applicationName}";
+"Pause ${applicationName}" = "Metti in pausa ${applicationName}";
+"Resume ${applicationName}" = "Riprendi ${applicationName}";
+"Skip in ${applicationName}" = "Salta su ${applicationName}";
+"Next track in ${applicationName}" = "Brano successivo su ${applicationName}";
+"Play the next song in ${applicationName}" = "Riproduci il brano successivo su ${applicationName}";
+"Previous track in ${applicationName}" = "Brano precedente su ${applicationName}";
+"Go back a track in ${applicationName}" = "Torna al brano precedente su ${applicationName}";
+"Shuffle ${applicationName}" = "Riproduzione casuale su ${applicationName}";
+"Toggle shuffle in ${applicationName}" = "Cambia la riproduzione casuale su ${applicationName}";
+"Repeat in ${applicationName}" = "Ripetizione su ${applicationName}";
+"Change repeat in ${applicationName}" = "Cambia la ripetizione su ${applicationName}";
+"Play ${playlist} in ${applicationName}" = "Riproduci ${playlist} su ${applicationName}";
+"Play the ${playlist} playlist in ${applicationName}" = "Riproduci la playlist ${playlist} su ${applicationName}";
+"Play the album ${album} in ${applicationName}" = "Riproduci l'album ${album} su ${applicationName}";
+"Play ${album} album in ${applicationName}" = "Metti l'album ${album} su ${applicationName}";
+"Favourite this in ${applicationName}" = "Aggiungi ai preferiti su ${applicationName}";
+"Favorite this song in ${applicationName}" = "Aggiungi questo brano ai preferiti su ${applicationName}";
+"Like this in ${applicationName}" = "Mi piace questo brano su ${applicationName}";
+"Play my favourites in ${applicationName}" = "Riproduci i miei preferiti su ${applicationName}";
+"Play my favorites in ${applicationName}" = "Metti i miei preferiti su ${applicationName}";
+"Shuffle my favourites in ${applicationName}" = "Mescola i miei preferiti su ${applicationName}";
+"Shuffle my favorites in ${applicationName}" = "Riproduci i miei preferiti in ordine casuale su ${applicationName}";

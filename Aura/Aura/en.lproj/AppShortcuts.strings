@@ -33,3 +33,7 @@
 "Favourite this in ${applicationName}" = "Favourite this in ${applicationName}";
 "Favorite this song in ${applicationName}" = "Favorite this song in ${applicationName}";
 "Like this in ${applicationName}" = "Like this in ${applicationName}";
+"Play my favourites in ${applicationName}" = "Play my favourites in ${applicationName}";
+"Play my favorites in ${applicationName}" = "Play my favorites in ${applicationName}";
+"Shuffle my favourites in ${applicationName}" = "Shuffle my favourites in ${applicationName}";
+"Shuffle my favorites in ${applicationName}" = "Shuffle my favorites in ${applicationName}";

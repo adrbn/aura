@@ -1,0 +1,29 @@
+/* Siri shortcut phrases. Keys repeat the phrases declared in AuraAppShortcuts; every
+   phrase must contain ${applicationName} or the system rejects it. */
+
+"Play ${applicationName}" = "Speel ${applicationName}";
+"Play music on ${applicationName}" = "Speel muziek af met ${applicationName}";
+"Start ${applicationName}" = "Start ${applicationName}";
+"Play or pause ${applicationName}" = "Speel af of pauzeer ${applicationName}";
+"Pause ${applicationName}" = "Pauzeer ${applicationName}";
+"Resume ${applicationName}" = "Hervat ${applicationName}";
+"Skip in ${applicationName}" = "Sla over in ${applicationName}";
+"Next track in ${applicationName}" = "Volgend nummer in ${applicationName}";
+"Play the next song in ${applicationName}" = "Speel het volgende nummer in ${applicationName}";
+"Previous track in ${applicationName}" = "Vorig nummer in ${applicationName}";
+"Go back a track in ${applicationName}" = "Ga een nummer terug in ${applicationName}";
+"Shuffle ${applicationName}" = "Shuffle ${applicationName}";
+"Toggle shuffle in ${applicationName}" = "Zet shuffle om in ${applicationName}";
+"Repeat in ${applicationName}" = "Herhaal in ${applicationName}";
+"Change repeat in ${applicationName}" = "Wijzig herhalen in ${applicationName}";
+"Play ${playlist} in ${applicationName}" = "Speel ${playlist} in ${applicationName}";
+"Play the ${playlist} playlist in ${applicationName}" = "Speel de afspeellijst ${playlist} in ${applicationName}";
+"Play the album ${album} in ${applicationName}" = "Speel het album ${album} in ${applicationName}";
+"Play ${album} album in ${applicationName}" = "Speel ${album} als album in ${applicationName}";
+"Favourite this in ${applicationName}" = "Voeg toe aan favorieten in ${applicationName}";
+"Favorite this song in ${applicationName}" = "Voeg dit nummer toe aan favorieten in ${applicationName}";
+"Like this in ${applicationName}" = "Ik vind dit nummer leuk in ${applicationName}";
+"Play my favourites in ${applicationName}" = "Speel mijn favorieten in ${applicationName}";
+"Play my favorites in ${applicationName}" = "Speel mijn favoriete nummers in ${applicationName}";
+"Shuffle my favourites in ${applicationName}" = "Shuffle mijn favorieten in ${applicationName}";
+"Shuffle my favorites in ${applicationName}" = "Speel mijn favorieten in willekeurige volgorde in ${applicationName}";
