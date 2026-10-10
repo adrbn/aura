@@ -132,6 +132,9 @@ final class AudioPlayer {
     }
     private var sleepTimerTask: Task<Void, Never>?
     /// Watches a play actually take effect — see `confirmPlaybackStarted`.
+    /// Called when something starts from a named source — an album, a playlist, an artist.
+    /// The phone tells Siri, which is how it comes to offer it again.
+    var sourceStarted: ((PlaybackSource) -> Void)?
     private var playbackWatchdog: Task<Void, Never>?
     /// When an interruption cut off a song that was playing; nil if it found us paused.
     private var interruptedWhilePlayingAt: Date?
@@ -636,6 +639,7 @@ final class AudioPlayer {
     func playSong(_ song: Song, fromQueue songs: [Song]? = nil, startIndex: Int = 0, source: PlaybackSource = .unknown) {
         AppLogger.shared.log("🎵 playSong: \(song.title) | queue: \(songs?.count ?? 1) songs | idx: \(startIndex)")
         if case .radio = source {} else { isRadioMode = false }
+        if source != playbackSource { sourceStarted?(source) }
         self.playbackSource = source
         self.autoplayFromIndex = nil  // Reset autoplay boundary
         // A picked song isn't "back" from anywhere — always slide in forward.
