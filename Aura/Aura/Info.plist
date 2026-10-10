@@ -13,6 +13,25 @@
 	<string>Aura saves the covers you choose to keep to your photo library.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Aura connects to the music server on your local network that you configure.</string>
+	<key>NSSiriUsageDescription</key>
+	<string>Aura uses Siri so you can ask for an artist, an album, a song or a playlist out loud.</string>
+	<key>INIntentsSupported</key>
+	<array>
+		<string>INPlayMediaIntent</string>
+	</array>
+	<key>INSupportedMediaCategories</key>
+	<array>
+		<string>INMediaCategoryMusic</string>
+	</array>
+	<key>INAlternativeAppNames</key>
+	<array>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>Ora</string>
+			<key>INAlternativeAppNamePronunciationHint</key>
+			<string>ora</string>
+		</dict>
+	</array>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>

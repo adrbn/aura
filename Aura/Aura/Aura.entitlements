@@ -10,6 +10,9 @@
 	<!-- Granted by Apple on 2026-09-28: the CarPlay audio app scene (CarPlaySceneDelegate). -->
 	<key>com.apple.developer.carplay-audio</key>
 	<true/>
+	<!-- Asking for music by name ("play Kygo on Aura") goes through SiriKit. -->
+	<key>com.apple.developer.siri</key>
+	<true/>
 	<!-- Shared with the widget extension, which shows the song this writes. -->
 	<key>com.apple.security.application-groups</key>
 	<array>

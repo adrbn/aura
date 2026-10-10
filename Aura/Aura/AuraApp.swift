@@ -1,5 +1,6 @@
 import SwiftUI
 import CarPlay
+import Intents
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     /// Stored when iOS relaunches us to deliver background download events;
@@ -24,6 +25,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     /// Always upright: the landscape clock turns its own content rather than the window.
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         .portrait
+    }
+
+    /// "Joue du Kygo sur Aura". Asking for music by name is SiriKit's, not App Shortcuts':
+    /// a shortcut phrase only matches values listed in advance, and nobody lists a library.
+    func application(_ application: UIApplication, handlerFor intent: INIntent) -> Any? {
+        intent is INPlayMediaIntent ? SpokenRequestHandler() : nil
     }
 
     func application(_ application: UIApplication,
@@ -114,6 +121,7 @@ struct AuraApp: App {
                 // library might have changed — a playlist made on the web will not be
                 // sayable until this runs.
                 AuraAppShortcuts.updateAppShortcutParameters()
+                SpokenRequestHandler.prepare()
                 // Wordmark finishes its entrance at ~1.5s (0.3s delay + 1.2s ease); hold a
                 // beat past that, then fade. 2.5s felt draggy.
                 try? await Task.sleep(for: .seconds(1.8))
@@ -344,5 +352,142 @@ struct SplitMix64 {
         z = (z ^ (z >> 27)) &* 0x94d049bb133111eb
         z = z ^ (z >> 31)
         return z
+    }
+}
+
+// MARK: - Music asked for by name
+
+/// Answers "play <anything> on Aura": an artist, an album, a song or a playlist, found by
+/// searching the server for what was said.
+final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling {
+    private enum Kind: String { case artist, album, song, playlist, resume }
+
+    /// Asks once for Siri, then teaches it the names it would otherwise mishear — "Kygo"
+    /// is not a word it knows until it has been told it is an artist here.
+    static func prepare() {
+        INPreferences.requestSiriAuthorization { status in
+            guard status == .authorized else { return }
+            Task {
+                guard let server = ServerManager.shared.currentServer else { return }
+                let artists = (try? await SubsonicClient.shared.getArtists(server: server)) ?? []
+                let playlists = (try? await SubsonicClient.shared.getPlaylists(server: server)) ?? []
+                INVocabulary.shared().setVocabularyStrings(
+                    NSOrderedSet(array: artists.map(\.name)), of: .mediaMusicArtistName)
+                INVocabulary.shared().setVocabularyStrings(
+                    NSOrderedSet(array: playlists.map(\.name)), of: .mediaPlaylistTitle)
+            }
+        }
+    }
+
+    func resolveMediaItems(for intent: INPlayMediaIntent) async -> [INPlayMediaMediaItemResolutionResult] {
+        let search = intent.mediaSearch
+        let said = [search?.mediaName, search?.artistName, search?.albumName]
+            .compactMap { $0 }.first { !$0.isEmpty }
+        AppLogger.shared.log("🗣 Siri asked for \(said ?? "music") (type \(search?.mediaType.rawValue ?? 0))")
+        // Nothing named: "play Aura", "play some music on Aura".
+        guard let said else { return [.success(with: Self.item(.resume, id: "", title: "Aura"))] }
+        guard let server = ServerManager.shared.currentServer,
+              let found = try? await SubsonicClient.shared.search3(
+                server: server, query: said, artistCount: 5, albumCount: 5, songCount: 5)
+        else { return [.unsupported()] }
+        let playlists = ((try? await SubsonicClient.shared.getPlaylists(server: server)) ?? [])
+            .filter { Self.same($0.name, said) }
+
+        let artists = (found.artist ?? []).map { Self.item(.artist, id: $0.id, title: $0.name) }
+        let albums = (found.album ?? []).map { Self.item(.album, id: $0.id, title: $0.name) }
+        let songs = (found.song ?? []).map { Self.item(.song, id: $0.id, title: $0.title) }
+        let lists = playlists.map { Self.item(.playlist, id: $0.id, title: $0.name) }
+
+        // What Siri understood the request to be comes first; then whatever carries the
+        // exact name said; then the likeliest thing meant by a bare name, the artist.
+        let typed: [INMediaItem]
+        switch search?.mediaType {
+        case .artist: typed = artists
+        case .album: typed = albums
+        case .song: typed = songs
+        case .playlist: typed = lists
+        default: typed = []
+        }
+        let all = artists + lists + albums + songs
+        let exact = all.filter { Self.same($0.title ?? "", said) }
+        guard let pick = typed.first ?? exact.first ?? all.first else { return [.unsupported()] }
+        return [.success(with: pick)]
+    }
+
+    func handle(intent: INPlayMediaIntent) async -> INPlayMediaIntentResponse {
+        guard let item = intent.mediaItems?.first, let identifier = item.identifier,
+              let colon = identifier.firstIndex(of: ":"),
+              let kind = Kind(rawValue: String(identifier[..<colon])) else {
+            return INPlayMediaIntentResponse(code: .failure, userActivity: nil)
+        }
+        let id = String(identifier[identifier.index(after: colon)...])
+        let name = item.title ?? ""
+        let shuffled = intent.playShuffled ?? false
+        if kind == .resume {
+            await AudioPlayer.shared.playSomething()
+            return INPlayMediaIntentResponse(code: .success, userActivity: nil)
+        }
+        guard let server = ServerManager.shared.currentServer else {
+            return INPlayMediaIntentResponse(code: .failureNoUnplayedContent, userActivity: nil)
+        }
+        let client = SubsonicClient.shared
+        var songs: [Song] = []
+        var source = PlaybackSource.unknown
+        // An artist is always shuffled: there is no order to a person's songs.
+        var shuffle = shuffled
+        switch kind {
+        case .artist:
+            let top = (try? await client.getTopSongs(server: server, artistName: name)) ?? []
+            let rest = ((try? await client.search3(server: server, query: name, artistCount: 0,
+                                                   albumCount: 0, songCount: 100))?.song ?? [])
+                .filter { ($0.artist ?? "").localizedCaseInsensitiveContains(name) }
+            let known = Set(top.map(\.id))
+            songs = top + rest.filter { !known.contains($0.id) }
+            source = .artist(id: id, name: name)
+            shuffle = true
+        case .album:
+            songs = (try? await client.getAlbum(server: server, id: id))?.song ?? []
+            source = .album(id: id, name: name)
+        case .playlist:
+            songs = (try? await client.getPlaylist(server: server, id: id))?.entry ?? []
+            source = .playlist(id: id, name: name)
+        case .song:
+            songs = ((try? await client.search3(server: server, query: name, artistCount: 0,
+                                                albumCount: 0, songCount: 20))?.song ?? [])
+                .filter { $0.id == id }
+            source = .search(query: name)
+        case .resume:
+            break
+        }
+        guard !songs.isEmpty else {
+            AppLogger.shared.log("🗣 Nothing to play for \(identifier)")
+            return INPlayMediaIntentResponse(code: .failureNoUnplayedContent, userActivity: nil)
+        }
+        let queue = songs, from = source, mixed = shuffle
+        await MainActor.run {
+            if mixed {
+                AudioPlayer.shared.playShuffled(queue, source: from)
+            } else {
+                AudioPlayer.shared.playSong(queue[0], fromQueue: queue, startIndex: 0, source: from)
+            }
+        }
+        return INPlayMediaIntentResponse(code: .success, userActivity: nil)
+    }
+
+    private static func item(_ kind: Kind, id: String, title: String) -> INMediaItem {
+        let type: INMediaItemType
+        switch kind {
+        case .artist: type = .artist
+        case .album: type = .album
+        case .song: type = .song
+        case .playlist: type = .playlist
+        case .resume: type = .music
+        }
+        return INMediaItem(identifier: "\(kind.rawValue):\(id)", title: title, type: type, artwork: nil)
+    }
+
+    /// "kygo" is "Kygo", and "beyonce" is "Beyoncé".
+    private static func same(_ a: String, _ b: String) -> Bool {
+        a.compare(b, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
     }
 }
