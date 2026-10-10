@@ -361,6 +361,7 @@ struct SplitMix64 {
 /// searching the server for what was said.
 final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling {
     private enum Kind: String { case artist, album, song, playlist, resume }
+    private static let vocabularyLimit = 1000
 
     /// Asks once for Siri, then teaches it the names it would otherwise mishear — "Kygo"
     /// is not a word it knows until it has been told it is an artist here.
@@ -371,8 +372,14 @@ final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling {
                 guard let server = ServerManager.shared.currentServer else { return }
                 let artists = (try? await SubsonicClient.shared.getArtists(server: server)) ?? []
                 let playlists = (try? await SubsonicClient.shared.getPlaylists(server: server)) ?? []
+                // The system weighs the list by its order and may not read a long one to
+                // the end, so favourites lead and a large library is cut where it stops
+                // being a vocabulary. A name left out can still be asked for — it is only
+                // less likely to be heard right.
+                let favourites = (try? await SubsonicClient.shared.getStarred2(server: server))?.artist ?? []
+                let names = (favourites + artists).map(\.name).prefix(Self.vocabularyLimit)
                 INVocabulary.shared().setVocabularyStrings(
-                    NSOrderedSet(array: artists.map(\.name)), of: .mediaMusicArtistName)
+                    NSOrderedSet(array: Array(names)), of: .mediaMusicArtistName)
                 INVocabulary.shared().setVocabularyStrings(
                     NSOrderedSet(array: playlists.map(\.name)), of: .mediaPlaylistTitle)
             }
