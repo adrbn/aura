@@ -167,7 +167,7 @@ Initial public release. Native SwiftUI music client for Navidrome and Subsonic-A
 ### Fixed — Appearance
 - The Add to Playlist sheet lists on the page's own dark background, like its header, instead of the system grey
 - With several Get It fetches running, their cards sit side by side, one on screen at a time: a swipe slides the next one in, settling with a small bounce and giving a little past either end, and the card says which it is (2/3) — instead of one card and a "+2"
-- Home's title no longer carries the logs button: the logs are in Settings → Beta Features, under View Logs
+- Home's title no longer carries the logs button: the logs are in Settings → Developer Options, under View Logs
 - Album pages close their song list with "2024 · 12 songs · 48 min", as a sleeve does, instead of a lone "12 Songs" adrift above the first song
 - Albums the server has no artwork for show their real cover: Navidrome's generic record — which it now resizes to order, so it slipped past the size test — is recognised by eye at any size, and the album is looked up in Deezer's catalogue by artist and title. Aura's own stand-in only appears when the catalogue has nothing either. Covers already cached as the record are cleared once
 
@@ -201,8 +201,8 @@ Initial public release. Native SwiftUI music client for Navidrome and Subsonic-A
 ### Added — Playback
 - Replay gain support
 - Streaming at 128 / 192 / 320 kbps plus original lossless (FLAC, ALAC, others)
-- Smart transcoding: MP3, AAC, OGG, or server-decided
-- 5-band parametric equalizer with 15 presets plus custom curves
+- Transcoding to MP3 at the bitrate picked, or the original file untouched
+- 5-band equalizer with 15 presets plus a custom curve
 - Sleep timer, including "stop after this song"
 - Full queue management: play next, add to queue, drag-reorder, auto-queue
 - Shuffle and three repeat modes
@@ -271,4 +271,4 @@ Initial public release. Native SwiftUI music client for Navidrome and Subsonic-A
 
 ### Developer
 - Split build configurations: `Release` (sideload IPA) and `Release-AppStore` (App Store; optional self-hosted integrations are excluded from the App Store configuration via compile flags)
-- MIT licensed. Source available on GitHub.
+- GPL-3.0 licensed. Source available on GitHub.
