@@ -303,6 +303,7 @@ private struct LandscapeLyrics: View {
             ForEach(max(anchor - 1, 0)...min(anchor + 1, player.lyrics.count - 1), id: \.self) { index in
                 let isCurrent = index == anchor && sung
                 line(player.lyrics[index], isCurrent: isCurrent)
+                    .scaleEffect(isCurrent ? 1 : 0.7)
                     .opacity(isCurrent ? 1 : 0.28)
                     .blur(radius: isCurrent ? 0 : 3)
                     .offset(y: CGFloat(index - anchor) * gap)
@@ -318,10 +319,11 @@ private struct LandscapeLyrics: View {
     private func line(_ line: LyricsLine, isCurrent: Bool) -> some View {
         VStack(spacing: 6) {
             Text(line.text)
-                .font(.system(size: isCurrent ? 34 : 24, weight: .bold))
+                // One size for every line, as in portrait: a line set smaller re-wraps
+                // when it becomes the sung one. The neighbours are scaled down instead.
+                .font(.system(size: 34, weight: .bold))
                 .foregroundStyle(.white)
-                .lineLimit(2)
-                .minimumScaleFactor(0.6)
+                .lineLimit(3)
             if isCurrent, appSettings.translateLyrics,
                let translation = translator.lines[line.text], !translation.isEmpty {
                 Text(translation)
