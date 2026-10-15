@@ -203,6 +203,11 @@ final class AudioPlayer {
     /// One-shot: a saved position to seek to as soon as the restored item is ready to play.
     private var pendingSeekTime: TimeInterval?
     private var consecutiveFailures = 0
+    /// Songs the player refused twice this session. Going back steps over them: landing on
+    /// one again only skipped forward again, so the song before it could not be reached.
+    private var failedSongIds: Set<String> = []
+    /// The song already given its second try, so a refusal is retried once, not for ever.
+    private var retriedSongId: String?
     /// One-shot per track: prevents repeated offline error toasts/skips from the
     /// multiple AVPlayerItem failure signals a single dead item can emit.
     private var playbackErrorHandled = false
@@ -1265,6 +1270,8 @@ final class AudioPlayer {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     self.consecutiveFailures = 0
+                    self.failedSongIds.remove(song.id)
+                    if self.retriedSongId == song.id { self.retriedSongId = nil }
                     self.isBuffering = false
                     // Resume from the position saved at last quit (one-shot). Applied here
                     // because seeking before the item is ready is unreliable.
@@ -1282,6 +1289,23 @@ final class AudioPlayer {
                     self.isBuffering = false
                     if self.isEffectivelyOffline {
                         self.handleOfflinePlaybackError()
+                        return
+                    }
+                    // Once more before giving up, without the cached copy: most refusals
+                    // are a broken cache file or a stream cut short, not a song that can't play.
+                    if self.retriedSongId != song.id, !song.isPreview {
+                        AppLogger.shared.log("🔁 Retrying failed track once, without its cached copy: \(song.title)")
+                        self.retriedSongId = song.id
+                        AudioCacheManager.shared.discardCached(songId: song.id)
+                        self.startPlayback(song)
+                        return
+                    }
+                    self.failedSongIds.insert(song.id)
+                    // Reached by going back: carry on backwards, where the listener was heading.
+                    if self.songChangeDirection < 0, self.queueIndex > 0, self.queue.indices.contains(self.queueIndex),
+                       self.queue[self.queueIndex].id == song.id {
+                        ToastManager.shared.show(String(localized: "Couldn't play \"\(song.title)\" — skipped"), icon: "backward.fill")
+                        self.previous(restartsFirst: false)
                         return
                     }
                     self.consecutiveFailures += 1
@@ -1659,6 +1683,8 @@ final class AudioPlayer {
         // going back from the first track dead-ended on a restart instead, so an album that
         // had just wrapped from its last track to its first could not be stepped back into.
         var targetIndex = queueIndex > 0 ? queueIndex - 1 : queue.count - 1
+        // Over the songs that already failed, back to the one before them.
+        while targetIndex > 0, failedSongIds.contains(queue[targetIndex].id) { targetIndex -= 1 }
         // Offline: walk further back past songs that can't play locally, so
         // "previous" never jumps forward via the startPlayback skip guard.
         if isEffectivelyOffline {

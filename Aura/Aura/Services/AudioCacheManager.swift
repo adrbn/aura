@@ -374,6 +374,16 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
         return cacheDirectory.appendingPathComponent("\(songId)\(suffix)\(mode).audio")
     }
 
+    /// Throws away every cached copy of a song, whatever its quality: a copy the player
+    /// refused may be a broken one, and it would be served again on the next try.
+    func discardCached(songId: String) {
+        let fm = FileManager.default
+        let files = (try? fm.contentsOfDirectory(atPath: cacheDirectory.path)) ?? []
+        for name in files where name.hasPrefix(songId + "_") && name.hasSuffix(".audio") {
+            try? fm.removeItem(at: cacheDirectory.appendingPathComponent(name))
+        }
+    }
+
     func isCached(songId: String, bitRate: Int?, transcoded: Bool) -> Bool {
         FileManager.default.fileExists(atPath: cacheFileURL(songId: songId, bitRate: bitRate, transcoded: transcoded).path)
     }
