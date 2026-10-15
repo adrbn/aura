@@ -77,12 +77,13 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **A stream cache.** What you stream is kept as it plays, up to a size you set, and an offline mode you switch on stays on across launches.
 - **Several servers**, switched from the Home title, and libraries split across music folders. A server can have a second, home-network address, used whenever it answers.
 - **A quality for cellular**, apart from the one on Wi-Fi, and the queue saved on your server when you leave the app, for another client to pick up.
-- **In English and in French.**
+- **In seven languages:** English, French, Italian, Spanish, German, Catalan and Dutch.
 - **On the Lock Screen**, in Control Center and in the Dynamic Island, with AirPlay.
+- **CarPlay** (App Store build): Home with the mixes and the Radar, your playlists, the newest albums, an Artists list, a Downloaded tab that plays without a connection, and a Radio button in Now Playing that follows the song with similar music.
 - **Siri and Shortcuts** in the app's seven languages: play an artist, album, song, playlist or genre by name, play your favourites, queue a song next or later, like the song playing, and pause, skip, go back, shuffle or repeat.
 - **Share links.** Share a song as links that open it on other services.
 - **Yours to arrange.** Light or dark, any accent colour, and tabs and Home sections in the order you choose.
-- **A nightstand clock.** Switch it on, turn the phone sideways while music plays, and the artwork, the time or the lyrics fill the screen.
+- **A landscape clock.** Switch it on in Settings and turn the phone sideways while music plays: the time large, the song beside it, and a tap on the cover for the lyrics, one line at a time.
 
 ## Screenshots
 

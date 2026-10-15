@@ -79,12 +79,13 @@ reprend le tout.
 - **Un cache de streaming.** Ce que vous écoutez en streaming est gardé au fil de la lecture, jusqu'à la taille que vous fixez, et un mode hors ligne que vous activez le reste d'un lancement à l'autre.
 - **Plusieurs serveurs**, qu'on change depuis le titre de l'accueil, et des bibliothèques réparties en dossiers de musique. Un serveur peut avoir une seconde adresse, celle de la maison, utilisée dès qu'elle répond.
 - **Une qualité pour le réseau cellulaire**, distincte de celle du Wi-Fi, et la file d'attente enregistrée sur votre serveur quand vous quittez l'app, pour qu'un autre client la reprenne.
-- **En français et en anglais.**
+- **En sept langues :** français, anglais, italien, espagnol, allemand, catalan et néerlandais.
 - **Sur l'écran verrouillé**, dans le Centre de contrôle et dans la Dynamic Island, avec AirPlay.
+- **CarPlay** (version App Store) : l'accueil avec les mix et le Radar, vos playlists, les derniers albums, une liste d'artistes, un onglet Téléchargé qui joue sans connexion, et un bouton Radio dans En cours de lecture qui enchaîne une musique proche du morceau.
 - **Siri et Raccourcis** dans les sept langues de l'app : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, lancer vos favoris, mettre un morceau à suivre ou dans la file, aimer le morceau en cours, et lecture, pause, suivant, précédent, aléatoire ou répétition.
 - **Des liens de partage.** Partagez un morceau sous forme de liens qui l'ouvrent sur d'autres services.
 - **À votre goût.** Clair ou sombre, la couleur d'accent de votre choix, et les onglets et les sections de l'accueil dans l'ordre que vous voulez.
-- **Une horloge de chevet** (l'horloge en paysage). Activez-la, tournez le téléphone sur le côté pendant la lecture, et la pochette, l'heure ou les paroles remplissent l'écran.
+- **Une horloge en paysage.** Activez-la dans les Réglages et tournez le téléphone sur le côté pendant la lecture : l'heure en grand, le morceau à côté, et un tap sur la pochette pour les paroles, une ligne à la fois.
 
 ## Captures d'écran
 
