@@ -4,6 +4,10 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- WMA, APE, WavPack, DSD and other files the iPhone can't read now play: your server turns them into MP3 at every quality, Lossless included, for streaming and downloads.
+
 ## [1.2.0] — 2026-10-15 (sent to App Review; the sideload IPA is out)
 
 - Ask Siri for an artist, an album, a song, a playlist or a genre by name, and Aura plays it. Siri can also play your favourites, queue a song next or later, and like the song playing.
