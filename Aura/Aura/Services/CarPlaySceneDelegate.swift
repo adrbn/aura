@@ -4,7 +4,7 @@ import UIKit
 /// The car's screen: the phone's library to browse (`CarPlayBrowser`) and the system's Now
 /// Playing, set up as Aura's.
 @MainActor
-final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate {
+final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate, CPInterfaceControllerDelegate {
     private var interfaceController: CPInterfaceController?
     private var browser: CarPlayBrowser?
     private var nowPlaying: CarPlayNowPlaying?
@@ -16,6 +16,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         let browser = CarPlayBrowser(interfaceController: interfaceController)
         self.browser = browser
         nowPlaying = CarPlayNowPlaying(browser: browser)
+        interfaceController.delegate = self
         interfaceController.setRootTemplate(browser.tabBar(), animated: false, completion: nil)
     }
 
@@ -26,6 +27,10 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         nowPlaying = nil
         browser = nil
         self.interfaceController = nil
+    }
+
+    nonisolated func templateWillAppear(_ aTemplate: CPTemplate, animated: Bool) {
+        MainActor.assumeIsolated { browser?.refreshDownloadedIfShown(aTemplate) }
     }
 }
 
@@ -70,7 +75,14 @@ final class CarPlayNowPlaying: NSObject, CPNowPlayingTemplateObserver {
         heart.isEnabled = song.map { !$0.isPreview } ?? false
         let shuffle = CPNowPlayingShuffleButton { [weak self] _ in self?.player.toggleShuffle() }
         let repeating = CPNowPlayingRepeatButton { [weak self] _ in self?.player.cycleRepeat() }
-        template.updateNowPlayingButtons([heart, shuffle, repeating])
+        // A radio from the song playing, which then plays on after it.
+        let radioImage = UIImage(systemName: "dot.radiowaves.left.and.right",
+                                 withConfiguration: UIImage.SymbolConfiguration(weight: .semibold)) ?? UIImage()
+        let radio = CPNowPlayingImageButton(image: radioImage) { [weak self] _ in
+            Task { await self?.player.continueAsRadio() }
+        }
+        radio.isEnabled = song.map { !$0.isPreview } ?? false && !player.isEffectivelyOfflineForCar
+        template.updateNowPlayingButtons([heart, radio, shuffle, repeating])
         template.isUpNextButtonEnabled = !player.userQueue.isEmpty || player.queueIndex + 1 < player.queue.count
         template.isAlbumArtistButtonEnabled = song?.albumId != nil
         browser.markPlaying()

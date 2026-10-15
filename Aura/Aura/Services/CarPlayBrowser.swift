@@ -20,7 +20,7 @@ final class CarPlayBrowser {
     }
 
     func tabBar() -> CPTabBarTemplate {
-        let tabs = [home(), playlists(), library()]
+        let tabs = [home(), playlists(), library(), downloaded()]
         return CPTabBarTemplate(templates: Array(tabs.prefix(Int(CPTabBarTemplate.maximumTabCount))))
     }
 
@@ -80,17 +80,96 @@ final class CarPlayBrowser {
         let shuffle = action(String(localized: "Shuffle Library"), symbol: "shuffle") { [weak self] in
             await self?.shuffleLibrary()
         }
-        template.updateSections([CPListSection(items: [shuffle])])
+        let artists = action(String(localized: "Artists"), symbol: "music.mic") { [weak self] in
+            await self?.showArtists()
+        }
+        template.updateSections([CPListSection(items: [shuffle, artists])])
         Task {
             let newest = await albums("newest", count: 24)
             guard !newest.isEmpty else { return }
             fill(template, with: [
-                CPListSection(items: [shuffle]),
+                CPListSection(items: [shuffle, artists]),
                 CPListSection(items: newest.map(albumRow),
                               header: String(localized: "Recently Added"), sectionIndexTitle: nil),
             ])
         }
         return template
+    }
+
+    /// What this iPhone holds, for the road where the network drops: a shuffle of it all,
+    /// then its albums, newest first. Read again each time the tab is shown.
+    private func downloaded() -> CPListTemplate {
+        let template = tab(String(localized: "Downloaded"), symbol: "arrow.down.circle.fill")
+        fillDownloaded(template)
+        downloadedTab = template
+        return template
+    }
+
+    private weak var downloadedTab: CPListTemplate?
+
+    /// Called when the car shows a tab: the downloads may have grown since.
+    func refreshDownloadedIfShown(_ template: CPTemplate) {
+        guard let tab = downloadedTab, template === tab else { return }
+        fillDownloaded(tab)
+    }
+
+    private func fillDownloaded(_ template: CPListTemplate) {
+        let library = OfflineLibrary.shared
+        library.refresh()
+        let songs = library.songs
+        guard !songs.isEmpty else {
+            template.updateSections([])
+            template.emptyViewTitleVariants = [String(localized: "Download music on your iPhone to play it here without a connection")]
+            return
+        }
+        let shuffle = action(String(localized: "Shuffle Downloaded"), symbol: "shuffle") { [weak self] in
+            let item = WatchItem(kind: .mix, id: "downloaded", title: String(localized: "Downloaded"),
+                                 subtitle: "", coverArt: nil)
+            await self?.play(songs, of: item, at: 0, shuffled: true)
+        }
+        let albums = library.recentAlbums.map { album -> CPListItem in
+            let item = WatchItem(kind: .album, id: album.id, title: album.name, subtitle: album.artist,
+                                 coverArt: album.coverArt)
+            let row = CPListItem(text: album.name, detailText: album.artist,
+                                 image: CarPlayArtwork.glyph("square.stack"), accessoryImage: nil,
+                                 accessoryType: .disclosureIndicator)
+            row.handler = { [weak self] _, completion in
+                guard let self else { return completion() }
+                Task {
+                    await self.open(item, songs: album.songs)
+                    completion()
+                }
+            }
+            setCover(album.coverArt, on: row)
+            return row
+        }
+        fill(template, with: [
+            CPListSection(items: [shuffle]),
+            CPListSection(items: albums, header: String(localized: "Albums"), sectionIndexTitle: nil),
+        ])
+    }
+
+    /// The artists with the most albums, A to Z — the car can't list a whole library, and
+    /// nobody scrolls past a few hundred names at a red light.
+    private func showArtists() async {
+        guard let server = ServerManager.shared.currentServer else { return }
+        let all: [Artist]
+        do {
+            all = try await SubsonicClient.shared.getArtists(server: server)
+        } catch {
+            AppLogger.shared.log("🚗 Artists not loaded: \(error.localizedDescription)")
+            return
+        }
+        // ponytail: capped at the row limit by album count; a letter index page if it's missed.
+        let kept = all.sorted { ($0.albumCount ?? 0) > ($1.albumCount ?? 0) }
+            .prefix(Self.rowLimit)
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        let rows = kept.map { artist in
+            row(LibraryCatalog.item(artist), placeholder: "music.mic")
+        }
+        let template = CPListTemplate(title: String(localized: "Artists"), sections: [])
+        fill(template, with: [CPListSection(items: rows)])
+        interfaceController?.pushTemplate(template, animated: true, completion: nil)
     }
 
     private func tab(_ title: String, symbol: String) -> CPListTemplate {
@@ -112,6 +191,8 @@ final class CarPlayBrowser {
         }
         template.emptyViewTitleVariants = [ServerManager.shared.currentServer == nil
             ? String(localized: "Sign in to Aura on your iPhone")
+            : !ServerManager.shared.hasNetwork
+            ? String(localized: "No connection — your downloads are in Downloaded")
             : String(localized: "Nothing here yet")]
         template.updateSections(kept)
     }
@@ -172,8 +253,9 @@ final class CarPlayBrowser {
     /// A mix, a playlist, the favourites or an album, as its page on the phone: Play and
     /// Shuffle, then its songs. From iOS 26.4 the cover heads the page, Play and Shuffle
     /// under it as Apple Music has them; before, they are its first two rows.
-    func open(_ item: WatchItem, cover: UIImage? = nil) async {
-        let songs = await LibraryCatalog.songs(of: item)
+    func open(_ item: WatchItem, cover: UIImage? = nil, songs given: [Song]? = nil) async {
+        var songs = given ?? []
+        if given == nil { songs = await LibraryCatalog.songs(of: item) }
         // One song has no page to browse: it plays.
         if songs.count == 1 { return await play(songs, of: item, at: 0, shuffled: false) }
         // Under a header the name is already there, large: the bar above goes without it.

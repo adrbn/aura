@@ -846,6 +846,9 @@ final class AudioPlayer {
         AppSettings.shared.offlineMode || !ServerManager.shared.hasNetwork
     }
 
+    /// The car's radio needs the server, as the phone's does.
+    var isEffectivelyOfflineForCar: Bool { isEffectivelyOffline }
+
     /// True when the song can play without the server: a permanent download exists,
     /// or the stream cache has its audio on disk.
     func isPlayableOffline(_ song: Song) -> Bool {
@@ -2192,6 +2195,23 @@ final class AudioPlayer {
     }
 
     /// Play from the radio temp playlist at a specific index
+    /// The car's radio button: the song playing carries on, and the radio built from it
+    /// follows instead of the rest of the queue. No page to play it from, as on the phone.
+    func continueAsRadio() async {
+        guard let seed = currentSong, !seed.isPreview else { return }
+        startRadioFromSong(seed)
+        pendingRadioOpen = false
+        while isFetchingRadioSongs { try? await Task.sleep(for: .milliseconds(300)) }
+        guard currentSong?.id == seed.id, radioPlaylistSongs.first?.id == seed.id,
+              radioPlaylistSongs.count > 1 else { return }
+        queue = radioPlaylistSongs
+        originalQueue = radioPlaylistSongs
+        queueIndex = 0
+        isShuffled = false
+        isRadioMode = true
+        playbackSource = .radio(name: radioPlaylistName)
+    }
+
     func playRadioPlaylistFromIndex(_ index: Int) {
         guard index < radioPlaylistSongs.count else { return }
         let song = radioPlaylistSongs[index]
