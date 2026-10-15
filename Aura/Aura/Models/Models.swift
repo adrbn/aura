@@ -108,6 +108,8 @@ final class AppSettings {
     var slskdPassword: String = ""
     var showStatsOnHome: Bool = true
     var homeTitleStyle: HomeTitleStyle = .server
+    /// What Home says on top when its title is set to Custom.
+    var homeCustomTitle: String = ""
     var listDensity: ListDensity = .normal
     var appLanguage: AppLanguage = .english
     var showUpNext: Bool = true
@@ -209,6 +211,7 @@ final class AppSettings {
             }
             showStatsOnHome = decoded.showStatsOnHome ?? true
             homeTitleStyle = decoded.homeTitleStyle ?? (decoded.hideHomeTitle == true ? .none : (decoded.showServerName == false ? .home : .server))
+            homeCustomTitle = decoded.homeCustomTitle ?? ""
             listDensity = decoded.listDensity ?? .normal
             pinnedPlaylistOrder = decoded.pinnedPlaylistOrder ?? Array(pinnedPlaylistIds)
             appLanguage = decoded.appLanguage ?? .english
@@ -270,6 +273,7 @@ final class AppSettings {
             slskdPassword: "", // never persisted to UserDefaults — lives in the Keychain
             showStatsOnHome: showStatsOnHome,
             homeTitleStyle: homeTitleStyle,
+            homeCustomTitle: homeCustomTitle,
             listDensity: listDensity,
             pinnedPlaylistOrder: pinnedPlaylistOrder,
             appLanguage: appLanguage,
@@ -359,6 +363,7 @@ struct SettingsData: Codable {
     var showServerName: Bool?
     var hideHomeTitle: Bool?
     var homeTitleStyle: HomeTitleStyle?
+    var homeCustomTitle: String?
     var listDensity: ListDensity?
     var pinnedPlaylistOrder: [String]?
     var appLanguage: AppLanguage?
@@ -624,6 +629,7 @@ enum EQPreset: String, Codable, CaseIterable {
 enum HomeTitleStyle: String, Codable, CaseIterable {
     case server = "Server"
     case home = "Home"
+    case custom = "Custom"
     case none = "None"
 }
 

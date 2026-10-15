@@ -24,6 +24,9 @@ struct OfflineHomeView: View {
         switch appSettings.homeTitleStyle {
         case .none: return ""
         case .home: return String(localized: "Home")
+        case .custom:
+            let text = appSettings.homeCustomTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? String(localized: "Home") : text
         case .server:
             let name = serverManager.currentServer?.friendlyName ?? ""
             return !name.isEmpty && name != serverManager.currentServer?.username ? name : String(localized: "Home")

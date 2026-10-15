@@ -85,8 +85,13 @@ enum LyricsOnServer {
         let defaults = UserDefaults.standard
         let typed = (defaults.string(forKey: addressKey) ?? "").trimmingCharacters(in: .whitespaces)
         let address = typed.isEmpty ? suggestedAddress : typed
-        let user = defaults.string(forKey: userKey) ?? ""
-        guard !user.isEmpty, let password = KeychainHelper.loadPassword(for: passwordAccount),
+        // The music server's own sign-in unless another one was typed: File Browser usually
+        // runs beside it, often for the same person under the same name.
+        let server = ServerManager.shared.currentServer
+        let typedUser = defaults.string(forKey: userKey) ?? ""
+        let user = typedUser.isEmpty ? (server?.username ?? "") : typedUser
+        let password = typedUser.isEmpty ? server?.password : KeychainHelper.loadPassword(for: passwordAccount)
+        guard !user.isEmpty, let password, !password.isEmpty,
               let base = URL(string: address.contains("://") ? address : "http://\(address)")
         else { throw Failure.notSignedIn }
         var request = URLRequest(url: base.appendingPathComponent("api/login"))

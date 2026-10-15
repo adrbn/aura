@@ -41,6 +41,7 @@ struct SettingsView: View {
     @State private var lfUser = ""
     @State private var lfKey = ""
     @State private var lfDraftLoaded = false
+    @State private var lfEditing = false
     @State private var lfValidating = false
     @State private var lfResult: LastfmValidation?
 
@@ -407,93 +408,94 @@ struct SettingsView: View {
         }
     }
 
-    // Both fields are needed: the API key identifies the app to Last.fm, the username
-    // says whose scrobbles to read. Neither substitutes for the other.
-    private var lastfmDirty: Bool {
-        lfUser.trimmingCharacters(in: .whitespaces) != appSettings.lastfmUsername.trimmingCharacters(in: .whitespaces)
-        || lfKey != appSettings.lastfmApiKey
-    }
+    // Both are needed: the API key identifies the app to Last.fm, the username says whose
+    // scrobbles to read. Editing an account keeps its saved key unless a new one is pasted.
+    private var lfKeyToSave: String { lfKey.isEmpty ? appSettings.lastfmApiKey : lfKey }
     private var lastfmCanSave: Bool {
-        !lfUser.trimmingCharacters(in: .whitespaces).isEmpty && !lfKey.isEmpty && lastfmDirty && !lfValidating
+        !lfUser.trimmingCharacters(in: .whitespaces).isEmpty && !lfKeyToSave.isEmpty && !lfValidating
     }
+
+    /// Connected and not being changed: one line saying so, instead of the form.
+    private var lastfmShowsAccount: Bool { appSettings.lastfmConfigured && !lfEditing }
 
     private var lastfmSection: some View {
         Section {
-            HStack {
-                Text("Username")
-                Spacer()
-                TextField("Last.fm username", text: $lfUser)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(.secondary)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-            }
-            HStack {
-                Text("API Key")
-                Spacer()
-                // Plain TextField (not SecureField) so an already-saved key stays visible
-                // — SecureField renders empty for a pre-filled value, which looked like the
-                // key had vanished. It's the user's own read-only key, safe to display.
-                TextField("API key", text: $lfKey)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(.secondary)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-            }
-
-            // Save = validate against Last.fm, then persist only on success.
-            Button {
-                Task { await saveLastfm() }
-            } label: {
-                HStack {
-                    if lfValidating {
-                        ProgressView().controlSize(.small)
-                        Text("Checking…")
-                    } else {
-                        Image(systemName: "checkmark.circle")
-                        Text(appSettings.lastfmConfigured && !lastfmDirty ? "Saved" : "Save & Connect")
+            if lastfmShowsAccount {
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(appSettings.lastfmUsername)
+                        if case .ok(_, let scrobbles?) = lfResult {
+                            Text("\(scrobbles) scrobbles").font(.caption).foregroundStyle(.secondary)
+                        } else {
+                            Text("Connected — powers your Wrapped").font(.caption).foregroundStyle(.secondary)
+                        }
                     }
                     Spacer()
-                }
-                .foregroundStyle(lastfmCanSave ? accentColor : .secondary)
-            }
-            .disabled(!lastfmCanSave)
-
-            // Result of the last Save attempt / current connection state.
-            switch lfResult {
-            case .ok(let name, let scrobbles):
-                Label {
-                    if let scrobbles {
-                        Text("Connected as \(name) · \(scrobbles) scrobbles")
-                    } else {
-                        Text("Connected as \(name)")
+                    Button("Change") {
+                        lfUser = appSettings.lastfmUsername
+                        lfKey = ""
+                        lfResult = nil
+                        lfEditing = true
                     }
-                } icon: {
-                    Image(systemName: "checkmark.seal.fill")
+                    .foregroundStyle(accentColor)
+                    .buttonStyle(.borderless)
                 }
-                .font(.caption)
-                .foregroundStyle(.green)
-            case .failed(let message):
-                Label(message, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-            case nil:
-                if appSettings.lastfmConfigured {
-                    Label("Connected — powers your Wrapped", systemImage: "checkmark.seal.fill")
+                Button("Disconnect", role: .destructive) {
+                    appSettings.lastfmUsername = ""
+                    appSettings.lastfmApiKey = ""
+                    appSettings.save()
+                    lfUser = ""
+                    lfKey = ""
+                    lfResult = nil
+                }
+            } else {
+                TextField("Username", text: $lfUser)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                // Hidden as it's typed, like any key. Changing an account leaves it empty, and
+                // the saved key is kept unless another is pasted.
+                SecureField("API Key", text: $lfKey,
+                            prompt: Text(appSettings.lastfmConfigured ? "Keep the saved key" : "API Key"))
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+
+                Button {
+                    Task { await saveLastfm() }
+                } label: {
+                    HStack {
+                        if lfValidating {
+                            ProgressView().controlSize(.small)
+                            Text("Checking…")
+                        } else {
+                            Text("Connect")
+                        }
+                        Spacer()
+                    }
+                    .foregroundStyle(lastfmCanSave ? accentColor : .secondary)
+                }
+                .disabled(!lastfmCanSave)
+
+                if case .failed(let message) = lfResult {
+                    Label(message, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(.orange)
+                }
+                if lfEditing {
+                    Button("Cancel") { lfEditing = false; lfResult = nil }
+                        .foregroundStyle(.secondary)
                 }
             }
         } header: {
             Text("Last.fm")
         } footer: {
-            Text("Both fields are required: the API key identifies the app, the username says whose scrobbles to read. Create a free API key at last.fm/api/account/create, then tap Save & Connect.")
+            if !lastfmShowsAccount {
+                Text("Both fields are required: the API key identifies the app, the username says whose scrobbles to read. Create a free API key at last.fm/api/account/create.")
+            }
         }
         .onAppear {
-            // Seed the drafts from the saved values once, when the section first appears.
             guard !lfDraftLoaded else { return }
             lfUser = appSettings.lastfmUsername
-            lfKey = appSettings.lastfmApiKey
             lfDraftLoaded = true
         }
     }
@@ -556,12 +558,15 @@ struct SettingsView: View {
         lfResult = nil
         defer { lfValidating = false }
         do {
-            let account = try await LastfmService.shared.validate(username: lfUser, apiKey: lfKey)
+            let key = lfKeyToSave
+            let account = try await LastfmService.shared.validate(username: lfUser, apiKey: key)
             // Persist only after Last.fm confirms the pair works.
             appSettings.lastfmUsername = account.username
-            appSettings.lastfmApiKey = lfKey
+            appSettings.lastfmApiKey = key
             appSettings.save()
             lfUser = account.username
+            lfKey = ""
+            lfEditing = false
             lfResult = .ok(username: account.username, scrobbles: account.scrobbles)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
@@ -781,6 +786,10 @@ struct SettingsView: View {
                     Text(LocalizedStringKey(style.rawValue)).tag(style)
                 }
             }
+            if appSettings.homeTitleStyle == .custom {
+                TextField("Your title", text: $appSettings.homeCustomTitle)
+                    .autocorrectionDisabled()
+            }
             Toggle("Library Stats", isOn: $appSettings.showStatsOnHome)
             Toggle("Play Counts", isOn: $appSettings.showPlayCounts)
             NavigationLink("Section Order") {
@@ -789,95 +798,85 @@ struct SettingsView: View {
         }
     }
 
-    @State private var showOnboarding = false
-
     #if !APPSTORE_BUILD
     private var betaFeaturesSection: some View {
         Section {
-            Toggle("Enable Beta Features", isOn: $appSettings.betaFeaturesEnabled)
+            Toggle("Developer Options", isOn: $appSettings.betaFeaturesEnabled)
             if appSettings.betaFeaturesEnabled {
                 NavigationLink {
                     DevLogsView()
                 } label: {
                     Label("View Logs", systemImage: "doc.text.magnifyingglass")
                 }
-                Button {
-                    showOnboarding = true
-                } label: {
-                    Label("Replay Onboarding", systemImage: "arrow.counterclockwise")
-                }
-                .fullScreenCover(isPresented: $showOnboarding) {
-                    // Must close the cover itself: the default `onComplete` is a no-op, so
-                    // replaying the onboarding used to trap the user inside it with no way
-                    // out — even after a successful connection.
-                    OnboardingView { showOnboarding = false }
-                        .environment(serverManager)
-                }
-                // Hidden from the UI on purpose — the feature and its stored setting are
-                // intact, it just isn't offered yet. Uncomment to bring it back.
-                // Toggle("Hide Player Options", isOn: $appSettings.alphaAutoHideToolbar)
-                Picker("Display Font", selection: $appSettings.displayFont) {
-                    // Each row is drawn in the face it selects — a list of names would
-                    // make the choice blind.
-                    ForEach(DisplayFont.selectable) { face in
-                        Text(face.label)
-                            .font(face.postScriptName.map { .custom($0, size: 17) } ?? .body)
-                            .tag(face)
-                    }
-                }
             }
         } header: {
-            Label("Dev / Beta Features", systemImage: "hammer.fill")
+            Label("Developer", systemImage: "hammer.fill")
         } footer: {
-            Text("Experimental features that may not be fully stable.")
+            Text("The logs, and what only this build has: Soulseek, Get It and lyrics saved to the server.")
         }
     }
 
+    /// Searching comes first; where slskd runs and how to sign in to it sit one level down,
+    /// set once and rarely seen again.
     private var externalServiceSection: some View {
-        Section("Soulseek (slskd)") {
-            HStack {
-                Text("Host")
-                Spacer()
-                TextField("IP address", text: $appSettings.externalServiceURL)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(.secondary)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-            }
-
-            HStack {
-                Text("Port")
-                Spacer()
-                TextField("Port", value: $appSettings.externalServicePort, format: .number)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(.secondary)
-                    .keyboardType(.numberPad)
-            }
-
-            HStack {
-                Text("Username")
-                Spacer()
-                TextField("slskd", text: $appSettings.slskdUsername)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(.secondary)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-            }
-
-            HStack {
-                Text("Password")
-                Spacer()
-                SecureField("slskd", text: $appSettings.slskdPassword)
-                    .multilineTextAlignment(.trailing)
-                    .foregroundStyle(.secondary)
-            }
-
+        Section("Soulseek") {
             NavigationLink {
                 ExternalServiceView()
             } label: {
                 Label("Search Soulseek", systemImage: "magnifyingglass")
             }
+            NavigationLink {
+                slskdConnectionForm
+            } label: {
+                HStack {
+                    Label("slskd Connection", systemImage: "server.rack")
+                    Spacer()
+                    Text(appSettings.externalServiceURL.isEmpty
+                         ? String(localized: "Not set")
+                         : "\(appSettings.externalServiceURL):\(appSettings.externalServicePort)")
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
         }
+    }
+
+    private var slskdConnectionForm: some View {
+        Form {
+            Section {
+                LabeledContent("Host") {
+                    TextField("IP address", text: $appSettings.externalServiceURL)
+                        .multilineTextAlignment(.trailing)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                }
+                LabeledContent("Port") {
+                    TextField("Port", value: $appSettings.externalServicePort, format: .number.grouping(.never))
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.numberPad)
+                }
+            } header: {
+                Text("Address")
+            }
+            Section {
+                LabeledContent("Username") {
+                    TextField("slskd", text: $appSettings.slskdUsername)
+                        .multilineTextAlignment(.trailing)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                }
+                LabeledContent("Password") {
+                    SecureField("slskd", text: $appSettings.slskdPassword)
+                        .multilineTextAlignment(.trailing)
+                }
+            } header: {
+                Text("Sign-In")
+            } footer: {
+                Text("slskd's own web sign-in, not your Soulseek account.")
+            }
+        }
+        .navigationTitle("slskd Connection")
+        .navigationBarTitleDisplayMode(.inline)
     }
     #endif
 
@@ -1249,27 +1248,43 @@ private struct LyricsOnServerRows: View {
     @AppStorage(LyricsOnServer.userKey) private var user = ""
     @State private var password = KeychainHelper.loadPassword(for: LyricsOnServer.passwordAccount) ?? ""
 
+    @State private var showsSignIn = false
+
     var body: some View {
         Toggle("Save Synced Lyrics to the Server", isOn: $isOn)
         if isOn {
-            TextField("File Browser", text: $address, prompt: Text(LyricsOnServer.suggestedAddress))
-                .keyboardType(.URL)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-            TextField("Username", text: $user)
-                .textContentType(.username)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-            SecureField("Password", text: $password)
-                .textContentType(.password)
-                .onChange(of: password) { _, value in
-                    if value.isEmpty {
-                        KeychainHelper.delete(for: LyricsOnServer.passwordAccount)
-                    } else {
-                        KeychainHelper.save(password: value, for: LyricsOnServer.passwordAccount)
-                    }
-                }
+            // Navidrome only reads the music: the .lrc is written by File Browser, which runs
+            // beside it. Its address and sign-in default to the server's, so there's nothing to
+            // type when they match; the fields stay one tap away for when they don't.
+            Text("Navidrome can't write files, so the lyrics go through File Browser on the same machine. Aura uses your server's address and sign-in unless you set others.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            DisclosureGroup("File Browser Sign-In", isExpanded: $showsSignIn) {
+                fields
+            }
+            .onAppear { showsSignIn = !address.isEmpty || !user.isEmpty }
         }
+    }
+
+    @ViewBuilder
+    private var fields: some View {
+        TextField("File Browser", text: $address, prompt: Text(LyricsOnServer.suggestedAddress))
+            .keyboardType(.URL)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+        TextField("Username", text: $user, prompt: Text(ServerManager.shared.currentServer?.username ?? "Username"))
+            .textContentType(.username)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+        SecureField("Password", text: $password)
+            .textContentType(.password)
+            .onChange(of: password) { _, value in
+                if value.isEmpty {
+                    KeychainHelper.delete(for: LyricsOnServer.passwordAccount)
+                } else {
+                    KeychainHelper.save(password: value, for: LyricsOnServer.passwordAccount)
+                }
+            }
     }
 }
 #endif

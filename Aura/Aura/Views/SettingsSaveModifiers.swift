@@ -35,6 +35,7 @@ private struct SettingsSaveModifier3: ViewModifier {
             .onChange(of: s.externalServicePort) { _, _ in s.save() }
             .onChange(of: s.showStatsOnHome) { _, _ in s.save() }
             .onChange(of: s.homeTitleStyle) { _, _ in s.save() }
+            .onChange(of: s.homeCustomTitle) { _, _ in s.save() }
 
             .onChange(of: s.appLanguage) { _, _ in s.save() }
             .onChange(of: s.appAccentColor) { _, _ in s.save() }

@@ -96,7 +96,9 @@ enum DisplayFont: String, Codable, CaseIterable, Identifiable {
 enum AppTypography {
     /// Read inside a `body` so SwiftUI's observation tracking re-renders every title
     /// when the face changes.
-    private static var choice: DisplayFont { AppSettings.shared.displayFont.resolved }
+    /// Vavin, for everyone: the choice of face is no longer offered, and a stored one from
+    /// when it was is ignored.
+    private static var choice: DisplayFont { DisplayFont.vavinCondensed.resolved }
 
     /// Display font for SwiftUI text. Named faces scale with Dynamic Type via
     /// `relativeTo:`; the system fallback is drawn at a fixed size, as a wordmark should be.
