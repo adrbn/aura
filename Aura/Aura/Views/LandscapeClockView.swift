@@ -60,7 +60,7 @@ struct LandscapeClockView: View {
         .onReceive(timer) { currentTime = $0 }
         .onAppear {
             angle = Self.angle(for: orientation) ?? 90
-            showsLyrics = lyricsMode && !player.lyrics.isEmpty
+            showsLyrics = lyricsMode && hasSyncedLyrics
             withAnimation(Self.fade) { isShown = true }
             keepAwakeIfCharging()
         }
@@ -123,12 +123,15 @@ struct LandscapeClockView: View {
     }
 
     private func content(size: CGSize) -> some View {
-        ZStack(alignment: .topTrailing) {
-            if showsLyrics && !player.lyrics.isEmpty {
+        ZStack {
+            if showsLyrics && hasSyncedLyrics {
+                // A tap anywhere goes back to the clock.
                 LandscapeLyrics(size: size)
+                    .contentShape(Rectangle())
+                    .onTapGesture { showsLyrics = false }
                     .transition(.opacity)
             } else {
-                // The time first and large, as a bedside clock reads; the song beside it.
+                // The time first, as a bedside clock reads; the song beside it.
                 HStack(spacing: 0) {
                     clockPanel(size: size)
                         .frame(width: (size.width - Self.sideInset * 2) * 0.58)
@@ -138,41 +141,16 @@ struct LandscapeClockView: View {
                 .padding(.horizontal, Self.sideInset)
                 .transition(.opacity)
             }
-            corner
-                .padding(.top, 16)
-                .padding(.trailing, Self.sideInset - 12)
         }
         .animation(Self.fade, value: showsLyrics)
     }
 
-    /// Switch to the lyrics or back, and close — quiet, in the corner.
-    private var corner: some View {
-        HStack(spacing: 4) {
-            if !player.lyrics.isEmpty {
-                chromeButton(showsLyrics ? "clock" : "quote.bubble",
-                             label: showsLyrics ? "Show Clock" : "Show Lyrics") {
-                    showsLyrics.toggle()
-                }
-            }
-            chromeButton("xmark", label: "Close") { leave() }
-        }
-    }
-
-    private func chromeButton(_ icon: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.45))
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-    }
+    /// One line at a time needs to know which line: lyrics without timing stay off.
+    private var hasSyncedLyrics: Bool { player.lyrics.contains { $0.time != nil } }
 
     private func songPanel(size: CGSize) -> some View {
-        let artSize = min(size.height * 0.42, size.width * 0.2)
-        return VStack(spacing: 12) {
+        let artSize = min(size.height * 0.34, size.width * 0.17)
+        return VStack(spacing: 0) {
             if let song = player.currentSong {
                 CoverArtAsyncImage(coverArt: song.coverArt, size: artSize)
                     .shadow(color: .black.opacity(0.5), radius: 20, y: 8)
@@ -189,10 +167,24 @@ struct LandscapeClockView: View {
                 }
                 .lineLimit(1)
                 .frame(width: artSize + 60)
+                .padding(.top, 18)
 
                 progress
                     .frame(width: artSize)
-                transport
+                    .padding(.top, 22)
+
+                if hasSyncedLyrics {
+                    Button { showsLyrics = true } label: {
+                        Image(systemName: "quote.bubble")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.4))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Show Lyrics")
+                    .padding(.top, 10)
+                }
             }
         }
         .frame(maxHeight: .infinity)
@@ -211,36 +203,12 @@ struct LandscapeClockView: View {
         .frame(height: 3)
     }
 
-    private var transport: some View {
-        HStack(spacing: 20) {
-            transportButton("backward.fill", size: 20, label: "Previous") { player.previous() }
-            transportButton(player.isPlaying ? "pause.fill" : "play.fill", size: 30,
-                            label: player.isPlaying ? "Pause" : "Play") { player.togglePlayPause() }
-            transportButton("forward.fill", size: 20, label: "Next") { player.next() }
-        }
-    }
-
-    /// Each control a full 56-point target around its glyph, not just the glyph.
-    private func transportButton(_ icon: String, size: CGFloat, label: LocalizedStringKey,
-                                 action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: size))
-                .foregroundStyle(.white.opacity(size > 24 ? 1 : 0.75))
-                .contentTransition(.symbolEffect(.replace))
-                .frame(width: 56, height: 56)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-    }
-
     /// The time, digital or with hands; a tap on it changes which, and it's remembered.
     private func clockPanel(size: CGSize) -> some View {
         Group {
             switch clockStyle {
             case .digital: digitalClock(size: size)
-            case .analog: analogClock(diameter: min(size.height * 0.7, size.width * 0.4))
+            case .analog: analogClock(diameter: min(size.height * 0.6, size.width * 0.32))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -255,15 +223,16 @@ struct LandscapeClockView: View {
 
     private func digitalClock(size: CGSize) -> some View {
         // Scaled to the screen, so it reads large on every device and never clips.
-        let timeSize = min(size.height * 0.5, size.width * 0.24)
-        return VStack(spacing: 0) {
+        let timeSize = min(size.height * 0.3, size.width * 0.14)
+        return VStack(spacing: 4) {
             Text(currentTime, format: .dateTime.hour().minute())
-                .font(AppTypography.display(timeSize, relativeTo: .largeTitle))
+                .font(.system(size: timeSize, weight: .semibold))
                 .foregroundStyle(.white)
+                .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.smooth, value: currentTime.formatted(.dateTime.hour().minute()))
             Text(currentTime, format: .dateTime.weekday(.wide).month().day())
-                .font(.system(size: max(timeSize * 0.14, 15), weight: .medium))
+                .font(.system(size: max(timeSize * 0.16, 15), weight: .medium))
                 .foregroundStyle(.white.opacity(0.55))
         }
         .lineLimit(1)
@@ -324,10 +293,8 @@ struct LandscapeClockView: View {
 
 // MARK: - Lyrics, on its side
 
-/// The whole sheet in a column, the sung line held in the middle. Every line is set the
-/// same size and only its brightness changes: the old view showed three or four lines,
-/// the sung one larger, so each new line changed both the count and the sizes and the
-/// block jumped to re-centre.
+/// The sung line alone in the middle, the one before above and the next below, quiet,
+/// blurred and well apart. A whole column read as a wall of text from across a room.
 private struct LandscapeLyrics: View {
     let size: CGSize
 
@@ -335,98 +302,59 @@ private struct LandscapeLyrics: View {
     @State private var translator = LyricsTranslator.shared
     @State private var appSettings = AppSettings.shared
 
-    private static let motion = Animation.smooth(duration: 0.5)
+    private static let motion = Animation.smooth(duration: 0.6)
 
     var body: some View {
-        let current = currentIndex
-        VStack(spacing: 0) {
-            ScrollViewReader { proxy in
-                ScrollView(.vertical) {
-                    VStack(alignment: .leading, spacing: 18) {
-                        ForEach(Array(player.lyrics.enumerated()), id: \.element.id) { index, line in
-                            row(line, isCurrent: index == current)
-                                .id(index)
-                        }
-                    }
-                    .padding(.vertical, size.height * 0.4)
-                    .padding(.horizontal, 60)
-                }
-                .scrollIndicators(.hidden)
-                .mask {
-                    LinearGradient(stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.25),
-                        .init(color: .black, location: 0.75),
-                        .init(color: .clear, location: 1),
-                    ], startPoint: .top, endPoint: .bottom)
-                }
-                .onAppear { proxy.scrollTo(current ?? 0, anchor: .center) }
-                .onChange(of: current) { _, index in
-                    guard let index else { return }
-                    withAnimation(Self.motion) { proxy.scrollTo(index, anchor: .center) }
-                }
-            }
-            if let song = player.currentSong {
-                footer(song)
+        let (anchor, sung) = position
+        let gap = size.height * 0.3
+        ZStack {
+            ForEach(max(anchor - 1, 0)...min(anchor + 1, player.lyrics.count - 1), id: \.self) { index in
+                let isCurrent = index == anchor && sung
+                line(player.lyrics[index], isCurrent: isCurrent)
+                    .opacity(isCurrent ? 1 : 0.28)
+                    .blur(radius: isCurrent ? 0 : 3)
+                    .offset(y: CGFloat(index - anchor) * gap)
+                    .transition(.opacity)
             }
         }
+        .padding(.horizontal, 90)
+        .frame(width: size.width, height: size.height)
+        .animation(Self.motion, value: anchor)
+        .animation(Self.motion, value: sung)
     }
 
-    private func row(_ line: LyricsLine, isCurrent: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+    private func line(_ line: LyricsLine, isCurrent: Bool) -> some View {
+        VStack(spacing: 6) {
             Text(line.text)
-                .font(.system(size: 30, weight: .bold))
+                .font(.system(size: isCurrent ? 34 : 24, weight: .bold))
                 .foregroundStyle(.white)
-            if appSettings.translateLyrics, let translation = translator.lines[line.text], !translation.isEmpty {
+                .lineLimit(2)
+                .minimumScaleFactor(0.6)
+            if isCurrent, appSettings.translateLyrics,
+               let translation = translator.lines[line.text], !translation.isEmpty {
                 Text(translation)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.white.opacity(0.65))
+                    .lineLimit(2)
             }
         }
-        .opacity(isCurrent ? 1 : 0.3)
-        .animation(Self.motion, value: isCurrent)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        // A line tapped is sung from its start, as in portrait.
-        .onTapGesture {
-            if let time = line.time { player.seek(to: time) }
-        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
     }
 
-    /// The song and a play button, small, under the lyrics.
-    private func footer(_ song: Song) -> some View {
-        HStack(spacing: 12) {
-            Text("\(song.title) — \(song.artist ?? String(localized: "Unknown Artist"))")
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.45))
-                .lineLimit(1)
-            Button { player.togglePlayPause() } label: {
-                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
-        }
-        .padding(.horizontal, 60)
-        .padding(.bottom, 4)
-    }
-
-    /// The line being sung; nil before the first and in a long instrumental break.
-    private var currentIndex: Int? {
+    /// The line to centre on — the last one reached, or the first before any — and
+    /// whether it is being sung now, rather than past in an instrumental break.
+    private var position: (Int, Bool) {
         var last: Int?
         for (i, line) in player.lyrics.enumerated() {
             guard let time = line.time else { continue }
             if time <= player.currentTime { last = i } else { break }
         }
-        guard let last, let lineTime = player.lyrics[last].time else { return last }
+        guard let last, let lineTime = player.lyrics[last].time else { return (0, false) }
         let next = last + 1 < player.lyrics.count ? player.lyrics[last + 1].time : nil
         let gap = (next ?? player.duration) - lineTime
         let sung = min(max(Double(player.lyrics[last].text.count) * 0.1, 4), 12)
-        if gap > sung + 2, player.currentTime > lineTime + sung { return nil }
-        return last
+        if gap > sung + 2, player.currentTime > lineTime + sung { return (last, false) }
+        return (last, true)
     }
 }
