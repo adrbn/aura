@@ -81,7 +81,7 @@ reprend le tout.
 - **Une qualité pour le réseau cellulaire**, distincte de celle du Wi-Fi, et la file d'attente enregistrée sur votre serveur quand vous quittez l'app, pour qu'un autre client la reprenne.
 - **En français et en anglais.**
 - **Sur l'écran verrouillé**, dans le Centre de contrôle et dans la Dynamic Island, avec AirPlay.
-- **Siri et Raccourcis** en anglais et en français : lecture, pause, morceau suivant ou précédent, aléatoire, répétition, mettre un morceau en favori, lancer une playlist ou un album par son nom, ou vos favoris.
+- **Siri et Raccourcis** dans les sept langues de l'app : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, lancer vos favoris, mettre un morceau à suivre ou dans la file, aimer le morceau en cours, et lecture, pause, suivant, précédent, aléatoire ou répétition.
 - **Des liens de partage.** Partagez un morceau sous forme de liens qui l'ouvrent sur d'autres services.
 - **À votre goût.** Clair ou sombre, la couleur d'accent de votre choix, et les onglets et les sections de l'accueil dans l'ordre que vous voulez.
 - **Une horloge de chevet** (l'horloge en paysage). Activez-la, tournez le téléphone sur le côté pendant la lecture, et la pochette, l'heure ou les paroles remplissent l'écran.
