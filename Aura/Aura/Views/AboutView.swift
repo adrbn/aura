@@ -8,8 +8,10 @@ struct AboutView: View {
 
     /// Single source of truth for outbound links — edit here when the repo goes public.
     private enum Links {
-        static let github = URL(string: "https://github.com/adrbn")!
-        static let privacy = URL(string: "https://adrbn.github.io/aura-site/privacy.html")!
+        static let github = URL(string: "https://github.com/adrbn/aura")!
+        static let kofi = URL(string: "https://ko-fi.com/adrbn")!
+        static let site = URL(string: "https://aura.adrbn.dev")!
+        static let privacy = URL(string: "https://aura.adrbn.dev/privacy")!
     }
 
     /// "1.0.0 · build 181" — marketing version + build, read live from the bundle (never hardcoded).
@@ -119,11 +121,14 @@ struct AboutView: View {
                 featureRow(icon: "quote.bubble", title: "Synced lyrics",
                            subtitle: "Time-synced from your server, LRCLIB as backup.")
                 rowDivider
-                featureRow(icon: "carplay", title: "CarPlay",
+                featureRow(icon: "car.fill", title: "CarPlay",
                            subtitle: "Your mixes, playlists and albums in the car.")
                 rowDivider
                 featureRow(icon: "arrow.down.circle", title: "Offline downloads",
                            subtitle: "Keep your music for the road, no signal needed.")
+                rowDivider
+                featureRow(icon: "waveform", title: "Siri",
+                           subtitle: "Ask for an artist, an album, a song or a playlist by name.")
             }
         }
     }
@@ -133,10 +138,16 @@ struct AboutView: View {
     private var linksCard: some View {
         card(padding: 4) {
             VStack(spacing: 0) {
-                linkRow(icon: "chevron.left.forwardslash.chevron.right",
+                linkRow(icon: .asset("GitHubMark"),
                         title: "Source & updates", detail: "GitHub", url: Links.github)
                 rowDivider
-                linkRow(icon: "hand.raised.fill",
+                linkRow(icon: .symbol("cup.and.saucer.fill"),
+                        title: "Support Aura", detail: "Ko-fi", url: Links.kofi)
+                rowDivider
+                linkRow(icon: .symbol("globe"),
+                        title: "Website", detail: "aura.adrbn.dev", url: Links.site)
+                rowDivider
+                linkRow(icon: .symbol("hand.raised.fill"),
                         title: "Privacy Policy", detail: nil, url: Links.privacy)
             }
         }
@@ -184,10 +195,19 @@ struct AboutView: View {
         .padding(.vertical, 12)
     }
 
-    private func linkRow(icon: String, title: LocalizedStringKey, detail: String?, url: URL) -> some View {
+    /// A row's glyph: an SF Symbol, or an image of the catalog for a mark the system lacks.
+    private enum Glyph {
+        case symbol(String)
+        case asset(String)
+    }
+
+    private func linkRow(icon: Glyph, title: LocalizedStringKey, detail: String?, url: URL) -> some View {
         Link(destination: url) {
             HStack(spacing: 14) {
-                iconBadge(icon)
+                switch icon {
+                case .symbol(let name): iconBadge(name)
+                case .asset(let name): iconBadge(image: Image(name))
+                }
                 Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.primary)
                 Spacer(minLength: 0)
                 if let detail {
@@ -205,11 +225,18 @@ struct AboutView: View {
     }
 
     private func iconBadge(_ systemName: String) -> some View {
+        iconBadge(image: Image(systemName: systemName))
+    }
+
+    private func iconBadge(image: Image) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 9, style: .continuous)
                 .fill(accent.opacity(0.15))
                 .frame(width: 34, height: 34)
-            Image(systemName: systemName)
+            image
+                .resizable()
+                .scaledToFit()
+                .frame(width: 17, height: 17)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(accent)
         }
