@@ -12,10 +12,11 @@ struct SearchView: View {
     private let titleHeight: CGFloat = 52
     private let searchBarHeight: CGFloat = 56
 
-    /// The title and the field go up with the rows, all the way, as every other tab's title
-    /// does — and come down with them on a pull. The field used to stop pinned under the
-    /// clock, a bar the results had to slide beneath; back at the top, it's there again.
-    private var headerOffset: CGFloat { -scrollY }
+    /// The title goes up with the rows and fades as it goes; the field follows it until it
+    /// reaches the top, then stays there, as in the system's music app, so a new search is
+    /// never a scroll back up away. A pull still brings both down with the rows.
+    private var headerOffset: CGFloat { -min(scrollY, titleHeight + 8) }
+    private var titleOpacity: Double { 1 - min(max(scrollY / (titleHeight * 0.7), 0), 1) }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -23,7 +24,11 @@ struct SearchView: View {
                 // Results scroll UNDER the status bar; reserve room for title + search field.
                 .ignoresSafeArea(.container, edges: .top)
                 .contentMargins(.top, TabChrome.contentTop + titleHeight + 8 + searchBarHeight, for: .scrollContent)
-                .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
+                // Down past the pinned field, so the rows going under it fade out.
+                .overlay(alignment: .top) {
+                    TopEdgeVeil(scrollY: scrollY - titleHeight,
+                                depth: TabChrome.bannerInset + searchBarHeight + 24)
+                }
                 // Big-left title above the search field, both scrolling away with the rows.
                 .overlay(alignment: .top) {
                     VStack(spacing: 8) {
@@ -33,6 +38,7 @@ struct SearchView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: titleHeight)
                             .padding(.horizontal, 16)
+                            .opacity(titleOpacity)
                         SearchFieldBar(text: $query, prompt: "Search your library…")
                             .frame(height: searchBarHeight)
                     }
@@ -264,13 +270,10 @@ struct SearchResultsContainer: View {
 
     @ViewBuilder
     private var resultsRows: some View {
-        if isSearching {
-            // The loader *replaces* the results instead of sitting above them. It used
-            // to be stacked on top, so a query still in flight kept the previous
-            // query's hits on screen — typing "misera" left "miser"'s albums showing,
-            // which reads as an answer rather than as something already thrown away.
-            // Rows in the shape of the answer, where it will appear — the same skeleton
-            // every other list loads with.
+        if isSearching && results.isEmpty {
+            // The skeleton only stands in for a first answer. Once there is one, it stays on
+            // screen while the next letter is searched: "guett" and "guetta" find nearly the
+            // same things, and swapping them for a loader at every key made the page blink.
             SkeletonSongList(count: 6)
                 .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
                 .listRowSeparator(.hidden)
