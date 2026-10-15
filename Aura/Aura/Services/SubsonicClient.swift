@@ -541,6 +541,9 @@ extension SubsonicClient {
         return URL(string: urlString)
     }
 
+    /// Formats AVFoundation can't play, which only reach the phone converted by the server.
+    nonisolated static let unplayableSuffixes: Set<String> = ["ogg", "opus", "wma", "ape", "wv", "tta", "mpc", "dsf", "dff"]
+
     nonisolated func streamURL(server: ServerConfig, id: String, maxBitRate: Int? = nil, songSuffix: String? = nil, songContentType: String? = nil) -> URL? {
         var urlString = "\(server.baseURL)/rest/stream?\(SubsonicClient.authQuery(for: server))&id=\(id)"
 
@@ -560,14 +563,13 @@ extension SubsonicClient {
 
         AppLogger.shared.log("🎚 streamURL id=\(id) suffix=\(suffix.isEmpty ? "n/a" : suffix) isLossy=\(isLossy) quality=\(quality.rawValue)")
 
-        if isLossy {
-            // Opus/OGG are lossy but iOS can't play them — must transcode
-            let unsupportedLossySuffixes: Set<String> = ["ogg", "opus"]
-            if unsupportedLossySuffixes.contains(suffix) {
-                let br = quality.bitRate ?? 320
-                urlString += "&format=mp3&maxBitRate=\(br)"
-            }
-            // Other lossy formats (mp3, m4a, aac) — never downsample
+        if Self.unplayableSuffixes.contains(suffix) {
+            // iOS can't decode the file at all, so the server converts it at every quality,
+            // Lossless included — sent raw, a WMA or an APE was a song that never started.
+            let br = quality.bitRate ?? 320
+            urlString += "&format=mp3&maxBitRate=\(br)"
+        } else if isLossy {
+            // mp3, m4a, aac — never downsample
         } else {
             // Lossless file (FLAC, ALAC, etc.)
             if quality == .lossless {

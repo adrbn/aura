@@ -211,7 +211,15 @@ final class DownloadManager: NSObject {
     }
 
     private func buildDownloadURL(server: ServerConfig, id: String) -> URL? {
-        buildTransferURL(server: server, id: id, capBitRate: AppSettings.shared.downloadQuality.bitRate)
+        buildTransferURL(server: server, id: id, capBitRate: downloadBitRate(for: id))
+    }
+
+    /// The download quality's bit rate — or 320 kbps for an original iOS can't play (WMA,
+    /// APE…), which would otherwise land on the phone as a file that never starts.
+    private func downloadBitRate(for songId: String) -> Int? {
+        if let cap = AppSettings.shared.downloadQuality.bitRate { return cap }
+        let suffix = knownSong(songId)?.suffix?.lowercased() ?? ""
+        return SubsonicClient.unplayableSuffixes.contains(suffix) ? 320 : nil
     }
 
     /// `stream` when a bit rate is asked for, `download` when the original is.
@@ -242,7 +250,7 @@ final class DownloadManager: NSObject {
     /// A capped download arrives transcoded, so it must not keep the source's extension —
     /// naming an MP3 `.flac` leaves a file nothing can play.
     private func downloadExtension(for songId: String) -> String {
-        AppSettings.shared.downloadQuality.bitRate == nil
+        downloadBitRate(for: songId) == nil
             ? (knownSong(songId)?.suffix ?? "mp3")
             : "mp3"
     }
