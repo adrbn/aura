@@ -15,6 +15,9 @@ struct NowPlayingView: View {
     @State private var backdropTone = BackdropTone.plain
     @State private var showClockMode = false
     @State private var clockOrientation: UIDeviceOrientation = .landscapeLeft
+    /// Closed by hand while still on its side: it stays closed until the phone is upright
+    /// again, rather than coming straight back at the next sensor wobble.
+    @State private var clockDismissed = false
     @State private var showAddToPlaylist = false
     @State private var showEqualizer = false
     @State private var navAlbumId: String?
@@ -237,6 +240,7 @@ struct NowPlayingView: View {
         // without the cover's slide, which played while the whole screen turned.
         .fullScreenCover(isPresented: $showClockMode) {
             LandscapeClockView(orientation: clockOrientation, lyricsMode: showLyrics) {
+                clockDismissed = UIDevice.current.orientation.isLandscape
                 Self.withoutAnimation { showClockMode = false }
             }
             .environment(player)
@@ -244,8 +248,9 @@ struct NowPlayingView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             // Physical-rotation notifications fire though the interface is held in portrait.
-            guard AppSettings.shared.landscapeClockEnabled, !showClockMode else { return }
             let orientation = UIDevice.current.orientation
+            if orientation == .portrait { clockDismissed = false }
+            guard AppSettings.shared.landscapeClockEnabled, !showClockMode, !clockDismissed else { return }
             guard orientation == .landscapeLeft || orientation == .landscapeRight else { return }
             clockOrientation = orientation
             Self.withoutAnimation { showClockMode = true }

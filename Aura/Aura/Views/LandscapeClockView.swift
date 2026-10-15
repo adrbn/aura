@@ -128,11 +128,12 @@ struct LandscapeClockView: View {
                 LandscapeLyrics(size: size)
                     .transition(.opacity)
             } else {
+                // The time first and large, as a bedside clock reads; the song beside it.
                 HStack(spacing: 0) {
-                    songPanel(size: size)
-                        .frame(width: size.width * 0.5)
                     clockPanel(size: size)
-                        .frame(width: size.width * 0.5)
+                        .frame(width: (size.width - Self.sideInset * 2) * 0.58)
+                    songPanel(size: size)
+                        .frame(maxWidth: .infinity)
                 }
                 .padding(.horizontal, Self.sideInset)
                 .transition(.opacity)
@@ -170,8 +171,8 @@ struct LandscapeClockView: View {
     }
 
     private func songPanel(size: CGSize) -> some View {
-        let artSize = min(size.height * 0.5, size.width * 0.28)
-        return VStack(spacing: 14) {
+        let artSize = min(size.height * 0.42, size.width * 0.2)
+        return VStack(spacing: 12) {
             if let song = player.currentSong {
                 CoverArtAsyncImage(coverArt: song.coverArt, size: artSize)
                     .shadow(color: .black.opacity(0.5), radius: 20, y: 8)
@@ -190,7 +191,7 @@ struct LandscapeClockView: View {
                 .frame(width: artSize + 60)
 
                 progress
-                    .frame(width: artSize + 20)
+                    .frame(width: artSize)
                 transport
             }
         }
@@ -200,23 +201,14 @@ struct LandscapeClockView: View {
     /// Where the song is, to read at a glance — not a slider to catch by mistake.
     private var progress: some View {
         let fraction = player.duration > 0 ? min(max(player.currentTime / player.duration, 0), 1) : 0
-        return VStack(spacing: 4) {
-            GeometryReader { bar in
-                Capsule().fill(.white.opacity(0.18))
-                    .overlay(alignment: .leading) {
-                        Capsule().fill(.white.opacity(0.75))
-                            .frame(width: bar.size.width * fraction)
-                    }
-            }
-            .frame(height: 3)
-            HStack {
-                Text(Self.clock(player.currentTime))
-                Spacer()
-                Text("-" + Self.clock(max(player.duration - player.currentTime, 0)))
-            }
-            .font(.caption2.monospacedDigit())
-            .foregroundStyle(.white.opacity(0.45))
+        return GeometryReader { bar in
+            Capsule().fill(.white.opacity(0.18))
+                .overlay(alignment: .leading) {
+                    Capsule().fill(.white.opacity(0.75))
+                        .frame(width: bar.size.width * fraction)
+                }
         }
+        .frame(height: 3)
     }
 
     private var transport: some View {
@@ -248,7 +240,7 @@ struct LandscapeClockView: View {
         Group {
             switch clockStyle {
             case .digital: digitalClock(size: size)
-            case .analog: analogClock(diameter: min(size.height * 0.62, size.width * 0.34))
+            case .analog: analogClock(diameter: min(size.height * 0.7, size.width * 0.4))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -263,17 +255,16 @@ struct LandscapeClockView: View {
 
     private func digitalClock(size: CGSize) -> some View {
         // Scaled to the screen, so it reads large on every device and never clips.
-        let timeSize = min(size.height * 0.28, size.width * 0.15)
-        return VStack(spacing: timeSize * 0.06) {
+        let timeSize = min(size.height * 0.5, size.width * 0.24)
+        return VStack(spacing: 0) {
             Text(currentTime, format: .dateTime.hour().minute())
-                .font(.system(size: timeSize, weight: .thin, design: .rounded))
+                .font(AppTypography.display(timeSize, relativeTo: .largeTitle))
                 .foregroundStyle(.white)
-                .monospacedDigit()
                 .contentTransition(.numericText())
                 .animation(.smooth, value: currentTime.formatted(.dateTime.hour().minute()))
             Text(currentTime, format: .dateTime.weekday(.wide).month().day())
-                .font(.system(size: max(timeSize * 0.2, 15), weight: .regular, design: .rounded))
-                .foregroundStyle(.white.opacity(0.5))
+                .font(.system(size: max(timeSize * 0.14, 15), weight: .medium))
+                .foregroundStyle(.white.opacity(0.55))
         }
         .lineLimit(1)
         .minimumScaleFactor(0.5)
@@ -311,11 +302,6 @@ struct LandscapeClockView: View {
             .fill(colour)
             .frame(width: width, height: length)
             .offset(y: -length / 2)
-    }
-
-    private static func clock(_ seconds: TimeInterval) -> String {
-        let total = Int(seconds.rounded(.down))
-        return String(format: "%d:%02d", total / 60, total % 60)
     }
 
     /// The cover for the blurred background, from the artwork cache — so it's there offline
