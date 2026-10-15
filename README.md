@@ -82,6 +82,7 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **CarPlay** (App Store build): Home with the mixes and the Radar, your playlists, the newest albums, an Artists list, a Downloaded tab that plays without a connection, and a Radio button in Now Playing that follows the song with similar music.
 - **Siri and Shortcuts** in the app's seven languages: play an artist, album, song, playlist or genre by name, play your favourites, queue a song next or later, like the song playing, and pause, skip, go back, shuffle or repeat.
 - **Share links.** Share a song as links that open it on other services.
+- **A Now Playing widget** for the Home Screen: the song and its cover, with previous, play-pause and next in the medium size.
 - **Yours to arrange.** Light or dark, any accent colour, and tabs and Home sections in the order you choose.
 - **A landscape clock.** Switch it on in Settings and turn the phone sideways while music plays: the time large, the song beside it, and a tap on the cover for the lyrics, one line at a time.
 
@@ -101,7 +102,7 @@ Both are free, and everything not listed here is the same in both.
 | | App Store build | Sideload IPA |
 |---|---|---|
 | CarPlay | Yes | No: re-signing the IPA drops Apple's CarPlay entitlement |
-| Get It (Soulseek via your own [slskd](https://github.com/slskd/slskd)) | No | Opt-in, under Settings → Beta Features |
+| Get It (Soulseek via your own [slskd](https://github.com/slskd/slskd)) | No | Opt-in, under Settings → Developer Options |
 | NetEase lyrics-timing check for remixes and edits | No | Yes |
 
 **Get It** fetches what your library is missing: a Radar release, a Deezer result in Search, the missing songs of an
@@ -121,7 +122,7 @@ server as `.lrc` files through File Browser.
 ### Sideload the IPA
 
 1. Install a sideloading tool on your iPhone: [AltStore](https://altstore.io), [SideStore](https://sidestore.io) or Feather.
-2. Download `Aura-v<version>.ipa` from the [latest release](https://github.com/adrbn/aura/releases/latest). Each release lists its SHA-256 checksum.
+2. Download `Aura-v<version>-build.<number>.ipa` from the [latest release](https://github.com/adrbn/aura/releases/latest). Each release lists its SHA-256 checksum.
 3. Open the IPA in your sideloading tool and install it.
 4. On first launch iOS blocks the app: go to **Settings → General → VPN & Device Management** and trust the developer profile.
 5. Open Aura and enter your server's address, username and password.
@@ -149,7 +150,7 @@ cd aura
 open Aura/Aura.xcodeproj
 ```
 
-- Xcode 26 or later (App Store archives are made with Xcode 26.6).
+- Xcode 26 or later (App Store archives are made with Xcode 27).
 - Select your own team under Signing & Capabilities, and set the `AURA_BUNDLE_BASE` build setting at the project level to a bundle identifier you own. The widget, watch app and Mac targets derive theirs from it.
 - Schemes and configurations:
   - **Aura**, with `Debug` and `Release`: the sideload build, with Get It and the NetEase check.
@@ -198,7 +199,7 @@ distribute must stay open under GPL-3.0.
 
 ## Credits
 
-- [LRCLIB](https://lrclib.net) for lyrics, [MusicBrainz](https://musicbrainz.org) for song credits, [Deezer](https://www.deezer.com)'s public catalogue for covers, artist photos, the Radar and previews, and the iTunes Search API for share links.
+- [LRCLIB](https://lrclib.net) for lyrics, [MusicBrainz](https://musicbrainz.org) for song credits, [Deezer](https://www.deezer.com)'s public catalogue for covers, artist photos, the Radar, previews and share links, and the iTunes Search API for share links too.
 - Optional, with your own key: [Google Gemini](https://ai.google.dev) for lyrics translation and [Last.fm](https://www.last.fm) for listening statistics.
 - Fonts: [Archivo](https://github.com/Omnibus-Type/Archivo) and Vavin, both under the SIL Open Font License 1.1.
 - Every picture on this page is a real capture of the app, playing the developer's own library.

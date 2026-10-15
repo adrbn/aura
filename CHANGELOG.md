@@ -4,10 +4,35 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] — 2026-10-15 (sent to App Review; the sideload IPA is out)
+
+- Ask Siri for an artist, an album, a song, a playlist or a genre by name, and Aura plays it. Siri can also play your favourites, queue a song next or later, and like the song playing.
+- CarPlay: a Downloaded tab that plays without a connection, an Artists list in Library, and a Radio button in Now Playing that keeps the song going and follows it with similar music.
+- Search keeps its results on screen while you type, and the search bar stays at the top as you scroll.
+- A song that won't play is tried once more before it's skipped, and going back no longer bounces off a song that failed.
+- Music comes back after a declined or short call.
+- A new landscape clock: the time large, the song beside it, and a tap on the cover for the lyrics, one line at a time.
+- Give Home a title of your own, in Settings.
+- Last.fm settings show your account, with Change and Disconnect.
+
+## [1.1.0] — 2026-10-05
+
+- Gapless playback: the next song is lined up behind the one playing, so live albums and mixes run on without a gap.
+- Aura speaks French, Italian, Spanish, German, Catalan and Dutch.
+- A Now Playing widget for the Home Screen: the song and its cover, with previous, play-pause and next in the medium size.
+- Rate songs from one to five stars, in Song Info. Ratings set offline are sent when your server is back.
+- A home address for your server: on your home network, Aura uses it while it answers.
+- A separate streaming quality for cellular data.
+- Your queue is saved on your server when you leave the app, for another client to pick up.
+- A shorter Now Playing menu, with Play Next, Add to Queue and Add to Playlist side by side.
+- Restore Original Timing moves into the Sync Lyrics screen, behind a confirmation.
+
+## [1.0.0] — 2026-10-04
+
+Initial public release. Native SwiftUI music client for Navidrome and Subsonic-API-compatible servers.
 
 ### Added — Apple Watch
-- Aura on the wrist, as a remote for the iPhone: the cover behind it in the phone's blur, the title and the heart at the top under the clock, previous, play/pause with the song's progress around it and next in the middle, and the Digital Crown on the phone's volume. The button in the bottom corner turns the screen to the lyrics, as the phone does: the blur condenses into a small cover in the top corner, coming into focus as it goes, and the words follow the song — word by word with karaoke on, the Crown walking the lines, a tap on one jumping to it. The other corner opens what's up next, where a tap plays a song. The top corner opens the library: search (dictation, Scribble or the keyboard) for songs, albums and artists, what the phone makes for you with the radar first, the favourites and the playlists — each opening to Play, Shuffle and its songs, an artist to their top songs and albums — with the covers sent small from the phone; starting something comes back to Now Playing. A double tap plays and pauses. Nothing playing shows the phone's time-of-day glow and Play Something. The watch counts the position on its own; the phone only speaks when something changes, so a playing song isn't a message a second. Needs watchOS 26; not in the App Store build until it has been tried on a watch
+- Aura on the wrist, as a remote for the iPhone: the cover behind it in the phone's blur, the title and the heart at the top under the clock, previous, play/pause with the song's progress around it and next in the middle, and the Digital Crown on the phone's volume. The button in the bottom corner turns the screen to the lyrics, as the phone does: the blur condenses into a small cover in the top corner, coming into focus as it goes, and the words follow the song — word by word with karaoke on, the Crown walking the lines, a tap on one jumping to it. The other corner opens what's up next, where a tap plays a song. The top corner opens the library: search (dictation, Scribble or the keyboard) for songs, albums and artists, what the phone makes for you with the radar first, the favourites and the playlists — each opening to Play, Shuffle and its songs, an artist to their top songs and albums — with the covers sent small from the phone; starting something comes back to Now Playing. A double tap plays and pauses. Nothing playing shows the phone's time-of-day glow and Play Something. The watch counts the position on its own; the phone only speaks when something changes, so a playing song isn't a message a second. Needs watchOS 26
 
 ### Added — CarPlay
 - Aura in the car, laid out as the phone is: **Home** with Made For You as a row of the mixes' own covers, the radar first, then what you played lately; **Playlists** with the favourites first; **Library** with Shuffle Library and the newest albums. Each opens as its page does on the phone — Play and Shuffle, then the songs, the one playing marked — and starting anything brings up Now Playing, with the heart, shuffle and repeat below the transport, **Up Next** opening the queue ("Next in Queue", then "Autoplay"; a tap plays it) and the album button opening the album that's playing. Apple granted the CarPlay audio entitlement on 28 September 2026. Now Playing is no longer a tab, and is never stacked twice
@@ -172,9 +197,6 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - The in-memory artwork cache now measures what it holds, so its 120 MB limit is real
 - An album or artist the server has no picture for gets Aura's own generated cover, instead of the server's "no cover" vinyl or grey silhouette — and is remembered, so it stops costing a ten-second round trip each time it scrolls past
 
-## [1.0.0] — TBD
-
-Initial public release. Native SwiftUI music client for Navidrome and Subsonic-API-compatible servers.
 
 ### Added — Playback
 - Replay gain support

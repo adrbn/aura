@@ -71,7 +71,7 @@ reprend le tout.
 - **Des notes.** Notez un morceau de une à cinq étoiles dans ses infos ; la note part sur votre serveur, et attend sur l'iPhone quand vous êtes hors ligne.
 - **Scrobbling.** Les écoutes partent vers votre serveur, et l'iPhone les garde en attendant quand vous êtes hors ligne.
 - **Des paroles que vous pouvez corriger.** Décalez le minutage si votre casque Bluetooth est en retard, ou calez vous-même les paroles d'un morceau : touchez *Now* au début de chaque ligne marquée. Votre minutage reste sur l'iPhone et passe avant toutes les autres sources. Pour un duo, un remix ou une autre version, Aura vérifie que les paroles correspondent à la version qui joue.
-- **La traduction des paroles**, en option, sous chaque ligne, par Gemini de Google avec votre propre clé d'API gratuite (Settings → Lyrics → Translation). Un morceau n'est envoyé que quand vous touchez traduire, et seulement ses lignes, son titre et son artiste. Les traductions sont gardées pour l'écoute hors ligne.
+- **La traduction des paroles**, en option, sous chaque ligne, par Gemini de Google avec votre propre clé d'API gratuite (Réglages → Paroles → Traduction). Un morceau n'est envoyé que quand vous touchez traduire, et seulement ses lignes, son titre et son artiste. Les traductions sont gardées pour l'écoute hors ligne.
 - **Enregistrer une radio comme playlist** sur votre serveur, pochette comprise.
 - **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe, avec des Recherches récentes de ce que vous avez écouté.
 - **Des playlists à votre façon.** En grille ou en liste, filtrées par épinglées, radios, mix, les vôtres, partagées ou téléchargées. Créez-les, réordonnez-les, donnez-leur une pochette tirée de vos photos ; les changements partent sur votre serveur.
@@ -84,6 +84,7 @@ reprend le tout.
 - **CarPlay** (version App Store) : l'accueil avec les mix et le Radar, vos playlists, les derniers albums, une liste d'artistes, un onglet Téléchargé qui joue sans connexion, et un bouton Radio dans En cours de lecture qui enchaîne une musique proche du morceau.
 - **Siri et Raccourcis** dans les sept langues de l'app : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, lancer vos favoris, mettre un morceau à suivre ou dans la file, aimer le morceau en cours, et lecture, pause, suivant, précédent, aléatoire ou répétition.
 - **Des liens de partage.** Partagez un morceau sous forme de liens qui l'ouvrent sur d'autres services.
+- **Un widget En cours de lecture** pour l'écran d'accueil : le morceau et sa pochette, avec précédent, lecture-pause et suivant en taille moyenne.
 - **À votre goût.** Clair ou sombre, la couleur d'accent de votre choix, et les onglets et les sections de l'accueil dans l'ordre que vous voulez.
 - **Une horloge en paysage.** Activez-la dans les Réglages et tournez le téléphone sur le côté pendant la lecture : l'heure en grand, le morceau à côté, et un tap sur la pochette pour les paroles, une ligne à la fois.
 
@@ -103,7 +104,7 @@ Les deux sont gratuites, et tout ce qui n'est pas listé ici est identique dans 
 | | Version App Store | IPA à installer soi-même |
 |---|---|---|
 | CarPlay | Oui | Non : re-signer l'IPA fait perdre l'autorisation CarPlay d'Apple |
-| Get It (Soulseek via votre propre [slskd](https://github.com/slskd/slskd)) | Non | À activer, dans Settings → Beta Features |
+| Get It (Soulseek via votre propre [slskd](https://github.com/slskd/slskd)) | Non | À activer, dans Réglages → Developer Options |
 | Vérification NetEase du minutage des paroles pour les remix et les versions modifiées | Non | Oui |
 
 **Get It** va chercher ce qui manque à votre bibliothèque : une sortie du Radar, un résultat Deezer dans la recherche,
@@ -123,7 +124,7 @@ serveur, en fichiers `.lrc` via File Browser, les paroles que vous avez calées 
 ### Installer l'IPA soi-même
 
 1. Installez un outil de sideload sur votre iPhone : [AltStore](https://altstore.io), [SideStore](https://sidestore.io) ou Feather.
-2. Téléchargez `Aura-v<version>.ipa` depuis la [dernière version](https://github.com/adrbn/aura/releases/latest). Chaque version indique sa somme de contrôle SHA-256.
+2. Téléchargez `Aura-v<version>-build.<numéro>.ipa` depuis la [dernière version](https://github.com/adrbn/aura/releases/latest). Chaque version indique sa somme de contrôle SHA-256.
 3. Ouvrez l'IPA dans votre outil de sideload et installez-le.
 4. Au premier lancement, iOS bloque l'app : allez dans **Réglages → Général → VPN et gestion de l'appareil** et faites confiance au profil du développeur.
 5. Ouvrez Aura et saisissez l'adresse de votre serveur, votre nom d'utilisateur et votre mot de passe.
@@ -153,7 +154,7 @@ cd aura
 open Aura/Aura.xcodeproj
 ```
 
-- Xcode 26 ou plus récent (les archives App Store sont faites avec Xcode 26.6).
+- Xcode 26 ou plus récent (les archives App Store sont faites avec Xcode 27).
 - Choisissez votre propre équipe dans Signing & Capabilities, et donnez au réglage de build `AURA_BUNDLE_BASE`, au niveau du projet, un identifiant de bundle qui vous appartient. Le widget, l'app de la montre et les cibles Mac en tirent le leur.
 - Schémas et configurations :
   - **Aura**, avec `Debug` et `Release` : la version à installer soi-même, avec Get It et la vérification NetEase.
@@ -204,7 +205,7 @@ vous distribuez doit rester ouverte, sous GPL-3.0.
 
 ## Crédits
 
-- [LRCLIB](https://lrclib.net) pour les paroles, [MusicBrainz](https://musicbrainz.org) pour les crédits des morceaux, le catalogue public de [Deezer](https://www.deezer.com) pour les pochettes, les photos d'artistes, le Radar et les extraits, et l'API iTunes Search pour les liens de partage.
+- [LRCLIB](https://lrclib.net) pour les paroles, [MusicBrainz](https://musicbrainz.org) pour les crédits des morceaux, le catalogue public de [Deezer](https://www.deezer.com) pour les pochettes, les photos d'artistes, le Radar, les extraits et les liens de partage, et l'API iTunes Search pour les liens de partage aussi.
 - En option, avec votre propre clé : [Google Gemini](https://ai.google.dev) pour la traduction des paroles et [Last.fm](https://www.last.fm) pour les statistiques d'écoute.
 - Polices : [Archivo](https://github.com/Omnibus-Type/Archivo) et Vavin, toutes deux sous SIL Open Font License 1.1.
 - Toutes les illustrations de cette page sont de vraies captures de l'app, sur la bibliothèque du développeur.
