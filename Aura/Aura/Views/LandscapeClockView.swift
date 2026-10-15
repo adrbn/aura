@@ -156,6 +156,10 @@ struct LandscapeClockView: View {
                     .shadow(color: .black.opacity(0.5), radius: 20, y: 8)
                     .scaleEffect(player.isPlaying ? 1.0 : 0.94)
                     .animation(.spring(response: 0.5, dampingFraction: 0.8), value: player.isPlaying)
+                    // The cover opens the lyrics.
+                    .onTapGesture { if hasSyncedLyrics { showsLyrics = true } }
+                    .accessibilityAddTraits(hasSyncedLyrics ? .isButton : [])
+                    .accessibilityHint(hasSyncedLyrics ? "Shows the lyrics" : "")
 
                 VStack(spacing: 3) {
                     Text(song.title)
@@ -173,18 +177,6 @@ struct LandscapeClockView: View {
                     .frame(width: artSize)
                     .padding(.top, 22)
 
-                if hasSyncedLyrics {
-                    Button { showsLyrics = true } label: {
-                        Image(systemName: "quote.bubble")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.4))
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Show Lyrics")
-                    .padding(.top, 10)
-                }
             }
         }
         .frame(maxHeight: .infinity)
