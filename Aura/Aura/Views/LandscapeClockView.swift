@@ -152,14 +152,18 @@ struct LandscapeClockView: View {
         let artSize = min(size.height * 0.34, size.width * 0.17)
         return VStack(spacing: 0) {
             if let song = player.currentSong {
-                CoverArtAsyncImage(coverArt: song.coverArt, size: artSize)
-                    .shadow(color: .black.opacity(0.5), radius: 20, y: 8)
-                    .scaleEffect(player.isPlaying ? 1.0 : 0.94)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.8), value: player.isPlaying)
-                    // The cover opens the lyrics.
-                    .onTapGesture { if hasSyncedLyrics { showsLyrics = true } }
-                    .accessibilityAddTraits(hasSyncedLyrics ? .isButton : [])
-                    .accessibilityHint(hasSyncedLyrics ? "Shows the lyrics" : "")
+                // The cover opens the lyrics. A real button: a tap gesture on the cover
+                // went unanswered inside the turned content.
+                Button { showsLyrics = true } label: {
+                    CoverArtAsyncImage(coverArt: song.coverArt, size: artSize)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!hasSyncedLyrics)
+                .accessibilityLabel("Show Lyrics")
+                .shadow(color: .black.opacity(0.5), radius: 20, y: 8)
+                .scaleEffect(player.isPlaying ? 1.0 : 0.94)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: player.isPlaying)
 
                 VStack(spacing: 3) {
                     Text(song.title)
