@@ -13,6 +13,7 @@ struct NowPlayingView: View {
     /// How the blurred cover behind everything is corrected: a vibrant tint for dark covers,
     /// a deeper veil for light ones.
     @State private var backdropTone = BackdropTone.plain
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var showClockMode = false
     @State private var clockOrientation: UIDeviceOrientation = .landscapeLeft
     /// Closed by hand while still on its side: it stays closed until the phone is upright
@@ -53,6 +54,9 @@ struct NowPlayingView: View {
     /// Side inset shared by the artwork, the title block, the transport row and the
     /// options bar — they must stay on the same vertical guides.
     private let horizontalPadding: CGFloat = 30
+    /// The player keeps a phone's width on a wide screen (iPhone Duo open): a cover the
+    /// width of the display would push the controls off the bottom. The blur still fills it.
+    private static let columnWidth: CGFloat = 440
 
     /// The artwork once it has shrunk into the lyrics header, and the gap to the title
     /// beside it.
@@ -89,6 +93,7 @@ struct NowPlayingView: View {
                     ZStack {
                         cachedBackground(for: song, in: geo)
                         playerView(song: song, geo: geo)
+                            .frame(maxWidth: Self.columnWidth)
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                     .cornerRadius(dragOffset > 0 ? min(dragOffset / 3, 30) : 0)
@@ -250,6 +255,8 @@ struct NowPlayingView: View {
             // Physical-rotation notifications fire though the interface is held in portrait.
             let orientation = UIDevice.current.orientation
             if orientation == .portrait { clockDismissed = false }
+            // A wide screen turns the whole interface, so the clock's own turn would be one too many.
+            guard horizontalSizeClass != .regular else { return }
             guard AppSettings.shared.landscapeClockEnabled, !showClockMode, !clockDismissed else { return }
             guard orientation == .landscapeLeft || orientation == .landscapeRight else { return }
             clockOrientation = orientation
@@ -267,7 +274,7 @@ struct NowPlayingView: View {
 
     @ViewBuilder
     private func playerView(song: Song, geo: GeometryProxy) -> some View {
-        let w = geo.size.width
+        let w = min(geo.size.width, Self.columnWidth)
         let artSize = w - (horizontalPadding * 2)
 
         VStack(spacing: 0) {

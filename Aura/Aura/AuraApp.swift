@@ -22,9 +22,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
 
-    /// Always upright: the landscape clock turns its own content rather than the window.
+    /// Upright on a phone screen: the landscape clock turns its own content rather than the
+    /// window. A wide screen — iPhone Duo open — turns with the device like any big display.
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-        .portrait
+        window?.traitCollection.horizontalSizeClass == .regular ? .allButUpsideDown : .portrait
     }
 
     /// "Joue du Kygo sur Aura". Asking for music by name is SiriKit's, not App Shortcuts':
@@ -66,6 +67,7 @@ struct AuraApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
+                OrientationRefresher()
                 ContentView()
                     .environment(serverManager)
                     .environment(audioPlayer)
@@ -577,5 +579,21 @@ final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling, INUpdateM
     /// "kygo" is "Kygo", and "beyonce" is "Beyoncé".
     private static func same(_ a: String, _ b: String) -> Bool {
         a.compare(b, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+    }
+}
+
+/// UIKit keeps the orientations it was last given: folding an iPhone Duo shut while it lies
+/// on its side must ask again, or the narrow outer screen stays in landscape.
+private struct OrientationRefresher: View {
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    var body: some View {
+        Color.clear
+            .allowsHitTesting(false)
+            .onChange(of: sizeClass) {
+                for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+                    scene.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+                }
+            }
     }
 }
