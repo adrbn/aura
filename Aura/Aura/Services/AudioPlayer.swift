@@ -70,6 +70,12 @@ final class AudioPlayer {
     var lyrics: [LyricsLine] = []
     var lyricsSource: LyricsSource = .structured
     var lyricsStatus: String = ""
+    /// Lyrics that only say there are none to sing: a lone "Instrumental" line.
+    var lyricsAreInstrumental: Bool {
+        !lyrics.isEmpty && lyrics.allSatisfy {
+            $0.text.range(of: #"^\W*instrumental\W*$"#, options: [.regularExpression, .caseInsensitive]) != nil
+        }
+    }
     /// True while lyrics are being fetched. The empty-state ("No lyrics available") must
     /// wait on this being false — otherwise it flashes before any source has been tried.
     var isLoadingLyrics = false

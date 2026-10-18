@@ -33,8 +33,9 @@ struct ContentView: View {
     }
 
     /// Room left above the tab bar for what floats over the tabs. On an iPhone Duo the tab
-    /// bar sits in the side column, by the status bar, so there is none to clear there.
-    private var tabBarGap: CGFloat { tabBarBeside ? 8 : 57 }
+    /// bar sits in the side column, by the status bar, so there is none to clear there: the
+    /// mini player dips into the bottom inset to end level with the side tab bar's foot.
+    private var tabBarGap: CGFloat { tabBarBeside ? -10 : 57 }
     /// Read from the layout, not the window: at launch the window has no insets yet, and a
     /// value read once then kept the phone's gap until something else redrew the bars.
     @State private var tabBarBeside = false

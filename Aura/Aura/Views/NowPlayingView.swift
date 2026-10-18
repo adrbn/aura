@@ -12,6 +12,9 @@ struct NowPlayingView: View {
     /// On a Duo's wide screen, the queue in place of the lyrics beside the player.
     /// `-duoQueue YES` opens on it, for checking the layout.
     @State private var besideQueue = UserDefaults.standard.bool(forKey: "duoQueue")
+    /// Beside the player, the queue takes over a few seconds after a song turns out to have
+    /// no words to show; the lyrics button brings the empty column back.
+    @State private var wordlessQueue = false
     @State private var backgroundImage: UIImage?
     /// How the blurred cover behind everything is corrected: a vibrant tint for dark covers,
     /// a deeper veil for light ones.
@@ -71,7 +74,7 @@ struct NowPlayingView: View {
     /// transport, toolbar — without the artwork or any gap. Checked on the Duo simulator.
     private static let duoChromeHeight: CGFloat = 300
     /// Source → art, art → title, transport → toolbar, tightened on a Duo's short screens.
-    private static let duoGaps = (source: CGFloat(8), title: CGFloat(14), toolbar: CGFloat(12))
+    private static let duoGaps = (title: CGFloat(14), toolbar: CGFloat(12))
 
     /// The artwork once it has shrunk into the lyrics header, and the gap to the title
     /// beside it.
@@ -213,8 +216,13 @@ struct NowPlayingView: View {
         .onChange(of: lyricsBeside) { _, beside in
             if beside { showLyrics = false }
         }
+        // Words found after all, by the second look: they take the column back.
+        .onChange(of: player.lyrics.isEmpty || player.lyricsAreInstrumental) { _, wordless in
+            if !wordless { wordlessQueue = false }
+        }
         .onChange(of: player.currentSong?.id) { oldId, newId in
             previousSongId = oldId
+            wordlessQueue = false
             if showLyrics {
                 Task {
                     try? await Task.sleep(for: .milliseconds(500))
@@ -323,7 +331,7 @@ struct NowPlayingView: View {
 
     /// The queue stands beside the player when asked for, or when the song has no lyrics.
     private var queueBeside: Bool {
-        besideQueue || (player.lyrics.isEmpty && !player.isLoadingLyrics)
+        besideQueue || wordlessQueue
     }
 
     /// The lyrics, fading out at both edges.
@@ -391,7 +399,8 @@ struct NowPlayingView: View {
     private func fittedPlayer(song: Song, size: CGSize) -> some View {
         if size.width > Self.columnWidth && size.height < Self.phoneSize.height {
             let insets = (top: max(safeTop, 12) + 8, bottom: max(safeBottom, 12) + 8)
-            let gaps = Self.duoGaps.source + Self.duoGaps.title + Self.duoGaps.toolbar
+            // The gap under the playback source matches the one above it.
+            let gaps = insets.top + Self.duoGaps.title + Self.duoGaps.toolbar
             let chrome = Self.duoChromeHeight + gaps + insets.top + insets.bottom
             let fullArt = Self.columnWidth - horizontalPadding * 2
             // The largest scale at which a full column still fits the height, never under 88%:
@@ -415,7 +424,12 @@ struct NowPlayingView: View {
         let duo = duoInsets != nil
 
         VStack(spacing: 0) {
-            Spacer().frame(height: duoInsets?.top ?? max(safeTop, 20) + 24)
+            if let duoInsets {
+                // As much room above the playback source as under it.
+                Spacer(minLength: duoInsets.top)
+            } else {
+                Spacer().frame(height: max(safeTop, 20) + 24)
+            }
 
             // Playing from source indicator (above cover art)
             if player.playbackSource != .unknown {
@@ -434,10 +448,10 @@ struct NowPlayingView: View {
                     .frame(maxWidth: w - 80)
                 }
                 .disabled(!player.playbackSource.isNavigable)
-                .padding(.bottom, 4)
+                .padding(.bottom, duo ? 0 : 4)
             }
 
-            Spacer(minLength: duo ? Self.duoGaps.source : 4)
+            Spacer(minLength: duoInsets?.top ?? 4)
 
             // Everything from the artwork down to the title sits in a container of FIXED
             // height, measured once from the normal state. Opening lyrics rearranges what is
@@ -701,7 +715,7 @@ struct NowPlayingView: View {
                 Spacer()
                 Button {
                     if lyricsBeside {
-                        withAnimation(.smooth(duration: 0.3)) { besideQueue = false }
+                        withAnimation(.smooth(duration: 0.3)) { besideQueue = false; wordlessQueue = false }
                     } else {
                         withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { showLyrics.toggle() }
                     }
@@ -1137,6 +1151,17 @@ struct NowPlayingView: View {
 
     // MARK: - Lyrics Scroll View
 
+    /// A song with no words to show steps aside after 2s: the phone goes back to the
+    /// artwork, the open Duo shows the queue beside the player.
+    private func leaveWordless() async {
+        try? await Task.sleep(for: .seconds(2))
+        guard !Task.isCancelled, !player.isLoadingLyrics,
+              player.lyrics.isEmpty || player.lyricsAreInstrumental else { return }
+        withAnimation(.easeInOut(duration: 0.35)) {
+            if lyricsBeside { wordlessQueue = true } else { showLyrics = false }
+        }
+    }
+
     private var lyricsScrollView: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -1157,6 +1182,15 @@ struct NowPlayingView: View {
                     .frame(maxWidth: .infinity)
                     .containerRelativeFrame(.vertical) { h, _ in h }
                     .padding(.horizontal, 16)
+                } else if player.lyricsAreInstrumental {
+                    // Not words to sing: a quiet note in the middle, not a lyric line.
+                    Text(String(localized: "Instrumental"))
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.35))
+                        .frame(maxWidth: .infinity)
+                        .containerRelativeFrame(.vertical) { h, _ in h }
+                        .padding(.horizontal, 16)
+                        .task(id: player.currentSong?.id) { await leaveWordless() }
                 } else if player.lyrics.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "text.quote").font(.system(size: 40))
@@ -1178,13 +1212,7 @@ struct NowPlayingView: View {
                     .frame(maxWidth: .infinity)
                     .containerRelativeFrame(.vertical) { h, _ in h }
                     .padding(.horizontal, 16)
-                    .task {
-                        // Auto-dismiss lyrics view after 2s if no lyrics found
-                        try? await Task.sleep(for: .seconds(2))
-                        guard !Task.isCancelled else { return }
-                        guard player.lyrics.isEmpty, !player.isLoadingLyrics else { return }
-                        withAnimation(.easeInOut(duration: 0.35)) { showLyrics = false }
-                    }
+                    .task(id: player.currentSong?.id) { await leaveWordless() }
                 } else {
                     LazyVStack(alignment: .leading, spacing: 18) {
                         Spacer().frame(height: 120)
@@ -1256,11 +1284,7 @@ struct NowPlayingView: View {
                         guard !Task.isCancelled else { return }
                         await MainActor.run {
                             isUserScrolling = false
-                            if let id = currentLyricId {
-                                withAnimation(.easeInOut(duration: 0.4)) {
-                                    proxy.scrollTo(id, anchor: .center)
-                                }
-                            }
+                            withAnimation(.easeInOut(duration: 0.4)) { scrollToSungLine(proxy) }
                         }
                     }
                 }
@@ -1268,9 +1292,7 @@ struct NowPlayingView: View {
             .onAppear {
                 // Immediately scroll to current lyric when lyrics view appears
                 updateLyricIndices()
-                if let id = currentLyricId {
-                    proxy.scrollTo(id, anchor: .center)
-                }
+                scrollToSungLine(proxy)
             }
             .onChange(of: player.lyricsTime) { _, _ in
                 updateLyricIndices()
@@ -1279,10 +1301,13 @@ struct NowPlayingView: View {
                 updateLyricIndices()
             }
             .onChange(of: currentLyricId) { _, newId in
-                guard let newId, !isUserScrolling else { return }
-                withAnimation(.easeInOut(duration: 0.4)) {
-                    proxy.scrollTo(newId, anchor: .center)
-                }
+                guard newId != nil, !isUserScrolling else { return }
+                withAnimation(.easeInOut(duration: 0.4)) { scrollToSungLine(proxy) }
+            }
+            // The first line beginning takes the sheet from its top to the centre.
+            .onChange(of: nearestLineIndex == nil) { _, _ in
+                guard !isUserScrolling else { return }
+                withAnimation(.easeInOut(duration: 0.4)) { scrollToSungLine(proxy) }
             }
             // Translations shown, hidden or arriving change every line's height, and the
             // list keeps its offset: the line being sung drifted off the centre, then was
@@ -1300,8 +1325,18 @@ struct NowPlayingView: View {
     /// Keeps the line being sung centred while the lines change height, in the same motion
     /// as they do: one glide, rather than the list jumping and then scrolling back.
     private func recenterLyrics(_ proxy: ScrollViewProxy) {
-        guard !isUserScrolling, let id = currentLyricId else { return }
-        withAnimation(Self.translationMotion) { proxy.scrollTo(id, anchor: .center) }
+        guard !isUserScrolling else { return }
+        withAnimation(Self.translationMotion) { scrollToSungLine(proxy) }
+    }
+
+    /// The line being sung, centred. Before the first one begins, the open Duo keeps the
+    /// sheet at its top instead, the first line just clear of the top fade.
+    private func scrollToSungLine(_ proxy: ScrollViewProxy) {
+        if lyricsBeside && nearestLineIndex == nil {
+            proxy.scrollTo("lyrics-top-spacer", anchor: .top)
+        } else if let id = currentLyricId {
+            proxy.scrollTo(id, anchor: .center)
+        }
     }
 
     @ViewBuilder

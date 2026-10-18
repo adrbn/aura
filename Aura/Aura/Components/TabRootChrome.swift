@@ -213,7 +213,7 @@ struct BottomEdgeVeil: View {
         // of on top of the bar, and without it the foot mirrors the top veil's short fade.
         let beside = TabChrome.tabBarBeside
         let tabBar = beside ? 0 : Self.tabBarHeight
-        let miniTop = beside ? Self.miniPlayerTop - 49 : Self.miniPlayerTop
+        let miniTop = beside ? Self.miniPlayerTop - 67 : Self.miniPlayerTop
         let lead = beside && !coversMiniPlayer && card == 0 ? 34 : Self.lead
         let barsTop = (coversMiniPlayer ? miniTop : tabBar) + card
         // The highest bar alone: the ramp has run its course by its foot, whatever sits below.
