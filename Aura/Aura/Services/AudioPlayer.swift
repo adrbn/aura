@@ -504,6 +504,9 @@ final class AudioPlayer {
         }
         // Prepare the player so pressing play works immediately
         preparePlayback(state.currentSong)
+        // Resuming doesn't announce the song, so without this its lyrics stayed empty
+        // until a refetch by hand.
+        loadLyrics(for: state.currentSong)
     }
 
     /// Called by `ServerManager` *before* switching to a different server. Persists the
