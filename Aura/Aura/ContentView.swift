@@ -81,6 +81,7 @@ struct ContentView: View {
             handlePostDismissNavigation()
         }) {
             NowPlayingView()
+                .duoPreview()
         }
         .sheet(isPresented: $showDownloadManager) {
             NavigationStack {
@@ -182,6 +183,7 @@ struct ContentView: View {
             handlePostDismissNavigation()
         }) {
             NowPlayingView()
+                .duoPreview()
         }
         // Now Playing's links open in the tab that holds them, as online.
         .onChange(of: audioPlayer.pendingArtistId) { _, newId in
@@ -280,6 +282,11 @@ struct ContentView: View {
             audioPlayer.isShowingNowPlaying = true
             try? await Task.sleep(for: .seconds(2))
             audioPlayer.seek(to: UserDefaults.standard.double(forKey: "shotAt"))
+            // A layout check, not a listening session: the phone may be in a pocket.
+            if DuoPreview.size != nil {
+                for _ in 0..<20 where !audioPlayer.isPlaying { try? await Task.sleep(for: .milliseconds(250)) }
+                audioPlayer.pause()
+            }
         default:
             break
         }
@@ -532,9 +539,43 @@ struct LoadErrorView: View {
 
 #if DEBUG
 /// The screen an App Store screenshot is taken of, from the launch arguments; nil otherwise.
+/// `-duoPreview 951x669` draws Now Playing at an iPhone Duo screen's size, shrunk to fit the
+/// phone, so the wide layout can be seen and captured without a Duo or a simulator.
+/// Sizes in points: inner 669x951 upright, 951x669 on its side; outer 466x678.
+enum DuoPreview {
+    static let size: CGSize? = UserDefaults.standard.string(forKey: "duoPreview").flatMap { text in
+        let parts = text.split(separator: "x").compactMap { Double($0) }
+        return parts.count == 2 ? CGSize(width: parts[0], height: parts[1]) : nil
+    }
+}
+
 enum Shot {
     static let name = UserDefaults.standard.string(forKey: "shot")
     static let ready = URL.documentsDirectory.appending(path: "shot-ready")
     static func note(_ state: String) { try? Data(state.utf8).write(to: ready) }
 }
 #endif
+
+extension View {
+    /// See `DuoPreview`. Release builds, and debug builds launched without it, are unchanged.
+    @ViewBuilder func duoPreview() -> some View {
+        #if DEBUG
+        if let size = DuoPreview.size {
+            GeometryReader { geo in
+                let scale = min(geo.size.width / size.width, geo.size.height / size.height)
+                self.frame(width: size.width, height: size.height)
+                    .environment(\.horizontalSizeClass, size.width >= 600 ? .regular : .compact)
+                    .clipped()
+                    .scaleEffect(scale)
+                    .frame(width: geo.size.width, height: geo.size.height)
+            }
+            .background(.black)
+            .ignoresSafeArea()
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
+    }
+}

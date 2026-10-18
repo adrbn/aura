@@ -14,6 +14,7 @@ struct NowPlayingView: View {
     /// a deeper veil for light ones.
     @State private var backdropTone = BackdropTone.plain
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var screenWidth: CGFloat = 0
     @State private var showClockMode = false
     @State private var clockOrientation: UIDeviceOrientation = .landscapeLeft
     /// Closed by hand while still on its side: it stays closed until the phone is upright
@@ -59,6 +60,7 @@ struct NowPlayingView: View {
     private static let columnWidth: CGFloat = 440
     /// Lyric lines stay a readable length however wide the screen gets.
     private static let lyricsColumnWidth: CGFloat = 560
+    private static let minLyricsWidth: CGFloat = 360
 
     /// The artwork once it has shrunk into the lyrics header, and the gap to the title
     /// beside it.
@@ -111,6 +113,7 @@ struct NowPlayingView: View {
                         }
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { screenWidth = $0 }
                     .cornerRadius(dragOffset > 0 ? min(dragOffset / 3, 30) : 0)
                     .offset(y: dragOffset)
                     // Immersive artwork canvas: always dark, whatever the app appearance.
@@ -289,8 +292,12 @@ struct NowPlayingView: View {
         withTransaction(transaction, change)
     }
 
-    /// True on a wide screen (iPhone Duo open), where the lyrics sit beside the player.
-    private var lyricsBeside: Bool { horizontalSizeClass == .regular }
+    /// True on a wide screen (iPhone Duo open, on its side), where the lyrics sit beside the
+    /// player. Open and upright the Duo is 669 points wide: the lyrics would get barely 230
+    /// of them, so it keeps the phone layout.
+    private var lyricsBeside: Bool {
+        horizontalSizeClass == .regular && screenWidth >= Self.columnWidth + Self.minLyricsWidth
+    }
 
     /// The lyrics, fading out at both edges.
     private var fadedLyrics: some View {
