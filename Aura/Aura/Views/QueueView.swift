@@ -269,7 +269,7 @@ struct QueueView: View {
 /// repeat, compact rows, and the autoplay tail under its own heading.
 extension QueueView {
     var embeddedQueue: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 0) {
             embeddedHeader
             List {
                 ForEach(Self.keyed(player.userQueue)) { row in
@@ -313,12 +313,14 @@ extension QueueView {
             .listStyle(.plain)
             .scrollIndicators(.hidden)
             .scrollContentBackground(.hidden)
-            // Rows start a little below the head and fade out under it as they scroll up.
-            .contentMargins(.top, 14, for: .scrollContent)
+            // Rows fade out under the head as they scroll up and at the foot (Now Playing's
+            // mask); a margin as tall as each fade lets the first and last rows rest clear of it.
+            .contentMargins(.top, 28, for: .scrollContent)
+            .contentMargins(.bottom, 48, for: .scrollContent)
             .mask {
                 VStack(spacing: 0) {
                     LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 40)
+                        .frame(height: 28)
                     Color.white
                 }
             }
@@ -411,6 +413,8 @@ extension QueueView {
                 .accessibilityHidden(true)
         }
         .contentShape(Rectangle())
+        // A held row lifts as a rounded tile; with the clear row background it lifted on black.
+        .contentShape(.dragPreview, RoundedRectangle(cornerRadius: 8, style: .continuous))
         .embeddedRowStyle()
     }
 
