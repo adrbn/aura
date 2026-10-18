@@ -8,7 +8,11 @@ struct NowPlayingView: View {
     @State private var appSettings = AppSettings.shared
     @State private var serverManager = ServerManager.shared
     @State private var translator = LyricsTranslator.shared
-    @State private var showLyrics = false
+    /// `-queueInline YES` opens on the queue under the artwork header, for checking the layout.
+    @State private var showLyrics = UserDefaults.standard.bool(forKey: "queueInline")
+    /// With `showLyrics`, the queue takes the lyrics' place under the small artwork header,
+    /// rather than opening in a sheet over the player.
+    @State private var queueInline = UserDefaults.standard.bool(forKey: "queueInline")
     /// On a Duo's wide screen, the queue in place of the lyrics beside the player.
     /// `-duoQueue YES` opens on it, for checking the layout.
     @State private var besideQueue = UserDefaults.standard.bool(forKey: "duoQueue")
@@ -223,7 +227,7 @@ struct NowPlayingView: View {
         .onChange(of: player.currentSong?.id) { oldId, newId in
             previousSongId = oldId
             wordlessQueue = false
-            if showLyrics {
+            if showLyrics && !queueInline {
                 Task {
                     try? await Task.sleep(for: .milliseconds(500))
                     if player.lyrics.isEmpty {
@@ -296,7 +300,7 @@ struct NowPlayingView: View {
         // so Now Playing is never laid out again in landscape underneath. It comes and goes
         // without the cover's slide, which played while the whole screen turned.
         .fullScreenCover(isPresented: $showClockMode) {
-            LandscapeClockView(orientation: clockOrientation, lyricsMode: showLyrics) {
+            LandscapeClockView(orientation: clockOrientation, lyricsMode: showLyrics && !queueInline) {
                 clockDismissed = UIDevice.current.orientation.isLandscape
                 Self.withoutAnimation { showClockMode = false }
             }
@@ -379,12 +383,30 @@ struct NowPlayingView: View {
             }
     }
 
+    /// The queue under the artwork header, where the lyrics go, its rows lined up with the art.
+    private var inlineQueueList: some View {
+        QueueView(embedded: true)
+            .frame(maxHeight: .infinity)
+            .mask(queueFootFade)
+            .padding(.horizontal, horizontalPadding)
+    }
+
+    /// Only the foot fades: at the top it would dim the fixed "Playing Next" head.
+    private var queueFootFade: some View {
+        VStack(spacing: 0) {
+            Color.white
+            LinearGradient(gradient: Self.lyricsEdgeFade, startPoint: .bottom, endPoint: .top)
+                .frame(height: 48)
+        }
+    }
+
     /// The queue in the right-hand column, on the player's own background, as the lyrics are.
     private var besideQueueList: some View {
         QueueView(embedded: true)
-            .mask(edgeFade)
-            // The list keeps its own leading inset; this matches it at the screen edge.
-            .padding(.trailing, horizontalPadding - 10)
+            .mask(queueFootFade)
+            .padding(.leading, 8)
+            // The open Duo keeps its clock and Wi-Fi in a column at the right edge: stop short of it.
+            .padding(.trailing, max(horizontalPadding, safeSides.right + 8))
             .padding(.top, max(safeTop, 20))
             .padding(.bottom, 20)
     }
@@ -474,7 +496,7 @@ struct NowPlayingView: View {
                 .frame(maxWidth: .infinity, alignment: showLyrics ? .leading : .center)
                 // Facing the small title, at the far end of the header.
                 .overlay(alignment: .trailing) {
-                    if showLyrics && translator.isAvailable {
+                    if showLyrics && !queueInline && translator.isAvailable {
                         translateButton
                             // A quick fade on close, done before the cover grows back over this
                             // corner: the slower one let it visibly slide underneath.
@@ -491,8 +513,10 @@ struct NowPlayingView: View {
             if showLyrics {
                 // Takes whatever the artwork and the title block give up. The container
                 // is height-locked, so this expands into exactly the space they vacate.
-                fadedLyrics
-                    .transition(.opacity)
+                Group {
+                    if queueInline { inlineQueueList } else { fadedLyrics }
+                }
+                .transition(.opacity)
             }
 
             Spacer().frame(height: duo ? Self.duoGaps.title : 20)
@@ -621,7 +645,7 @@ struct NowPlayingView: View {
                 Spacer()
                 SongActionsRow(
                     song: song,
-                    showLyrics: showLyrics,
+                    showLyrics: showLyrics && !queueInline,
                     accentColor: accentColor,
                     showAddToPlaylist: $showAddToPlaylist,
                     showCredits: $showCredits,
@@ -697,7 +721,11 @@ struct NowPlayingView: View {
         if lyricsBeside {
             withAnimation(.smooth(duration: 0.3)) { besideQueue.toggle() }
         } else {
-            player.isShowingQueue = true
+            let open = !(showLyrics && queueInline)
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                showLyrics = open
+                queueInline = open
+            }
         }
     }
 
@@ -711,13 +739,16 @@ struct NowPlayingView: View {
             HStack {
                 // Beside the player the right-hand column shows either the lyrics or the
                 // queue, and these two buttons pick which.
-                let lyricsUp = lyricsBeside ? !queueBeside : showLyrics
+                let lyricsUp = lyricsBeside ? !queueBeside : showLyrics && !queueInline
                 Spacer()
                 Button {
                     if lyricsBeside {
                         withAnimation(.smooth(duration: 0.3)) { besideQueue = false; wordlessQueue = false }
                     } else {
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { showLyrics.toggle() }
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                            showLyrics = !lyricsUp
+                            queueInline = false
+                        }
                     }
                 } label: {
                     Image(systemName: lyricsUp ? "quote.bubble.fill" : "quote.bubble")
@@ -750,7 +781,7 @@ struct NowPlayingView: View {
                 Button { showQueue() } label: {
                     Image(systemName: "list.bullet")
                         .font(.title2)
-                        .foregroundStyle(lyricsBeside && queueBeside ? accentColor : .white.opacity(0.6))
+                        .foregroundStyle((lyricsBeside ? queueBeside : showLyrics && queueInline) ? accentColor : .white.opacity(0.6))
                 }
                 .accessibilityLabel("Show queue")
                 Spacer()

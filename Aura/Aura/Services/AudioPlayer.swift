@@ -169,7 +169,7 @@ final class AudioPlayer {
     private var cachedArtworkSongId: String?
     private var stableCoverArtURL: String?
     private var savedPlaybackSource: PlaybackSource?
-    private var autoplayFromIndex: Int?  // Index where autoplay/random-fill songs begin
+    private(set) var autoplayFromIndex: Int?  // Index where autoplay/random-fill songs begin
     private var isSeeking = false
     /// Where the current item's stream begins in the song. Past zero once a jump ahead in a
     /// stream the server converts as it sends has asked for it again from there (see
@@ -947,6 +947,9 @@ final class AudioPlayer {
                 neighbours.append(queue[queueIndex - step])
             }
         }
+        // The queue's thumbnails too, so its rows never open on placeholders.
+        let upcoming = userQueue + queue.dropFirst(queueIndex + 1)
+        ArtworkCache.shared.prefetch(coverArtIds: upcoming.prefix(30).compactMap(\.coverArt), pointSize: 52)
         // A song can sit in both the user queue and the main queue; fetch it once.
         var seen: Set<String> = []
         for song in neighbours where seen.insert(song.id).inserted {

@@ -11,7 +11,7 @@ struct QueueView: View {
 
     var body: some View {
         if embedded {
-            queueList.listStyle(.plain)
+            embeddedQueue
         } else {
             NavigationStack {
                 queueList
@@ -259,5 +259,176 @@ struct QueueView: View {
     private var autoNextSongs: [Song] {
         guard !player.queue.isEmpty, player.queueIndex + 1 < player.queue.count else { return [] }
         return Array(player.queue[(player.queueIndex + 1)...])
+    }
+}
+
+// MARK: - Beside or under the player
+
+/// The queue drawn on Now Playing's own background — under the artwork header on a phone,
+/// beside the player on an open iPhone Duo: a fixed "Playing Next" head with shuffle and
+/// repeat, compact rows, and the autoplay tail under its own heading.
+extension QueueView {
+    var embeddedQueue: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            embeddedHeader
+            List {
+                ForEach(Self.keyed(player.userQueue)) { row in
+                    embeddedRow(row.song)
+                        .onTapGesture {
+                            let song = player.userQueue.remove(at: row.index)
+                            player.playSong(song, fromQueue: player.queue, startIndex: player.queueIndex, source: .queue)
+                        }
+                }
+                .onDelete { indices in
+                    for i in indices.sorted().reversed() { player.userQueue.remove(at: i) }
+                }
+                .onMove { player.userQueue.move(fromOffsets: $0, toOffset: $1) }
+
+                queueSection(fromSourceSongs, start: player.queueIndex + 1, source: player.playbackSource)
+
+                let autoplay = autoplaySongs
+                if !autoplay.isEmpty {
+                    Label("Autoplay", systemImage: "infinity")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(.top, 14)
+                        .embeddedRowStyle()
+                    queueSection(autoplay, start: autoplayStart, source: .autoplay)
+                } else if player.userQueue.isEmpty && fromSourceSongs.isEmpty {
+                    Group {
+                        if player.isBuildingQueue {
+                            HStack(spacing: 10) {
+                                ProgressView().controlSize(.small)
+                                Text("Finding songs to play next…")
+                            }
+                        } else {
+                            Text("Nothing in the queue")
+                        }
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.55))
+                    .embeddedRowStyle()
+                }
+            }
+            .listStyle(.plain)
+            .scrollIndicators(.hidden)
+            .scrollContentBackground(.hidden)
+            .animation(.smooth(duration: 0.35), value: Self.keyed(player.userQueue).map(\.id))
+            .animation(.smooth(duration: 0.35), value: Self.keyed(autoNextSongs).map(\.id))
+            // Warm every row's cover up front — loading them as they scroll in shows placeholders.
+            .task(id: upcomingCovers) {
+                ArtworkCache.shared.prefetch(coverArtIds: upcomingCovers, pointSize: 52)
+            }
+        }
+    }
+
+    private var upcomingCovers: [String] {
+        (player.userQueue + autoNextSongs).compactMap(\.coverArt)
+    }
+
+    private var embeddedHeader: some View {
+        HStack(alignment: .center, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Playing Next")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                if player.playbackSource != .unknown {
+                    Text("From \(player.playbackSource.displayName)")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.55))
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: 8)
+            headerToggle("shuffle", on: player.isShuffled, label: "Shuffle") { player.toggleShuffle() }
+            headerToggle(player.repeatMode.systemImage, on: player.repeatMode != .off, label: "Repeat") {
+                player.cycleRepeat()
+            }
+        }
+    }
+
+    /// A toggle that lights a soft tile behind itself when on.
+    private func headerToggle(_ symbol: String, on: Bool, label: LocalizedStringKey,
+                              action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white.opacity(on ? 1 : 0.6))
+                .frame(width: 36, height: 30)
+                .background(.white.opacity(on ? 0.22 : 0), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+
+    /// Rows of `player.queue` from `start` on, each played from where it stands.
+    @ViewBuilder
+    private func queueSection(_ songs: [Song], start: Int, source: PlaybackSource) -> some View {
+        ForEach(Self.keyed(songs)) { row in
+            embeddedRow(row.song)
+                .onTapGesture {
+                    let index = start + row.index
+                    if index < player.queue.count {
+                        player.playSong(row.song, fromQueue: player.queue, startIndex: index, source: source)
+                    }
+                }
+        }
+        .onDelete { indices in
+            for offset in indices.map({ $0 + start }).sorted().reversed() { player.removeFromQueue(at: offset) }
+        }
+        .onMove { from, to in
+            player.moveInQueue(from: IndexSet(from.map { $0 + start }), to: to + start)
+        }
+    }
+
+    private func embeddedRow(_ song: Song) -> some View {
+        HStack(spacing: 12) {
+            CoverArtImage(coverArt: song.coverArt, size: 52, cornerRadius: 6)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(song.title)
+                    .font(.body)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                Text(song.artist ?? String(localized: "Unknown Artist"))
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.55))
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            Image(systemName: "line.3.horizontal")
+                .font(.system(size: 15))
+                .foregroundStyle(.white.opacity(0.35))
+                .accessibilityHidden(true)
+        }
+        .contentShape(Rectangle())
+        .embeddedRowStyle()
+    }
+
+    /// Where the autoplay tail begins: past the source's own songs.
+    private var autoplayStart: Int {
+        max(player.queueIndex + 1, player.autoplayFromIndex ?? player.queue.count)
+    }
+
+    /// What's left of the album, playlist or artist being played.
+    private var fromSourceSongs: [Song] {
+        let start = player.queueIndex + 1
+        guard start < autoplayStart, autoplayStart <= player.queue.count else { return [] }
+        return Array(player.queue[start..<autoplayStart])
+    }
+
+    /// Songs added after the source ran out, by autoplay.
+    private var autoplaySongs: [Song] {
+        guard autoplayStart < player.queue.count else { return [] }
+        return Array(player.queue[autoplayStart...])
+    }
+}
+
+private extension View {
+    /// A row edge to edge, on the player's background, with no separator.
+    func embeddedRowStyle() -> some View {
+        listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
     }
 }
