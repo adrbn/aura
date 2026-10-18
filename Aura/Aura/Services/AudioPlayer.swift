@@ -78,6 +78,17 @@ final class AudioPlayer {
     /// this song nor end this song's spinner when it lands.
     private var lyricsGeneration = 0
     private var lyricsTask: Task<Void, Never>?
+    /// The next song's lyrics, looked for near the end of this one; `lines` nil means none.
+    private struct AheadLyrics {
+        let songId: String
+        let generation: Int
+        var lines: [LyricsLine]?
+        var source: LyricsSource?
+        var done = false
+    }
+    private var aheadLyrics: AheadLyrics?
+    private var aheadLyricsTask: Task<Void, Never>?
+    private var aheadGeneration = 0
     var isShowingQueue = false
     var radioPlaylistSongs: [Song] = []
     var radioPlaylistName: String = ""
@@ -1603,8 +1614,6 @@ final class AudioPlayer {
 
     /// Begin caching the next track in queue when the current song is near completion
     private func prefetchNextTrack() {
-        guard let server = ServerManager.shared.currentServer else { return }
-        let bitRate = AppSettings.shared.effectiveStreamingQuality.bitRate
 
         // Determine next song: user queue first, then main queue
         let nextSong: Song?
@@ -1619,6 +1628,9 @@ final class AudioPlayer {
         }
 
         guard let song = nextSong, !song.isPreview else { return }
+        fetchLyricsAhead(for: song)
+        guard let server = ServerManager.shared.currentServer else { return }
+        let bitRate = AppSettings.shared.effectiveStreamingQuality.bitRate
         AudioCacheManager.shared.prefetch(songId: song.id, server: server, bitRate: bitRate, songSuffix: song.suffix, songContentType: song.contentType)
     }
 
@@ -2547,10 +2559,23 @@ final class AudioPlayer {
         lyricsTask?.cancel()
         lyricsGeneration += 1
         let generation = lyricsGeneration
+        // Looked for while the song before played out: shown the moment the song starts.
+        let ahead = aheadLyrics?.songId == song.id && aheadLyrics?.done == true ? aheadLyrics : nil
+        if aheadLyrics?.songId == song.id { aheadLyricsTask?.cancel(); aheadLyrics = nil }
+        AppLogger.shared.log("🎤 loadLyrics: \(song.title) by \(song.artist ?? "?")"
+                             + (ahead == nil ? "" : " — found ahead: \(ahead?.lines?.count ?? 0) lines"))
+        if let lines = ahead?.lines {
+            lyrics = lines
+            if let source = ahead?.source { lyricsSource = source }
+            lyricsStatus = ""
+            isLoadingLyrics = false
+            lyricsTask = Task { await checkVersionIfNeeded(of: song, generation: generation) }
+            return
+        }
         lyrics = []
-        lyricsStatus = String(localized: "Loading lyrics...")
-        isLoadingLyrics = true
-        AppLogger.shared.log("🎤 loadLyrics: \(song.title) by \(song.artist ?? "?")")
+        // None found ahead: say so at once, and look again behind it in case that was the network.
+        lyricsStatus = ahead == nil ? String(localized: "Loading lyrics...") : String(localized: "No lyrics found")
+        isLoadingLyrics = ahead == nil
         lyricsTask = Task {
             // A preview is thirty seconds from somewhere in the song, and nothing says where:
             // its words come from LRCLIB alone — the server doesn't hold the song — and as a
@@ -2565,6 +2590,40 @@ final class AudioPlayer {
                     self.lyricsStatus = String(localized: "No lyrics found")
                 }
                 self.isLoadingLyrics = false
+            }
+        }
+    }
+
+    /// Lyrics found by the fetch `generation`: on screen when it's the current one, kept for
+    /// later when it's the fetch ahead for the next song, dropped otherwise.
+    private func showFound(_ lines: [LyricsLine], source: LyricsSource?, generation: Int) async {
+        await MainActor.run {
+            if generation == self.lyricsGeneration {
+                self.lyrics = lines
+                if let source { self.lyricsSource = source }
+                self.lyricsStatus = ""
+            } else if generation == self.aheadLyrics?.generation {
+                self.aheadLyrics?.lines = lines
+                self.aheadLyrics?.source = source
+            }
+        }
+    }
+
+    /// Looks for the next song's lyrics near the end of this one, so they show as it starts.
+    private func fetchLyricsAhead(for song: Song) {
+        guard aheadLyrics?.songId != song.id, !song.isPreview else { return }
+        aheadLyricsTask?.cancel()
+        // Counted down from -1, apart from `lyricsGeneration`, so it never writes on screen.
+        aheadGeneration -= 1
+        let generation = aheadGeneration
+        aheadLyrics = AheadLyrics(songId: song.id, generation: generation)
+        aheadLyricsTask = Task {
+            let found = await resolveLyrics(for: song, generation: generation)
+            await MainActor.run {
+                guard self.aheadLyrics?.generation == generation else { return }
+                if !found { self.aheadLyrics?.lines = nil }
+                self.aheadLyrics?.done = true
+                AppLogger.shared.log("🎤 Lyrics ahead: \(song.title) — \(found ? "found" : "none")")
             }
         }
     }
@@ -2593,11 +2652,16 @@ final class AudioPlayer {
             LyricsVersion.forget(song.id)
         }
         guard await findLyrics(for: song, generation: generation) else { return false }
+        await checkVersionIfNeeded(of: song, generation: generation)
+        return true
+    }
+
+    /// Checks the version once a song, when its title names one and the network is there.
+    private func checkVersionIfNeeded(of song: Song, generation: Int) async {
         if !isEffectivelyOffline, LyricsVersion.verdict(for: song.id) == nil,
            !LyricsVersion.markers(title: song.title, artist: song.artist).isEmpty {
             await checkVersion(of: song, generation: generation)
         }
-        return true
     }
 
     /// Asks LRCLIB for the version's own sheets and, when most of them disagree with the
@@ -2679,11 +2743,7 @@ final class AudioPlayer {
         let parsed = LyricsOverrides.parse(text)
         guard !parsed.isEmpty else { return false }
         AppLogger.shared.log("🎵 Lyrics timed by hand: \(parsed.count) lines")
-        await publishLyrics(generation) {
-            self.lyrics = parsed
-            self.lyricsSource = .structured
-            self.lyricsStatus = ""
-        }
+        await showFound(parsed, source: .structured, generation: generation)
         return true
     }
 
@@ -2725,13 +2785,10 @@ final class AudioPlayer {
         let parsed = parseLRC(text)
         guard !parsed.isEmpty else { return false }
         AppLogger.shared.log("🎵 Lyrics from the downloaded copy: \(parsed.count) lines")
-        await publishLyrics(generation) {
-            self.lyrics = parsed
-            // A `.lrc` carrying timestamps follows the song; one without them is a plain
-            // sheet, and `legacy` is what this app calls that.
-            self.lyricsSource = parsed.contains { $0.time != nil } ? .structured : .legacy
-            self.lyricsStatus = ""
-        }
+        // A `.lrc` carrying timestamps follows the song; one without them is a plain
+        // sheet, and `legacy` is what this app calls that.
+        await showFound(parsed, source: parsed.contains { $0.time != nil } ? .structured : .legacy,
+                        generation: generation)
         return true
     }
 
@@ -2906,20 +2963,12 @@ final class AudioPlayer {
             if !timed, plain.isEmpty {
                 let lines = parsed.filter { !$0.text.isEmpty }.map { LyricsLine(time: nil, text: $0.text) }
                 guard !lines.isEmpty else { return false }
-                await publishLyrics(generation) {
-                    self.lyrics = lines
-                    self.lyricsSource = .legacy
-                    self.lyricsStatus = ""
-                }
+                await showFound(lines, source: .legacy, generation: generation)
                 return true
             }
             if !parsed.isEmpty, timed {
                 AppLogger.shared.log("🎵 LRCLIB: Got \(parsed.count) synced lyrics lines")
-                await publishLyrics(generation) {
-                    self.lyrics = parsed
-                    self.lyricsSource = .structured
-                    self.lyricsStatus = ""
-                }
+                await showFound(parsed, source: .structured, generation: generation)
                 return true
             }
         }
@@ -2930,11 +2979,7 @@ final class AudioPlayer {
                 .filter { !$0.isEmpty }
                 .map { LyricsLine(time: nil, text: $0) }
             if !lines.isEmpty {
-                await publishLyrics(generation) {
-                    self.lyrics = lines
-                    self.lyricsSource = .legacy
-                    self.lyricsStatus = ""
-                }
+                await showFound(lines, source: .legacy, generation: generation)
                 return true
             }
         }
@@ -2975,10 +3020,7 @@ final class AudioPlayer {
                     AppLogger.shared.log("🎤 Lyrics: server supplied word-level timing for \(cuesByIndex.count) line(s)")
                 }
                 if !parsed.isEmpty {
-                    await publishLyrics(generation) {
-                        self.lyrics = parsed
-                        self.lyricsStatus = ""
-                    }
+                    await showFound(parsed, source: nil, generation: generation)
                     return true
                 }
             }
@@ -3002,15 +3044,9 @@ final class AudioPlayer {
                         .map { $0.trimmingCharacters(in: .whitespaces) }
                         .filter { !$0.isEmpty }
                         .map { LyricsLine(time: nil, text: $0) }
-                    await publishLyrics(generation) {
-                        self.lyrics = plainLines
-                        self.lyricsStatus = ""
-                    }
+                    await showFound(plainLines, source: nil, generation: generation)
                 } else {
-                    await publishLyrics(generation) {
-                        self.lyrics = parsed
-                        self.lyricsStatus = ""
-                    }
+                    await showFound(parsed, source: nil, generation: generation)
                 }
                 return true
             }

@@ -121,7 +121,7 @@ struct NowPlayingView: View {
                                 fittedPlayer(song: song, size: geo.size)
                                     .frame(maxWidth: .infinity)
                                 Group {
-                                    if besideQueue { besideQueueList } else { besideLyrics }
+                                    if queueBeside { besideQueueList } else { besideLyrics }
                                 }
                                 .transition(.opacity)
                                 .frame(maxWidth: Self.lyricsColumnWidth)
@@ -319,6 +319,11 @@ struct NowPlayingView: View {
     /// of them, so it keeps the phone layout.
     private var lyricsBeside: Bool {
         horizontalSizeClass == .regular && screenWidth >= Self.columnWidth + Self.minLyricsWidth
+    }
+
+    /// The queue stands beside the player when asked for, or when the song has no lyrics.
+    private var queueBeside: Bool {
+        besideQueue || (player.lyrics.isEmpty && !player.isLoadingLyrics)
     }
 
     /// The lyrics, fading out at both edges.
@@ -692,7 +697,7 @@ struct NowPlayingView: View {
             HStack {
                 // Beside the player the right-hand column shows either the lyrics or the
                 // queue, and these two buttons pick which.
-                let lyricsUp = lyricsBeside ? !besideQueue : showLyrics
+                let lyricsUp = lyricsBeside ? !queueBeside : showLyrics
                 Spacer()
                 Button {
                     if lyricsBeside {
@@ -731,7 +736,7 @@ struct NowPlayingView: View {
                 Button { showQueue() } label: {
                     Image(systemName: "list.bullet")
                         .font(.title2)
-                        .foregroundStyle(lyricsBeside && besideQueue ? accentColor : .white.opacity(0.6))
+                        .foregroundStyle(lyricsBeside && queueBeside ? accentColor : .white.opacity(0.6))
                 }
                 .accessibilityLabel("Show queue")
                 Spacer()
