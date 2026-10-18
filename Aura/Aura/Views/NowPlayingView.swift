@@ -333,16 +333,21 @@ struct NowPlayingView: View {
     }
 
     private var edgeFade: some View {
-        VStack(spacing: 0) {
-            LinearGradient(gradient: Self.lyricsEdgeFade,
-                           startPoint: .top, endPoint: .bottom)
-                .frame(height: Self.lyricsEdgeFadeHeight)
-            Color.white
-            // Same curve, read from the other end — so both edges fall off
-            // identically and can't drift apart when the curve is retuned.
-            LinearGradient(gradient: Self.lyricsEdgeFade,
-                           startPoint: .bottom, endPoint: .top)
-                .frame(height: Self.lyricsEdgeFadeHeight)
+        // On a short sheet (the folded Duo leaves ~195pt) two full-height fades meet in the
+        // middle and swallow the sung line; there each takes a fifth of the height at most.
+        GeometryReader { geo in
+            let fade = min(Self.lyricsEdgeFadeHeight, geo.size.height * 0.2)
+            VStack(spacing: 0) {
+                LinearGradient(gradient: Self.lyricsEdgeFade,
+                               startPoint: .top, endPoint: .bottom)
+                    .frame(height: fade)
+                Color.white
+                // Same curve, read from the other end — so both edges fall off
+                // identically and can't drift apart when the curve is retuned.
+                LinearGradient(gradient: Self.lyricsEdgeFade,
+                               startPoint: .bottom, endPoint: .top)
+                    .frame(height: fade)
+            }
         }
     }
 
