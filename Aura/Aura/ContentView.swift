@@ -285,7 +285,8 @@ struct ContentView: View {
             // A layout check, not a listening session: the phone may be in a pocket.
             if DuoPreview.size != nil {
                 for _ in 0..<20 where !audioPlayer.isPlaying { try? await Task.sleep(for: .milliseconds(250)) }
-                audioPlayer.pause()
+                // `-duoPlaying YES` keeps it playing, silent, to see the cover at its playing size.
+                if UserDefaults.standard.bool(forKey: "duoPlaying") { audioPlayer.volume = 0 } else { audioPlayer.pause() }
             }
         default:
             break

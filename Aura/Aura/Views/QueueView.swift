@@ -6,12 +6,42 @@ struct QueueView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var undoQueue: [Song]?
     @State private var undoTimer: Timer?
+    /// Drawn beside the player on an iPhone Duo instead of in its own sheet.
+    var embedded = false
 
     var body: some View {
-        NavigationStack {
-            List {
+        if embedded {
+            queueList.listStyle(.plain)
+        } else {
+            NavigationStack {
+                queueList
+                    .background(Color.themeBg)
+                    .navigationTitle("")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .principal) {
+                            Text("Queue").font(.headline)
+                        }
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            if !autoNextSongs.isEmpty || !player.userQueue.isEmpty {
+                                Button("Clear") { player.clearUpNext() }
+                            }
+                        }
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { dismiss() }
+                        }
+                    }
+            }
+        }
+    }
+
+    private var queueList: some View {
+        List {
+            Group {
                 // Now playing
-                if let song = player.currentSong {
+                if !embedded, let song = player.currentSong {
                     Section("Now Playing") {
                         HStack(spacing: 12) {
                             CoverArtImage(coverArt: song.coverArt, size: 50, cornerRadius: 6)
@@ -169,54 +199,39 @@ struct QueueView: View {
                     }
                 }
             }
-            // A song played leaves the top and the rest slide up; a new album's songs fade
-            // in over the old — rather than every row rewritten where it stands.
-            .animation(.smooth(duration: 0.35), value: Self.keyed(player.userQueue).map(\.id))
-            .animation(.smooth(duration: 0.35), value: Self.keyed(autoNextSongs).map(\.id))
-            .scrollIndicators(.hidden)
-            .scrollContentBackground(.hidden)
-            .background(Color.themeBg)
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Queue").font(.headline)
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if !autoNextSongs.isEmpty || !player.userQueue.isEmpty {
-                        Button("Clear") { player.clearUpNext() }
+            // Beside the player, the rows sit on its own background.
+            .listRowBackground(embedded ? Color.clear : nil)
+            .listRowSeparator(embedded ? .hidden : .automatic)
+        }
+        // A song played leaves the top and the rest slide up; a new album's songs fade
+        // in over the old — rather than every row rewritten where it stands.
+        .animation(.smooth(duration: 0.35), value: Self.keyed(player.userQueue).map(\.id))
+        .animation(.smooth(duration: 0.35), value: Self.keyed(autoNextSongs).map(\.id))
+        .scrollIndicators(.hidden)
+        .scrollContentBackground(.hidden)
+        .onDisappear { undoTimer?.invalidate() }
+        .overlay(alignment: .bottom) {
+            if undoQueue != nil {
+                Button {
+                    if let saved = undoQueue {
+                        player.restoreQueue(saved)
+                        undoTimer?.invalidate()
+                        undoQueue = nil
                     }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .onDisappear { undoTimer?.invalidate() }
-            .overlay(alignment: .bottom) {
-                if undoQueue != nil {
-                    Button {
-                        if let saved = undoQueue {
-                            player.restoreQueue(saved)
-                            undoTimer?.invalidate()
-                            undoQueue = nil
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "arrow.uturn.backward")
-                            Text("Undo shuffle")
-                        }
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.primary)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(.ultraThinMaterial, in: Capsule())
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.uturn.backward")
+                        Text("Undo shuffle")
                     }
-                    .padding(.bottom, 16)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(.spring(response: 0.3), value: undoQueue != nil)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(.ultraThinMaterial, in: Capsule())
                 }
+                .padding(.bottom, 16)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.spring(response: 0.3), value: undoQueue != nil)
             }
         }
     }

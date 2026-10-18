@@ -9,6 +9,9 @@ struct NowPlayingView: View {
     @State private var serverManager = ServerManager.shared
     @State private var translator = LyricsTranslator.shared
     @State private var showLyrics = false
+    /// On a Duo's wide screen, the queue in place of the lyrics beside the player.
+    /// `-duoQueue YES` opens on it, for checking the layout.
+    @State private var besideQueue = UserDefaults.standard.bool(forKey: "duoQueue")
     @State private var backgroundImage: UIImage?
     /// How the blurred cover behind everything is corrected: a vibrant tint for dark covers,
     /// a deeper veil for light ones.
@@ -64,8 +67,11 @@ struct NowPlayingView: View {
     /// The phone the player is designed on (iPhone 17 Pro), its reference on a Duo.
     private static let phoneSize = CGSize(width: 402, height: 874)
     private static let minDuoScale: CGFloat = 0.88
-    /// Everything in the player but the artwork, in height, on a Duo.
-    private static let duoChromeHeight: CGFloat = 480
+    /// The player's own elements in height — source, title block, year row, timeline and
+    /// transport, toolbar — without the artwork or any gap. Checked on the Duo simulator.
+    private static let duoChromeHeight: CGFloat = 300
+    /// Source → art, art → title, transport → toolbar, tightened on a Duo's short screens.
+    private static let duoGaps = (source: CGFloat(8), title: CGFloat(14), toolbar: CGFloat(12))
 
     /// The artwork once it has shrunk into the lyrics header, and the gap to the title
     /// beside it.
@@ -81,6 +87,13 @@ struct NowPlayingView: View {
     /// Radio needs the server — greyed out in offline mode or without any network.
     private var isEffectivelyOffline: Bool {
         appSettings.offlineMode || !serverManager.hasNetwork
+    }
+
+    /// The sides' safe insets: the folded Duo keeps its status bar in a column on one side.
+    private var safeSides: UIEdgeInsets {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets ?? .zero
     }
 
     private var safeTop: CGFloat {
@@ -107,12 +120,18 @@ struct NowPlayingView: View {
                             HStack(spacing: 0) {
                                 fittedPlayer(song: song, size: geo.size)
                                     .frame(maxWidth: .infinity)
-                                besideLyrics
-                                    .frame(maxWidth: Self.lyricsColumnWidth)
+                                Group {
+                                    if besideQueue { besideQueueList } else { besideLyrics }
+                                }
+                                .transition(.opacity)
+                                .frame(maxWidth: Self.lyricsColumnWidth)
                                     .frame(maxWidth: .infinity)
                             }
                         } else {
+                            // Centred between the side insets, clear of a side status bar.
                             fittedPlayer(song: song, size: geo.size)
+                                .padding(.leading, safeSides.left)
+                                .padding(.trailing, safeSides.right)
                         }
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
@@ -309,20 +328,22 @@ struct NowPlayingView: View {
             // Long eased dissolves at both ends, not the old 16pt hairline. Lines
             // don't stop at an edge, they thin out into the background — which is
             // what keeps a dense lyric sheet from feeling like a wall of text.
-            .mask(
-                VStack(spacing: 0) {
-                    LinearGradient(gradient: Self.lyricsEdgeFade,
-                                   startPoint: .top, endPoint: .bottom)
-                        .frame(height: Self.lyricsEdgeFadeHeight)
-                    Color.white
-                    // Same curve, read from the other end — so both edges fall off
-                    // identically and can't drift apart when the curve is retuned.
-                    LinearGradient(gradient: Self.lyricsEdgeFade,
-                                   startPoint: .bottom, endPoint: .top)
-                        .frame(height: Self.lyricsEdgeFadeHeight)
-                }
-            )
+            .mask(edgeFade)
             .padding(.horizontal, horizontalPadding)
+    }
+
+    private var edgeFade: some View {
+        VStack(spacing: 0) {
+            LinearGradient(gradient: Self.lyricsEdgeFade,
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: Self.lyricsEdgeFadeHeight)
+            Color.white
+            // Same curve, read from the other end — so both edges fall off
+            // identically and can't drift apart when the curve is retuned.
+            LinearGradient(gradient: Self.lyricsEdgeFade,
+                           startPoint: .bottom, endPoint: .top)
+                .frame(height: Self.lyricsEdgeFadeHeight)
+        }
     }
 
     /// The right-hand column of the wide layout: the lyrics from the top of the screen to
@@ -340,6 +361,16 @@ struct NowPlayingView: View {
             }
     }
 
+    /// The queue in the right-hand column, on the player's own background, as the lyrics are.
+    private var besideQueueList: some View {
+        QueueView(embedded: true)
+            .mask(edgeFade)
+            // The list keeps its own leading inset; this matches it at the screen edge.
+            .padding(.trailing, horizontalPadding - 10)
+            .padding(.top, max(safeTop, 20))
+            .padding(.bottom, 20)
+    }
+
     // MARK: - Player View
 
     /// The player on a Duo screen, which is wider than any phone but no taller (669 points
@@ -348,12 +379,17 @@ struct NowPlayingView: View {
     /// the screen lacks.
     @ViewBuilder
     private func fittedPlayer(song: Song, size: CGSize) -> some View {
-        if size.width > Self.columnWidth {
-            let scale = min(1, max(Self.minDuoScale, size.height / Self.phoneSize.height))
+        if size.width > Self.columnWidth && size.height < Self.phoneSize.height {
+            let insets = (top: max(safeTop, 12) + 8, bottom: max(safeBottom, 12) + 8)
+            let gaps = Self.duoGaps.source + Self.duoGaps.title + Self.duoGaps.toolbar
+            let chrome = Self.duoChromeHeight + gaps + insets.top + insets.bottom
+            let fullArt = Self.columnWidth - horizontalPadding * 2
+            // The largest scale at which a full column still fits the height, never under 88%:
+            // the artwork, and the timeline it matches, take whatever the gaps gave back.
+            let scale = min(1, max(Self.minDuoScale, size.height / (chrome + fullArt)))
             let height = size.height / scale
-            // The artwork sets the column, so it keeps the timeline's width as on a phone.
-            let w = min(size.width / scale, Self.columnWidth, height - Self.duoChromeHeight + horizontalPadding * 2)
-            playerView(song: song, width: w, artSize: w - horizontalPadding * 2)
+            let w = min(Self.columnWidth, height - chrome + horizontalPadding * 2)
+            playerView(song: song, width: w, artSize: w - horizontalPadding * 2, duoInsets: insets)
                 .frame(height: height)
                 .scaleEffect(scale)
                 .frame(width: w * scale, height: size.height)
@@ -364,10 +400,12 @@ struct NowPlayingView: View {
     }
 
     @ViewBuilder
-    private func playerView(song: Song, width w: CGFloat, artSize: CGFloat) -> some View {
+    private func playerView(song: Song, width w: CGFloat, artSize: CGFloat,
+                            duoInsets: (top: CGFloat, bottom: CGFloat)? = nil) -> some View {
+        let duo = duoInsets != nil
 
         VStack(spacing: 0) {
-            Spacer().frame(height: max(safeTop, 20) + 24)
+            Spacer().frame(height: duoInsets?.top ?? max(safeTop, 20) + 24)
 
             // Playing from source indicator (above cover art)
             if player.playbackSource != .unknown {
@@ -389,7 +427,7 @@ struct NowPlayingView: View {
                 .padding(.bottom, 4)
             }
 
-            Spacer(minLength: 4)
+            Spacer(minLength: duo ? Self.duoGaps.source : 4)
 
             // Everything from the artwork down to the title sits in a container of FIXED
             // height, measured once from the normal state. Opening lyrics rearranges what is
@@ -433,7 +471,7 @@ struct NowPlayingView: View {
                     .transition(.opacity)
             }
 
-            Spacer().frame(height: 20)
+            Spacer().frame(height: duo ? Self.duoGaps.title : 20)
 
             // Song info — hidden while lyrics are open, where the header already shows the
             // title and artist. Its height is what lets the lyrics breathe.
@@ -567,7 +605,7 @@ struct NowPlayingView: View {
             progressAndControls
                 .padding(.horizontal, horizontalPadding)
 
-            Spacer()
+            Spacer(minLength: duo ? Self.duoGaps.toolbar : nil)
 
             // Bottom toolbar. Under the alpha auto-hide setting it collapses to a small
             // glass handle and expands from the centre on demand.
@@ -585,7 +623,7 @@ struct NowPlayingView: View {
                         .transition(.opacity.combined(with: .scale(scale: 0.8)))
                 }
             }
-            .padding(.bottom, max(safeBottom, 20) + 40)
+            .padding(.bottom, duoInsets?.bottom ?? max(safeBottom, 20) + 40)
         }
         .frame(width: w)
     }
@@ -625,6 +663,15 @@ struct NowPlayingView: View {
         }
     }
 
+    /// The queue beside the player when there is room for it, in its sheet otherwise.
+    private func showQueue() {
+        if lyricsBeside {
+            withAnimation(.smooth(duration: 0.3)) { besideQueue.toggle() }
+        } else {
+            player.isShowingQueue = true
+        }
+    }
+
     /// A radio grows from the server's knowledge of the song: none offline, none for a preview.
     private var radioUnavailable: Bool {
         isEffectivelyOffline || player.currentSong?.isPreview == true
@@ -633,18 +680,22 @@ struct NowPlayingView: View {
     /// Lyrics, radio, queue, sleep timer, output and sharing, each a tap away.
     private var optionsBar: some View {
             HStack {
-                // Beside the player the lyrics are always up, so there is nothing to toggle.
-                if !lyricsBeside {
-                    Spacer()
-                    Button {
+                // Beside the player the right-hand column shows either the lyrics or the
+                // queue, and these two buttons pick which.
+                let lyricsUp = lyricsBeside ? !besideQueue : showLyrics
+                Spacer()
+                Button {
+                    if lyricsBeside {
+                        withAnimation(.smooth(duration: 0.3)) { besideQueue = false }
+                    } else {
                         withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { showLyrics.toggle() }
-                    } label: {
-                        Image(systemName: showLyrics ? "quote.bubble.fill" : "quote.bubble")
-                            .font(.title2)
-                            .foregroundStyle(showLyrics ? accentColor : .white.opacity(0.6))
                     }
-                    .accessibilityLabel(showLyrics ? "Hide lyrics" : "Show lyrics")
+                } label: {
+                    Image(systemName: lyricsUp ? "quote.bubble.fill" : "quote.bubble")
+                        .font(.title2)
+                        .foregroundStyle(lyricsUp ? accentColor : .white.opacity(0.6))
                 }
+                .accessibilityLabel(lyricsUp ? "Hide lyrics" : "Show lyrics")
                 Spacer()
                 Button {
                     if let current = player.currentSong {
@@ -667,10 +718,10 @@ struct NowPlayingView: View {
                 .disabled(radioUnavailable)
                 .accessibilityLabel("Start radio from this song")
                 Spacer()
-                Button { player.isShowingQueue = true } label: {
+                Button { showQueue() } label: {
                     Image(systemName: "list.bullet")
                         .font(.title2)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(lyricsBeside && besideQueue ? accentColor : .white.opacity(0.6))
                 }
                 .accessibilityLabel("Show queue")
                 Spacer()
@@ -1028,7 +1079,7 @@ struct NowPlayingView: View {
             player.isShowingNowPlaying = false
             player.pendingFrequentlyPlayedOpen = true
         case .queue, .autoplay:
-            player.isShowingQueue = true
+            showQueue()
         case .search, .songs, .unknown:
             break
         }
