@@ -407,7 +407,7 @@ struct NowPlayingView: View {
             .padding(.leading, 8)
             // The open Duo keeps its clock and Wi-Fi in a column at the right edge: stop short of it.
             .padding(.trailing, max(horizontalPadding, safeSides.right + 8))
-            .padding(.top, max(safeTop, 20))
+            .padding(.top, max(safeTop, 20) + 6)
             .padding(.bottom, 20)
     }
 
