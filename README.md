@@ -63,17 +63,19 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 
 **And also**
 
-- **An editable queue.** Play next, add to the end, drag to reorder. When it runs out, autoplay carries on with similar songs.
+- **A queue you can see ahead in.** It opens in place of the artwork, with shuffle and repeat at its head. Play next, add to the end, drag to reorder. As soon as an album, playlist or artist plays, autoplay lines up similar songs under its own heading, so the music doesn't stop at the last track.
 - **Gapless playback.** The next song is lined up behind the one playing, so live albums and DJ mixes run on without a gap.
 - **Shuffle, repeat one or all, and a sleep timer** that stops after a set time or at the end of the song.
 - **Ratings.** Rate a song from one to five stars in its Song Info; the rating goes to your server, and waits on the iPhone while you're offline.
 - **Scrobbling.** Plays go to your server, and are held on the iPhone while you're offline.
+- **Lyrics ready on time.** The next song's lyrics are fetched once the one playing passes 80%, so they show the moment it starts.
 - **Lyrics you can fix.** Shift the timing if your Bluetooth headphones lag, or put a song's lyrics in time yourself: tap *Now* as each marked line starts. Your timing stays on the iPhone and wins over every other source. For a duet, a remix or another version, Aura checks that the lyrics match the version playing.
 - **Lyrics translation**, optional, under each line, by Google's Gemini with a free API key of your own (Settings → Lyrics → Translation). A song is sent only when you tap translate, and only its lines, title and artist. Translations are kept for offline use.
 - **Save a radio as a playlist** on your server, and its cover goes with it.
 - **One search** across songs, albums, artists and playlists that forgives typos, with a Recently Searched list of what you played.
 - **Playlists your way.** A grid or a list, filtered to pinned, radios, mixes, yours, shared or downloaded. Create them, reorder them and give them a cover from your photos; changes go to your server.
 - **Pages in the colour of their artwork.** When your server has no cover for an album, Aura finds it in Deezer's catalogue.
+- **Any format your server holds.** WMA, APE, WavPack, DSD and other files the iPhone can't read are turned into MP3 by your server, at every quality, for streaming and downloads.
 - **A stream cache.** What you stream is kept as it plays, up to a size you set, and an offline mode you switch on stays on across launches.
 - **Several servers**, switched from the Home title, and libraries split across music folders. A server can have a second, home-network address, used whenever it answers.
 - **A quality for cellular**, apart from the one on Wi-Fi, and the queue saved on your server when you leave the app, for another client to pick up.
@@ -85,6 +87,7 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **A Now Playing widget** for the Home Screen: the song and its cover, with previous, play-pause and next in the medium size.
 - **Yours to arrange.** Light or dark, any accent colour, and tabs and Home sections in the order you choose.
 - **A landscape clock.** Switch it on in Settings and turn the phone sideways while music plays: the time large, the song beside it, and a tap on the cover for the lyrics, one line at a time.
+- **Ready for iPhone Duo** (next version). Open, Aura turns with the device: Now Playing keeps the player on the left with the lyrics or the queue beside it, and album, playlist, mix and radio pages stand their cover at the left with the title and buttons next to it. Folded, the player keeps a phone's proportions on the short screens.
 
 ## Screenshots
 
@@ -93,6 +96,9 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 </p>
 <p align="center">
   <img src="docs/assets/shots-watch.webp" width="64%" alt="The Apple Watch app: Now Playing, lyrics, Up Next and the Library" />
+</p>
+<p align="center">
+  <img src="docs/assets/shots-duo.webp" width="100%" alt="Aura open on the iPhone Duo: Now Playing with the queue and its Playing Next head beside the player, and an album page with the cover at the left and the title and buttons beside it" />
 </p>
 
 ## Two builds

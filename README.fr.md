@@ -65,17 +65,19 @@ reprend le tout.
 
 **Et aussi**
 
-- **Une file d'attente modifiable.** Lire ensuite, ajouter à la fin, glisser pour réordonner. Quand elle se vide, la lecture automatique enchaîne sur des morceaux proches.
+- **Une file d'attente qui montre la suite.** Elle s'ouvre à la place de la pochette, avec l'aléatoire et la répétition en tête. Lire ensuite, ajouter à la fin, glisser pour réordonner. Dès qu'un album, une playlist ou un artiste joue, la lecture automatique aligne des morceaux proches sous son propre titre, et la musique ne s'arrête pas au dernier morceau.
 - **Lecture sans blanc.** Le morceau suivant est préparé derrière celui qui joue : albums live et mix de DJ s'enchaînent sans coupure.
 - **Lecture aléatoire, répétition d'un morceau ou de tout, et un minuteur de veille** qui coupe après un temps donné ou à la fin du morceau.
 - **Des notes.** Notez un morceau de une à cinq étoiles dans ses infos ; la note part sur votre serveur, et attend sur l'iPhone quand vous êtes hors ligne.
 - **Scrobbling.** Les écoutes partent vers votre serveur, et l'iPhone les garde en attendant quand vous êtes hors ligne.
+- **Des paroles prêtes à temps.** Les paroles du morceau suivant sont cherchées dès que celui qui joue passe 80 %, pour s'afficher dès qu'il commence.
 - **Des paroles que vous pouvez corriger.** Décalez le minutage si votre casque Bluetooth est en retard, ou calez vous-même les paroles d'un morceau : touchez *Now* au début de chaque ligne marquée. Votre minutage reste sur l'iPhone et passe avant toutes les autres sources. Pour un duo, un remix ou une autre version, Aura vérifie que les paroles correspondent à la version qui joue.
 - **La traduction des paroles**, en option, sous chaque ligne, par Gemini de Google avec votre propre clé d'API gratuite (Réglages → Paroles → Traduction). Un morceau n'est envoyé que quand vous touchez traduire, et seulement ses lignes, son titre et son artiste. Les traductions sont gardées pour l'écoute hors ligne.
 - **Enregistrer une radio comme playlist** sur votre serveur, pochette comprise.
 - **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe, avec des Recherches récentes de ce que vous avez écouté.
 - **Des playlists à votre façon.** En grille ou en liste, filtrées par épinglées, radios, mix, les vôtres, partagées ou téléchargées. Créez-les, réordonnez-les, donnez-leur une pochette tirée de vos photos ; les changements partent sur votre serveur.
 - **Des pages aux couleurs de leur pochette.** Quand votre serveur n'a pas la pochette d'un album, Aura la trouve dans le catalogue de Deezer.
+- **Tous les formats de votre serveur.** WMA, APE, WavPack, DSD et les autres fichiers que l'iPhone ne sait pas lire sont convertis en MP3 par votre serveur, à toutes les qualités, en streaming comme en téléchargement.
 - **Un cache de streaming.** Ce que vous écoutez en streaming est gardé au fil de la lecture, jusqu'à la taille que vous fixez, et un mode hors ligne que vous activez le reste d'un lancement à l'autre.
 - **Plusieurs serveurs**, qu'on change depuis le titre de l'accueil, et des bibliothèques réparties en dossiers de musique. Un serveur peut avoir une seconde adresse, celle de la maison, utilisée dès qu'elle répond.
 - **Une qualité pour le réseau cellulaire**, distincte de celle du Wi-Fi, et la file d'attente enregistrée sur votre serveur quand vous quittez l'app, pour qu'un autre client la reprenne.
@@ -87,6 +89,7 @@ reprend le tout.
 - **Un widget En cours de lecture** pour l'écran d'accueil : le morceau et sa pochette, avec précédent, lecture-pause et suivant en taille moyenne.
 - **À votre goût.** Clair ou sombre, la couleur d'accent de votre choix, et les onglets et les sections de l'accueil dans l'ordre que vous voulez.
 - **Une horloge en paysage.** Activez-la dans les Réglages et tournez le téléphone sur le côté pendant la lecture : l'heure en grand, le morceau à côté, et un tap sur la pochette pour les paroles, une ligne à la fois.
+- **Prêt pour l'iPhone Duo** (prochaine version). Ouvert, Aura tourne avec l'appareil : En cours de lecture garde le lecteur à gauche avec les paroles ou la file d'attente à côté, et les pages d'album, de playlist, de mix et de radio posent leur pochette à gauche avec le titre et les boutons à côté. Plié, le lecteur garde les proportions d'un téléphone sur les écrans courts.
 
 ## Captures d'écran
 
@@ -95,6 +98,9 @@ reprend le tout.
 </p>
 <p align="center">
   <img src="docs/assets/shots-watch.webp" width="64%" alt="L'app Apple Watch : En cours de lecture, les paroles, À suivre et la bibliothèque" />
+</p>
+<p align="center">
+  <img src="docs/assets/shots-duo.webp" width="100%" alt="Aura ouvert sur l'iPhone Duo : En cours de lecture avec la file d'attente et sa tête Playing Next à côté du lecteur, et une page d'album avec la pochette à gauche, le titre et les boutons à côté" />
 </p>
 
 ## Deux versions
