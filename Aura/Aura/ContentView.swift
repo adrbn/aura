@@ -24,9 +24,20 @@ struct ContentView: View {
         }
     }
 
+    /// Whether a keyboard about to show really covers the foot of the screen. With a
+    /// hardware keyboard only the shortcuts bar shows, a strip that may never send its
+    /// hide, and the mini player hidden for it stayed hidden.
+    private static func coversContent(_ note: Notification) -> Bool {
+        guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return true }
+        return frame.height > 120
+    }
+
     /// Room left above the tab bar for what floats over the tabs. On an iPhone Duo the tab
     /// bar sits in the side column, by the status bar, so there is none to clear there.
-    private var tabBarGap: CGFloat { TabChrome.tabBarBeside ? 8 : 57 }
+    private var tabBarGap: CGFloat { tabBarBeside ? 8 : 57 }
+    /// Read from the layout, not the window: at launch the window has no insets yet, and a
+    /// value read once then kept the phone's gap until something else redrew the bars.
+    @State private var tabBarBeside = false
 
     private var mainContent: some View {
         ZStack(alignment: .bottom) {
@@ -42,6 +53,9 @@ struct ContentView: View {
             }
             .tint(appSettings.activeTheme.accentColor)
             .onChange(of: fetchCardInset, initial: true) { BottomChrome.shared.cardInset = $1 }
+            .onGeometryChange(for: Bool.self) { $0.safeAreaInsets.leading > 0 || $0.safeAreaInsets.trailing > 0 } action: {
+                tabBarBeside = $0
+            }
 
             VStack(spacing: 0) {
                 Spacer()
@@ -143,8 +157,8 @@ struct ContentView: View {
             // Backfill permanent artwork for existing downloads while we have a connection.
             await DownloadManager.shared.ensureOfflineArtwork()
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-            withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = true }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { note in
+            withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = Self.coversContent(note) }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
             withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = false }
@@ -213,8 +227,8 @@ struct ContentView: View {
             await serverManager.testConnection()
             serverManager.startMonitoring()
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-            withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = true }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { note in
+            withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = Self.coversContent(note) }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
             withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = false }

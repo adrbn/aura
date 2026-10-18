@@ -566,7 +566,12 @@ struct NowPlayingView: View {
             //
             // `.frame(height:)` also centres its content unless told otherwise, which pushed
             // the header down the locked box instead of pinning it to the top.
-            .frame(height: showLyrics ? mediaRegionHeight : nil, alignment: .top)
+            .frame(height: showLyrics && !duo ? mediaRegionHeight : nil, alignment: .top)
+            // On the Duo's short screens the column is a fixed height already, so the lyrics
+            // take whatever the gaps around them don't need, rather than a height measured
+            // from the other state that left them a sliver between two stretched gaps.
+            .frame(maxHeight: showLyrics && duo ? .infinity : nil, alignment: .top)
+            .layoutPriority(showLyrics && duo ? 1 : 0)
             // Recorded only in the normal state — that layout is the reference the lyrics
             // state has to match — which is now also the only state where nothing is
             // constraining it, so this reads the true natural height.
