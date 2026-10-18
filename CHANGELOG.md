@@ -7,7 +7,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 ## [Unreleased]
 
 - WMA, APE, WavPack, DSD and other files the iPhone can't read now play: your server turns them into MP3 at every quality, Lossless included, for streaming and downloads.
-- Ready for iPhone Duo: open, Aura turns with the device, and Now Playing keeps a phone-sized column over the full-screen blur. Folded, nothing changes.
+- Ready for iPhone Duo: open, Aura turns with the device, and Now Playing puts the player on the left and the lyrics on the right, always up. Folded, nothing changes.
 
 ## [1.2.0] — 2026-10-15 (sent to App Review; the sideload IPA is out)
 

@@ -57,6 +57,8 @@ struct NowPlayingView: View {
     /// The player keeps a phone's width on a wide screen (iPhone Duo open): a cover the
     /// width of the display would push the controls off the bottom. The blur still fills it.
     private static let columnWidth: CGFloat = 440
+    /// Lyric lines stay a readable length however wide the screen gets.
+    private static let lyricsColumnWidth: CGFloat = 560
 
     /// The artwork once it has shrunk into the lyrics header, and the gap to the title
     /// beside it.
@@ -92,8 +94,21 @@ struct NowPlayingView: View {
                 if let song = player.currentSong {
                     ZStack {
                         cachedBackground(for: song, in: geo)
-                        playerView(song: song, geo: geo)
-                            .frame(maxWidth: Self.columnWidth)
+                        if lyricsBeside {
+                            // iPhone Duo open: the player keeps its column on the left and the
+                            // lyrics stay up on the right, rather than taking turns.
+                            HStack(spacing: 0) {
+                                playerView(song: song, geo: geo)
+                                    .frame(maxWidth: Self.columnWidth)
+                                    .frame(maxWidth: .infinity)
+                                besideLyrics
+                                    .frame(maxWidth: Self.lyricsColumnWidth)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        } else {
+                            playerView(song: song, geo: geo)
+                                .frame(maxWidth: Self.columnWidth)
+                        }
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                     .cornerRadius(dragOffset > 0 ? min(dragOffset / 3, 30) : 0)
@@ -168,6 +183,10 @@ struct NowPlayingView: View {
                         }
                     }
             }
+        }
+        // Opening the Duo with the phone's lyrics up would show them twice.
+        .onChange(of: lyricsBeside) { _, beside in
+            if beside { showLyrics = false }
         }
         .onChange(of: player.currentSong?.id) { oldId, newId in
             previousSongId = oldId
@@ -270,6 +289,47 @@ struct NowPlayingView: View {
         withTransaction(transaction, change)
     }
 
+    /// True on a wide screen (iPhone Duo open), where the lyrics sit beside the player.
+    private var lyricsBeside: Bool { horizontalSizeClass == .regular }
+
+    /// The lyrics, fading out at both edges.
+    private var fadedLyrics: some View {
+        lyricsScrollView
+            .frame(maxHeight: .infinity)
+            // Long eased dissolves at both ends, not the old 16pt hairline. Lines
+            // don't stop at an edge, they thin out into the background — which is
+            // what keeps a dense lyric sheet from feeling like a wall of text.
+            .mask(
+                VStack(spacing: 0) {
+                    LinearGradient(gradient: Self.lyricsEdgeFade,
+                                   startPoint: .top, endPoint: .bottom)
+                        .frame(height: Self.lyricsEdgeFadeHeight)
+                    Color.white
+                    // Same curve, read from the other end — so both edges fall off
+                    // identically and can't drift apart when the curve is retuned.
+                    LinearGradient(gradient: Self.lyricsEdgeFade,
+                                   startPoint: .bottom, endPoint: .top)
+                        .frame(height: Self.lyricsEdgeFadeHeight)
+                }
+            )
+            .padding(.horizontal, horizontalPadding)
+    }
+
+    /// The right-hand column of the wide layout: the lyrics from the top of the screen to
+    /// the bottom, with the translate button the lyrics header carries on a phone.
+    private var besideLyrics: some View {
+        fadedLyrics
+            .padding(.top, max(safeTop, 20))
+            .padding(.bottom, 20)
+            .overlay(alignment: .topTrailing) {
+                if translator.isAvailable {
+                    translateButton
+                        .padding(.top, max(safeTop, 20))
+                        .padding(.trailing, horizontalPadding)
+                }
+            }
+    }
+
     // MARK: - Player View
 
     @ViewBuilder
@@ -338,27 +398,9 @@ struct NowPlayingView: View {
                 .gesture(showLyrics ? nil : coverDragGesture)
 
             if showLyrics {
-                lyricsScrollView
-                    // Takes whatever the artwork and the title block give up. The container
-                    // is height-locked, so this expands into exactly the space they vacate.
-                    .frame(maxHeight: .infinity)
-                    // Long eased dissolves at both ends, not the old 16pt hairline. Lines
-                    // don't stop at an edge, they thin out into the background — which is
-                    // what keeps a dense lyric sheet from feeling like a wall of text.
-                    .mask(
-                        VStack(spacing: 0) {
-                            LinearGradient(gradient: Self.lyricsEdgeFade,
-                                           startPoint: .top, endPoint: .bottom)
-                                .frame(height: Self.lyricsEdgeFadeHeight)
-                            Color.white
-                            // Same curve, read from the other end — so both edges fall off
-                            // identically and can't drift apart when the curve is retuned.
-                            LinearGradient(gradient: Self.lyricsEdgeFade,
-                                           startPoint: .bottom, endPoint: .top)
-                                .frame(height: Self.lyricsEdgeFadeHeight)
-                        }
-                    )
-                    .padding(.horizontal, horizontalPadding)
+                // Takes whatever the artwork and the title block give up. The container
+                // is height-locked, so this expands into exactly the space they vacate.
+                fadedLyrics
                     .transition(.opacity)
             }
 
@@ -562,15 +604,18 @@ struct NowPlayingView: View {
     /// Lyrics, radio, queue, sleep timer, output and sharing, each a tap away.
     private var optionsBar: some View {
             HStack {
-                Spacer()
-                Button {
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { showLyrics.toggle() }
-                } label: {
-                    Image(systemName: showLyrics ? "quote.bubble.fill" : "quote.bubble")
-                        .font(.title2)
-                        .foregroundStyle(showLyrics ? accentColor : .white.opacity(0.6))
+                // Beside the player the lyrics are always up, so there is nothing to toggle.
+                if !lyricsBeside {
+                    Spacer()
+                    Button {
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { showLyrics.toggle() }
+                    } label: {
+                        Image(systemName: showLyrics ? "quote.bubble.fill" : "quote.bubble")
+                            .font(.title2)
+                            .foregroundStyle(showLyrics ? accentColor : .white.opacity(0.6))
+                    }
+                    .accessibilityLabel(showLyrics ? "Hide lyrics" : "Show lyrics")
                 }
-                .accessibilityLabel(showLyrics ? "Hide lyrics" : "Show lyrics")
                 Spacer()
                 Button {
                     if let current = player.currentSong {
