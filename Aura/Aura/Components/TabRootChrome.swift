@@ -69,6 +69,35 @@ enum DetailListLayout {
     static let gap: CGFloat = 12
 }
 
+/// A page's header: on a phone the cover over the centred name and buttons; on a wide
+/// screen (the open iPhone Duo) the cover at the left and the rest beside it, at its foot,
+/// as on an album page. The playlist and album pages lay theirs out the same way inline.
+struct DetailHeader<Cover: View, Titles: View, Controls: View>: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @ViewBuilder var cover: Cover
+    @ViewBuilder var titles: (_ wide: Bool) -> Titles
+    @ViewBuilder var controls: Controls
+
+    var body: some View {
+        let wide = horizontalSizeClass == .regular
+        let layout = wide ? AnyLayout(HStackLayout(alignment: .bottom, spacing: 24))
+                          : AnyLayout(VStackLayout(spacing: 16))
+        layout {
+            cover
+            VStack(alignment: wide ? .leading : .center, spacing: 16) {
+                VStack(alignment: wide ? .leading : .center, spacing: 4) { titles(wide) }
+                    .multilineTextAlignment(wide ? .leading : .center)
+                    .padding(.horizontal, wide ? 0 : 16)
+                controls
+                    .frame(maxWidth: wide ? 360 : nil)
+                    .padding(.horizontal, wide ? 0 : 16)
+            }
+            .frame(maxWidth: wide ? .infinity : nil, alignment: .leading)
+        }
+        .padding(.horizontal, wide ? 16 : 0)
+    }
+}
+
 /// The line that closes a page's list — "2026 · 9 songs · 40 min" — as the back of a record
 /// sleeve does, `DetailListLayout.gap` below the last song.
 ///

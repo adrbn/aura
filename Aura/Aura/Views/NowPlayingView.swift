@@ -61,6 +61,8 @@ struct NowPlayingView: View {
     @State private var mediaRegionHeight: CGFloat?
     /// The Duo's gap above the playback source with the artwork showing, kept with lyrics open.
     @State private var duoSourceGap: CGFloat = 0
+    /// The Duo's gap above the toolbar with the artwork showing, kept with lyrics open.
+    @State private var duoToolbarGap: CGFloat = 0
     /// Natural height of the title block, so collapsing it for the lyrics can animate.
     @State private var songInfoHeight: CGFloat?
 
@@ -664,7 +666,12 @@ struct NowPlayingView: View {
             progressAndControls
                 .padding(.horizontal, horizontalPadding)
 
-            Spacer(minLength: duo ? Self.duoGaps.toolbar : nil)
+            // Held at its artwork-mode height with lyrics open, which otherwise take it and
+            // drop the timeline and transport towards the toolbar.
+            Spacer(minLength: duo ? (showLyrics ? max(Self.duoGaps.toolbar, duoToolbarGap) : Self.duoGaps.toolbar) : nil)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                    if duo, !showLyrics, height > 0 { duoToolbarGap = height }
+                }
 
             // Bottom toolbar. Under the alpha auto-hide setting it collapses to a small
             // glass handle and expands from the centre on demand.

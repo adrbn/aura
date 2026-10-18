@@ -113,29 +113,25 @@ struct RadarReleaseView: View {
     // MARK: Header
 
     private var header: some View {
-        VStack(spacing: 16) {
+        DetailHeader {
             CoverArtImage(coverArt: release.largeCover, size: 220, cornerRadius: 12, placeholderName: release.title)
                 .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
-
-            VStack(spacing: 4) {
-                Text(release.title)
-                    .font(.title2.bold())
-                    .multilineTextAlignment(.center)
-                if let artistId = release.artist.libraryId {
-                    Button { player.pendingArtistId = artistId } label: {
-                        Text(release.byline)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(accentColor)
-                    }
-                    .buttonStyle(.borderless)
-                } else {
+        } titles: { wide in
+            Text(release.title)
+                .font(wide ? .title.bold() : .title2.bold())
+            if let artistId = release.artist.libraryId {
+                Button { player.pendingArtistId = artistId } label: {
                     Text(release.byline)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(accentColor)
                 }
+                .buttonStyle(.borderless)
+            } else {
+                Text(release.byline)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
             }
-            .padding(.horizontal)
-
+        } controls: {
             HStack(spacing: 12) {
                 Button { play(nil) } label: {
                     Label("Play", systemImage: "play.fill")
@@ -161,7 +157,6 @@ struct RadarReleaseView: View {
                     .disabled(songs.isEmpty)
                 }
             }
-            .padding(.horizontal)
         }
         .padding(.top, 12)
         .padding(.bottom, DetailListLayout.gap)

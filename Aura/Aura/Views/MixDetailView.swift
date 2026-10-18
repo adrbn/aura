@@ -24,19 +24,15 @@ struct MixDetailView: View {
     var body: some View {
         List {
             // Header (collage + title + actions) — one full-width row, no separator.
-            VStack(spacing: 16) {
+            DetailHeader {
                 // Cover + name + description sit at the top; the track list follows
                 // directly below the buttons, so hiding Save just lifts the list.
                 EditorialMixCover(mix: shown, size: 200)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
-
-                VStack(spacing: 4) {
-                    Text(shown.title).font(.title2.bold()).multilineTextAlignment(.center)
-                    Text(shown.subtitle).font(.subheadline).foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal)
-
+            } titles: { wide in
+                Text(shown.title).font(wide ? .title.bold() : .title2.bold())
+                Text(shown.subtitle).font(.subheadline).foregroundStyle(.secondary)
+            } controls: {
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
                         Button {
@@ -81,7 +77,6 @@ struct MixDetailView: View {
                         .disabled(isSaving)
                     }
                 }
-                .padding(.horizontal)
             }
             .padding(.top, 12)
             .padding(.bottom, DetailListLayout.gap)

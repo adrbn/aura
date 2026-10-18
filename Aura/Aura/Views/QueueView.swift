@@ -271,7 +271,7 @@ extension QueueView {
     var embeddedQueue: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Room between the source line and where the rows have faded out entirely.
-            embeddedHeader.padding(.bottom, 12)
+            embeddedHeader.padding(.bottom, 4)
             List {
                 ForEach(Self.keyed(player.userQueue)) { row in
                     embeddedRow(row.song)
@@ -289,7 +289,12 @@ extension QueueView {
 
                 let autoplay = autoplaySongs
                 if !autoplay.isEmpty {
-                    Label("Autoplay", systemImage: "infinity")
+                    // A small mark beside the word: as a Label's icon the infinity drew at the
+                    // full headline size and outweighed the heading itself.
+                    HStack(spacing: 6) {
+                        Image(systemName: "infinity").font(.footnote.weight(.bold))
+                        Text("Autoplay")
+                    }
                         .font(.headline)
                         .foregroundStyle(.white)
                         .padding(.top, 14)

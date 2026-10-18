@@ -24,21 +24,19 @@ struct RadioPlaylistView: View {
         List {
             // Header — cover/name/desc sit at the top; the song list follows directly
             // below the buttons (no vertical centering that would shift on save).
-            VStack(spacing: 16) {
+            DetailHeader {
                 EditorialRadioCover(songs: player.radioPlaylistSongs,
                                     fallbackName: player.radioPlaylistName
                                         .replacingOccurrences(of: "Radio: ", with: ""),
                                     size: 200,
                                     isLoading: player.isFetchingRadioSongs)
                     .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
-
+            } titles: { wide in
                 // The count closes the list, as it does an album's.
                 Text(player.radioPlaylistName)
-                    .font(.title2.bold())
-                    .multilineTextAlignment(.center)
+                    .font(wide ? .title.bold() : .title2.bold())
                     .lineLimit(2)
-                    .padding(.horizontal, 24)
-
+            } controls: {
                 // Play/Shuffle and Save share one spaced stack so Save never
                 // overlaps the buttons above it.
                 VStack(spacing: 12) {
@@ -86,7 +84,6 @@ struct RadioPlaylistView: View {
                         .disabled(player.radioPlaylistSongs.isEmpty || isAwaitingSongs || isSaving)
                     }
                 }
-                .padding(.horizontal)
             }
             .padding(.top, 12)
             .padding(.bottom, DetailListLayout.gap)

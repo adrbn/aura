@@ -9,6 +9,11 @@ struct AlbumDetailView: View {
     @State private var album: AlbumWithSongs?
     @State private var isLoading = true
     @State private var isStarred = false
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var wide: Bool { horizontalSizeClass == .regular }
+    private var headerLayout: AnyLayout {
+        wide ? AnyLayout(HStackLayout(alignment: .bottom, spacing: 24)) : AnyLayout(VStackLayout(spacing: 12))
+    }
     #if !APPSTORE_BUILD
     /// The release the album is a copy of, when the sideload build can get what it's missing.
     @State private var edition: AlbumCompletion.Edition?
@@ -18,9 +23,10 @@ struct AlbumDetailView: View {
         Group {
             if let album = album {
                 List {
-                    // Header with album art
-                    VStack(spacing: 12) {
-                        CoverArtAsyncImage(coverArt: album.coverArt, size: 260)
+                    // Header. On an iPhone Duo's wide screen the cover stands at the left and
+                    // the name and buttons sit beside it, at its foot, as on a playlist page.
+                    headerLayout {
+                        CoverArtAsyncImage(coverArt: album.coverArt, size: wide ? 220 : 260)
                             .coverMenu(cornerRadius: 12, actions: [
                                 CoverMenuAction(title: String(localized: "Save Cover Art"),
                                                 systemImage: "square.and.arrow.down") {
@@ -29,11 +35,13 @@ struct AlbumDetailView: View {
                             ])
                             .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
 
+                        VStack(alignment: wide ? .leading : .center, spacing: 12) {
+                        VStack(alignment: wide ? .leading : .center, spacing: wide ? 4 : 12) {
                         Text(album.name)
-                            .font(.title2.bold())
-                            .multilineTextAlignment(.center)
+                            .font(wide ? .title.bold() : .title2.bold())
+                            .multilineTextAlignment(wide ? .leading : .center)
                             .lineLimit(3)
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, wide ? 0 : 24)
 
                         TappableArtistText(
                             artistString: album.artist ?? String(localized: "Unknown Artist"),
@@ -42,6 +50,7 @@ struct AlbumDetailView: View {
                             foregroundStyle: AnyShapeStyle(.secondary),
                             tappableStyle: AnyShapeStyle(accentColor)
                         )
+                        }
 
                         // Play controls
                         HStack(spacing: 12) {
@@ -123,9 +132,13 @@ struct AlbumDetailView: View {
                             }
                             .buttonStyle(.borderless)
                         }
-                        .padding(.horizontal, 16)
+                        .frame(maxWidth: wide ? 420 : nil)
+                        .padding(.horizontal, wide ? 0 : 16)
                         .padding(.top, 8)
+                        }
+                        .frame(maxWidth: wide ? .infinity : nil, alignment: .leading)
                     }
+                    .padding(.horizontal, wide ? 16 : 0)
                     // The cover starts where a playlist's, a mix's and a radio's does.
                     .padding(.top, 12)
                     .padding(.bottom, DetailListLayout.gap)
