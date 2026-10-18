@@ -1543,6 +1543,9 @@ struct NowPlayingView: View {
         // has to say "there is more text here", so it sits at roughly a quarter, and the
         // edge mask thins it further still the closer it is to the top or bottom.
         if distance == 1 { return 0.28 }
+        // Beside the player the column runs the screen's full height, so a few more lines
+        // thin out below and above instead of leaving it empty under the sung one.
+        if lyricsBeside { return max(0, 0.28 - 0.06 * Double(distance - 1)) }
         return 0.0
     }
 

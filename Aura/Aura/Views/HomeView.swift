@@ -595,7 +595,7 @@ struct HomeView: View {
             GeometryReader { geo in
                 let spacing: CGFloat = 12
                 let horizontalPadding: CGFloat = 16
-                let cardSize = (geo.size.width - horizontalPadding - spacing) / 2
+                let cardSize = Self.albumCardSize(for: geo.size.width)
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: spacing) {
                         ForEach(Array(albums.enumerated()), id: \.element.id) { index, album in
@@ -614,8 +614,14 @@ struct HomeView: View {
 
     /// Height for album row: card image + text labels + spacing
     private var albumRowHeight: CGFloat {
-        let cardSize = (layoutWidth - 16 - 12) / 2  // leading padding + spacing
-        return max(cardSize, 0) + 36  // image + two text lines
+        max(Self.albumCardSize(for: layoutWidth), 0) + 36  // image + two text lines
+    }
+
+    /// Two covers to a phone's width, about 187 points each. A wider screen (iPhone Duo)
+    /// shows more covers at that size rather than two huge ones.
+    private static func albumCardSize(for width: CGFloat) -> CGFloat {
+        let count = max(2, ((width - 16) / 199).rounded(.down))
+        return (width - 16 - 12 * (count - 1)) / count
     }
 
     private func sectionHeader(_ title: String) -> some View {
@@ -735,7 +741,8 @@ struct HomeView: View {
             // page title included — wider than the screen, shifting everything left.
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
-                    ForEach(0..<3, id: \.self) { _ in
+                    // As many as a wide screen shows; the scroll view clips the rest.
+                    ForEach(0..<8, id: \.self) { _ in
                         RoundedRectangle(cornerRadius: 16)
                             .fill(Color.themeSecondaryBg)
                             .frame(width: 176, height: 176)
@@ -752,19 +759,26 @@ struct HomeView: View {
                         .fill(Color.themeSecondaryBg)
                         .frame(width: 150, height: 22)
                         .padding(.horizontal, 16)
-                    ForEach(0..<3, id: \.self) { _ in
-                        HStack(spacing: 12) {
-                            RoundedRectangle(cornerRadius: 8).fill(Color.themeSecondaryBg)
-                                .frame(width: 50, height: 50)
-                            VStack(alignment: .leading, spacing: 6) {
-                                RoundedRectangle(cornerRadius: 4).fill(Color.themeSecondaryBg)
-                                    .frame(width: 180, height: 13)
-                                RoundedRectangle(cornerRadius: 4).fill(Color.themeSecondaryBg)
-                                    .frame(width: 120, height: 11)
+                    // One column of rows on a phone, more side by side on a wide screen.
+                    HStack(alignment: .top, spacing: 0) {
+                        ForEach(0..<max(1, Int(layoutWidth / 340)), id: \.self) { _ in
+                            VStack(alignment: .leading, spacing: 12) {
+                                ForEach(0..<3, id: \.self) { _ in
+                                    HStack(spacing: 12) {
+                                        RoundedRectangle(cornerRadius: 8).fill(Color.themeSecondaryBg)
+                                            .frame(width: 50, height: 50)
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            RoundedRectangle(cornerRadius: 4).fill(Color.themeSecondaryBg)
+                                                .frame(width: 180, height: 13)
+                                            RoundedRectangle(cornerRadius: 4).fill(Color.themeSecondaryBg)
+                                                .frame(width: 120, height: 11)
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 16)
+                                }
                             }
-                            Spacer()
                         }
-                        .padding(.horizontal, 16)
                     }
                 }
                 .shimmering()
@@ -773,7 +787,7 @@ struct HomeView: View {
     }
 
     private func prefetchHomeCovers() {
-        let cardSize = layoutWidth > 0 ? (layoutWidth - 16 - 12) / 2 : 180
+        let cardSize = layoutWidth > 0 ? Self.albumCardSize(for: layoutWidth) : 180
         let albumArt = (newestAlbums + frequentAlbums + randomAlbums).compactMap(\.coverArt)
         ArtworkCache.shared.prefetch(coverArtIds: albumArt, pointSize: cardSize)
         ArtworkCache.shared.prefetch(coverArtIds: starredSongs.compactMap(\.coverArt), pointSize: 50)

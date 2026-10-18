@@ -20,11 +20,12 @@ import UIKit
 /// Read these from a view body: they touch @Observable state, so the layout follows the
 /// banner appearing/disappearing.
 enum TabChrome {
-    /// The window's own top safe area (status bar / island).
+    /// The window's own top safe area (status bar / island). An iPhone Duo keeps its status
+    /// bar in a side column and reports none, which would set titles against the very edge.
     static var windowSafeTop: CGFloat {
-        (UIApplication.shared.connectedScenes
+        max(24, (UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
-            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.top) ?? 59
+            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.top) ?? 59)
     }
 
     /// The window's own bottom safe area (home indicator).
@@ -32,6 +33,15 @@ enum TabChrome {
         (UIApplication.shared.connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets.bottom) ?? 34
+    }
+
+    /// True when the tab bar stands in a side column (the iPhone Duo's wide screens), so
+    /// nothing but the mini player sits along the foot of the screen.
+    static var tabBarBeside: Bool {
+        let insets = (UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first(where: { $0.isKeyWindow })?.safeAreaInsets) ?? .zero
+        return insets.left > 0 || insets.right > 0
     }
 
     /// Height to reserve for the floating ConnectionBanner (0 when it's hidden).
@@ -199,16 +209,22 @@ struct BottomEdgeVeil: View {
     var body: some View {
         let bottom = TabChrome.windowSafeBottom
         let card = BottomChrome.shared.cardInset
-        let barsTop = (coversMiniPlayer ? Self.miniPlayerTop : Self.tabBarHeight) + card
+        // With the tab bar in a side column, the mini player sits 8pt off the foot instead
+        // of on top of the bar, and without it the foot mirrors the top veil's short fade.
+        let beside = TabChrome.tabBarBeside
+        let tabBar = beside ? 0 : Self.tabBarHeight
+        let miniTop = beside ? Self.miniPlayerTop - 49 : Self.miniPlayerTop
+        let lead = beside && !coversMiniPlayer && card == 0 ? 34 : Self.lead
+        let barsTop = (coversMiniPlayer ? miniTop : tabBar) + card
         // The highest bar alone: the ramp has run its course by its foot, whatever sits below.
-        let highestBar = card > 0 ? card : (coversMiniPlayer ? Self.miniPlayerTop - Self.tabBarHeight : 0)
-        let height = bottom + barsTop + Self.lead
+        let highestBar = card > 0 ? card : (coversMiniPlayer ? miniTop - tabBar : 0)
+        let height = bottom + barsTop + lead
         // Measured from the foot of the screen. Inside a tab the safe area ends at the top of
         // the tab bar, and a fixed-height view only aligns to that; filling the whole screen
         // first is what puts the fade where the bars actually are.
         Color.clear
             .overlay(alignment: .bottom) {
-                LinearGradient(stops: Self.stops(height: height, rampEnd: Self.lead + highestBar),
+                LinearGradient(stops: Self.stops(height: height, rampEnd: lead + highestBar),
                                startPoint: .top, endPoint: .bottom)
                     .frame(height: height)
             }

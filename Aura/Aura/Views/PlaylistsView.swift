@@ -27,7 +27,14 @@ struct PlaylistsView: View {
     /// The list is the default. The key is new with that change: the grid was the default
     /// before, and anyone still on it under the old key never chose it, so everyone starts
     /// on the list once and what they pick from here on is kept.
-    @AppStorage("musika_playlists_layout_v2") private var layout: PlaylistLayout = .list
+    /// On an iPhone Duo's wide screen the grid is the default instead: tiles fill it, a
+    /// list leaves most of each row empty.
+    @AppStorage("musika_playlists_layout_v2") private var savedLayout: String?
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var layout: PlaylistLayout {
+        get { savedLayout.flatMap(PlaylistLayout.init) ?? (horizontalSizeClass == .regular ? .grid : .list) }
+        nonmutating set { savedLayout = newValue.rawValue }
+    }
     let columns = [GridItem(.adaptive(minimum: 160), spacing: 16)]
 
     private var filterContext: PlaylistFilterContext {

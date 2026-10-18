@@ -24,6 +24,10 @@ struct ContentView: View {
         }
     }
 
+    /// Room left above the tab bar for what floats over the tabs. On an iPhone Duo the tab
+    /// bar sits in the side column, by the status bar, so there is none to clear there.
+    private var tabBarGap: CGFloat { TabChrome.tabBarBeside ? 8 : 57 }
+
     private var mainContent: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
@@ -45,19 +49,19 @@ struct ContentView: View {
                 // Download indicator
                 if DownloadManager.shared.isDownloading {
                     DownloadIndicatorView()
-                        .padding(.bottom, audioPlayer.hasQueue ? 0 : 49)
+                        .padding(.bottom, audioPlayer.hasQueue ? 0 : tabBarGap - 8)
                         .onTapGesture { showDownloadManager = true }
                 }
 
                 #if !APPSTORE_BUILD
-                FetchProgressBanner(bottomGap: audioPlayer.hasQueue ? 6 : 57, height: $fetchCardHeight)
+                FetchProgressBanner(bottomGap: audioPlayer.hasQueue ? 6 : tabBarGap, height: $fetchCardHeight)
                     .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.fetches.map(\.id))
                 #endif
 
                 // Above the fetch card, which a stack otherwise draws on top while it leaves.
                 if audioPlayer.hasQueue {
                     MiniPlayerView()
-                        .padding(.bottom, 57)
+                        .padding(.bottom, tabBarGap)
                         .zIndex(1)
                 }
             }
@@ -167,7 +171,7 @@ struct ContentView: View {
                 Spacer()
                 if audioPlayer.hasQueue {
                     MiniPlayerView()
-                        .padding(.bottom, 57)
+                        .padding(.bottom, tabBarGap)
                 }
             }
             .ignoresSafeArea(.keyboard)

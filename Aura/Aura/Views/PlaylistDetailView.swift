@@ -17,13 +17,19 @@ struct PlaylistDetailView: View {
     @State private var isStarred = false
     @State private var showDownloadConfirm = false
     @State private var coverArtRefreshId = UUID()
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private var wide: Bool { horizontalSizeClass == .regular }
+    private var headerLayout: AnyLayout {
+        wide ? AnyLayout(HStackLayout(alignment: .bottom, spacing: 24)) : AnyLayout(VStackLayout(spacing: 16))
+    }
 
     var body: some View {
         Group {
             if let playlist = playlist {
                 List {
-                    // Header
-                    VStack(spacing: 16) {
+                    // Header. On an iPhone Duo's wide screen the cover stands at the left and
+                    // the name and buttons sit beside it, at its foot, as on an album page.
+                    headerLayout {
                         // Cover + name sit at the top; the song list follows directly
                         // below the buttons rather than being pushed to mid-screen.
                         headerCover
@@ -46,12 +52,13 @@ struct PlaylistDetailView: View {
                             },
                         ])
 
-                        VStack(spacing: 4) {
+                        VStack(alignment: wide ? .leading : .center, spacing: 16) {
+                        VStack(alignment: wide ? .leading : .center, spacing: 4) {
                             Text(playlist.name)
-                                .font(.title2.bold())
-                                .multilineTextAlignment(.center)
+                                .font(wide ? .title.bold() : .title2.bold())
+                                .multilineTextAlignment(wide ? .leading : .center)
                                 .lineLimit(2)
-                                .padding(.horizontal, 24)
+                                .padding(.horizontal, wide ? 0 : 24)
 
                             // Show the description in place of the author when one is set.
                             if let comment = playlist.comment,
@@ -59,8 +66,8 @@ struct PlaylistDetailView: View {
                                 Text(comment)
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 24)
+                                    .multilineTextAlignment(wide ? .leading : .center)
+                                    .padding(.horizontal, wide ? 0 : 24)
                             } else if let owner = playlist.owner {
                                 Text(owner).font(.subheadline).foregroundStyle(.secondary)
                             }
@@ -92,8 +99,12 @@ struct PlaylistDetailView: View {
                             }
                             .buttonStyle(.borderless)
                         }
-                        .padding(.horizontal, 16)
+                        .frame(maxWidth: wide ? 360 : nil)
+                        .padding(.horizontal, wide ? 0 : 16)
+                        }
+                        .frame(maxWidth: wide ? .infinity : nil, alignment: .leading)
                     }
+                    .padding(.horizontal, wide ? 16 : 0)
                     .padding(.top, 12)
                     .padding(.bottom, DetailListLayout.gap)
                     .frame(maxWidth: .infinity)
