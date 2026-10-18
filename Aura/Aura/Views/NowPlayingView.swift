@@ -61,6 +61,11 @@ struct NowPlayingView: View {
     /// Lyric lines stay a readable length however wide the screen gets.
     private static let lyricsColumnWidth: CGFloat = 560
     private static let minLyricsWidth: CGFloat = 360
+    /// The phone the player is designed on (iPhone 17 Pro), its reference on a Duo.
+    private static let phoneSize = CGSize(width: 402, height: 874)
+    private static let minDuoScale: CGFloat = 0.88
+    /// Everything in the player but the artwork, in height, on a Duo.
+    private static let duoChromeHeight: CGFloat = 480
 
     /// The artwork once it has shrunk into the lyrics header, and the gap to the title
     /// beside it.
@@ -100,16 +105,14 @@ struct NowPlayingView: View {
                             // iPhone Duo open: the player keeps its column on the left and the
                             // lyrics stay up on the right, rather than taking turns.
                             HStack(spacing: 0) {
-                                playerView(song: song, geo: geo)
-                                    .frame(maxWidth: Self.columnWidth)
+                                fittedPlayer(song: song, size: geo.size)
                                     .frame(maxWidth: .infinity)
                                 besideLyrics
                                     .frame(maxWidth: Self.lyricsColumnWidth)
                                     .frame(maxWidth: .infinity)
                             }
                         } else {
-                            playerView(song: song, geo: geo)
-                                .frame(maxWidth: Self.columnWidth)
+                            fittedPlayer(song: song, size: geo.size)
                         }
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
@@ -339,10 +342,29 @@ struct NowPlayingView: View {
 
     // MARK: - Player View
 
+    /// The player on a Duo screen, which is wider than any phone but no taller (669 points
+    /// on its side, 678 folded). Text and controls stay close to their phone size — scaled
+    /// down to 88% at most — and the artwork, with the column it sets, gives up the height
+    /// the screen lacks.
     @ViewBuilder
-    private func playerView(song: Song, geo: GeometryProxy) -> some View {
-        let w = min(geo.size.width, Self.columnWidth)
-        let artSize = w - (horizontalPadding * 2)
+    private func fittedPlayer(song: Song, size: CGSize) -> some View {
+        if size.width > Self.columnWidth {
+            let scale = min(1, max(Self.minDuoScale, size.height / Self.phoneSize.height))
+            let height = size.height / scale
+            // The artwork sets the column, so it keeps the timeline's width as on a phone.
+            let w = min(size.width / scale, Self.columnWidth, height - Self.duoChromeHeight + horizontalPadding * 2)
+            playerView(song: song, width: w, artSize: w - horizontalPadding * 2)
+                .frame(height: height)
+                .scaleEffect(scale)
+                .frame(width: w * scale, height: size.height)
+        } else {
+            let w = min(size.width, Self.columnWidth)
+            playerView(song: song, width: w, artSize: w - horizontalPadding * 2)
+        }
+    }
+
+    @ViewBuilder
+    private func playerView(song: Song, width w: CGFloat, artSize: CGFloat) -> some View {
 
         VStack(spacing: 0) {
             Spacer().frame(height: max(safeTop, 20) + 24)
@@ -897,7 +919,9 @@ struct NowPlayingView: View {
     /// One size for every line, always. The neighbours are made smaller with `scaleEffect`
     /// instead — a smaller *font* would re-wrap them and reshuffle the words mid-phrase.
     private func lyricFont(isCurrent: Bool) -> Font {
-        .system(size: 30, weight: .bold, design: .default)
+        // Beside the player the lyrics get a column wider than a phone: bigger lines keep
+        // the share of it they have on an iPhone.
+        .system(size: lyricsBeside ? 40 : 30, weight: .bold, design: .default)
     }
 
     // Patterns: "(feat. X)", "(ft. X)", "(featuring X)", or without parens at end
@@ -1123,7 +1147,7 @@ struct NowPlayingView: View {
                                 if appSettings.translateLyrics,
                                    let translation = translator.lines[line.text], !translation.isEmpty {
                                     Text(translation)
-                                        .font(.system(size: 17, weight: .semibold))
+                                        .font(.system(size: lyricsBeside ? 22 : 17, weight: .semibold))
                                         .opacity(0.6)
                                         // Gone at once when hidden, so the next line never
                                         // slides over a fading one; shown once there's room.
