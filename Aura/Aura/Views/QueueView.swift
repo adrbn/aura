@@ -270,8 +270,9 @@ struct QueueView: View {
 extension QueueView {
     var embeddedQueue: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Room between the source line and where the rows have faded out entirely.
-            embeddedHeader.padding(.bottom, 4)
+            // As close to the first row as the Autoplay heading is to its own: the head comes
+            // down to it, so the rows keep their place.
+            embeddedHeader.padding(.top, 28)
             List {
                 ForEach(Self.keyed(player.userQueue)) { row in
                     embeddedRow(row.song)
@@ -321,12 +322,13 @@ extension QueueView {
             .scrollContentBackground(.hidden)
             // Rows fade out under the head as they scroll up and at the foot (Now Playing's
             // mask); a margin as tall as each fade lets the first and last rows rest clear of it.
-            .contentMargins(.top, 28, for: .scrollContent)
+            // The top one is short: the head sits right above the first row.
+            .contentMargins(.top, 10, for: .scrollContent)
             .contentMargins(.bottom, 48, for: .scrollContent)
             .mask {
                 VStack(spacing: 0) {
                     LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 28)
+                        .frame(height: 10)
                     Color.white
                 }
             }
