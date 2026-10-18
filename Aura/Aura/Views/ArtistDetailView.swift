@@ -275,16 +275,19 @@ struct ArtistDetailView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 // Download all albums
                 Button {
-                    downloadAllAlbums()
+                    if !allAlbumsDownloaded { downloadAllAlbums() }
                 } label: {
                     if isDownloadingAll {
                         ProgressView()
                     } else {
-                        Image(systemName: allAlbumsDownloaded ? "checkmark.circle.fill" : "arrow.down.circle")
-                            .foregroundStyle(allAlbumsDownloaded ? .green : accentColor)
+                        // White to fetch, a green tick once everything is here. Not disabled
+                        // when done: the bar would grey the tick out.
+                        Image(systemName: allAlbumsDownloaded ? "checkmark" : "arrow.down")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(allAlbumsDownloaded ? .green : .white)
                     }
                 }
-                .disabled(albums.isEmpty || isDownloadingAll || allAlbumsDownloaded)
+                .disabled(albums.isEmpty || isDownloadingAll)
             }
         }
         .navigationDestination(item: $selectedAlbumId) { albumId in
