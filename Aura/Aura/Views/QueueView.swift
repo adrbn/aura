@@ -270,7 +270,8 @@ struct QueueView: View {
 extension QueueView {
     var embeddedQueue: some View {
         VStack(alignment: .leading, spacing: 0) {
-            embeddedHeader
+            // Room between the source line and where the rows have faded out entirely.
+            embeddedHeader.padding(.bottom, 12)
             List {
                 ForEach(Self.keyed(player.userQueue)) { row in
                     embeddedRow(row.song)

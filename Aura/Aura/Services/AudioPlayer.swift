@@ -524,6 +524,8 @@ final class AudioPlayer {
         // Resuming doesn't announce the song, so without this its lyrics stayed empty
         // until a refetch by hand.
         loadLyrics(for: state.currentSong)
+        // A queue saved before autoplay was lined up up front gets its tail now.
+        lineUpAutoplay(state.currentSong)
     }
 
     /// Called by `ServerManager` *before* switching to a different server. Persists the
@@ -960,6 +962,33 @@ final class AudioPlayer {
         }
     }
 
+    /// Line autoplay up behind the source as soon as it plays, as Apple Music does, so the
+    /// queue shows what follows the album or playlist instead of stopping at its last song.
+    /// Seeded from that last song, which is what the autoplay has to follow on from.
+    private func lineUpAutoplay(_ song: Song) {
+        guard autoplayFromIndex == nil, repeatMode == .off, !isRadioMode, !song.isPreview,
+              !isEffectivelyOffline, queue.count > 1, let seed = queue.last,
+              let server = ServerManager.shared.currentServer else { return }
+        if case .radio = playbackSource { return }
+        let source = queue.map(\.id)
+        Task {
+            let tail = await buildSimilarTail(for: seed, server: server, limit: 30)
+            await MainActor.run {
+                // Stand down if the source changed or something else filled the tail meanwhile.
+                guard self.autoplayFromIndex == nil, self.queue.map(\.id) == source else { return }
+                let have = Set(source)
+                let fresh = tail.filter { !have.contains($0.id) }
+                guard !fresh.isEmpty else { return }
+                self.autoplayFromIndex = self.queue.count
+                self.queue += fresh
+                self.originalQueue += fresh
+                self.prefetchNeighbourCovers()
+                self.saveLastPlayback()
+                AppLogger.shared.log("🎵 Autoplay: lined up \(fresh.count) songs after the source")
+            }
+        }
+    }
+
     private func startPlayback(_ song: Song, renewing: Bool = true) {
         // A preview's address runs out a quarter of an hour after Deezer hands it out, and a
         // radar queue plays for longer than that: an expired one is asked for again first.
@@ -976,6 +1005,7 @@ final class AudioPlayer {
         // ...and the neighbours, so a skip swaps to art that is already in memory instead
         // of starting its download at the moment the user asks for it.
         prefetchNeighbourCovers()
+        lineUpAutoplay(song)
         guard let server = ServerManager.shared.currentServer else {
             AppLogger.shared.log("❌ startPlayback: no server configured")
             return

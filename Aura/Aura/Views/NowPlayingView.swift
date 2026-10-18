@@ -59,6 +59,8 @@ struct NowPlayingView: View {
     /// Height of the artwork-plus-title region, captured from the normal state and then held
     /// constant so switching to lyrics cannot move anything above or below it.
     @State private var mediaRegionHeight: CGFloat?
+    /// The Duo's gap above the playback source with the artwork showing, kept with lyrics open.
+    @State private var duoSourceGap: CGFloat = 0
     /// Natural height of the title block, so collapsing it for the lyrics can animate.
     @State private var songInfoHeight: CGFloat?
 
@@ -447,8 +449,12 @@ struct NowPlayingView: View {
 
         VStack(spacing: 0) {
             if let duoInsets {
-                // As much room above the playback source as under it.
-                Spacer(minLength: duoInsets.top)
+                // As much room above the playback source as under it — and as much with the
+                // lyrics or queue open as with the artwork, which otherwise take the gaps.
+                Spacer(minLength: showLyrics ? max(duoInsets.top, duoSourceGap) : duoInsets.top)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                        if !showLyrics, height > 0 { duoSourceGap = height }
+                    }
             } else {
                 Spacer().frame(height: max(safeTop, 20) + 24)
             }
@@ -473,7 +479,7 @@ struct NowPlayingView: View {
                 .padding(.bottom, duo ? 0 : 4)
             }
 
-            Spacer(minLength: duoInsets?.top ?? 4)
+            Spacer(minLength: duoInsets.map { showLyrics ? max($0.top, duoSourceGap) : $0.top } ?? 4)
 
             // Everything from the artwork down to the title sits in a container of FIXED
             // height, measured once from the normal state. Opening lyrics rearranges what is
@@ -1214,13 +1220,13 @@ struct NowPlayingView: View {
                     .containerRelativeFrame(.vertical) { h, _ in h }
                     .padding(.horizontal, 16)
                 } else if player.lyricsAreInstrumental {
-                    // Not words to sing: a quiet note in the middle, not a lyric line.
+                    // Not words to sing: a lyric line's size and place, greyed so it doesn't read as one.
                     Text(String(localized: "Instrumental"))
-                        .font(.title3.weight(.semibold))
+                        .font(lyricFont(isCurrent: true))
                         .foregroundStyle(.white.opacity(0.35))
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .containerRelativeFrame(.vertical) { h, _ in h }
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 10)
                         .task(id: player.currentSong?.id) { await leaveWordless() }
                 } else if player.lyrics.isEmpty {
                     VStack(spacing: 16) {
