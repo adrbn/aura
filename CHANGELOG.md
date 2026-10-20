@@ -6,6 +6,13 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-10-20
+
+- The queue opens in place of the artwork, with what plays next at the top, shuffle and repeat beside it, and autoplay lined up under its own heading as soon as an album, playlist or artist plays.
+- An artist's page lists their albums first, then their singles and EPs under their own heading.
+- Open Aura with nothing playing and it picks up the queue you left in another app on your server.
+- The next song's lyrics are fetched before it starts, so they show at once.
+- An instrumental shows a quiet note instead of an empty lyrics screen.
 - WMA, APE, WavPack, DSD and other files the iPhone can't read now play: your server turns them into MP3 at every quality, Lossless included, for streaming and downloads.
 - Ready for iPhone Duo: open, Aura turns with the device, and on its side Now Playing puts the player on the left and the lyrics or the queue on the right, on the same background. On the short screens the player tightens its gaps so the artwork stays as wide as the timeline and fills the space.
 
