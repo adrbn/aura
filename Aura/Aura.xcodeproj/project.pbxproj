@@ -420,6 +420,8 @@
 		E10000020000000051C10002 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E10000020000000051C10003 /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E10000020000000051C10004 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E10000020000000051C10005 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = zh-Hans.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E10000020000000051C10006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E100000200000000000000B3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E100000200000000000000C0 /* SongQuery.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQuery.swift; sourceTree = "<group>"; };
 		E100000200000000000000C1 /* SearchHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHistory.swift; sourceTree = "<group>"; };
@@ -969,6 +971,8 @@
 				de,
 				ca,
 				nl,
+				"zh-Hans",
+				ru,
 			);
 			mainGroup = E10000050000000000000001;
 			productRefGroup = E10000050000000000000009 /* Products */;
@@ -1392,6 +1396,8 @@
 				E10000020000000051C10002 /* de */,
 				E10000020000000051C10003 /* ca */,
 				E10000020000000051C10004 /* nl */,
+				E10000020000000051C10005 /* zh-Hans */,
+				E10000020000000051C10006 /* ru */,
 			);
 			name = AppShortcuts.strings;
 			sourceTree = "<group>";

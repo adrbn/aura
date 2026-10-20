@@ -1,0 +1,38 @@
+/* App Shortcut phrases, Simplified Chinese. Keys must match the phrases declared
+   in AuraAppShortcuts exactly. Every phrase must contain ${applicationName} or the
+   system rejects it. Phrased for speech, not translated literally from English. */
+
+"Play ${applicationName}" = "播放${applicationName}";
+"Play music on ${applicationName}" = "用${applicationName}放音乐";
+"Start ${applicationName}" = "开始播放${applicationName}";
+
+"Play or pause ${applicationName}" = "${applicationName}播放或暂停";
+"Pause ${applicationName}" = "暂停${applicationName}";
+"Resume ${applicationName}" = "继续播放${applicationName}";
+
+"Skip in ${applicationName}" = "${applicationName}切歌";
+"Next track in ${applicationName}" = "${applicationName}下一首";
+"Play the next song in ${applicationName}" = "用${applicationName}播放下一首歌";
+
+"Previous track in ${applicationName}" = "${applicationName}上一首";
+"Go back a track in ${applicationName}" = "${applicationName}回到上一首";
+
+"Shuffle ${applicationName}" = "${applicationName}随机播放";
+"Toggle shuffle in ${applicationName}" = "切换${applicationName}的随机播放";
+
+"Repeat in ${applicationName}" = "${applicationName}重复播放";
+"Change repeat in ${applicationName}" = "更改${applicationName}的重复模式";
+
+"Play ${playlist} in ${applicationName}" = "用${applicationName}播放${playlist}";
+"Play the ${playlist} playlist in ${applicationName}" = "用${applicationName}播放播放列表${playlist}";
+
+"Play the album ${album} in ${applicationName}" = "用${applicationName}播放专辑${album}";
+"Play ${album} album in ${applicationName}" = "在${applicationName}里放${album}这张专辑";
+
+"Favourite this in ${applicationName}" = "在${applicationName}里喜爱这首歌";
+"Favorite this song in ${applicationName}" = "把这首歌加到${applicationName}的喜爱";
+"Like this in ${applicationName}" = "在${applicationName}里点喜欢";
+"Play my favourites in ${applicationName}" = "用${applicationName}播放我喜爱的歌";
+"Play my favorites in ${applicationName}" = "在${applicationName}里放我喜爱的歌";
+"Shuffle my favourites in ${applicationName}" = "用${applicationName}随机播放我喜爱的歌";
+"Shuffle my favorites in ${applicationName}" = "在${applicationName}里随机放我喜爱的歌";
