@@ -32,6 +32,10 @@ struct PlaylistsView: View {
     /// On an iPhone Duo's wide screen the grid is the default instead: tiles fill it, a
     /// list leaves most of each row empty.
     @AppStorage("musika_playlists_layout_v2") private var savedLayout: String?
+    /// Off, the pinned playlists stay pinned but sit in the list like the others.
+    @AppStorage("playlists_pinned_on_top") private var pinnedOnTop = true
+    @State private var unpinCandidate: Playlist?
+    @State private var draggedPinId: String?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var layout: PlaylistLayout {
         get { savedLayout.flatMap(PlaylistLayout.init) ?? (horizontalSizeClass == .regular ? .grid : .list) }
@@ -60,6 +64,7 @@ struct PlaylistsView: View {
     }
 
     var pinnedPlaylists: [Playlist] {
+        guard pinnedOnTop else { return [] }
         let pinned = filteredPlaylists.filter { appSettings.isPinned($0.id) }
         let order = appSettings.pinnedPlaylistOrder
         return pinned.sorted { a, b in
@@ -74,13 +79,17 @@ struct PlaylistsView: View {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
             ($0.comment ?? "").localizedCaseInsensitiveContains(searchText)
         }
-        let unpinned = filtered.filter { !appSettings.isPinned($0.id) }
+        let unpinned = filtered.filter { !isOnTop($0) }
         return sortPlaylists(searchText.isEmpty ? folderLevel(unpinned).loose : unpinned)
     }
 
     /// The folders at this level, from playlists named "Folder/Name", as other apps do.
     var folders: [(name: String, count: Int)] {
-        folderLevel(filteredPlaylists.filter { !appSettings.isPinned($0.id) }).folders
+        folderLevel(filteredPlaylists.filter { !isOnTop($0) }).folders
+    }
+
+    private func isOnTop(_ playlist: Playlist) -> Bool {
+        pinnedOnTop && appSettings.isPinned(playlist.id)
     }
 
     /// Splits the playlists under `folder` into its subfolders and the playlists right in it.
@@ -179,6 +188,11 @@ struct PlaylistsView: View {
                     Button { showCreatePlaylist = true } label: {
                         Label("Create Playlist", systemImage: "plus")
                     }
+                    if !appSettings.pinnedPlaylistIds.isEmpty {
+                        Toggle(isOn: $pinnedOnTop.animation(.spring(response: 0.3, dampingFraction: 0.85))) {
+                            Label("Pinned on Top", systemImage: "pin")
+                        }
+                    }
                     if !pinnedPlaylists.isEmpty {
                         Button { showReorderPinned = true } label: {
                             Label("Reorder Pinned", systemImage: "arrow.up.arrow.down")
@@ -256,7 +270,7 @@ struct PlaylistsView: View {
                             if !folder.isEmpty {
                                 folderBackRow
                             } else if !pinnedPlaylists.isEmpty {
-                                playlistCollection(pinnedPlaylists)
+                                playlistCollection(pinnedPlaylists, reorderable: true)
                             }
                             if !folders.isEmpty {
                                 folderList
@@ -402,6 +416,18 @@ struct PlaylistsView: View {
             } message: {
                 Text("This will permanently delete the selected playlists from the server. You can undo this briefly after deletion.")
             }
+            .confirmationDialog(
+                unpinCandidate.map { String(localized: "Unpin “\($0.name)”?") } ?? "",
+                isPresented: Binding(get: { unpinCandidate != nil }, set: { if !$0 { unpinCandidate = nil } }),
+                titleVisibility: .visible,
+                presenting: unpinCandidate
+            ) { playlist in
+                Button("Unpin", role: .destructive) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        appSettings.togglePin(playlistId: playlist.id)
+                    }
+                }
+            }
             .alert("New Playlist", isPresented: $showCreatePlaylist) {
                 TextField("Playlist Name", text: $newPlaylistName)
                 Button("Create") {
@@ -445,12 +471,14 @@ struct PlaylistsView: View {
 
     /// The playlists as a grid of covers or a list of rows, as chosen in the filter bar.
     @ViewBuilder
-    private func playlistCollection(_ list: [Playlist]) -> some View {
+    private func playlistCollection(_ list: [Playlist], reorderable: Bool = false) -> some View {
         switch layout {
         case .grid:
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(list) { playlist in
                     playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
+                        .modifier(PinDragModifier(id: playlist.id, enabled: reorderable && !isSelecting,
+                                                  dragged: $draggedPinId))
                         .id(playlist.id)
                 }
             }
@@ -459,6 +487,8 @@ struct PlaylistsView: View {
             LazyVStack(spacing: 0) {
                 ForEach(list) { playlist in
                     playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
+                        .modifier(PinDragModifier(id: playlist.id, enabled: reorderable && !isSelecting,
+                                                  dragged: $draggedPinId))
                         .id(playlist.id)
                 }
             }
@@ -543,8 +573,13 @@ struct PlaylistsView: View {
                 if isSelecting { selectionMark(playlist, onCover: false) }
                 PlaylistRowView(playlist: playlist, title: shownName(playlist), isPinned: isPinned,
                                 onTogglePin: isSelecting ? nil : {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                                        appSettings.togglePin(playlistId: playlist.id)
+                                    // Pinning is a tap; unpinning asks first, a pin being slow to set back.
+                                    if isPinned {
+                                        unpinCandidate = playlist
+                                    } else {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                            appSettings.togglePin(playlistId: playlist.id)
+                                        }
                                     }
                                 })
             }
@@ -840,6 +875,48 @@ struct PlaylistCardView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+/// Hold a pinned playlist and drag it: the order follows the finger, row by row.
+private struct PinDragModifier: ViewModifier {
+    let id: String
+    let enabled: Bool
+    @Binding var dragged: String?
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content
+                .onDrag {
+                    dragged = id
+                    return NSItemProvider(object: id as NSString)
+                }
+                .onDrop(of: [.text], delegate: PinDropDelegate(target: id, dragged: $dragged))
+        } else {
+            content
+        }
+    }
+}
+
+private struct PinDropDelegate: DropDelegate {
+    let target: String
+    @Binding var dragged: String?
+
+    func dropEntered(info: DropInfo) {
+        let settings = AppSettings.shared
+        guard let dragged, dragged != target,
+              let from = settings.pinnedPlaylistOrder.firstIndex(of: dragged),
+              let to = settings.pinnedPlaylistOrder.firstIndex(of: target) else { return }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+            settings.movePinnedPlaylist(from: IndexSet(integer: from), to: to > from ? to + 1 : to)
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+
+    func performDrop(info: DropInfo) -> Bool {
+        dragged = nil
+        return true
     }
 }
 
