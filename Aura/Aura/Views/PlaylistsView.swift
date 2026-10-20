@@ -41,6 +41,7 @@ struct PlaylistsView: View {
     /// The full path ("Mixes/") of the folder being renamed.
     @State private var renamingFolder: String?
     @State private var folderNewName = ""
+    @State private var deletingFolder: String?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var layout: PlaylistLayout {
         get { savedLayout.flatMap(PlaylistLayout.init) ?? (horizontalSizeClass == .regular ? .grid : .list) }
@@ -445,6 +446,18 @@ struct PlaylistsView: View {
                     }
                 }
             }
+            .confirmationDialog(
+                deletingFolder.map { String(localized: "Delete the folder “\(String($0.dropLast().split(separator: "/").last ?? ""))”?") } ?? "",
+                isPresented: Binding(get: { deletingFolder != nil }, set: { if !$0 { deletingFolder = nil } }),
+                titleVisibility: .visible,
+                presenting: deletingFolder
+            ) { path in
+                Button("Keep the Playlists") { Task { await ungroupFolder(path) } }
+                Button("Delete the Playlists Too", role: .destructive) {
+                    selectedPlaylistIds = Set(playlists.filter { $0.name.hasPrefix(path) }.map(\.id))
+                    deletePlaylists()
+                }
+            }
             .alert("Rename Folder", isPresented: Binding(get: { renamingFolder != nil },
                                                          set: { if !$0 { renamingFolder = nil } })) {
                 TextField("Folder Name", text: $folderNewName)
@@ -612,13 +625,30 @@ struct PlaylistsView: View {
             selectedPlaylistIds = Set(inside.map(\.id))
             isSelecting = true
         } label: { Label("Select Playlists", systemImage: "checkmark.circle") }
+        Button(role: .destructive) { deletingFolder = path } label: {
+            Label("Delete Folder", systemImage: "trash")
+        }
+    }
+
+    /// The folder's playlists move up one level, the folder itself gone.
+    private func ungroupFolder(_ path: String) async {
+        guard let server = serverManager.currentServer else { return }
+        for playlist in playlists where playlist.name.hasPrefix(path) {
+            let renamed = parentPath(of: path) + playlist.name.dropFirst(path.count)
+            try? await SubsonicClient.shared.updatePlaylist(server: server, id: playlist.id, name: renamed)
+        }
+        await loadPlaylists()
+    }
+
+    private func parentPath(of path: String) -> String {
+        String(path.dropLast().split(separator: "/").dropLast().map { $0 + "/" }.joined())
     }
 
     /// Renames every playlist under the folder, which is what moving the folder means here.
     private func renameFolder(_ oldPath: String, to newName: String) async {
         let name = newName.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "/", with: "-")
         guard !name.isEmpty, let server = serverManager.currentServer else { return }
-        let newPath = String(oldPath.dropLast().split(separator: "/").dropLast().map { $0 + "/" }.joined()) + name + "/"
+        let newPath = parentPath(of: oldPath) + name + "/"
         guard newPath != oldPath else { return }
         for playlist in playlists where playlist.name.hasPrefix(oldPath) {
             let renamed = newPath + playlist.name.dropFirst(oldPath.count)
