@@ -177,6 +177,7 @@ struct SettingsView: View {
                 playbackSection
                 equalizerSection
                 lastfmSection
+                madeForYouSection
                 wrappedSection
                 radarSection
             }
@@ -518,6 +519,20 @@ struct SettingsView: View {
             guard !lfDraftLoaded else { return }
             lfUser = appSettings.lastfmUsername
             lfDraftLoaded = true
+        }
+    }
+
+    private var madeForYouSection: some View {
+        Section {
+            NavigationLink {
+                MadeForYouSettingsView()
+            } label: {
+                Label("Choose Your Mixes", systemImage: "sparkles")
+            }
+        } header: {
+            Text("Made For You")
+        } footer: {
+            Text("Which mixes Home makes, from which genres, and how many songs each.")
         }
     }
 

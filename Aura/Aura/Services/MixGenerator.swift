@@ -178,6 +178,44 @@ struct MixCache {
     }
 }
 
+// MARK: - Mix preferences
+
+/// What Settings ▸ Made For You lets you choose, read by the generator from UserDefaults.
+/// Every key defaults to what the shelf did before it could be tuned.
+enum MixPreferences {
+    static let timeOfDayKey = "mfy_time_of_day"
+    static let genreMixesKey = "mfy_genre_mixes"
+    static let discoverKey = "mfy_discover"
+    static let genresKey = "mfy_genres"
+    static let lengthKey = "mfy_length"
+    static func moodKey(_ mood: MixGenerator.Mood) -> String { "mfy_mood_\(mood.rawValue)" }
+
+    private static func flag(_ key: String) -> Bool {
+        UserDefaults.standard.object(forKey: key) as? Bool ?? true
+    }
+    static var timeOfDay: Bool { flag(timeOfDayKey) }
+    static var genreMixes: Bool { flag(genreMixesKey) }
+    static var discover: Bool { flag(discoverKey) }
+    static func mood(_ mood: MixGenerator.Mood) -> Bool { flag(moodKey(mood)) }
+    /// Genres picked by hand, or empty to follow what's played and liked most.
+    static var genres: [String] {
+        (UserDefaults.standard.string(forKey: genresKey) ?? "")
+            .split(separator: "\n").map(String.init)
+    }
+    static var length: Int {
+        let v = UserDefaults.standard.integer(forKey: lengthKey)
+        return v > 0 ? v : 50
+    }
+    static var anyOn: Bool {
+        timeOfDay || genreMixes || discover || MixGenerator.Mood.allCases.contains(where: mood)
+    }
+    /// Changes whenever a setting does, so leaving the page can tell whether to rebuild.
+    static var signature: String {
+        ([timeOfDay, genreMixes, discover] + MixGenerator.Mood.allCases.map(mood)).map { $0 ? "1" : "0" }.joined()
+            + "|\(genres.joined(separator: ","))|\(length)"
+    }
+}
+
 // MARK: - Mix generator
 
 @MainActor
@@ -341,7 +379,9 @@ final class MixGenerator {
         // Build ONE broad candidate pool from mood + favourite genres, favourites and
         // random, then carve out time/mood mixes by energy band. No artist-centred mixes —
         // mixes are organised purely by time of day and mood.
-        let userGenres = topGenres(recentSongs + starredSongs, limit: 4)
+        let picked = MixPreferences.genres
+        let userGenres = picked.isEmpty ? topGenres(recentSongs + starredSongs, limit: 4) : picked
+        let length = MixPreferences.length
         let genres = Array(Set(Mood.allCases.flatMap { $0.genres }).union(userGenres))
         let served = cache.served(for: server.id)
         let sizes = await genreSizes(server: server)
@@ -364,18 +404,18 @@ final class MixGenerator {
 
         // 1. Time-of-day mix first (context for "right now").
         let bucket = TimeBucket.current
-        let nowSongs = rested(pool.filter { !used.contains($0.id) }, served: served, limit: 50) {
+        let nowSongs = rested(pool.filter { !used.contains($0.id) }, served: served, limit: length) {
             energyOrdered($0, band: bucket.energyBand, limit: $1)
         }
-        if nowSongs.count >= 8 {
+        if MixPreferences.timeOfDay, nowSongs.count >= 8 {
             built.append(Mix(id: "now", title: bucket.title, subtitle: bucket.mood, songs: nowSongs,
                              kind: .timeOfDay, templateSeed: bucket.rawValue))
             used.formUnion(nowSongs.map { $0.id })
         }
 
         // 2. Mood mixes.
-        for mood in Mood.allCases {
-            let songs = rested(pool.filter { !used.contains($0.id) }, served: served, limit: 50) {
+        for mood in Mood.allCases where MixPreferences.mood(mood) {
+            let songs = rested(pool.filter { !used.contains($0.id) }, served: served, limit: length) {
                 energyOrdered($0, band: mood.band, limit: $1)
             }
             guard songs.count >= 8 else { continue }
@@ -385,17 +425,20 @@ final class MixGenerator {
         }
 
         // 3. Genre mixes — one per the user's top genres (organised by genre, not energy).
-        built.append(contentsOf: await genreMixes(userGenres: userGenres, used: &used, served: served,
-                                                  sizes: sizes, server: server))
+        if MixPreferences.genreMixes {
+            built.append(contentsOf: await genreMixes(userGenres: userGenres, used: &used, served: served,
+                                                      sizes: sizes, server: server, length: length))
+        }
 
         // 4. Discovery mix (separate source — songs you haven't heard).
-        if let discover = await discoverMix(recentSongs: recentSongs, starredSongs: starredSongs, served: served,
-                                            server: server) {
+        if MixPreferences.discover,
+           let discover = await discoverMix(recentSongs: recentSongs, starredSongs: starredSongs, served: served,
+                                            server: server, length: length) {
             built.append(discover)
         }
 
-        // 5. Fallback for empty / brand-new libraries.
-        if built.isEmpty, let fallback = await fallbackMix(server: server) {
+        // 5. Fallback for empty / brand-new libraries — not when every mix was switched off.
+        if built.isEmpty, MixPreferences.anyOn, let fallback = await fallbackMix(server: server) {
             built.append(fallback)
         }
 
@@ -453,7 +496,7 @@ final class MixGenerator {
     }
 
     private func discoverMix(recentSongs: [Song], starredSongs: [Song], served: Set<String>,
-                             server: ServerConfig) async -> Mix? {
+                             server: ServerConfig, length: Int) async -> Mix? {
         // Seed from recent plays first; fall back to favorites so discovery still
         // works on a fresh connect (before any local play history exists).
         var seeds = Array(recentSongs.prefix(5))
@@ -474,21 +517,22 @@ final class MixGenerator {
         guard pool.count >= 6 else { return nil }
         let subtitle = recentSongs.isEmpty ? String(localized: "Fresh songs based on your favorites") : String(localized: "Fresh songs based on your recent plays")
         return Mix(id: "discover", title: String(localized: "New Discoveries"), subtitle: subtitle,
-                   songs: rested(pool, served: served, limit: 50) { Array($0.prefix($1)) }, kind: .discovery)
+                   songs: rested(pool, served: served, limit: length) { Array($0.prefix($1)) }, kind: .discovery)
     }
 
     /// One mix per the user's top genres. Pulled directly from `getSongsByGenre`
     /// so each mix is genuinely that genre (not energy-bucketed). `used` keeps the
     /// genre mixes from overlapping with the time-of-day / mood mixes above.
     private func genreMixes(userGenres: [String], used: inout Set<String>, served: Set<String>,
-                            sizes: [String: Int], server: ServerConfig) async -> [Mix] {
+                            sizes: [String: Int], server: ServerConfig, length: Int) async -> [Mix] {
         guard !userGenres.isEmpty else { return [] }
         // Fetch all genre pools concurrently, preserving the top-genre order.
         let pools: [(genre: String, songs: [Song])] = await withTaskGroup(of: (Int, String, [Song]).self) { group in
             for (i, genre) in userGenres.enumerated() {
-                let offset = Self.offset(in: sizes[genre.lowercased()], taking: 60)
+                let count = max(60, length + 10)
+                let offset = Self.offset(in: sizes[genre.lowercased()], taking: count)
                 group.addTask {
-                    let songs = (try? await SubsonicClient.shared.getSongsByGenre(server: server, genre: genre, count: 60, offset: offset)) ?? []
+                    let songs = (try? await SubsonicClient.shared.getSongsByGenre(server: server, genre: genre, count: count, offset: offset)) ?? []
                     return (i, genre, songs)
                 }
             }
@@ -499,7 +543,7 @@ final class MixGenerator {
 
         var mixes: [Mix] = []
         for (genre, songs) in pools {
-            let final = rested(dedupe(songs).filter { !used.contains($0.id) }, served: served, limit: 50) {
+            let final = rested(dedupe(songs).filter { !used.contains($0.id) }, served: served, limit: length) {
                 Array($0.shuffled().prefix($1))
             }
             guard final.count >= 8 else { continue }
