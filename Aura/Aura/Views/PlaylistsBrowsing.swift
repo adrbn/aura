@@ -193,6 +193,8 @@ struct PlaylistRowView: View {
     let playlist: Playlist
     var title: String? = nil
     var isPinned: Bool = false
+    /// When set, the pin is a button that pins or unpins the playlist.
+    var onTogglePin: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -211,7 +213,18 @@ struct PlaylistRowView: View {
                 }
             }
             Spacer(minLength: 8)
-            if isPinned {
+            if let onTogglePin {
+                Button(action: onTogglePin) {
+                    Image(systemName: isPinned ? "pin.fill" : "pin")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(isPinned ? .secondary : .quaternary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, -14)
+                .accessibilityLabel(isPinned ? "Unpin" : "Pin")
+            } else if isPinned {
                 // A quiet mark, as on the grid's covers: in the accent it was the brightest
                 // thing in the row, louder than the name it belongs to.
                 Image(systemName: "pin.fill")

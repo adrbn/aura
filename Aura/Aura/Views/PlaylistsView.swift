@@ -168,8 +168,12 @@ struct PlaylistsView: View {
                 } label: {
                     Image(systemName: layout.toggleIcon)
                         .foregroundStyle(.secondary)
+                        .frame(width: 36, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                // The 44pt tap areas overlap the gap, so the glyphs keep their old spacing.
+                .padding(.trailing, -15)
                 .accessibilityLabel(layout == .grid ? "Show as List" : "Show as Grid")
                 Menu {
                     Button { showCreatePlaylist = true } label: {
@@ -192,10 +196,15 @@ struct PlaylistsView: View {
                         }
                     }
                 } label: {
+                    // Rotating only turns the drawing: the tap area stayed the flat ellipsis's
+                    // thin strip, so it gets a full 44pt frame.
                     Image(systemName: "ellipsis")
                         .rotationEffect(.degrees(90))
                         .foregroundStyle(.secondary)
+                        .frame(width: 36, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .padding(.trailing, -8)
                 // A menu's label takes the tint, not its own style: without this the row's
                 // accent won over the grey the grid button beside it has.
                 .tint(Color.secondary)
@@ -532,7 +541,12 @@ struct PlaylistsView: View {
         case .list:
             HStack(spacing: 12) {
                 if isSelecting { selectionMark(playlist, onCover: false) }
-                PlaylistRowView(playlist: playlist, title: shownName(playlist), isPinned: isPinned)
+                PlaylistRowView(playlist: playlist, title: shownName(playlist), isPinned: isPinned,
+                                onTogglePin: isSelecting ? nil : {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                        appSettings.togglePin(playlistId: playlist.id)
+                                    }
+                                })
             }
             .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
         }
