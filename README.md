@@ -99,7 +99,9 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **Pins, in place.** Hold a pinned playlist and drag it to reorder, and a menu switch puts pins back in the list without unpinning them.
 - **Multi-disc albums** list each disc under its own heading, and artists and titles sort by their sort tags.
 - **Sorts that stay put.** The order you pick for Songs, Favourites, Albums, Artists or Playlists is still there when you come back.
-- **Several music folders at once.** Tick any of your server's folders in Settings → Music Folders (Navidrome 0.58 or later for more than one).
+- **Several music folders at once.** Tick any of your server's folders in Settings → Music Folders, and the whole app follows: Home, the Library, search, favourites and mixes (Navidrome 0.58 or later for more than one).
+- **Made For You, your way.** Settings → Made For You switches each mix on or off, picks the genres the genre mixes come from, and sets 25, 50 or 100 songs per mix.
+- **A better Songs list.** Search inside it, its song count, Favourites in the order you liked them, and Recently and Frequently Played listing the songs you actually played, by last play and play count.
 - **Keep a playlist downloaded**: its new songs download whenever Aura opens with your server in reach.
 - **Animated covers**, WebP or GIF, on Now Playing and the album page.
 - **SharePlay** over FaceTime, everyone streaming from the same server; **`aura://` links** for Shortcuts; and **Chinese and Russian**.

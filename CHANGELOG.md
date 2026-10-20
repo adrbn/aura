@@ -24,7 +24,11 @@ For 1.4:
 - Deleting a playlist or removing a song shows in the top toast with an Undo button, and sheets and confirmations take the app's look.
 - Renaming the playlist that's playing renames the source shown in Now Playing.
 - The sort picked on Songs, Favourites, Albums, Artists and Playlists is remembered ([#1](https://github.com/adrbn/aura/issues/1)).
-- Settings → Music Folders ticks several folders at once, on Navidrome 0.58 or later ([#2](https://github.com/adrbn/aura/issues/2)).
+- Settings → Music Folders ticks several folders at once, on Navidrome 0.58 or later, and search, the songs list, favourites and mixes follow them too ([#2](https://github.com/adrbn/aura/issues/2)).
+- Settings → Made For You switches each mix on or off, picks the genres of the genre mixes or leaves it automatic, sets 25, 50 or 100 songs per mix, and makes new mixes at once ([#1](https://github.com/adrbn/aura/issues/1)).
+- The songs list has a search, shows its song count, no longer re-sorts thousands of rows on every redraw, and names its first order (Date Liked on Favourites, Server Order on Songs) instead of Default.
+- Recently and Frequently Played list the songs themselves, by last play and play count, instead of every song of the albums played.
+- Server Unreachable and No Internet Connection show in the app's language.
 
 ## [1.3.0] — 2026-10-20
 

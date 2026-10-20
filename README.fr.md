@@ -101,7 +101,9 @@ reprend le tout.
 - **Les épingles, sur place.** Maintenez une playlist épinglée et glissez-la pour la déplacer, et un interrupteur du menu remet les épingles dans la liste sans les retirer.
 - **Les albums à plusieurs disques** listent chaque disque sous son titre, et artistes et morceaux se trient selon leurs tags de tri.
 - **Des tris qui restent.** L'ordre choisi pour Morceaux, Favoris, Albums, Artistes ou Playlists est toujours là quand vous revenez.
-- **Plusieurs dossiers de musique à la fois.** Cochez ceux de votre serveur dans Réglages → Dossiers de musique (Navidrome 0.58 ou plus récent pour en cocher plusieurs).
+- **Plusieurs dossiers de musique à la fois.** Cochez ceux de votre serveur dans Réglages → Dossiers de musique, et toute l'app suit : l'accueil, la bibliothèque, la recherche, les favoris et les mix (Navidrome 0.58 ou plus récent pour en cocher plusieurs).
+- **Pour vous, à votre goût.** Réglages → Pour vous active ou coupe chaque mix, choisit les genres des mix par genre, et fixe 25, 50 ou 100 morceaux par mix.
+- **Une meilleure liste de morceaux.** Une recherche dedans, le nombre de morceaux, les favoris dans l'ordre où vous les avez aimés, et Écoutés récemment et Écoutés souvent qui listent les morceaux vraiment écoutés, par dernière écoute et nombre d'écoutes.
 - **Une playlist gardée téléchargée** : ses nouveaux morceaux se téléchargent dès qu'Aura s'ouvre avec le serveur à portée.
 - **Les pochettes animées**, WebP ou GIF, dans En cours de lecture et sur la page d'album.
 - **SharePlay** sur FaceTime, chacun écoutant depuis le même serveur ; des **liens `aura://`** pour Raccourcis ; et le **chinois et le russe**.
