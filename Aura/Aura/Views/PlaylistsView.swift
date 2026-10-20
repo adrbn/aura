@@ -26,6 +26,8 @@ struct PlaylistsView: View {
     @State private var downloadedIds: Set<String> = []
     /// The folder being browsed, as a name prefix ending in "/" ("" is the top).
     @State private var folder = ""
+    /// Which way the last folder change went, so the page slides in from the right side.
+    @State private var folderGoingDeeper = true
     /// The list is the default. The key is new with that change: the grid was the default
     /// before, and anyone still on it under the old key never chose it, so everyone starts
     /// on the list once and what they pick from here on is kept.
@@ -36,6 +38,9 @@ struct PlaylistsView: View {
     @AppStorage("playlists_pinned_on_top") private var pinnedOnTop = true
     @State private var unpinCandidate: Playlist?
     @State private var draggedPinId: String?
+    /// The full path ("Mixes/") of the folder being renamed.
+    @State private var renamingFolder: String?
+    @State private var folderNewName = ""
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var layout: PlaylistLayout {
         get { savedLayout.flatMap(PlaylistLayout.init) ?? (horizontalSizeClass == .regular ? .grid : .list) }
@@ -278,10 +283,22 @@ struct PlaylistsView: View {
                             playlistCollection(unpinnedPlaylists)
                         }
                         .padding(.top, 8)
+                        // A folder slides in like a pushed page and back out the way it came.
+                        .id(folder)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: folderGoingDeeper ? .trailing : .leading).combined(with: .opacity),
+                            removal: .move(edge: folderGoingDeeper ? .leading : .trailing).combined(with: .opacity)))
                     }
                     ListEndSpacer()
                 }
                 .scrollIndicators(.hidden)
+                // Swipe right inside a folder to go back up, as the back gesture does elsewhere.
+                .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
+                    guard !folder.isEmpty, !isSelecting,
+                          value.translation.width > 80,
+                          abs(value.translation.width) > abs(value.translation.height) * 2 else { return }
+                    leaveFolder()
+                })
                 // No page colour here: `tabRootGlass` paints it, with the glow at its top.
                 .overlay(alignment: .trailing) {
                     if !indexTitles.isEmpty {
@@ -428,6 +445,15 @@ struct PlaylistsView: View {
                     }
                 }
             }
+            .alert("Rename Folder", isPresented: Binding(get: { renamingFolder != nil },
+                                                         set: { if !$0 { renamingFolder = nil } })) {
+                TextField("Folder Name", text: $folderNewName)
+                Button("OK") {
+                    guard let path = renamingFolder else { return }
+                    Task { await renameFolder(path, to: folderNewName) }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
             .alert("New Playlist", isPresented: $showCreatePlaylist) {
                 TextField("Playlist Name", text: $newPlaylistName)
                 Button("Create") {
@@ -501,8 +527,7 @@ struct PlaylistsView: View {
     /// Back up one folder level, with the folder's name as the heading.
     private var folderBackRow: some View {
         Button {
-            let parts = folder.split(separator: "/").dropLast()
-            folder = parts.isEmpty ? "" : parts.joined(separator: "/") + "/"
+            leaveFolder()
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "chevron.left").font(.headline)
@@ -520,7 +545,7 @@ struct PlaylistsView: View {
         VStack(spacing: 0) {
             ForEach(folders, id: \.name) { entry in
                 Button {
-                    folder += entry.name + "/"
+                    openFolder(folder + entry.name + "/")
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "folder.fill")
@@ -546,9 +571,60 @@ struct PlaylistsView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
+                .contextMenu { folderMenu(path: folder + entry.name + "/", name: entry.name) }
             }
         }
         .padding(.horizontal)
+    }
+
+    private func openFolder(_ path: String) {
+        folderGoingDeeper = true
+        withAnimation(.spring(response: 0.35, dampingFraction: 1)) { folder = path }
+    }
+
+    private func leaveFolder() {
+        guard !folder.isEmpty else { return }
+        let parts = folder.split(separator: "/").dropLast()
+        folderGoingDeeper = false
+        withAnimation(.spring(response: 0.35, dampingFraction: 1)) {
+            folder = parts.isEmpty ? "" : parts.joined(separator: "/") + "/"
+        }
+    }
+
+    @ViewBuilder
+    private func folderMenu(path: String, name: String) -> some View {
+        let inside = playlists.filter { $0.name.hasPrefix(path) }
+        Button { openFolder(path) } label: { Label("Open", systemImage: "folder") }
+        if inside.contains(where: { !appSettings.isPinned($0.id) }) {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    for playlist in inside where !appSettings.isPinned(playlist.id) {
+                        appSettings.togglePin(playlistId: playlist.id)
+                    }
+                }
+            } label: { Label("Pin All", systemImage: "pin") }
+        }
+        Button {
+            folderNewName = name
+            renamingFolder = path
+        } label: { Label("Rename Folder", systemImage: "pencil") }
+        Button {
+            selectedPlaylistIds = Set(inside.map(\.id))
+            isSelecting = true
+        } label: { Label("Select Playlists", systemImage: "checkmark.circle") }
+    }
+
+    /// Renames every playlist under the folder, which is what moving the folder means here.
+    private func renameFolder(_ oldPath: String, to newName: String) async {
+        let name = newName.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "/", with: "-")
+        guard !name.isEmpty, let server = serverManager.currentServer else { return }
+        let newPath = String(oldPath.dropLast().split(separator: "/").dropLast().map { $0 + "/" }.joined()) + name + "/"
+        guard newPath != oldPath else { return }
+        for playlist in playlists where playlist.name.hasPrefix(oldPath) {
+            let renamed = newPath + playlist.name.dropFirst(oldPath.count)
+            try? await SubsonicClient.shared.updatePlaylist(server: server, id: playlist.id, name: renamed)
+        }
+        await loadPlaylists()
     }
 
     private func selectionMark(_ playlist: Playlist, onCover: Bool) -> some View {
