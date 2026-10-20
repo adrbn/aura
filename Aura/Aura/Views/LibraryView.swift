@@ -250,7 +250,7 @@ struct AlbumsGridView: View {
     @State private var albums: [Album] = []
     @State private var isLoading = true
     @State private var loadFailed = false
-    @State private var sortType = "alphabeticalByName"
+    @AppStorage("albums_sort") private var sortType = "alphabeticalByName"
 
     let columns = [
         GridItem(.adaptive(minimum: 160), spacing: 16)
@@ -501,7 +501,7 @@ struct ArtistsFullListView: View {
     @State private var isLoading = true
     @State private var loadFailed = false
     @State private var appSettings = AppSettings.shared
-    @State private var sortOrder: ArtistSortOrder = .name
+    @AppStorage("artists_sort") private var sortOrder: ArtistSortOrder = .name
     @State private var searchText = ""
     var albumArtistsOnly: Bool = false
 

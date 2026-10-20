@@ -8,7 +8,7 @@ struct PlaylistsView: View {
     @State private var searchText = ""
     @State private var isLoading = true
     @State private var appSettings = AppSettings.shared
-    @State private var sortOrder: PlaylistSortOrder = .recentlyChanged
+    @AppStorage("playlists_sort") private var sortOrder: PlaylistSortOrder = .recentlyChanged
     @State private var showSearch = false
     @State private var showReorderPinned = false
     @State private var isSelecting = false

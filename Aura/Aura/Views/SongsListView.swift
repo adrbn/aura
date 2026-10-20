@@ -87,8 +87,9 @@ struct SongsListView: View {
     @State private var isLoading = true
     @State private var loadError: String?
     @State private var loadingProgress: String = ""
-    @State private var sortOrder: SongSortOrder
-    @State private var sortAscending = true
+    /// Saved per list, so a sort picked on Favourites is still there when you come back.
+    @AppStorage private var sortOrder: SongSortOrder
+    @AppStorage private var sortAscending: Bool
     @State private var displayLimit = 44
     /// True while the full library is still paging in, so rows show in arrival order
     /// (no reshuffle on every page); the chosen sort applies once loading completes.
@@ -105,14 +106,15 @@ struct SongsListView: View {
             _isLoading = State(initialValue: false)
         }
 
+        let defaultOrder: SongSortOrder
         switch fetchType {
         case .random, .recentSongs, .frequentSongs, .newestSongs:
-            _sortOrder = State(initialValue: .none)
-        case .starred:
-            _sortOrder = State(initialValue: .recentlyAdded)
-        default:
-            _sortOrder = State(initialValue: .recentlyAdded)
+            defaultOrder = .none
+        case .starred, .all:
+            defaultOrder = .recentlyAdded
         }
+        _sortOrder = AppStorage(wrappedValue: defaultOrder, "songs_sort_\(fetchType)")
+        _sortAscending = AppStorage(wrappedValue: true, "songs_sort_ascending_\(fetchType)")
     }
 
     private var sortedSongs: [Song] {
