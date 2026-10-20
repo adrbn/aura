@@ -117,25 +117,6 @@ final class AudioPlayer {
 
     private var player: AVPlayer?
 
-    /// The song played up or down by whole semitones, its speed untouched — shifted in the
-    /// EQ's audio tap. Held for the session, back to 0 at the next launch.
-    var pitchSemitones = 0 {
-        didSet { EqualizerManager.shared.setPitch(semitones: pitchSemitones) }
-    }
-
-    /// How fast the song plays, its pitch kept. Held for the session, back to 1× at the next launch.
-    var playbackSpeed: Float = 1 {
-        didSet { applySpeed() }
-    }
-
-    static let playbackSpeeds: [Float] = [0.5, 0.75, 1, 1.25, 1.5, 2]
-
-    private func applySpeed() {
-        guard let player else { return }
-        player.defaultRate = playbackSpeed
-        if player.rate != 0 { player.rate = playbackSpeed }
-        updateNowPlayingInfo()
-    }
     private var timeObserver: Any?
     private var originalQueue: [Song] = []
     #if os(iOS)
@@ -649,7 +630,6 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVQueuePlayer(playerItem: playerItem)
-        applySpeed()
         applyOutputVolume(for: song)
         resetScrobbleProgress()
         player?.pause()
@@ -1103,7 +1083,6 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVQueuePlayer(playerItem: playerItem)
-        applySpeed()
         // This path never applied the fader: every song started from here played at full
         // level until the fader was next touched.
         applyOutputVolume(for: song)
@@ -1246,7 +1225,6 @@ final class AudioPlayer {
 
         activateAudioSession()
         queuePlayer.play()
-        applySpeed()
         isPlaying = true
         currentSong = song
         publishPlaybackState()
@@ -1873,7 +1851,6 @@ final class AudioPlayer {
         EqualizerManager.shared.attachToPlayerItem(item)
         watchEnd(of: item)
         player?.replaceCurrentItem(with: item)
-        applySpeed()
         if isPlaying { player?.play() }
         return true
     }
@@ -2632,7 +2609,6 @@ final class AudioPlayer {
         bufferProgress = 0
         incoming.automaticallyWaitsToMinimizeStalling = true
         player = incoming
-        applySpeed()
         observePlayerItem(item, song: full)
         observeBuffer(item, songId: full.id)
         watchPlayback(of: item)
@@ -3232,10 +3208,10 @@ final class AudioPlayer {
             MPMediaItemPropertyAlbumTitle: song.album ?? String(localized: "Unknown"),
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(playbackSpeed) : 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
             // What the rate returns to after a pause, so a car's progress bar keeps moving
             // on its own between updates instead of waiting for the next one.
-            MPNowPlayingInfoPropertyDefaultPlaybackRate: Double(playbackSpeed),
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
             // Without a media type the system does not reliably classify this as music,
             // which is what decides whether it appears where music is expected. The content
             // identifier gives the item a stable name across processes, so anything that

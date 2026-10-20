@@ -1985,38 +1985,6 @@ struct SongActionsRow: View {
     }
     #endif
 
-    /// The speed, its pitch kept, and the pitch a semitone at a time, its speed kept.
-    private var speedMenu: some View {
-        Menu {
-            Picker(selection: Binding(get: { player.playbackSpeed }, set: { player.playbackSpeed = $0 })) {
-                ForEach(AudioPlayer.playbackSpeeds, id: \.self) { speed in
-                    Text(speed.formatted(.number.precision(.fractionLength(0...2))) + "×")
-                }
-            } label: {
-                Label("Speed", systemImage: "gauge.with.dots.needle.67percent")
-            }
-            .pickerStyle(.menu)
-            ControlGroup {
-                Button { player.pitchSemitones -= 1 } label: {
-                    Label("Down", systemImage: "minus")
-                }
-                .disabled(player.pitchSemitones <= -6)
-                Button { player.pitchSemitones = 0 } label: {
-                    Text(player.pitchSemitones == 0 ? "0" : player.pitchSemitones.formatted(.number.sign(strategy: .always())))
-                }
-                Button { player.pitchSemitones += 1 } label: {
-                    Label("Up", systemImage: "plus")
-                }
-                .disabled(player.pitchSemitones >= 6)
-            } label: {
-                Text("Pitch")
-            }
-            .menuActionDismissBehavior(.disabled)
-        } label: {
-            Label("Speed & Pitch", systemImage: "gauge.with.dots.needle.67percent")
-        }
-    }
-
     private var actions: some View {
         HStack(spacing: 2) {
             favoriteButton
@@ -2048,7 +2016,6 @@ struct SongActionsRow: View {
                 Button { showEqualizer = true } label: {
                     Label("Equalizer", systemImage: "slider.vertical.3")
                 }
-                speedMenu
                 if SharePlay.shared.isActive {
                     Button { SharePlay.shared.leave() } label: {
                         Label("Leave SharePlay", systemImage: "shareplay.slash")
