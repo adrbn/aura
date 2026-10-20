@@ -83,7 +83,11 @@ struct SongsListView: View {
     @Environment(ServerManager.self) private var serverManager
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
-    @State private var songs: [Song] = []
+    @State private var songs: [Song] = [] { didSet { resort() } }
+    /// `songs` filtered and sorted, kept rather than recomputed on every render: sorting a
+    /// 20k-song library with localized compares on each body pass made scrolling stutter.
+    @State private var sortedSongs: [Song] = []
+    @State private var searchText = ""
     @State private var isLoading = true
     @State private var loadError: String?
     @State private var loadingProgress: String = ""
@@ -117,17 +121,27 @@ struct SongsListView: View {
         _sortAscending = AppStorage(wrappedValue: true, "songs_sort_ascending_\(fetchType)")
     }
 
-    private var sortedSongs: [Song] {
+    private func resort() {
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        let base = query.isEmpty ? songs : songs.filter {
+            $0.title.localizedStandardContains(query)
+                || ($0.artist ?? "").localizedStandardContains(query)
+                || ($0.album ?? "").localizedStandardContains(query)
+        }
+        sortedSongs = sorted(base)
+    }
+
+    private func sorted(_ songs: [Song]) -> [Song] {
         // While the full library is still streaming in, keep arrival (server) order so the
         // visible rows stay put; the chosen sort is applied once loading completes.
         if isStreaming { return songs }
         let sorted: [Song]
         switch sortOrder {
         case .none:
-            return songs
+            sorted = songs
         case .recentlyAdded:
-            // Sort by created date descending (newest first)
-            return songs.sorted { ($0.created ?? "") > ($1.created ?? "") }
+            // Newest first when ascending, the way this list has always opened.
+            sorted = songs.sorted { ($0.created ?? "") > ($1.created ?? "") }
         case .title:
             sorted = songs.sorted { $0.sortKey.localizedCaseInsensitiveCompare($1.sortKey) == .orderedAscending }
         case .artist:
@@ -176,6 +190,15 @@ struct SongsListView: View {
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets())
         .listRowBackground(Color.clear)
+    }
+
+    private var songCountRow: some View {
+        Text("\(songs.count) songs")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
     }
 
     // MARK: - Alphabet fast-scroll
@@ -271,6 +294,9 @@ struct SongsListView: View {
                     // case. Favourites already has its own Play/Shuffle pair below.
                     if fetchType != .starred {
                         shuffleAllRow
+                        if fetchType == .all, !isStreaming, searchText.isEmpty {
+                            songCountRow
+                        }
                     }
 
                     // Favorite Songs header with heart cover art
@@ -290,7 +316,6 @@ struct SongsListView: View {
                                     .font(.system(size: 60))
                                     .foregroundStyle(.white)
                             }
-                            .shadow(color: accentColor.opacity(0.4), radius: 12, y: 6)
                             .allowsHitTesting(false)
 
                             Text("\(songs.count) songs")
@@ -307,7 +332,7 @@ struct SongsListView: View {
                                         .font(.subheadline.weight(.semibold))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 10)
-                                        .background(accentColor.opacity(0.15))
+                                        .background(Color.primary.opacity(0.08))
                                         .foregroundStyle(accentColor)
                                         .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
@@ -320,7 +345,7 @@ struct SongsListView: View {
                                         .font(.subheadline.weight(.semibold))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 10)
-                                        .background(accentColor.opacity(0.15))
+                                        .background(Color.primary.opacity(0.08))
                                         .foregroundStyle(accentColor)
                                         .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
@@ -357,6 +382,12 @@ struct SongsListView: View {
                                 displayLimit += 44
                             }
                         }
+                    }
+
+                    if sortedSongs.isEmpty, !searchText.isEmpty {
+                        ContentUnavailableView.search(text: searchText)
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                     }
 
                     if displayLimit < sortedSongs.count {
@@ -415,8 +446,18 @@ struct SongsListView: View {
             displayLimit = 44
             await refreshTabContent { await loadSongs() }
         }
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic),
+                    prompt: Text("Search these songs"))
+        .onAppear { resort() }
         .onChange(of: sortOrder) { _, _ in
             displayLimit = 44
+            resort()
+        }
+        .onChange(of: sortAscending) { _, _ in resort() }
+        .onChange(of: isStreaming) { _, _ in resort() }
+        .onChange(of: searchText) { _, _ in
+            displayLimit = 44
+            resort()
         }
     }
 
@@ -537,7 +578,7 @@ struct SongsListView: View {
                 // Only surface an error state when there's nothing to show — with
                 // cached songs on screen, a failed refresh shouldn't interrupt.
                 if songs.isEmpty {
-                    loadError = serverManager.hasNetwork ? "Server Unreachable" : "No Internet Connection"
+                    loadError = serverManager.hasNetwork ? String(localized: "Server Unreachable") : String(localized: "No Internet Connection")
                 }
             }
         }
