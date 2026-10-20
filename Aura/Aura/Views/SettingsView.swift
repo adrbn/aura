@@ -291,27 +291,48 @@ struct SettingsView: View {
     private var musicFolderSection: some View {
         if !musicFolders.isEmpty {
             Section {
-                // One folder, or all of them — exactly what the server can do. The Subsonic
-                // API filters by a single `musicFolderId`, and this used to offer ticks on
-                // any number of folders: they were saved to a set nothing ever read, while
-                // every request went out with a stale single value. It now writes the value
-                // the requests actually use.
-                Picker("Music Folder", selection: $appSettings.selectedMusicFolderId) {
-                    Text("All Folders").tag(Int?.none)
-                    ForEach(musicFolders) { folder in
-                        Text(folder.name ?? String(localized: "Folder \(folder.id)")).tag(Int?.some(folder.id))
+                // Navidrome takes `musicFolderId` several times, so any subset of folders
+                // can be shown at once. No tick, or every tick, means no filter at all.
+                folderRow(String(localized: "All Folders"), selected: appSettings.selectedMusicFolderIds.isEmpty) {
+                    appSettings.selectedMusicFolderIds = []
+                }
+                ForEach(musicFolders) { folder in
+                    folderRow(folder.name ?? String(localized: "Folder \(folder.id)"),
+                              selected: appSettings.selectedMusicFolderIds.contains(folder.id)) {
+                        toggleMusicFolder(folder.id)
                     }
                 }
             } header: {
                 Text("Music Folders")
             } footer: {
-                if appSettings.selectedMusicFolderId == nil {
+                if appSettings.selectedMusicFolderIds.isEmpty {
                     Text("Every folder on the server is shown.")
                 } else {
-                    Text("Only this folder is shown across the app.")
+                    Text("Only the ticked folders are shown across the app.")
                 }
             }
         }
+    }
+
+    private func folderRow(_ name: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Text(name).foregroundStyle(.primary)
+                Spacer()
+                if selected {
+                    Image(systemName: "checkmark").foregroundStyle(accentColor)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func toggleMusicFolder(_ id: Int) {
+        var ids = appSettings.selectedMusicFolderIds
+        if let i = ids.firstIndex(of: id) { ids.remove(at: i) } else { ids.append(id) }
+        // Every folder ticked is the same as no filter, and reads as "All Folders".
+        appSettings.selectedMusicFolderIds = ids.count == musicFolders.count ? [] : ids
     }
 
     private var libraryScanSection: some View {
@@ -982,7 +1003,13 @@ struct SettingsView: View {
         guard let server = serverManager.currentServer else { return }
         do {
             let folders = try await SubsonicClient.shared.getMusicFolders(server: server)
-            await MainActor.run { musicFolders = folders }
+            await MainActor.run {
+                musicFolders = folders
+                // A folder removed on the server would make Navidrome refuse every request.
+                let known = Set(folders.map(\.id))
+                let kept = appSettings.selectedMusicFolderIds.filter(known.contains)
+                if kept != appSettings.selectedMusicFolderIds { appSettings.selectedMusicFolderIds = kept }
+            }
         } catch {
             AppLogger.shared.log("❌ Failed to load music folders: \(error.localizedDescription)")
         }

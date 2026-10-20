@@ -122,7 +122,9 @@ final class AppSettings {
     var appearanceMode: AppearanceMode = .dark
     var eqPreset: EQPreset = .flat
     var eqCustomBands: [Float] = [0, 0, 0, 0, 0]
-    var selectedMusicFolderId: Int? = nil
+    /// Folders the app is limited to; empty means every folder. Navidrome takes the
+    /// `musicFolderId` parameter several times, so any subset can be shown at once.
+    var selectedMusicFolderIds: [Int] = []
     var enabledLibraryCategories: [LibraryCategory] = LibraryCategory.defaultEnabled
     var showPlayCounts: Bool = false
     var homeSectionOrder: [HomeSection] = HomeSection.defaultOrder
@@ -223,7 +225,8 @@ final class AppSettings {
             eqCustomBands = decoded.eqCustomBands ?? [0, 0, 0, 0, 0]
             // -1 once meant "all folders". Sent as-is it would be a real `musicFolderId`
             // matching nothing, so it is read back as no filter at all.
-            selectedMusicFolderId = decoded.selectedMusicFolderId.flatMap { $0 == -1 ? nil : $0 }
+            selectedMusicFolderIds = decoded.selectedMusicFolderIds
+                ?? decoded.selectedMusicFolderId.flatMap { $0 == -1 ? nil : [$0] } ?? []
             enabledLibraryCategories = decoded.enabledLibraryCategories ?? LibraryCategory.defaultEnabled
             showPlayCounts = decoded.showPlayCounts ?? false
             let loadedOrder = decoded.homeSectionOrder ?? HomeSection.defaultOrder
@@ -283,7 +286,8 @@ final class AppSettings {
             appearanceMode: appearanceMode,
             eqPreset: eqPreset,
             eqCustomBands: eqCustomBands,
-            selectedMusicFolderId: selectedMusicFolderId,
+            selectedMusicFolderId: selectedMusicFolderIds.first,
+            selectedMusicFolderIds: selectedMusicFolderIds,
             enabledLibraryCategories: enabledLibraryCategories,
             showPlayCounts: showPlayCounts,
             homeSectionOrder: homeSectionOrder,
@@ -374,6 +378,7 @@ struct SettingsData: Codable {
     var eqPreset: EQPreset?
     var eqCustomBands: [Float]?
     var selectedMusicFolderId: Int?
+    var selectedMusicFolderIds: [Int]?
     var enabledLibraryCategories: [LibraryCategory]?
     var showPlayCounts: Bool?
     var homeSectionOrder: [HomeSection]?

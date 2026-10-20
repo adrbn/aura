@@ -28689,58 +28689,6 @@
         }
       }
     },
-    "Only this folder is shown across the app.": {
-      "localizations": {
-        "ca": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Només aquesta carpeta es mostra a tota l'app."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nur dieser Ordner wird in der gesamten App angezeigt."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solo esta carpeta se muestra en toda la app."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seul ce dossier est affiché dans toute l’app."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Solo questa cartella viene mostrata in tutta l'app."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alleen deze map wordt in de hele app getoond."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "整个 App 中仅显示此文件夹。"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Во всем приложении показывается только эта папка."
-          }
-        }
-      }
-    },
     "Open": {
       "localizations": {
         "ca": {
@@ -54609,6 +54557,58 @@
           "stringUnit": {
             "state": "translated",
             "value": "Не удалось сохранить плейлист"
+          }
+        }
+      }
+    },
+    "Only the ticked folders are shown across the app.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seuls les dossiers cochés sont affichés dans l'app."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nell'app vengono mostrate solo le cartelle selezionate."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se muestran en la app las carpetas marcadas."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur die markierten Ordner werden in der App angezeigt."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Només es mostren a l'app les carpetes marcades."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alleen de aangevinkte mappen worden in de app getoond."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 中仅显示勾选的文件夹。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В приложении показываются только отмеченные папки."
           }
         }
       }

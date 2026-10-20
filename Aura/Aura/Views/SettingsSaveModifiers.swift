@@ -46,7 +46,7 @@ private struct SettingsSaveModifier3: ViewModifier {
             .onChange(of: s.showUpNext) { _, _ in s.save() }
             .onChange(of: s.showPlayCounts) { _, _ in s.save() }
             .onChange(of: s.homeSectionOrder) { _, _ in s.save() }
-            .onChange(of: s.selectedMusicFolderId) { _, _ in s.save() }
+            .onChange(of: s.selectedMusicFolderIds) { _, _ in s.save() }
     }
 }
 

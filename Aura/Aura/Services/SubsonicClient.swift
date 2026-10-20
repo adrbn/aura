@@ -34,11 +34,12 @@ actor SubsonicClient {
         return "u=\(user)&t=\(token)&s=\(salt)&v=1.16.1&c=Aura&f=json"
     }
 
-    private func buildURL(server: ServerConfig, endpoint: String, params: [String: String] = [:]) -> URL? {
+    private func buildURL(server: ServerConfig, endpoint: String, params: [String: String] = [:], musicFolderIds: [Int] = []) -> URL? {
         var urlString = "\(server.baseURL)/rest/\(endpoint)?\(Self.authQuery(for: server))"
         for (key, value) in params {
             urlString += "&\(key)=\(value.addingPercentEncoding(withAllowedCharacters: Self.queryValueAllowed) ?? value)"
         }
+        for id in musicFolderIds { urlString += "&musicFolderId=\(id)" }
         return URL(string: urlString)
     }
 
@@ -55,11 +56,9 @@ actor SubsonicClient {
     }
 
     func getAlbumList2(server: ServerConfig, type: String, size: Int = 20, offset: Int = 0, musicFolderId: Int? = nil) async throws -> [Album] {
-        var params = ["type": type, "size": String(size), "offset": String(offset)]
-        if let folderId = musicFolderId ?? AppSettings.shared.selectedMusicFolderId {
-            params["musicFolderId"] = String(folderId)
-        }
-        guard let url = buildURL(server: server, endpoint: "getAlbumList2", params: params) else {
+        let params = ["type": type, "size": String(size), "offset": String(offset)]
+        let folders = musicFolderId.map { [$0] } ?? AppSettings.shared.selectedMusicFolderIds
+        guard let url = buildURL(server: server, endpoint: "getAlbumList2", params: params, musicFolderIds: folders) else {
             throw SubsonicClientError.invalidURL
         }
 
@@ -78,11 +77,8 @@ actor SubsonicClient {
     }
 
     func getArtists(server: ServerConfig, musicFolderId: Int? = nil) async throws -> [Artist] {
-        var params: [String: String] = [:]
-        if let folderId = musicFolderId ?? AppSettings.shared.selectedMusicFolderId {
-            params["musicFolderId"] = String(folderId)
-        }
-        guard let url = buildURL(server: server, endpoint: "getArtists", params: params.isEmpty ? [:] : params) else {
+        let folders = musicFolderId.map { [$0] } ?? AppSettings.shared.selectedMusicFolderIds
+        guard let url = buildURL(server: server, endpoint: "getArtists", musicFolderIds: folders) else {
             throw SubsonicClientError.invalidURL
         }
         let data = try await fetchData(from: url)
@@ -151,11 +147,9 @@ actor SubsonicClient {
     }
 
     func getRandomSongs(server: ServerConfig, size: Int = 20, musicFolderId: Int? = nil) async throws -> [Song] {
-        var params = ["size": String(size)]
-        if let folderId = musicFolderId ?? AppSettings.shared.selectedMusicFolderId {
-            params["musicFolderId"] = String(folderId)
-        }
-        guard let url = buildURL(server: server, endpoint: "getRandomSongs", params: params) else {
+        let params = ["size": String(size)]
+        let folders = musicFolderId.map { [$0] } ?? AppSettings.shared.selectedMusicFolderIds
+        guard let url = buildURL(server: server, endpoint: "getRandomSongs", params: params, musicFolderIds: folders) else {
             throw SubsonicClientError.invalidURL
         }
 
@@ -358,7 +352,8 @@ actor SubsonicClient {
     private var _albumCountDate: Date?
 
     private func loadPersistedAlbumCount(server: ServerConfig) -> (Int, Date)? {
-        let folderId = AppSettings.shared.selectedMusicFolderId ?? -1
+        let ids = AppSettings.shared.selectedMusicFolderIds
+        let folderId = ids.isEmpty ? "-1" : ids.sorted().map(String.init).joined(separator: ",")
         let key = "albumCount_\(server.id)_\(folderId)"
         let count = UserDefaults.standard.integer(forKey: key)
         let ts = UserDefaults.standard.double(forKey: key + "_ts")
@@ -367,7 +362,8 @@ actor SubsonicClient {
     }
 
     private func persistAlbumCount(_ count: Int, server: ServerConfig) {
-        let folderId = AppSettings.shared.selectedMusicFolderId ?? -1
+        let ids = AppSettings.shared.selectedMusicFolderIds
+        let folderId = ids.isEmpty ? "-1" : ids.sorted().map(String.init).joined(separator: ",")
         let key = "albumCount_\(server.id)_\(folderId)"
         UserDefaults.standard.set(count, forKey: key)
         UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: key + "_ts")
