@@ -18,6 +18,31 @@ struct DownloadQueueItem: Identifiable {
 final class DownloadManager: NSObject {
     static let shared = DownloadManager()
 
+    /// Playlists kept downloaded: the songs added to them download whenever Aura comes to
+    /// the front with the server in reach.
+    private(set) var keptPlaylistIds = Set(UserDefaults.standard.stringArray(forKey: "aura.keptPlaylists") ?? [])
+
+    func setKeepDownloaded(_ playlistId: String, _ keep: Bool) {
+        if keep { keptPlaylistIds.insert(playlistId) } else { keptPlaylistIds.remove(playlistId) }
+        UserDefaults.standard.set(Array(keptPlaylistIds), forKey: "aura.keptPlaylists")
+        if keep { Task { await syncKeptPlaylists() } }
+    }
+
+    // ponytail: adds only — a song taken out of a playlist stays downloaded, since it may
+    // have been downloaded for itself or for an album too.
+    func syncKeptPlaylists() async {
+        guard !keptPlaylistIds.isEmpty, !AppSettings.shared.offlineMode, ServerManager.shared.hasNetwork,
+              let server = ServerManager.shared.currentServer else { return }
+        for id in keptPlaylistIds {
+            guard !isGroupDownloading(id),
+                  let playlist = try? await SubsonicClient.shared.getPlaylist(server: server, id: id) else { continue }
+            let missing = (playlist.entry ?? []).filter { !isDownloaded($0.id) }
+            guard !missing.isEmpty else { continue }
+            AppLogger.shared.log("⬇️ Kept playlist \(playlist.name): \(missing.count) new songs")
+            await downloadAlbum(missing, groupId: id)
+        }
+    }
+
     var downloadedSongs: [DownloadedSong] = []
     var activeDownloads: Set<String> = []
     var downloadProgress: [String: Double] = [:]  // songId -> 0.0...1.0

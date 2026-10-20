@@ -74,6 +74,7 @@ struct AuraApp: App {
                     .preferredColorScheme(appSettings.appearanceMode.colorScheme)
                     .tint(appSettings.activeTheme.accentColor)
                     .environment(\.appAccentColor, appSettings.activeTheme.accentColor)
+                    .onOpenURL { AuraURL.open($0) }
                     .onChange(of: scenePhase) { oldPhase, newPhase in
                         // No auto-open of NowPlayingView on return from background.
                         // Dynamic Island / Control Center / Lock Screen taps already
@@ -95,6 +96,7 @@ struct AuraApp: App {
                             Task {
                                 await serverManager.settleModeOnOpen()
                                 audioPlayer.resumeQueueFromServer()
+                                await DownloadManager.shared.syncKeptPlaylists()
                             }
                         }
                     }
@@ -119,6 +121,7 @@ struct AuraApp: App {
             .task {
                 await serverManager.settleModeOnOpen()
                 audioPlayer.resumeQueueFromServer()
+                await DownloadManager.shared.syncKeptPlaylists()
             }
             .task {
                 // Pinned playlists follow you between devices; start listening for the
