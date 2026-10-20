@@ -140,7 +140,7 @@ actor SubsonicClient {
             "songCount": String(songCount)
         ]
         if songOffset > 0 { params["songOffset"] = String(songOffset) }
-        guard let url = buildURL(server: server, endpoint: "search3", params: params) else { throw SubsonicClientError.invalidURL }
+        guard let url = buildURL(server: server, endpoint: "search3", params: params, musicFolderIds: AppSettings.shared.selectedMusicFolderIds) else { throw SubsonicClientError.invalidURL }
 
         let data = try await fetchData(from: url)
         return try decodeSubsonic(data: data, key: "searchResult3", as: SearchResult3.self)
@@ -159,7 +159,7 @@ actor SubsonicClient {
     }
 
     func getStarred2(server: ServerConfig) async throws -> Starred2 {
-        guard let url = buildURL(server: server, endpoint: "getStarred2") else {
+        guard let url = buildURL(server: server, endpoint: "getStarred2", musicFolderIds: AppSettings.shared.selectedMusicFolderIds) else {
             throw SubsonicClientError.invalidURL
         }
         let data = try await fetchData(from: url)
@@ -277,7 +277,7 @@ actor SubsonicClient {
     func getSongsByGenre(server: ServerConfig, genre: String, count: Int = 20, offset: Int = 0) async throws -> [Song] {
         guard let url = buildURL(server: server, endpoint: "getSongsByGenre", params: [
             "genre": genre, "count": String(count), "offset": String(offset)
-        ]) else { throw SubsonicClientError.invalidURL }
+        ], musicFolderIds: AppSettings.shared.selectedMusicFolderIds) else { throw SubsonicClientError.invalidURL }
         let data = try await fetchData(from: url)
         struct Container: Decodable { let song: [Song]? }
         let wrapper = try decodeSubsonic(data: data, key: "songsByGenre", as: Container.self)

@@ -46,7 +46,12 @@ private struct SettingsSaveModifier3: ViewModifier {
             .onChange(of: s.showUpNext) { _, _ in s.save() }
             .onChange(of: s.showPlayCounts) { _, _ in s.save() }
             .onChange(of: s.homeSectionOrder) { _, _ in s.save() }
-            .onChange(of: s.selectedMusicFolderIds) { _, _ in s.save() }
+            .onChange(of: s.selectedMusicFolderIds) { _, _ in
+                s.save()
+                // What was loaded belongs to the old folders.
+                SongsCache.shared.invalidateAll()
+                Task { await MixGenerator.shared.generate() }
+            }
     }
 }
 
