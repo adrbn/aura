@@ -10,6 +10,8 @@ final class ToastManager {
     struct ToastMessage: Equatable {
         let text: String
         let icon: String
+        /// A button at the toast's end, e.g. Undo; tapping it runs the handler and hides the toast.
+        var action: (title: String, handler: () -> Void)? = nil
         let id = UUID()
 
         static func == (lhs: ToastMessage, rhs: ToastMessage) -> Bool {
@@ -17,18 +19,24 @@ final class ToastManager {
         }
     }
 
-    func show(_ text: String, icon: String = "checkmark.circle.fill") {
+    func show(_ text: String, icon: String = "checkmark.circle.fill",
+              duration: Double = 2.5, action: (title: String, handler: () -> Void)? = nil) {
         dismissTask?.cancel()
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            currentToast = ToastMessage(text: text, icon: icon)
+            currentToast = ToastMessage(text: text, icon: icon, action: action)
         }
         dismissTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(2.5))
+            try? await Task.sleep(for: .seconds(duration))
             guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.3)) {
                 currentToast = nil
             }
         }
+    }
+
+    func dismiss() {
+        dismissTask?.cancel()
+        withAnimation(.easeOut(duration: 0.25)) { currentToast = nil }
     }
 }
 
@@ -45,6 +53,20 @@ struct ToastOverlay: View {
                     Text(message.text)
                         .font(.subheadline.weight(.medium))
                         .lineLimit(1)
+                    if let action = message.action {
+                        Button {
+                            action.handler()
+                            toast.dismiss()
+                        } label: {
+                            Text(action.title)
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color.appAccent)
+                                .padding(.leading, 6)
+                                .frame(minHeight: 32)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
@@ -55,7 +77,7 @@ struct ToastOverlay: View {
                 Spacer()
             }
             .transition(.move(edge: .top).combined(with: .opacity))
-            .allowsHitTesting(false)
+            .allowsHitTesting(message.action != nil)
         }
     }
 }

@@ -15,7 +15,6 @@ struct PlaylistsView: View {
     @State private var selectedPlaylistIds: Set<String> = []
     @State private var showDeleteConfirmation = false
     @State private var recentlyDeletedPlaylists: [Playlist] = []
-    @State private var showUndoBanner = false
     @State private var showCreatePlaylist = false
     @State private var navPath = NavigationPath()
     @State private var editingPlaylist: Playlist?
@@ -350,28 +349,7 @@ struct PlaylistsView: View {
                     .padding(.bottom, 20)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-
-                // Undo banner
-                if showUndoBanner {
-                    HStack {
-                        Text("\(recentlyDeletedPlaylists.count) playlist(s) deleted")
-                            .font(.subheadline)
-                        Spacer()
-                        Button("Undo") {
-                            undoDelete()
-                        }
-                        .font(.subheadline.bold())
-                        .foregroundStyle(accentColor)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 90)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
             }
-            .animation(.easeInOut, value: showUndoBanner)
             .tabRootGlass(scrollY: $scrollY)
             .refreshable { await refreshTabContent { await loadPlaylists() } }
             .navigationDestination(for: Playlist.self) { PlaylistDetailView(playlistId: $0.id) }
@@ -715,14 +693,12 @@ struct PlaylistsView: View {
         let idsToDelete = selectedPlaylistIds
         isSelecting = false
         selectedPlaylistIds.removeAll()
-        showUndoBanner = true
+        ToastManager.shared.show(String(localized: "\(toDelete.count) playlist(s) deleted"), icon: "trash.fill",
+                                 duration: 5, action: (String(localized: "Undo"), undoDelete))
 
         // Actually delete from server after a delay (undo window)
         Task {
             try? await Task.sleep(for: .seconds(5))
-            await MainActor.run {
-                withAnimation { showUndoBanner = false }
-            }
             // If not undone, actually delete
             if !recentlyDeletedPlaylists.isEmpty {
                 guard let server = serverManager.currentServer else { return }
@@ -738,7 +714,6 @@ struct PlaylistsView: View {
         // Re-add to local list
         playlists.append(contentsOf: recentlyDeletedPlaylists)
         recentlyDeletedPlaylists = []
-        showUndoBanner = false
     }
 
     private func pinSelectedPlaylists() {

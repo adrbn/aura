@@ -224,28 +224,6 @@ struct PlaylistDetailView: View {
                 .tint(.primary)
             }
         }
-        .overlay(alignment: .bottom) {
-            if let removal = pendingRemoval {
-                HStack {
-                    Text("Removed \"\(removal.song.title)\"")
-                        .font(.subheadline)
-                        .lineLimit(1)
-                    Spacer()
-                    Button("Undo") {
-                        undoRemoval()
-                    }
-                    .font(.subheadline.bold())
-                    .foregroundStyle(accentColor)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-                .padding(.horizontal, 16)
-                .padding(.bottom, 90)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .animation(.easeInOut(duration: 0.25), value: pendingRemoval != nil)
         .confirmationDialog("Download Playlist?", isPresented: $showDownloadConfirm, titleVisibility: .visible) {
             Button("Download All Songs") {
                 if let songs = playlist?.entry, !songs.isEmpty {
@@ -315,6 +293,8 @@ struct PlaylistDetailView: View {
         pendingRemoval = (song: song, index: index)
         playlist?.entry?.remove(at: index)
         if let count = playlist?.songCount { playlist?.songCount = count - 1 }
+        ToastManager.shared.show(String(localized: "Removed \"\(song.title)\""), icon: "minus.circle.fill",
+                                 duration: 4, action: (String(localized: "Undo"), undoRemoval))
 
         undoTask?.cancel()
         undoTask = Task {
