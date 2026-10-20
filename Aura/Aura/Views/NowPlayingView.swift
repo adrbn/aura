@@ -888,6 +888,10 @@ struct NowPlayingView: View {
             CoverArtAsyncImage(coverArt: song.coverArt ?? song.albumId, size: size,
                                fallbackCoverArt: song.albumId,
                                cornerRadius: 12 * size / max(heroSize, 1))
+                .overlay {
+                    AnimatedCoverOverlay(coverArt: song.coverArt ?? song.albumId)
+                        .clipShape(RoundedRectangle(cornerRadius: 12 * size / max(heroSize, 1)))
+                }
                 .shadow(color: .black.opacity(showLyrics ? 0.35 : 0.4),
                         radius: showLyrics ? 6 : 20,
                         y: showLyrics ? 3 : 10)
@@ -1683,7 +1687,10 @@ struct NowPlayingView: View {
             }
             .drawingGroup() // Flatten to bitmap — prevents per-frame recomposite flicker
             .ignoresSafeArea(.all)
-            .transaction { $0.animation = nil } // No stray animations on background
+            // No crossfade when the cover changes. Scoped to the image: a blanket nil animation
+            // also stripped the dismiss slide, so a quick swipe down dropped the backdrop at
+            // once and left the player floating over Home.
+            .animation(nil, value: backgroundImage)
             .task(id: song.coverArt) {
                 await loadBackgroundImage(for: song)
             }
@@ -1981,30 +1988,6 @@ struct SongActionsRow: View {
     }
     #endif
 
-    #if !APPSTORE_BUILD
-    /// Experimental: the song a semitone at a time up or down, speed and all, as on a turntable.
-    private var pitchMenu: some View {
-        Menu {
-            ControlGroup {
-                Button { player.pitchSemitones -= 1 } label: {
-                    Label("Down", systemImage: "minus")
-                }
-                .disabled(player.pitchSemitones <= -6)
-                Button { player.pitchSemitones = 0 } label: {
-                    Text(player.pitchSemitones == 0 ? "0" : player.pitchSemitones.formatted(.number.sign(strategy: .always())))
-                }
-                Button { player.pitchSemitones += 1 } label: {
-                    Label("Up", systemImage: "plus")
-                }
-                .disabled(player.pitchSemitones >= 6)
-            }
-            .menuActionDismissBehavior(.disabled)
-        } label: {
-            Label("Pitch (Beta)", systemImage: "tuningfork")
-        }
-    }
-    #endif
-
     private var actions: some View {
         HStack(spacing: 2) {
             favoriteButton
@@ -2036,9 +2019,35 @@ struct SongActionsRow: View {
                 Button { showEqualizer = true } label: {
                     Label("Equalizer", systemImage: "slider.vertical.3")
                 }
-                #if !APPSTORE_BUILD
-                pitchMenu
-                #endif
+                // A semitone at a time, speed and all, as on a turntable.
+                ControlGroup {
+                    Button { player.pitchSemitones -= 1 } label: {
+                        Label("Down", systemImage: "minus")
+                    }
+                    .disabled(player.pitchSemitones <= -6)
+                    Button { player.pitchSemitones = 0 } label: {
+                        if player.pitchSemitones == 0 {
+                            Text("Pitch")
+                        } else {
+                            Text(player.pitchSemitones.formatted(.number.sign(strategy: .always())))
+                        }
+                    }
+                    Button { player.pitchSemitones += 1 } label: {
+                        Label("Up", systemImage: "plus")
+                    }
+                    .disabled(player.pitchSemitones >= 6)
+                }
+                .menuActionDismissBehavior(.disabled)
+                if SharePlay.shared.isActive {
+                    Button { SharePlay.shared.leave() } label: {
+                        Label("Leave SharePlay", systemImage: "shareplay.slash")
+                    }
+                } else {
+                    ShareLink(item: ListenTogetherInvite(),
+                              preview: SharePreview("Listen Together on Aura")) {
+                        Label("SharePlay", systemImage: "shareplay")
+                    }
+                }
                 if !DownloadManager.shared.isDownloaded(song.id) {
                     Button {
                         Task { await DownloadManager.shared.downloadSong(song) }

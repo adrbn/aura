@@ -193,6 +193,12 @@ struct PlaylistDetailView: View {
                         Label("Add to Queue", systemImage: "text.append")
                     }
                     downloadMenuButton
+                    Toggle(isOn: Binding(
+                        get: { DownloadManager.shared.keptPlaylistIds.contains(playlistId) },
+                        set: { DownloadManager.shared.setKeepDownloaded(playlistId, $0) }
+                    )) {
+                        Label("Keep Downloaded", systemImage: "arrow.down.circle.dotted")
+                    }
                     Divider()
                     Button { showEditSheet = true } label: {
                         Label("Modify", systemImage: "pencil")

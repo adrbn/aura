@@ -24,12 +24,23 @@ struct PlaylistsView: View {
     @State private var scrollY: CGFloat = 0
     @State private var filter: PlaylistFilter = .all
     @State private var downloadedIds: Set<String> = []
+    /// The folder being browsed, as a name prefix ending in "/" ("" is the top).
+    @State private var folder = ""
+    /// Which way the last folder change went, so the page slides in from the right side.
+    @State private var folderGoingDeeper = true
     /// The list is the default. The key is new with that change: the grid was the default
     /// before, and anyone still on it under the old key never chose it, so everyone starts
     /// on the list once and what they pick from here on is kept.
     /// On an iPhone Duo's wide screen the grid is the default instead: tiles fill it, a
     /// list leaves most of each row empty.
     @AppStorage("musika_playlists_layout_v2") private var savedLayout: String?
+    /// Off, the pinned playlists stay pinned but sit in the list like the others.
+    @AppStorage("playlists_pinned_on_top") private var pinnedOnTop = true
+    @State private var unpinCandidate: Playlist?
+    @State private var draggedPinId: String?
+    /// The full path ("Mixes/") of the folder being renamed.
+    @State private var renamingFolder: String?
+    @State private var folderNewName = ""
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var layout: PlaylistLayout {
         get { savedLayout.flatMap(PlaylistLayout.init) ?? (horizontalSizeClass == .regular ? .grid : .list) }
@@ -58,6 +69,7 @@ struct PlaylistsView: View {
     }
 
     var pinnedPlaylists: [Playlist] {
+        guard pinnedOnTop else { return [] }
         let pinned = filteredPlaylists.filter { appSettings.isPinned($0.id) }
         let order = appSettings.pinnedPlaylistOrder
         return pinned.sorted { a, b in
@@ -72,8 +84,43 @@ struct PlaylistsView: View {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
             ($0.comment ?? "").localizedCaseInsensitiveContains(searchText)
         }
-        let unpinned = filtered.filter { !appSettings.isPinned($0.id) }
-        return sortPlaylists(unpinned)
+        let unpinned = filtered.filter { !isOnTop($0) }
+        return sortPlaylists(searchText.isEmpty ? folderLevel(unpinned).loose : unpinned)
+    }
+
+    /// The folders at this level, from playlists named "Folder/Name", as other apps do.
+    var folders: [(name: String, count: Int)] {
+        folderLevel(filteredPlaylists.filter { !isOnTop($0) }).folders
+    }
+
+    private func isOnTop(_ playlist: Playlist) -> Bool {
+        pinnedOnTop && appSettings.isPinned(playlist.id)
+    }
+
+    /// Splits the playlists under `folder` into its subfolders and the playlists right in it.
+    /// A folder needs two playlists, so a lone "AC/DC" stays a playlist.
+    private func folderLevel(_ list: [Playlist]) -> (folders: [(name: String, count: Int)], loose: [Playlist]) {
+        var groups: [String: [Playlist]] = [:]
+        var loose: [Playlist] = []
+        for playlist in list where playlist.name.hasPrefix(folder) {
+            let rest = playlist.name.dropFirst(folder.count)
+            if let slash = rest.firstIndex(of: "/"), slash != rest.startIndex {
+                groups[String(rest[..<slash]), default: []].append(playlist)
+            } else {
+                loose.append(playlist)
+            }
+        }
+        loose += groups.values.filter { $0.count == 1 }.flatMap { $0 }
+        let folders = groups.filter { $0.value.count > 1 }
+            .map { (name: $0.key, count: $0.value.count) }
+            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+        return (folders, loose)
+    }
+
+    /// A playlist's name inside the folder being browsed, without the folder's path.
+    private func shownName(_ playlist: Playlist) -> String {
+        guard !folder.isEmpty, playlist.name.hasPrefix(folder) else { return playlist.name }
+        return String(playlist.name.dropFirst(folder.count))
     }
 
     /// When searching, return all matching playlists in a single sorted list (pinned badge preserved but not separated)
@@ -135,12 +182,21 @@ struct PlaylistsView: View {
                 } label: {
                     Image(systemName: layout.toggleIcon)
                         .foregroundStyle(.secondary)
+                        .frame(width: 36, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                // The 44pt tap areas overlap the gap, so the glyphs keep their old spacing.
+                .padding(.trailing, -15)
                 .accessibilityLabel(layout == .grid ? "Show as List" : "Show as Grid")
                 Menu {
                     Button { showCreatePlaylist = true } label: {
                         Label("Create Playlist", systemImage: "plus")
+                    }
+                    if !appSettings.pinnedPlaylistIds.isEmpty {
+                        Toggle(isOn: $pinnedOnTop.animation(.spring(response: 0.3, dampingFraction: 0.85))) {
+                            Label("Pinned on Top", systemImage: "pin")
+                        }
                     }
                     if !pinnedPlaylists.isEmpty {
                         Button { showReorderPinned = true } label: {
@@ -159,10 +215,15 @@ struct PlaylistsView: View {
                         }
                     }
                 } label: {
+                    // Rotating only turns the drawing: the tap area stayed the flat ellipsis's
+                    // thin strip, so it gets a full 44pt frame.
                     Image(systemName: "ellipsis")
                         .rotationEffect(.degrees(90))
                         .foregroundStyle(.secondary)
+                        .frame(width: 36, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .padding(.trailing, -8)
                 // A menu's label takes the tint, not its own style: without this the row's
                 // accent won over the grey the grid button beside it has.
                 .tint(Color.secondary)
@@ -211,16 +272,33 @@ struct PlaylistsView: View {
                             .padding(.top, 8)
                     } else {
                         VStack(alignment: .leading, spacing: layout == .grid ? 16 : 8) {
-                            if !pinnedPlaylists.isEmpty {
-                                playlistCollection(pinnedPlaylists)
+                            if !folder.isEmpty {
+                                folderBackRow
+                            } else if !pinnedPlaylists.isEmpty {
+                                playlistCollection(pinnedPlaylists, reorderable: true)
+                            }
+                            if !folders.isEmpty {
+                                folderList
                             }
                             playlistCollection(unpinnedPlaylists)
                         }
                         .padding(.top, 8)
+                        // A folder slides in like a pushed page and back out the way it came.
+                        .id(folder)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: folderGoingDeeper ? .trailing : .leading).combined(with: .opacity),
+                            removal: .move(edge: folderGoingDeeper ? .leading : .trailing).combined(with: .opacity)))
                     }
                     ListEndSpacer()
                 }
                 .scrollIndicators(.hidden)
+                // Swipe right inside a folder to go back up, as the back gesture does elsewhere.
+                .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
+                    guard !folder.isEmpty, !isSelecting,
+                          value.translation.width > 80,
+                          abs(value.translation.width) > abs(value.translation.height) * 2 else { return }
+                    leaveFolder()
+                })
                 // No page colour here: `tabRootGlass` paints it, with the glow at its top.
                 .overlay(alignment: .trailing) {
                     if !indexTitles.isEmpty {
@@ -355,6 +433,27 @@ struct PlaylistsView: View {
             } message: {
                 Text("This will permanently delete the selected playlists from the server. You can undo this briefly after deletion.")
             }
+            .confirmationDialog(
+                unpinCandidate.map { String(localized: "Unpin “\($0.name)”?") } ?? "",
+                isPresented: Binding(get: { unpinCandidate != nil }, set: { if !$0 { unpinCandidate = nil } }),
+                titleVisibility: .visible,
+                presenting: unpinCandidate
+            ) { playlist in
+                Button("Unpin", role: .destructive) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        appSettings.togglePin(playlistId: playlist.id)
+                    }
+                }
+            }
+            .alert("Rename Folder", isPresented: Binding(get: { renamingFolder != nil },
+                                                         set: { if !$0 { renamingFolder = nil } })) {
+                TextField("Folder Name", text: $folderNewName)
+                Button("OK") {
+                    guard let path = renamingFolder else { return }
+                    Task { await renameFolder(path, to: folderNewName) }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
             .alert("New Playlist", isPresented: $showCreatePlaylist) {
                 TextField("Playlist Name", text: $newPlaylistName)
                 Button("Create") {
@@ -398,12 +497,14 @@ struct PlaylistsView: View {
 
     /// The playlists as a grid of covers or a list of rows, as chosen in the filter bar.
     @ViewBuilder
-    private func playlistCollection(_ list: [Playlist]) -> some View {
+    private func playlistCollection(_ list: [Playlist], reorderable: Bool = false) -> some View {
         switch layout {
         case .grid:
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(list) { playlist in
                     playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
+                        .modifier(PinDragModifier(id: playlist.id, enabled: reorderable && !isSelecting,
+                                                  dragged: $draggedPinId))
                         .id(playlist.id)
                 }
             }
@@ -412,6 +513,8 @@ struct PlaylistsView: View {
             LazyVStack(spacing: 0) {
                 ForEach(list) { playlist in
                     playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
+                        .modifier(PinDragModifier(id: playlist.id, enabled: reorderable && !isSelecting,
+                                                  dragged: $draggedPinId))
                         .id(playlist.id)
                 }
             }
@@ -419,6 +522,109 @@ struct PlaylistsView: View {
             // Clear of the alphabet rail when it shows.
             .padding(.trailing, indexTitles.isEmpty ? 16 : 28)
         }
+    }
+
+    /// Back up one folder level, with the folder's name as the heading.
+    private var folderBackRow: some View {
+        Button {
+            leaveFolder()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left").font(.headline)
+                Text(folder.split(separator: "/").last.map(String.init) ?? "")
+                    .font(.title3.weight(.semibold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(.primary)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal)
+    }
+
+    private var folderList: some View {
+        VStack(spacing: 0) {
+            ForEach(folders, id: \.name) { entry in
+                Button {
+                    openFolder(folder + entry.name + "/")
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "folder.fill")
+                            .font(.title2)
+                            .foregroundStyle(accentColor)
+                            .frame(width: 56, height: 56)
+                            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.name)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            Text("\(entry.count) playlists")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
+                .contextMenu { folderMenu(path: folder + entry.name + "/", name: entry.name) }
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    private func openFolder(_ path: String) {
+        folderGoingDeeper = true
+        withAnimation(.spring(response: 0.35, dampingFraction: 1)) { folder = path }
+    }
+
+    private func leaveFolder() {
+        guard !folder.isEmpty else { return }
+        let parts = folder.split(separator: "/").dropLast()
+        folderGoingDeeper = false
+        withAnimation(.spring(response: 0.35, dampingFraction: 1)) {
+            folder = parts.isEmpty ? "" : parts.joined(separator: "/") + "/"
+        }
+    }
+
+    @ViewBuilder
+    private func folderMenu(path: String, name: String) -> some View {
+        let inside = playlists.filter { $0.name.hasPrefix(path) }
+        Button { openFolder(path) } label: { Label("Open", systemImage: "folder") }
+        if inside.contains(where: { !appSettings.isPinned($0.id) }) {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    for playlist in inside where !appSettings.isPinned(playlist.id) {
+                        appSettings.togglePin(playlistId: playlist.id)
+                    }
+                }
+            } label: { Label("Pin All", systemImage: "pin") }
+        }
+        Button {
+            folderNewName = name
+            renamingFolder = path
+        } label: { Label("Rename Folder", systemImage: "pencil") }
+        Button {
+            selectedPlaylistIds = Set(inside.map(\.id))
+            isSelecting = true
+        } label: { Label("Select Playlists", systemImage: "checkmark.circle") }
+    }
+
+    /// Renames every playlist under the folder, which is what moving the folder means here.
+    private func renameFolder(_ oldPath: String, to newName: String) async {
+        let name = newName.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "/", with: "-")
+        guard !name.isEmpty, let server = serverManager.currentServer else { return }
+        let newPath = String(oldPath.dropLast().split(separator: "/").dropLast().map { $0 + "/" }.joined()) + name + "/"
+        guard newPath != oldPath else { return }
+        for playlist in playlists where playlist.name.hasPrefix(oldPath) {
+            let renamed = newPath + playlist.name.dropFirst(oldPath.count)
+            try? await SubsonicClient.shared.updatePlaylist(server: server, id: playlist.id, name: renamed)
+        }
+        await loadPlaylists()
     }
 
     private func selectionMark(_ playlist: Playlist, onCover: Bool) -> some View {
@@ -434,14 +640,24 @@ struct PlaylistsView: View {
     private func playlistItem(_ playlist: Playlist, isPinned: Bool) -> some View {
         switch layout {
         case .grid:
-            PlaylistCardView(playlist: playlist, isPinned: isPinned, showSongCount: isSelecting)
+            PlaylistCardView(playlist: playlist, title: shownName(playlist), isPinned: isPinned, showSongCount: isSelecting)
                 .overlay(alignment: .topLeading) {
                     if isSelecting { selectionMark(playlist, onCover: true).padding(8) }
                 }
         case .list:
             HStack(spacing: 12) {
                 if isSelecting { selectionMark(playlist, onCover: false) }
-                PlaylistRowView(playlist: playlist, isPinned: isPinned)
+                PlaylistRowView(playlist: playlist, title: shownName(playlist), isPinned: isPinned,
+                                onTogglePin: isSelecting ? nil : {
+                                    // Pinning is a tap; unpinning asks first, a pin being slow to set back.
+                                    if isPinned {
+                                        unpinCandidate = playlist
+                                    } else {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                            appSettings.togglePin(playlistId: playlist.id)
+                                        }
+                                    }
+                                })
             }
             .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
         }
@@ -707,6 +923,7 @@ struct PlaylistsView: View {
 
 struct PlaylistCardView: View {
     let playlist: Playlist
+    var title: String? = nil
     var isPinned: Bool = false
     var showSongCount: Bool = false
 
@@ -727,13 +944,55 @@ struct PlaylistCardView: View {
                         .padding(6)
                 }
             }
-            Text(playlist.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
+            Text(title ?? playlist.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
             if showSongCount {
                 Text("\(playlist.songCount ?? 0) songs")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+/// Hold a pinned playlist and drag it: the order follows the finger, row by row.
+private struct PinDragModifier: ViewModifier {
+    let id: String
+    let enabled: Bool
+    @Binding var dragged: String?
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content
+                .onDrag {
+                    dragged = id
+                    return NSItemProvider(object: id as NSString)
+                }
+                .onDrop(of: [.text], delegate: PinDropDelegate(target: id, dragged: $dragged))
+        } else {
+            content
+        }
+    }
+}
+
+private struct PinDropDelegate: DropDelegate {
+    let target: String
+    @Binding var dragged: String?
+
+    func dropEntered(info: DropInfo) {
+        let settings = AppSettings.shared
+        guard let dragged, dragged != target,
+              let from = settings.pinnedPlaylistOrder.firstIndex(of: dragged),
+              let to = settings.pinnedPlaylistOrder.firstIndex(of: target) else { return }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+            settings.movePinnedPlaylist(from: IndexSet(integer: from), to: to > from ? to + 1 : to)
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+
+    func performDrop(info: DropInfo) -> Bool {
+        dragged = nil
+        return true
     }
 }
 

@@ -1,0 +1,39 @@
+/* App Shortcut phrases, Russian. Keys are the English phrases declared in
+   AuraAppShortcuts; every value must contain ${applicationName} and keep any
+   other ${...} parameter. */
+
+"Play ${applicationName}" = "Включи ${applicationName}";
+"Play music on ${applicationName}" = "Включи музыку в ${applicationName}";
+"Start ${applicationName}" = "Запусти ${applicationName}";
+
+"Play or pause ${applicationName}" = "Пуск или пауза в ${applicationName}";
+"Pause ${applicationName}" = "Поставь ${applicationName} на паузу";
+"Resume ${applicationName}" = "Продолжи ${applicationName}";
+
+"Skip in ${applicationName}" = "Пропусти в ${applicationName}";
+"Next track in ${applicationName}" = "Следующий трек в ${applicationName}";
+"Play the next song in ${applicationName}" = "Включи следующую песню в ${applicationName}";
+
+"Previous track in ${applicationName}" = "Предыдущий трек в ${applicationName}";
+"Go back a track in ${applicationName}" = "Вернись к предыдущему треку в ${applicationName}";
+
+"Shuffle ${applicationName}" = "Перемешай в ${applicationName}";
+"Toggle shuffle in ${applicationName}" = "Переключи перемешивание в ${applicationName}";
+
+"Repeat in ${applicationName}" = "Повтор в ${applicationName}";
+"Change repeat in ${applicationName}" = "Смени режим повтора в ${applicationName}";
+
+"Play ${playlist} in ${applicationName}" = "Включи ${playlist} в ${applicationName}";
+"Play the ${playlist} playlist in ${applicationName}" = "Включи плейлист ${playlist} в ${applicationName}";
+
+"Play the album ${album} in ${applicationName}" = "Включи альбом ${album} в ${applicationName}";
+"Play ${album} album in ${applicationName}" = "Поставь альбом ${album} в ${applicationName}";
+
+"Favourite this in ${applicationName}" = "Добавь в избранное в ${applicationName}";
+"Favorite this song in ${applicationName}" = "Добавь эту песню в избранное в ${applicationName}";
+"Like this in ${applicationName}" = "Мне нравится эта песня в ${applicationName}";
+
+"Play my favourites in ${applicationName}" = "Включи мое избранное в ${applicationName}";
+"Play my favorites in ${applicationName}" = "Поставь мое избранное в ${applicationName}";
+"Shuffle my favourites in ${applicationName}" = "Перемешай мое избранное в ${applicationName}";
+"Shuffle my favorites in ${applicationName}" = "Включи мое избранное вперемешку в ${applicationName}";

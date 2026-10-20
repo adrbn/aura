@@ -15,7 +15,10 @@ final class AudioPlayer {
     /// few rather than stopping dead.
     private static let previewFade: TimeInterval = 3
 
-    var currentSong: Song?
+    var currentSong: Song? {
+        // The pitch is for the song it was set on: the next one starts back at 0.
+        didSet { if oldValue?.id != currentSong?.id, pitchSemitones != 0 { pitchSemitones = 0 } }
+    }
     var queue: [Song] = []
     var userQueue: [Song] = []
     var queueIndex: Int = 0
@@ -117,21 +120,22 @@ final class AudioPlayer {
 
     private var player: AVPlayer?
 
-    /// Experimental, sideload only: the song played up or down by whole semitones. It is a
+    /// The song played up or down by whole semitones. It is a
     /// turntable's pitch — the speed goes with it — since AVPlayer can't move one without the
-    /// other. Held for the session, back to 0 at the next launch.
+    /// other. Back to 0 at the next song.
     var pitchSemitones = 0 {
         didSet { applyPitch() }
     }
 
-    // ponytail: the Lock Screen and the car still count song time at 1×, so their progress bar
-    // drifts from the real one while the pitch is off zero. Pass the rate on if this ever ships.
+    /// The speed the pitch sets, passed to the Lock Screen and the car so their bar keeps time.
+    private var pitchRate: Float { Float(pow(2, Double(pitchSemitones) / 12)) }
+
     private func applyPitch() {
         guard let player else { return }
         if pitchSemitones != 0 { player.currentItem?.audioTimePitchAlgorithm = .varispeed }
-        let rate = Float(pow(2, Double(pitchSemitones) / 12))
-        player.defaultRate = rate
-        if player.rate != 0 { player.rate = rate }
+        player.defaultRate = pitchRate
+        if player.rate != 0 { player.rate = pitchRate }
+        updateNowPlayingInfo()
     }
     private var timeObserver: Any?
     private var originalQueue: [Song] = []
@@ -217,6 +221,8 @@ final class AudioPlayer {
     /// request already owns the outcome. Only the newest completion clears `isSeeking`, so
     /// a late one can't unfreeze the clock mid-scrub either.
     private var seekGeneration = 0
+    /// Counts seeks, for SharePlay to notice one and pass it on.
+    private(set) var seekCount = 0
     /// One-shot: a saved position to seek to as soon as the restored item is ready to play.
     private var pendingSeekTime: TimeInterval?
     private var consecutiveFailures = 0
@@ -644,7 +650,6 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVQueuePlayer(playerItem: playerItem)
-        applyPitch()
         applyOutputVolume(for: song)
         resetScrobbleProgress()
         player?.pause()
@@ -1098,7 +1103,6 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVQueuePlayer(playerItem: playerItem)
-        applyPitch()
         // This path never applied the fader: every song started from here played at full
         // level until the fader was next touched.
         applyOutputVolume(for: song)
@@ -1194,7 +1198,6 @@ final class AudioPlayer {
               let current = queuePlayer.currentItem,
               let server = ServerManager.shared.currentServer else { return }
         let item = makePlayerItem(for: song, server: server, bitRate: AppSettings.shared.effectiveStreamingQuality.bitRate)
-        if pitchSemitones != 0 { item.audioTimePitchAlgorithm = .varispeed }
         EqualizerManager.shared.attachToPlayerItem(item)
         queuePlayer.insert(item, after: current)
         queuePlayer.actionAtItemEnd = .advance
@@ -1242,7 +1245,6 @@ final class AudioPlayer {
 
         activateAudioSession()
         queuePlayer.play()
-        applyPitch()
         isPlaying = true
         currentSong = song
         publishPlaybackState()
@@ -1564,20 +1566,22 @@ final class AudioPlayer {
         }
     }
 
-    /// Asks once for an App Store rating, after the twentieth song listened to past the
-    /// scrobble point, and only while the app is on screen. The App Store build only: a
-    /// sideloaded build would ask its own developer.
+    /// Asks for an App Store rating once per version, from the twentieth song listened to
+    /// past the scrobble point, and only while the app is on screen (iOS itself caps it at
+    /// three times a year). The App Store build only: a sideloaded build would ask its own
+    /// developer.
     private func askForReviewIfDue() {
         #if os(iOS) && APPSTORE_BUILD
         let defaults = UserDefaults.standard
         let plays = defaults.integer(forKey: "reviewPromptPlays") + 1
         defaults.set(plays, forKey: "reviewPromptPlays")
-        guard plays >= 20, !defaults.bool(forKey: "reviewPromptAsked") else { return }
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        guard plays >= 20, defaults.string(forKey: "reviewPromptVersion") != version else { return }
         Task { @MainActor in
             guard let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
             else { return }
-            UserDefaults.standard.set(true, forKey: "reviewPromptAsked")
+            UserDefaults.standard.set(version, forKey: "reviewPromptVersion")
             AppStore.requestReview(in: scene)
         }
         #endif
@@ -1816,6 +1820,7 @@ final class AudioPlayer {
         // Every seek gets an id, so a completion belonging to a superseded one can be
         // recognised and ignored.
         seekGeneration &+= 1
+        seekCount &+= 1
         let generation = seekGeneration
         if reopen(at: time) { return }
         isSeeking = true
@@ -1866,7 +1871,6 @@ final class AudioPlayer {
         EqualizerManager.shared.attachToPlayerItem(item)
         watchEnd(of: item)
         player?.replaceCurrentItem(with: item)
-        applyPitch()
         if isPlaying { player?.play() }
         return true
     }
@@ -2625,7 +2629,6 @@ final class AudioPlayer {
         bufferProgress = 0
         incoming.automaticallyWaitsToMinimizeStalling = true
         player = incoming
-        applyPitch()
         observePlayerItem(item, song: full)
         observeBuffer(item, songId: full.id)
         watchPlayback(of: item)
@@ -3225,10 +3228,10 @@ final class AudioPlayer {
             MPMediaItemPropertyAlbumTitle: song.album ?? String(localized: "Unknown"),
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(pitchRate) : 0.0,
             // What the rate returns to after a pause, so a car's progress bar keeps moving
             // on its own between updates instead of waiting for the next one.
-            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: Double(pitchRate),
             // Without a media type the system does not reliably classify this as music,
             // which is what decides whether it appears where music is expected. The content
             // identifier gives the item a stable name across processes, so anything that

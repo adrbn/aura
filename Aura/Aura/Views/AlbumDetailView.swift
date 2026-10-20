@@ -27,6 +27,10 @@ struct AlbumDetailView: View {
                     // the name and buttons sit beside it, at its foot, as on a playlist page.
                     headerLayout {
                         CoverArtAsyncImage(coverArt: album.coverArt, size: wide ? 220 : 260)
+                            .overlay {
+                                AnimatedCoverOverlay(coverArt: album.coverArt)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
                             .coverMenu(cornerRadius: 12, actions: [
                                 CoverMenuAction(title: String(localized: "Save Cover Art"),
                                                 systemImage: "square.and.arrow.down") {
@@ -150,7 +154,18 @@ struct AlbumDetailView: View {
                     // Song list
                     if let songs = album.song {
                         let isSingle = songs.count <= 1
+                        let multiDisc = Set(songs.compactMap(\.discNumber)).count > 1
                         ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
+                            // Each disc of a multi-disc release under its own heading.
+                            if multiDisc, let disc = song.discNumber,
+                               index == 0 || songs[index - 1].discNumber != disc {
+                                Text("Disc \(disc)")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, index == 0 ? 0 : 12)
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                            }
                             SongRowView(
                                 song: song,
                                 showArt: false,

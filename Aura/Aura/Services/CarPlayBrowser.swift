@@ -163,7 +163,7 @@ final class CarPlayBrowser {
         // ponytail: capped at the row limit by album count; a letter index page if it's missed.
         let kept = all.sorted { ($0.albumCount ?? 0) > ($1.albumCount ?? 0) }
             .prefix(Self.rowLimit)
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            .sorted { $0.sortKey.localizedCaseInsensitiveCompare($1.sortKey) == .orderedAscending }
         let rows = kept.map { artist in
             row(LibraryCatalog.item(artist), placeholder: "music.mic")
         }

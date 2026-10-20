@@ -127,7 +127,7 @@ struct SongsListView: View {
             // Sort by created date descending (newest first)
             return songs.sorted { ($0.created ?? "") > ($1.created ?? "") }
         case .title:
-            sorted = songs.sorted { ($0.title).localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+            sorted = songs.sorted { $0.sortKey.localizedCaseInsensitiveCompare($1.sortKey) == .orderedAscending }
         case .artist:
             sorted = songs.sorted { ($0.artist ?? "").localizedCaseInsensitiveCompare($1.artist ?? "") == .orderedAscending }
         case .album:
