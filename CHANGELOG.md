@@ -6,6 +6,18 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+On the `next` branch, for 1.4:
+
+- Pitch from Now Playing's menu, a semitone at a time up to six either way, the speed going with it as on a turntable. It goes back to 0 when the next song starts.
+- Playlists named `Folder/Name` sit in a folder on the Playlists tab once two of them share it.
+- A multi-disc album lists each disc under its own heading; artists and song titles sort by their artistsort and titlesort tags.
+- A playlist can be kept downloaded: its new songs download whenever Aura comes to the front with the server in reach.
+- Animated WebP and GIF covers play on Now Playing and the album page.
+- SharePlay over FaceTime keeps the queue, the song, the position and play or pause in step, each phone streaming from the same server.
+- `aura://` links play a playlist or an album, shuffled or not, and play, pause or skip, for Shortcuts and other apps.
+- Aura speaks Simplified Chinese and Russian.
+- The App Store build asks for a rating once per version, after twenty songs, and About has a Rate Aura row.
+
 ## [1.3.0] — 2026-10-20
 
 - The queue opens in place of the artwork, with what plays next at the top, shuffle and repeat beside it, and autoplay lined up under its own heading as soon as an album, playlist or artist plays.

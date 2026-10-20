@@ -89,6 +89,15 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **A landscape clock.** Switch it on in Settings and turn the phone sideways while music plays: the time large, the song beside it, and a tap on the cover for the lyrics, one line at a time.
 - **Ready for iPhone Duo** (next version). Open, Aura turns with the device: Now Playing keeps the player on the left with the lyrics or the queue beside it, and album, playlist, mix and radio pages stand their cover at the left with the title and buttons next to it. Folded, the player keeps a phone's proportions on the short screens.
 
+**Coming in 1.4** (on the `next` branch, being tested)
+
+- **Pitch.** Up or down a semitone at a time from Now Playing's menu, as on a turntable: the speed goes with it. The next song starts back at 0.
+- **Playlist folders.** Name playlists `Folder/Name` and they sit in a folder on the Playlists tab.
+- **Multi-disc albums** list each disc under its own heading, and artists and titles sort by their sort tags.
+- **Keep a playlist downloaded**: its new songs download whenever Aura opens with your server in reach.
+- **Animated covers**, WebP or GIF, on Now Playing and the album page.
+- **SharePlay** over FaceTime, everyone streaming from the same server; **`aura://` links** for Shortcuts; and **Chinese and Russian**.
+
 ## Screenshots
 
 <p align="center">
