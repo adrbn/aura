@@ -215,6 +215,7 @@ struct SongCreditsSheet: View {
                 }
             }
             .scrollIndicators(.hidden)
+            .auraSheet()
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

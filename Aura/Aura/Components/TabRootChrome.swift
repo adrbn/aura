@@ -485,3 +485,28 @@ struct SearchFieldBar: View {
         .padding(.horizontal, 16)
     }
 }
+
+// MARK: - Sheets
+
+/// A sheet's big title, in the tabs' display face and at their left edge.
+struct SheetTitle: View {
+    let text: LocalizedStringKey
+    init(_ text: LocalizedStringKey) { self.text = text }
+
+    var body: some View {
+        Text(text)
+            .auraDisplay(34)
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+extension View {
+    /// A sheet in the app's look: the page's canvas under the list instead of the system's
+    /// grey, so grouped rows read as the same cards as in Settings. Goes on the list.
+    func auraSheet() -> some View {
+        scrollContentBackground(.hidden)
+            .background(Color.themeBg)
+            .presentationBackground(Color.themeBg)
+    }
+}

@@ -93,20 +93,6 @@ struct PlaylistsView: View {
         folderLevel(filteredPlaylists.filter { !isOnTop($0) }).folders
     }
 
-    /// Every folder path in the library, subfolders included ("Mixes/", "Mixes/Summer/").
-    private var allFolderPaths: [String] {
-        var paths = Set<String>()
-        for playlist in playlists {
-            var path = ""
-            for part in playlist.name.split(separator: "/", omittingEmptySubsequences: false).dropLast()
-            where !part.isEmpty {
-                path += part + "/"
-                paths.insert(path)
-            }
-        }
-        return paths.sorted { $0.localizedCompare($1) == .orderedAscending }
-    }
-
     private func isOnTop(_ playlist: Playlist) -> Bool {
         pinnedOnTop && appSettings.isPinned(playlist.id)
     }
@@ -435,7 +421,7 @@ struct PlaylistsView: View {
                 ReorderPinnedView(playlists: playlists)
             }
             .sheet(item: $editingPlaylist) { playlist in
-                PlaylistEditView(playlistId: playlist.id, currentName: playlist.name, currentComment: playlist.comment ?? "") {
+                PlaylistEditView(playlistId: playlist.id, currentName: playlist.name, currentComment: playlist.comment ?? "", coverArt: playlist.coverArt) {
                     await loadPlaylists()
                 }
             }
@@ -447,29 +433,28 @@ struct PlaylistsView: View {
             } message: {
                 Text("This will permanently delete the selected playlists from the server. You can undo this briefly after deletion.")
             }
-            .confirmationDialog(
-                unpinCandidate.map { String(localized: "Unpin “\($0.name)”?") } ?? "",
-                isPresented: Binding(get: { unpinCandidate != nil }, set: { if !$0 { unpinCandidate = nil } }),
-                titleVisibility: .visible,
-                presenting: unpinCandidate
-            ) { playlist in
+            // Alerts, centred: a confirmation dialog floats as a popover off the whole list.
+            .alert(unpinCandidate.map { String(localized: "Unpin “\($0.name)”?") } ?? "",
+                   isPresented: Binding(get: { unpinCandidate != nil }, set: { if !$0 { unpinCandidate = nil } }),
+                   presenting: unpinCandidate) { playlist in
+                Button("Cancel", role: .cancel) {}
                 Button("Unpin", role: .destructive) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
                         appSettings.togglePin(playlistId: playlist.id)
                     }
                 }
             }
-            .confirmationDialog(
-                deletingFolder.map { String(localized: "Delete the folder “\(String($0.dropLast().split(separator: "/").last ?? ""))”?") } ?? "",
-                isPresented: Binding(get: { deletingFolder != nil }, set: { if !$0 { deletingFolder = nil } }),
-                titleVisibility: .visible,
-                presenting: deletingFolder
-            ) { path in
+            .alert(deletingFolder.map { String(localized: "Delete the folder “\(String($0.dropLast().split(separator: "/").last ?? ""))”?") } ?? "",
+                   isPresented: Binding(get: { deletingFolder != nil }, set: { if !$0 { deletingFolder = nil } }),
+                   presenting: deletingFolder) { path in
                 Button("Keep the Playlists") { Task { await ungroupFolder(path) } }
                 Button("Delete the Playlists Too", role: .destructive) {
                     selectedPlaylistIds = Set(playlists.filter { $0.name.hasPrefix(path) }.map(\.id))
                     deletePlaylists()
                 }
+                Button("Cancel", role: .cancel) {}
+            } message: { _ in
+                Text("Keeping them moves them out of the folder.")
             }
             .alert("Rename Folder", isPresented: Binding(get: { renamingFolder != nil },
                                                          set: { if !$0 { renamingFolder = nil } })) {
@@ -481,7 +466,7 @@ struct PlaylistsView: View {
                 Button("Cancel", role: .cancel) {}
             }
             .sheet(isPresented: $showCreatePlaylist) {
-                CreatePlaylistSheet(folders: allFolderPaths, startFolder: folder) { name, comment in
+                PlaylistFormSheet(startFolder: folder) { name, comment in
                     guard let server = serverManager.currentServer,
                           let created = try? await SubsonicClient.shared.createPlaylist(server: server, name: name, songIds: [])
                     else { return false }
@@ -1066,6 +1051,7 @@ struct ReorderPinnedView: View {
             }
             .scrollIndicators(.hidden)
             .environment(\.editMode, .constant(.active))
+            .auraSheet()
             .navigationTitle("reorder pinned")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

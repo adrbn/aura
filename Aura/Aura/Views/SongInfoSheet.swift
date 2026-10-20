@@ -22,6 +22,7 @@ struct SongInfoSheet: View {
                 SongFileSections(song: song)
             }
             .scrollIndicators(.hidden)
+            .auraSheet()
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

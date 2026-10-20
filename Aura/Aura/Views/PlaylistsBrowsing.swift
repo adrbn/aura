@@ -253,23 +253,31 @@ struct PlaylistRowView: View {
     }
 }
 
-/// A new playlist: its name, an optional description, and the folder it goes in, which can
-/// be a new one at any level. A folder is only a name prefix ("Mixes/Summer/Name") on the server.
-struct CreatePlaylistSheet: View {
-    let folders: [String]
-    let startFolder: String
-    /// Creates the playlist from its full name and description; false when the server refused.
-    let onCreate: (String, String) async -> Bool
+/// A playlist's name, description and folder, to create one or to edit it. A folder is only
+/// a name prefix on the server ("Mixes/Summer/Name"), so moving one is renaming it.
+struct PlaylistFormSheet: View {
+    /// Nil creates a playlist; set, edits that one and shows its cover.
+    var playlistId: String? = nil
+    var coverArt: String? = nil
+    var initialName = ""
+    var initialComment = ""
+    /// The folder a new playlist starts in: the one being browsed.
+    var startFolder = ""
+    /// Saves the full name and the description; false when the server refused.
+    let onSubmit: (String, String) async -> Bool
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appAccentColor) private var accentColor
+    @Environment(ServerManager.self) private var serverManager
+    @State private var folders: [String] = []
     @State private var name = ""
     @State private var comment = ""
     @State private var folder = ""
     @State private var newFolder = ""
-    @State private var isCreating = false
+    @State private var isSaving = false
     @State private var failed = false
     @FocusState private var nameFocused: Bool
 
+    private var isEditing: Bool { playlistId != nil }
     private var cleanName: String { name.trimmingCharacters(in: .whitespaces) }
     private var cleanNewFolder: String {
         newFolder.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "/", with: "-")
@@ -280,22 +288,13 @@ struct CreatePlaylistSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
+                header
+                    .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 8, trailing: 20))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+
                 Section {
-                    VStack(spacing: 16) {
-                        Image(systemName: "music.note.list")
-                            .font(.system(size: 44))
-                            .foregroundStyle(accentColor)
-                            .frame(width: 120, height: 120)
-                            .background(accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
-                        TextField("Playlist Name", text: $name)
-                            .font(.title2.bold())
-                            .multilineTextAlignment(.center)
-                            .focused($nameFocused)
-                            .submitLabel(.done)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
                     TextField("Description (optional)", text: $comment, axis: .vertical)
                         .lineLimit(1...4)
                 }
@@ -309,6 +308,7 @@ struct CreatePlaylistSheet: View {
                     HStack(spacing: 12) {
                         Image(systemName: "folder.badge.plus")
                             .foregroundStyle(accentColor)
+                            .frame(width: 24)
                         TextField(folder.isEmpty ? String(localized: "New Folder")
                                                  : String(localized: "New Folder in \(String(folder.dropLast()))"),
                                   text: $newFolder)
@@ -321,29 +321,65 @@ struct CreatePlaylistSheet: View {
                     }
                 }
             }
-            .navigationTitle("New Playlist")
-            .navigationBarTitleDisplayMode(.inline)
+            .listSectionSpacing(.compact)
+            .scrollIndicators(.hidden)
+            .auraSheet()
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    if isCreating {
+                    if isSaving {
                         ProgressView()
                     } else {
-                        Button("Create") { create() }
+                        Button(isEditing ? "Save" : "Create") { save() }
                             .fontWeight(.semibold)
                             .disabled(cleanName.isEmpty)
                     }
                 }
             }
-            .alert("Couldn't create the playlist", isPresented: $failed) {
+            .alert(isEditing ? "Couldn't save the playlist" : "Couldn't create the playlist", isPresented: $failed) {
                 Button("OK", role: .cancel) {}
             }
         }
         .onAppear {
-            folder = startFolder
-            nameFocused = true
+            let parts = initialName.split(separator: "/", omittingEmptySubsequences: false)
+            if isEditing, parts.count > 1 {
+                folder = parts.dropLast().joined(separator: "/") + "/"
+                name = String(parts.last ?? "")
+            } else {
+                folder = startFolder
+                name = initialName
+            }
+            comment = initialComment
+            if !isEditing { nameFocused = true }
+        }
+        .task { await loadFolders() }
+    }
+
+    /// The title, then the cover or a tile standing for it, then the name, large.
+    private var header: some View {
+        VStack(spacing: 18) {
+            SheetTitle(isEditing ? "edit playlist" : "new playlist")
+            Group {
+                if let playlistId {
+                    PlaylistCoverView(playlistId: playlistId, coverArt: coverArt, size: 150, cornerRadius: 12)
+                } else {
+                    Image(systemName: "music.note.list")
+                        .font(.system(size: 48))
+                        .foregroundStyle(accentColor)
+                        .frame(width: 150, height: 150)
+                        .background(Color.themeGroupedBg, in: RoundedRectangle(cornerRadius: 12))
+                }
+            }
+            .shadow(color: .black.opacity(0.3), radius: 12, y: 6)
+            TextField("Playlist Name", text: $name)
+                .font(.title2.bold())
+                .multilineTextAlignment(.center)
+                .focused($nameFocused)
+                .submitLabel(.done)
+                .padding(.vertical, 12)
+                .background(Color.themeGroupedBg, in: RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -354,6 +390,7 @@ struct CreatePlaylistSheet: View {
             HStack(spacing: 12) {
                 Image(systemName: path.isEmpty ? "tray" : "folder.fill")
                     .foregroundStyle(accentColor)
+                    .frame(width: 24)
                 Text(title).foregroundStyle(.primary)
                 Spacer()
                 if folder == path {
@@ -368,11 +405,27 @@ struct CreatePlaylistSheet: View {
         .buttonStyle(.plain)
     }
 
-    private func create() {
-        isCreating = true
+    /// Every folder path on the server, subfolders included ("Mixes/", "Mixes/Summer/").
+    private func loadFolders() async {
+        guard let server = serverManager.currentServer,
+              let playlists = try? await SubsonicClient.shared.getPlaylists(server: server) else { return }
+        var paths = Set<String>()
+        for playlist in playlists {
+            var path = ""
+            for part in playlist.name.split(separator: "/", omittingEmptySubsequences: false).dropLast()
+            where !part.isEmpty {
+                path += part + "/"
+                paths.insert(path)
+            }
+        }
+        folders = paths.sorted { $0.localizedCompare($1) == .orderedAscending }
+    }
+
+    private func save() {
+        isSaving = true
         Task {
-            let ok = await onCreate(fullName, comment.trimmingCharacters(in: .whitespacesAndNewlines))
-            isCreating = false
+            let ok = await onSubmit(fullName, comment.trimmingCharacters(in: .whitespacesAndNewlines))
+            isSaving = false
             if ok { dismiss() } else { failed = true }
         }
     }

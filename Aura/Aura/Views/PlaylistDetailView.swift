@@ -261,13 +261,13 @@ struct PlaylistDetailView: View {
             await loadPlaylist()
         }
         .sheet(isPresented: $showAddSongs) {
-            AddSongsSheet(alreadyIn: Set(playlist?.entry?.map(\.id) ?? [])) { song in
+            AddSongsSheet(playlistSongs: playlist?.entry ?? []) { song in
                 await add(song)
             }
         }
         .sheet(isPresented: $showEditSheet) {
             if let pl = playlist {
-                PlaylistEditView(playlistId: pl.id, currentName: pl.name, currentComment: pl.comment ?? "") {
+                PlaylistEditView(playlistId: pl.id, currentName: pl.name, currentComment: pl.comment ?? "", coverArt: pl.coverArt) {
                     await loadPlaylist()
                 }
             }
@@ -453,6 +453,7 @@ struct PlaylistDetailView: View {
             }
             .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
                                       bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 8))
+            .listRowBackground(Color.clear)
         }
     }
 
@@ -594,48 +595,27 @@ struct PlaylistDetailView: View {
 
 struct PlaylistEditView: View {
     let playlistId: String
-    @State var currentName: String
-    @State var currentComment: String
+    let currentName: String
+    let currentComment: String
+    var coverArt: String? = nil
     var onSave: () async -> Void
 
     @Environment(ServerManager.self) private var serverManager
-    @Environment(\.dismiss) private var dismiss
+    @Environment(AudioPlayer.self) private var player
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Playlist Info") {
-                    TextField("Name", text: $currentName)
-                    TextField("Description", text: $currentComment, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-
-                Section("Cover Art") {
-                    Text("Long-press the cover art on the playlist page to change it from your photo library.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+        PlaylistFormSheet(playlistId: playlistId, coverArt: coverArt,
+                          initialName: currentName, initialComment: currentComment) { name, comment in
+            guard let server = serverManager.currentServer,
+                  (try? await SubsonicClient.shared.updatePlaylist(server: server, id: playlistId,
+                                                                   name: name, comment: comment)) != nil
+            else { return false }
+            // Now Playing names what plays by its source; a renamed playlist renames it there too.
+            if case .playlist(let id, _) = player.playbackSource, id == playlistId {
+                player.playbackSource = .playlist(id: id, name: name)
             }
-            .navigationTitle("edit playlist")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        Task {
-                            guard let server = serverManager.currentServer else { return }
-                            try? await SubsonicClient.shared.updatePlaylist(
-                                server: server, id: playlistId,
-                                name: currentName, comment: currentComment
-                            )
-                            await onSave()
-                            dismiss()
-                        }
-                    }
-                }
-            }
+            await onSave()
+            return true
         }
     }
 }
@@ -661,62 +641,113 @@ enum PlaylistSuggester {
     }
 }
 
-/// Search the server and add songs one tap at a time, the sheet staying open.
+/// Search the server and add songs one tap at a time, the sheet staying open. Before a
+/// search it offers suggestions, so it never opens on a blank page.
 struct AddSongsSheet: View {
-    let alreadyIn: Set<String>
+    let playlistSongs: [Song]
     let onAdd: (Song) async -> Void
     @Environment(ServerManager.self) private var serverManager
+    @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
     @Environment(\.dismiss) private var dismiss
     @State private var query = ""
     @State private var results: [Song] = []
+    @State private var suggestions: [Song] = []
+    @State private var isSearching = false
     @State private var added: Set<String> = []
+
+    private var alreadyIn: Set<String> { Set(playlistSongs.map(\.id)) }
+    private var searching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
 
     var body: some View {
         NavigationStack {
-            List(results) { song in
-                let isIn = alreadyIn.contains(song.id) || added.contains(song.id)
-                HStack(spacing: 8) {
-                    SongRowView(song: song, disableSwipeActions: true)
-                    Button {
-                        added.insert(song.id)
-                        Task { await onAdd(song) }
-                    } label: {
-                        Image(systemName: isIn ? "checkmark.circle.fill" : "plus.circle")
-                            .font(.title3)
-                            .foregroundStyle(accentColor)
-                            .frame(width: 44, height: 44)
+            List {
+                VStack(spacing: 12) {
+                    SheetTitle("add songs")
+                        .padding(.horizontal, 16)
+                    SearchFieldBar(text: $query, prompt: "Songs, artists, albums")
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+
+                if searching {
+                    if results.isEmpty && !isSearching {
+                        Text("No results")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 40)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                     }
-                    .buttonStyle(.borderless)
-                    .disabled(isIn)
-                    .accessibilityLabel(isIn ? "Added" : "Add to Playlist")
+                    ForEach(results) { row($0) }
+                } else if !suggestions.isEmpty {
+                    Text("Suggestions")
+                        .font(.title3.bold())
+                        .padding(.top, 8)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    ForEach(suggestions) { row($0) }
+                } else {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
             }
             .listStyle(.plain)
-            .overlay {
-                if results.isEmpty {
-                    ContentUnavailableView(query.isEmpty ? "Search your library" : "No results",
-                                           systemImage: "magnifyingglass")
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.immediately)
+            .auraSheet()
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
                 }
             }
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always),
-                        prompt: "Songs, artists, albums")
+            .task {
+                guard let server = serverManager.currentServer else { return }
+                suggestions = await PlaylistSuggester.suggest(server: server, for: playlistSongs, count: 25)
+            }
             .task(id: query) {
                 let text = query.trimmingCharacters(in: .whitespaces)
                 guard !text.isEmpty else { results = []; return }
+                isSearching = true
+                defer { isSearching = false }
                 try? await Task.sleep(for: .milliseconds(300))
                 guard !Task.isCancelled, let server = serverManager.currentServer else { return }
                 let found = try? await SubsonicClient.shared.search3(server: server, query: text,
                                                                      artistCount: 0, albumCount: 0, songCount: 40)
                 if !Task.isCancelled { results = found?.song ?? [] }
             }
-            .navigationTitle("Add Songs")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
         }
+    }
+
+    private func row(_ song: Song) -> some View {
+        let isIn = alreadyIn.contains(song.id) || added.contains(song.id)
+        return HStack(spacing: 8) {
+            SongRowView(song: song, disableSwipeActions: true) {
+                player.playSong(song, fromQueue: [song])
+            }
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { _ = added.insert(song.id) }
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                Task { await onAdd(song) }
+            } label: {
+                Image(systemName: isIn ? "checkmark.circle.fill" : "plus.circle")
+                    .font(.title3)
+                    .foregroundStyle(accentColor)
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.borderless)
+            .disabled(isIn)
+            .accessibilityLabel(isIn ? "Added" : "Add to Playlist")
+        }
+        .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
+                                  bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 8))
+        .listRowBackground(Color.clear)
     }
 }

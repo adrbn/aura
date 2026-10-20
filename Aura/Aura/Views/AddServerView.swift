@@ -68,6 +68,7 @@ struct AddServerView: View {
                     }
                 }
             }
+            .auraSheet()
             .navigationTitle("add new server")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
