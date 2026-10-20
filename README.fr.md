@@ -91,10 +91,11 @@ reprend le tout.
 - **Une horloge en paysage.** Activez-la dans les Réglages et tournez le téléphone sur le côté pendant la lecture : l'heure en grand, le morceau à côté, et un tap sur la pochette pour les paroles, une ligne à la fois.
 - **Prêt pour l'iPhone Duo** (prochaine version). Ouvert, Aura tourne avec l'appareil : En cours de lecture garde le lecteur à gauche avec les paroles ou la file d'attente à côté, et les pages d'album, de playlist, de mix et de radio posent leur pochette à gauche avec le titre et les boutons à côté. Plié, le lecteur garde les proportions d'un téléphone sur les écrans courts.
 
-**Dans la 1.4** (sur la branche `next`, en test)
+**Dans la 1.4** (en test)
 
 - **La tonalité.** Un demi-ton plus haut ou plus bas depuis le menu d'En cours de lecture, comme sur une platine : la vitesse suit. Le morceau suivant repart à 0.
-- **Des dossiers de playlists.** Nommez vos playlists `Dossier/Nom` et elles se rangent dans un dossier de l'onglet Playlists.
+- **Des dossiers de playlists.** Nommez vos playlists `Dossier/Nom` et elles se rangent dans un dossier de l'onglet Playlists ; balayez vers la droite pour en sortir, appui long pour tout épingler, renommer ou sélectionner.
+- **Les épingles, sur place.** Maintenez une playlist épinglée et glissez-la pour la déplacer, et un interrupteur du menu remet les épingles dans la liste sans les retirer.
 - **Les albums à plusieurs disques** listent chaque disque sous son titre, et artistes et morceaux se trient selon leurs tags de tri.
 - **Une playlist gardée téléchargée** : ses nouveaux morceaux se téléchargent dès qu'Aura s'ouvre avec le serveur à portée.
 - **Les pochettes animées**, WebP ou GIF, dans En cours de lecture et sur la page d'album.

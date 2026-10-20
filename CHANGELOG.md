@@ -6,10 +6,11 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
-On the `next` branch, for 1.4:
+For 1.4:
 
 - Pitch from Now Playing's menu, a semitone at a time up to six either way, the speed going with it as on a turntable. It goes back to 0 when the next song starts.
-- Playlists named `Folder/Name` sit in a folder on the Playlists tab once two of them share it.
+- Playlists named `Folder/Name` sit in a folder on the Playlists tab once two of them share it. A folder slides in and out, a swipe right goes back up, and a long press offers pin all, rename folder and select playlists.
+- Pinned playlists reorder in place: hold one and drag it. Unpinning from a row asks first, and a Pinned on Top switch in the menu puts pins back in the list without unpinning them.
 - A multi-disc album lists each disc under its own heading; artists and song titles sort by their artistsort and titlesort tags.
 - A playlist can be kept downloaded: its new songs download whenever Aura comes to the front with the server in reach.
 - Animated WebP and GIF covers play on Now Playing and the album page.
