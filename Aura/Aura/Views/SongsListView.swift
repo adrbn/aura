@@ -69,6 +69,11 @@ final class SongsCache {
         dates[k] = Date()
     }
 
+    func invalidateAll() {
+        storage = [:]
+        dates = [:]
+    }
+
     func invalidate(_ type: SongFetchType) {
         let k = key(for: type)
         storage[k] = nil
@@ -138,7 +143,8 @@ struct SongsListView: View {
         let sorted: [Song]
         switch sortOrder {
         case .none:
-            sorted = songs
+            // Favourites' own order is when each was liked, newest first.
+            sorted = fetchType == .starred ? songs.sorted { ($0.starred ?? "") > ($1.starred ?? "") } : songs
         case .recentlyAdded:
             // Newest first when ascending, the way this list has always opened.
             sorted = songs.sorted { ($0.created ?? "") > ($1.created ?? "") }
@@ -425,7 +431,7 @@ struct SongsListView: View {
                 Menu {
                     Picker("Sort By", selection: $sortOrder) {
                         ForEach(SongSortOrder.allCases, id: \.self) { order in
-                            Text(LocalizedStringKey(order.rawValue)).tag(order)
+                            Text(label(for: order)).tag(order)
                         }
                     }
                     Divider()
@@ -459,6 +465,38 @@ struct SongsListView: View {
             displayLimit = 44
             resort()
         }
+    }
+
+    /// "Default" said nothing about what order it was; each list names its own.
+    private func label(for order: SongSortOrder) -> LocalizedStringKey {
+        guard order == .none else { return LocalizedStringKey(order.rawValue) }
+        switch fetchType {
+        case .all: return "Server Order"
+        case .starred: return "Date Liked"
+        case .recentSongs: return "Last Played"
+        case .frequentSongs: return "Most Played"
+        case .random: return "Shuffled"
+        case .newestSongs: return "Newest Albums First"
+        }
+    }
+
+    /// Songs of the albums the server lists as recent or frequent, narrowed to the songs
+    /// themselves: the server has no list of songs by plays, but each song carries its play
+    /// count and last play. Falls back to the albums' songs when the server sends neither.
+    private func songsOfAlbums(type: String, server: ServerConfig) async throws -> [Song] {
+        let albums = try await SubsonicClient.shared.getAlbumList2(server: server, type: type, size: 20)
+        var all: [Song] = []
+        for album in albums {
+            let detail = try await SubsonicClient.shared.getAlbum(server: server, id: album.id)
+            all.append(contentsOf: detail.song ?? [])
+        }
+        let narrowed: [Song]
+        if type == "frequent" {
+            narrowed = all.filter { ($0.playCount ?? 0) > 0 }.sorted { ($0.playCount ?? 0) > ($1.playCount ?? 0) }
+        } else {
+            narrowed = all.filter { $0.played != nil }.sorted { ($0.played ?? "") > ($1.played ?? "") }
+        }
+        return narrowed.isEmpty ? all : Array(narrowed.prefix(100))
     }
 
     private func loadSongs() async {
@@ -530,12 +568,7 @@ struct SongsListView: View {
                 }
 
             case .recentSongs:
-                let albums = try await SubsonicClient.shared.getAlbumList2(server: server, type: "recent", size: 10)
-                var allSongs: [Song] = []
-                for album in albums {
-                    let detail = try await SubsonicClient.shared.getAlbum(server: server, id: album.id)
-                    allSongs.append(contentsOf: detail.song ?? [])
-                }
+                let allSongs = try await songsOfAlbums(type: "recent", server: server)
                 SongsCache.shared.store(allSongs, for: .recentSongs)
                 await MainActor.run {
                     songs = allSongs
@@ -559,12 +592,7 @@ struct SongsListView: View {
                 }
 
             case .frequentSongs:
-                let albums = try await SubsonicClient.shared.getAlbumList2(server: server, type: "frequent", size: 10)
-                var allSongs: [Song] = []
-                for album in albums {
-                    let detail = try await SubsonicClient.shared.getAlbum(server: server, id: album.id)
-                    allSongs.append(contentsOf: detail.song ?? [])
-                }
+                let allSongs = try await songsOfAlbums(type: "frequent", server: server)
                 SongsCache.shared.store(allSongs, for: .frequentSongs)
                 await MainActor.run {
                     songs = allSongs

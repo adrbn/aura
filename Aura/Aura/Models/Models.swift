@@ -767,6 +767,8 @@ struct Song: Identifiable, Codable, Hashable {
     let contentType: String?
     let isDir: Bool?
     var starred: String?
+    /// When the song was last played (OpenSubsonic; Navidrome sends it).
+    var played: String? = nil
     let size: Int?
     let path: String?
     let playCount: Int?
