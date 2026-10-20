@@ -15,7 +15,10 @@ final class AudioPlayer {
     /// few rather than stopping dead.
     private static let previewFade: TimeInterval = 3
 
-    var currentSong: Song?
+    var currentSong: Song? {
+        // The pitch is for the song it was set on: the next one starts back at 0.
+        didSet { if oldValue?.id != currentSong?.id, pitchSemitones != 0 { pitchSemitones = 0 } }
+    }
     var queue: [Song] = []
     var userQueue: [Song] = []
     var queueIndex: Int = 0
@@ -117,6 +120,22 @@ final class AudioPlayer {
 
     private var player: AVPlayer?
 
+    /// Experimental, sideload only: the song played up or down by whole semitones. It is a
+    /// turntable's pitch — the speed goes with it — since AVPlayer can't move one without the
+    /// other. Back to 0 at the next song.
+    var pitchSemitones = 0 {
+        didSet { applyPitch() }
+    }
+
+    // ponytail: the Lock Screen and the car still count song time at 1×, so their progress bar
+    // drifts from the real one while the pitch is off zero. Pass the rate on if this ever ships.
+    private func applyPitch() {
+        guard let player else { return }
+        if pitchSemitones != 0 { player.currentItem?.audioTimePitchAlgorithm = .varispeed }
+        let rate = Float(pow(2, Double(pitchSemitones) / 12))
+        player.defaultRate = rate
+        if player.rate != 0 { player.rate = rate }
+    }
     private var timeObserver: Any?
     private var originalQueue: [Song] = []
     #if os(iOS)

@@ -2016,6 +2016,23 @@ struct SongActionsRow: View {
                 Button { showEqualizer = true } label: {
                     Label("Equalizer", systemImage: "slider.vertical.3")
                 }
+                #if !APPSTORE_BUILD
+                // Experimental: a semitone at a time, speed and all, as on a turntable.
+                ControlGroup {
+                    Button { player.pitchSemitones -= 1 } label: {
+                        Label("Down", systemImage: "minus")
+                    }
+                    .disabled(player.pitchSemitones <= -6)
+                    Button { player.pitchSemitones = 0 } label: {
+                        Text(player.pitchSemitones == 0 ? "Pitch" : player.pitchSemitones.formatted(.number.sign(strategy: .always())))
+                    }
+                    Button { player.pitchSemitones += 1 } label: {
+                        Label("Up", systemImage: "plus")
+                    }
+                    .disabled(player.pitchSemitones >= 6)
+                }
+                .menuActionDismissBehavior(.disabled)
+                #endif
                 if SharePlay.shared.isActive {
                     Button { SharePlay.shared.leave() } label: {
                         Label("Leave SharePlay", systemImage: "shareplay.slash")
