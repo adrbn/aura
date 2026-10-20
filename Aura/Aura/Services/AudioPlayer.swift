@@ -1568,20 +1568,22 @@ final class AudioPlayer {
         }
     }
 
-    /// Asks once for an App Store rating, after the twentieth song listened to past the
-    /// scrobble point, and only while the app is on screen. The App Store build only: a
-    /// sideloaded build would ask its own developer.
+    /// Asks for an App Store rating once per version, from the twentieth song listened to
+    /// past the scrobble point, and only while the app is on screen (iOS itself caps it at
+    /// three times a year). The App Store build only: a sideloaded build would ask its own
+    /// developer.
     private func askForReviewIfDue() {
         #if os(iOS) && APPSTORE_BUILD
         let defaults = UserDefaults.standard
         let plays = defaults.integer(forKey: "reviewPromptPlays") + 1
         defaults.set(plays, forKey: "reviewPromptPlays")
-        guard plays >= 20, !defaults.bool(forKey: "reviewPromptAsked") else { return }
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        guard plays >= 20, defaults.string(forKey: "reviewPromptVersion") != version else { return }
         Task { @MainActor in
             guard let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
             else { return }
-            UserDefaults.standard.set(true, forKey: "reviewPromptAsked")
+            UserDefaults.standard.set(version, forKey: "reviewPromptVersion")
             AppStore.requestReview(in: scene)
         }
         #endif

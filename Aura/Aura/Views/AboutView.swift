@@ -9,6 +9,7 @@ struct AboutView: View {
     /// Single source of truth for outbound links — edit here when the repo goes public.
     private enum Links {
         static let github = URL(string: "https://github.com/adrbn/aura")!
+        static let review = URL(string: "https://apps.apple.com/app/id6818241470?action=write-review")!
         static let kofi = URL(string: "https://ko-fi.com/adrbn")!
         static let site = URL(string: "https://aura.adrbn.dev")!
         static let privacy = URL(string: "https://aura.adrbn.dev/privacy")!
@@ -138,6 +139,9 @@ struct AboutView: View {
     private var linksCard: some View {
         card(padding: 4) {
             VStack(spacing: 0) {
+                linkRow(icon: .symbol("star.fill"),
+                        title: "Rate Aura", detail: "App Store", url: Links.review)
+                rowDivider
                 linkRow(icon: .asset("GitHubMark"),
                         title: "Source & updates", detail: "GitHub", url: Links.github)
                 rowDivider
