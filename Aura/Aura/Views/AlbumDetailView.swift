@@ -27,6 +27,10 @@ struct AlbumDetailView: View {
                     // the name and buttons sit beside it, at its foot, as on a playlist page.
                     headerLayout {
                         CoverArtAsyncImage(coverArt: album.coverArt, size: wide ? 220 : 260)
+                            .overlay {
+                                AnimatedCoverOverlay(coverArt: album.coverArt)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
                             .coverMenu(cornerRadius: 12, actions: [
                                 CoverMenuAction(title: String(localized: "Save Cover Art"),
                                                 systemImage: "square.and.arrow.down") {

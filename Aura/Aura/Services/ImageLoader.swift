@@ -1,5 +1,6 @@
 import SwiftUI
 import CryptoKit
+import ImageIO
 
 // MARK: - Image Cache
 
@@ -100,6 +101,14 @@ final class ArtworkCache: @unchecked Sendable {
     /// If 429s ever come back in the server log, this is the first number to lower.
     static let maxConcurrentDownloads = 5
     private let downloadGate = DownloadGate(limit: ArtworkCache.maxConcurrentDownloads)
+    /// Animated covers' bytes, and the covers already found to be stills (see `animatedData`).
+    fileprivate let animatedCovers: NSCache<NSString, NSData> = {
+        let cache = NSCache<NSString, NSData>()
+        cache.totalCostLimit = 40 * 1024 * 1024
+        return cache
+    }()
+    fileprivate var stillCovers = Set<String>()
+    fileprivate let stillCoversLock = NSLock()
 
     /// True when artwork must come from local storage only: the user asked for offline
     /// mode AND the server really is out of reach. Offline mode on its own is not enough —
@@ -967,3 +976,84 @@ enum GenericArtwork {
         }
     }
 }
+
+// MARK: - Animated covers
+
+extension ArtworkCache {
+    /// The raw bytes of a cover when they hold more than one frame, or nil for a still.
+    /// Navidrome keeps an animated WebP or GIF cover moving when it resizes it, but the
+    /// pipeline above decodes and stores covers as JPEG, which keeps the first frame only.
+    /// So the big covers ask once more, and only play what has frames.
+    func animatedData(forCoverArt coverArt: String, requestSize: Int) async -> Data? {
+        let key = "\(coverArt)_\(requestSize)" as NSString
+        if let hit = animatedCovers.object(forKey: key) { return hit as Data }
+        if stillCoversLock.withLock({ stillCovers.contains(key as String) }) { return nil }
+        guard !isArtworkOffline, !coverArt.hasPrefix("https://"),
+              let server = ServerManager.shared.currentServer,
+              let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: requestSize) else { return nil }
+        await downloadGate.acquire()
+        defer { downloadGate.release() }
+        guard let (data, resp) = try? await imageSession.data(from: url),
+              (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              CGImageSourceGetCount(source) > 1 else {
+            stillCoversLock.withLock { _ = stillCovers.insert(key as String) }
+            return nil
+        }
+        animatedCovers.setObject(data as NSData, forKey: key, cost: data.count)
+        return data
+    }
+}
+
+/// Plays an animated cover over the still one, or shows nothing for a still cover.
+struct AnimatedCoverOverlay: View {
+    let coverArt: String?
+    var requestSize = 600
+    @State private var data: Data?
+
+    var body: some View {
+        ZStack {
+            #if canImport(UIKit)
+            if let data { AnimatedImagePlayer(data: data) }
+            #endif
+        }
+        .allowsHitTesting(false)
+        .task(id: coverArt) {
+            data = nil
+            guard let coverArt else { return }
+            data = await ArtworkCache.shared.animatedData(forCoverArt: coverArt, requestSize: requestSize)
+        }
+    }
+}
+
+#if canImport(UIKit)
+/// Decodes one frame at a time with ImageIO, so a long animation costs one frame of
+/// memory rather than all of them.
+private struct AnimatedImagePlayer: UIViewRepresentable {
+    let data: Data
+
+    final class Coordinator { var stop = false }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIView(context: Context) -> UIImageView {
+        let view = UIImageView()
+        view.contentMode = .scaleAspectFill
+        view.clipsToBounds = true
+        view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        view.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        let coordinator = context.coordinator
+        CGAnimateImageDataWithBlock(data as CFData, nil) { [weak view] _, frame, stop in
+            guard let view, !coordinator.stop else { stop.pointee = true; return }
+            view.image = UIImage(cgImage: frame)
+        }
+        return view
+    }
+
+    func updateUIView(_ view: UIImageView, context: Context) {}
+
+    static func dismantleUIView(_ view: UIImageView, coordinator: Coordinator) {
+        coordinator.stop = true
+    }
+}
+#endif

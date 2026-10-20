@@ -888,6 +888,10 @@ struct NowPlayingView: View {
             CoverArtAsyncImage(coverArt: song.coverArt ?? song.albumId, size: size,
                                fallbackCoverArt: song.albumId,
                                cornerRadius: 12 * size / max(heroSize, 1))
+                .overlay {
+                    AnimatedCoverOverlay(coverArt: song.coverArt ?? song.albumId)
+                        .clipShape(RoundedRectangle(cornerRadius: 12 * size / max(heroSize, 1)))
+                }
                 .shadow(color: .black.opacity(showLyrics ? 0.35 : 0.4),
                         radius: showLyrics ? 6 : 20,
                         y: showLyrics ? 3 : 10)
