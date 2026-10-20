@@ -2049,6 +2049,16 @@ struct SongActionsRow: View {
                     Label("Equalizer", systemImage: "slider.vertical.3")
                 }
                 speedMenu
+                if SharePlay.shared.isActive {
+                    Button { SharePlay.shared.leave() } label: {
+                        Label("Leave SharePlay", systemImage: "shareplay.slash")
+                    }
+                } else {
+                    ShareLink(item: ListenTogetherInvite(),
+                              preview: SharePreview("Listen Together on Aura")) {
+                        Label("SharePlay", systemImage: "shareplay")
+                    }
+                }
                 if !DownloadManager.shared.isDownloaded(song.id) {
                     Button {
                         Task { await DownloadManager.shared.downloadSong(song) }

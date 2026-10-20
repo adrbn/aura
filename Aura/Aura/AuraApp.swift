@@ -123,6 +123,10 @@ struct AuraApp: App {
                 audioPlayer.resumeQueueFromServer()
                 await DownloadManager.shared.syncKeptPlaylists()
             }
+            .task { await SharePlay.shared.observeSessions() }
+            .alert(SharePlay.shared.notice ?? "", isPresented: Binding(
+                get: { SharePlay.shared.notice != nil },
+                set: { if !$0 { SharePlay.shared.notice = nil } })) {}
             .task {
                 // Pinned playlists follow you between devices; start listening for the
                 // Mac's changes before anything can touch them here.

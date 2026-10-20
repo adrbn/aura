@@ -220,6 +220,8 @@ final class AudioPlayer {
     /// request already owns the outcome. Only the newest completion clears `isSeeking`, so
     /// a late one can't unfreeze the clock mid-scrub either.
     private var seekGeneration = 0
+    /// Counts seeks, for SharePlay to notice one and pass it on.
+    private(set) var seekCount = 0
     /// One-shot: a saved position to seek to as soon as the restored item is ready to play.
     private var pendingSeekTime: TimeInterval?
     private var consecutiveFailures = 0
@@ -1818,6 +1820,7 @@ final class AudioPlayer {
         // Every seek gets an id, so a completion belonging to a superseded one can be
         // recognised and ignored.
         seekGeneration &+= 1
+        seekCount &+= 1
         let generation = seekGeneration
         if reopen(at: time) { return }
         isSeeking = true

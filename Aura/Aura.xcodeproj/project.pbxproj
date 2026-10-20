@@ -21,6 +21,7 @@
 		0DD7E850D3FA7DC35FC4AB8C /* LyricsOverrides.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB20C2630F70AD51EC1D03F /* LyricsOverrides.swift */; };
 		1098ACD0A4306A067B6F7DBC /* AuraWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 46EB97B0FBEAA4C3113B875E /* AuraWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		125F7988574B0686E951FB7C /* LyricWordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F8 /* LyricWordTiming.swift */; };
+		13C86C64BEDAFEB5C93CB129 /* SharePlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0534A06AB826D81FA115759 /* SharePlay.swift */; };
 		169403C7846F4989E4392CEF /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
 		196AB9045E589FCE183BD48E /* PlayHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE183A34FA /* PlayHistory.swift */; };
 		1DE6DF3B70B4F115C8E5194A /* ServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000012 /* ServerManager.swift */; };
@@ -210,7 +211,6 @@
 		E1000001000000000000A00A /* ReleaseFetchAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00A /* ReleaseFetchAttributes.swift */; };
 		E1000001000000000000A00B /* ReleaseFetchAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00A /* ReleaseFetchAttributes.swift */; };
 		E1000001000000000000A00C /* ReleaseFetchLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00C /* ReleaseFetchLiveActivity.swift */; };
-		E1000001000000000000A0F1 /* NowPlayingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A0F1 /* NowPlayingWidget.swift */; };
 		E1000001000000000000A00D /* FetchProgressBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00D /* FetchProgressBanner.swift */; };
 		E1000001000000000000A00E /* SoulseekPickTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00E /* SoulseekPickTests.swift */; };
 		E1000001000000000000A00F /* WorkshopGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00F /* WorkshopGrid.swift */; };
@@ -218,6 +218,7 @@
 		E1000001000000000000A011 /* DeezerSearchSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A011 /* DeezerSearchSection.swift */; };
 		E1000001000000000000A012 /* PlaylistCovers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A012 /* PlaylistCovers.swift */; };
 		E1000001000000000000A013 /* PlaylistsBrowsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A013 /* PlaylistsBrowsing.swift */; };
+		E1000001000000000000A0F1 /* NowPlayingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A0F1 /* NowPlayingWidget.swift */; };
 		E1000001000000000000B001 /* PreviewAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B001 /* PreviewAligner.swift */; };
 		E1000001000000000000B002 /* LyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B002 /* LyricsTranslator.swift */; };
 		E1000001000000000000B003 /* CoverFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B003 /* CoverFinder.swift */; };
@@ -415,13 +416,6 @@
 		E100000200000000000000B0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E100000200000000000000B1 /* SkeletonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonView.swift; sourceTree = "<group>"; };
 		E100000200000000000000B2 /* SearchIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchIndex.swift; sourceTree = "<group>"; };
-		E10000020000000051C10000 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		E10000020000000051C10001 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		E10000020000000051C10002 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		E10000020000000051C10003 /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		E10000020000000051C10004 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		E10000020000000051C10005 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = zh-Hans.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		E10000020000000051C10006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E100000200000000000000B3 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E100000200000000000000C0 /* SongQuery.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SongQuery.swift; sourceTree = "<group>"; };
 		E100000200000000000000C1 /* SearchHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHistory.swift; sourceTree = "<group>"; };
@@ -462,7 +456,6 @@
 		E1000002000000000000A009 /* ReleaseFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetcher.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00A /* ReleaseFetchAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetchAttributes.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00C /* ReleaseFetchLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseFetchLiveActivity.swift; sourceTree = "<group>"; };
-		E1000002000000000000A0F1 /* NowPlayingWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingWidget.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00D /* FetchProgressBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FetchProgressBanner.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00E /* SoulseekPickTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoulseekPickTests.swift; sourceTree = "<group>"; };
 		E1000002000000000000A00F /* WorkshopGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkshopGrid.swift; sourceTree = "<group>"; };
@@ -470,9 +463,17 @@
 		E1000002000000000000A011 /* DeezerSearchSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeezerSearchSection.swift; sourceTree = "<group>"; };
 		E1000002000000000000A012 /* PlaylistCovers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistCovers.swift; sourceTree = "<group>"; };
 		E1000002000000000000A013 /* PlaylistsBrowsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistsBrowsing.swift; sourceTree = "<group>"; };
+		E1000002000000000000A0F1 /* NowPlayingWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingWidget.swift; sourceTree = "<group>"; };
 		E1000002000000000000B001 /* PreviewAligner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewAligner.swift; sourceTree = "<group>"; };
 		E1000002000000000000B002 /* LyricsTranslator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsTranslator.swift; sourceTree = "<group>"; };
 		E1000002000000000000B003 /* CoverFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverFinder.swift; sourceTree = "<group>"; };
+		E10000020000000051C10000 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E10000020000000051C10001 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E10000020000000051C10002 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E10000020000000051C10003 /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E10000020000000051C10004 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E10000020000000051C10005 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/AppShortcuts.strings"; sourceTree = "<group>"; };
+		E10000020000000051C10006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E10000030000000000000001 /* Aura.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aura.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E10000030000000000000002 /* AuraWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AuraWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E318A59381EE24D9E5853599 /* DisplayFontTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayFontTests.swift; sourceTree = "<group>"; };
@@ -481,6 +482,7 @@
 		E789F4384A074A1B5C0CC509 /* PinSync.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PinSync.swift; sourceTree = "<group>"; };
 		ECB4AE645C8B2F7136CBF7BF /* Aura-mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Aura-mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ECC9389652F34E463A5C765C /* MacSearchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSearchView.swift; sourceTree = "<group>"; };
+		F0534A06AB826D81FA115759 /* SharePlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SharePlay.swift; sourceTree = "<group>"; };
 		FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaylistMembershipCache.swift; sourceTree = "<group>"; };
 		FFB810DD93B73BC5A1020C86 /* LyricsSyncView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsSyncView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -725,6 +727,7 @@
 				4FB20C2630F70AD51EC1D03F /* LyricsOverrides.swift */,
 				B473B77C7F39B4A0C89FD065 /* LyricsOnServer.swift */,
 				9FF14467AF6F8D18111DBF21 /* AlbumCompletion.swift */,
+				F0534A06AB826D81FA115759 /* SharePlay.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1328,6 +1331,7 @@
 				3A7733BE80C898D602ACA160 /* LyricsOnServer.swift in Sources */,
 				55D7F49CF50EACF1E3CE7127 /* AlbumCompletion.swift in Sources */,
 				016B640B9D48D7E4C4EED3A0 /* MissingSongsSection.swift in Sources */,
+				13C86C64BEDAFEB5C93CB129 /* SharePlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
