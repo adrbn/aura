@@ -1687,7 +1687,10 @@ struct NowPlayingView: View {
             }
             .drawingGroup() // Flatten to bitmap — prevents per-frame recomposite flicker
             .ignoresSafeArea(.all)
-            .transaction { $0.animation = nil } // No stray animations on background
+            // No crossfade when the cover changes. Scoped to the image: a blanket nil animation
+            // also stripped the dismiss slide, so a quick swipe down dropped the backdrop at
+            // once and left the player floating over Home.
+            .animation(nil, value: backgroundImage)
             .task(id: song.coverArt) {
                 await loadBackgroundImage(for: song)
             }
