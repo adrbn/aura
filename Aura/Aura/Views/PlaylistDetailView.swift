@@ -17,6 +17,8 @@ struct PlaylistDetailView: View {
     @State private var isStarred = false
     @State private var showDownloadConfirm = false
     @State private var coverArtRefreshId = UUID()
+    @State private var showAddSongs = false
+    @State private var suggestions: [Song] = []
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private var wide: Bool { horizontalSizeClass == .regular }
     private var headerLayout: AnyLayout {
@@ -147,6 +149,14 @@ struct PlaylistDetailView: View {
                             ListSummaryRow(text: Self.summary(of: songs))
                         }
                     }
+                    if playlist.entry?.isEmpty ?? true {
+                        emptyPlaylistPrompt
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    }
+                    if !suggestions.isEmpty {
+                        suggestionsSection
+                    }
 
                     ListEndSpacer()
                         .listRowSeparator(.hidden)
@@ -200,6 +210,9 @@ struct PlaylistDetailView: View {
                         Label("Keep Downloaded", systemImage: "arrow.down.circle.dotted")
                     }
                     Divider()
+                    Button { showAddSongs = true } label: {
+                        Label("Add Songs", systemImage: "plus")
+                    }
                     Button { showEditSheet = true } label: {
                         Label("Modify", systemImage: "pencil")
                     }
@@ -246,6 +259,11 @@ struct PlaylistDetailView: View {
         .task {
             isStarred = AppSettings.shared.isPinned(playlistId)
             await loadPlaylist()
+        }
+        .sheet(isPresented: $showAddSongs) {
+            AddSongsSheet(alreadyIn: Set(playlist?.entry?.map(\.id) ?? [])) { song in
+                await add(song)
+            }
         }
         .sheet(isPresented: $showEditSheet) {
             if let pl = playlist {
@@ -361,11 +379,91 @@ struct PlaylistDetailView: View {
             }
             // Warm song thumbnails so rows don't pop in while scrolling.
             // Capped: huge playlists shouldn't trigger hundreds of fetches at once.
+            if suggestions.isEmpty {
+                let picked = await PlaylistSuggester.suggest(server: server, for: result.entry ?? [])
+                await MainActor.run { withAnimation { suggestions = picked } }
+            }
             let thumbIds = (result.entry ?? []).prefix(300).compactMap(\.displayCoverArt)
             ArtworkCache.shared.prefetch(coverArtIds: Array(thumbIds), pointSize: 50)
         } catch {
             AppLogger.shared.log("❌ Playlist load error: \(error.localizedDescription)")
             await MainActor.run { isLoading = false }
+        }
+    }
+
+    /// An empty playlist says so and offers the way to fill it.
+    private var emptyPlaylistPrompt: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "music.note.list")
+                .font(.system(size: 40))
+                .foregroundStyle(.tertiary)
+            Text("This playlist is empty")
+                .font(.headline)
+            Text("Add songs here, or from any song's menu with Add to Playlist.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button { showAddSongs = true } label: {
+                Label("Add Songs", systemImage: "plus")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 20).padding(.vertical, 10)
+                    .background(accentColor.opacity(0.15), in: Capsule())
+                    .foregroundStyle(accentColor)
+            }
+            .buttonStyle(.borderless)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+        .padding(.horizontal, 32)
+    }
+
+    @ViewBuilder
+    private var suggestionsSection: some View {
+        HStack {
+            Text("Suggestions").font(.title3.bold())
+            Spacer()
+            Button {
+                Task {
+                    guard let server = serverManager.currentServer else { return }
+                    let picked = await PlaylistSuggester.suggest(server: server, for: playlist?.entry ?? [])
+                    withAnimation { suggestions = picked }
+                }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("Refresh Suggestions")
+        }
+        .padding(.top, 24)
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+        ForEach(suggestions) { song in
+            HStack(spacing: 8) {
+                SongRowView(song: song, disableSwipeActions: true) {
+                    player.playSong(song, fromQueue: [song])
+                }
+                Button { Task { await add(song) } } label: {
+                    Image(systemName: "plus.circle")
+                        .font(.title3)
+                        .foregroundStyle(accentColor)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Add to Playlist")
+            }
+            .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
+                                      bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 8))
+        }
+    }
+
+    private func add(_ song: Song) async {
+        guard let server = serverManager.currentServer else { return }
+        do {
+            try await SubsonicClient.shared.addSongToPlaylist(server: server, playlistId: playlistId, songId: song.id)
+            await MainActor.run { withAnimation { suggestions.removeAll { $0.id == song.id } } }
+            await loadPlaylist()
+        } catch {
+            ToastManager.shared.show(String(localized: "Couldn't add the song"), icon: "exclamationmark.triangle")
         }
     }
 
@@ -536,6 +634,87 @@ struct PlaylistEditView: View {
                             dismiss()
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/// Songs to offer under a playlist: like a few of its songs, or like what played lately when
+/// it is empty, and random ones when the server knows no similar songs.
+enum PlaylistSuggester {
+    static func suggest(server: ServerConfig, for songs: [Song], count: Int = 10) async -> [Song] {
+        let inside = Set(songs.map(\.id))
+        let seeds = songs.isEmpty
+            ? Array(PlayHistory.shared.recentSongIds(limit: 20).shuffled().prefix(3))
+            : Array(songs.shuffled().prefix(3).map(\.id))
+        var picked: [Song] = []
+        for seed in seeds {
+            let similar = (try? await SubsonicClient.shared.getSimilarSongs2(server: server, id: seed, count: 10)) ?? []
+            picked += similar
+        }
+        if picked.isEmpty {
+            picked = (try? await SubsonicClient.shared.getRandomSongs(server: server, size: count * 2)) ?? []
+        }
+        var seen = inside
+        return Array(picked.shuffled().filter { seen.insert($0.id).inserted }.prefix(count))
+    }
+}
+
+/// Search the server and add songs one tap at a time, the sheet staying open.
+struct AddSongsSheet: View {
+    let alreadyIn: Set<String>
+    let onAdd: (Song) async -> Void
+    @Environment(ServerManager.self) private var serverManager
+    @Environment(\.appAccentColor) private var accentColor
+    @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+    @State private var results: [Song] = []
+    @State private var added: Set<String> = []
+
+    var body: some View {
+        NavigationStack {
+            List(results) { song in
+                let isIn = alreadyIn.contains(song.id) || added.contains(song.id)
+                HStack(spacing: 8) {
+                    SongRowView(song: song, disableSwipeActions: true)
+                    Button {
+                        added.insert(song.id)
+                        Task { await onAdd(song) }
+                    } label: {
+                        Image(systemName: isIn ? "checkmark.circle.fill" : "plus.circle")
+                            .font(.title3)
+                            .foregroundStyle(accentColor)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(isIn)
+                    .accessibilityLabel(isIn ? "Added" : "Add to Playlist")
+                }
+            }
+            .listStyle(.plain)
+            .overlay {
+                if results.isEmpty {
+                    ContentUnavailableView(query.isEmpty ? "Search your library" : "No results",
+                                           systemImage: "magnifyingglass")
+                }
+            }
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: "Songs, artists, albums")
+            .task(id: query) {
+                let text = query.trimmingCharacters(in: .whitespaces)
+                guard !text.isEmpty else { results = []; return }
+                try? await Task.sleep(for: .milliseconds(300))
+                guard !Task.isCancelled, let server = serverManager.currentServer else { return }
+                let found = try? await SubsonicClient.shared.search3(server: server, query: text,
+                                                                     artistCount: 0, albumCount: 0, songCount: 40)
+                if !Task.isCancelled { results = found?.song ?? [] }
+            }
+            .navigationTitle("Add Songs")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
                 }
             }
         }

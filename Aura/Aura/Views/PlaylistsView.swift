@@ -17,7 +17,6 @@ struct PlaylistsView: View {
     @State private var recentlyDeletedPlaylists: [Playlist] = []
     @State private var showUndoBanner = false
     @State private var showCreatePlaylist = false
-    @State private var newPlaylistName = ""
     @State private var navPath = NavigationPath()
     @State private var editingPlaylist: Playlist?
     @State private var isFindingDuplicates = false
@@ -92,6 +91,20 @@ struct PlaylistsView: View {
     /// The folders at this level, from playlists named "Folder/Name", as other apps do.
     var folders: [(name: String, count: Int)] {
         folderLevel(filteredPlaylists.filter { !isOnTop($0) }).folders
+    }
+
+    /// Every folder path in the library, subfolders included ("Mixes/", "Mixes/Summer/").
+    private var allFolderPaths: [String] {
+        var paths = Set<String>()
+        for playlist in playlists {
+            var path = ""
+            for part in playlist.name.split(separator: "/", omittingEmptySubsequences: false).dropLast()
+            where !part.isEmpty {
+                path += part + "/"
+                paths.insert(path)
+            }
+        }
+        return paths.sorted { $0.localizedCompare($1) == .orderedAscending }
     }
 
     private func isOnTop(_ playlist: Playlist) -> Bool {
@@ -467,23 +480,18 @@ struct PlaylistsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             }
-            .alert("New Playlist", isPresented: $showCreatePlaylist) {
-                TextField("Playlist Name", text: $newPlaylistName)
-                Button("Create") {
-                    let name = newPlaylistName.trimmingCharacters(in: .whitespaces)
-                    guard !name.isEmpty else { return }
-                    Task {
-                        guard let server = serverManager.currentServer else { return }
-                        if let created = try? await SubsonicClient.shared.createPlaylist(server: server, name: name, songIds: []) {
-                            newPlaylistName = ""
-                            await loadPlaylists()
-                            navPath.append(created)
-                        }
+            .sheet(isPresented: $showCreatePlaylist) {
+                CreatePlaylistSheet(folders: allFolderPaths, startFolder: folder) { name, comment in
+                    guard let server = serverManager.currentServer,
+                          let created = try? await SubsonicClient.shared.createPlaylist(server: server, name: name, songIds: [])
+                    else { return false }
+                    if !comment.isEmpty {
+                        try? await SubsonicClient.shared.updatePlaylist(server: server, id: created.id, comment: comment)
                     }
+                    await loadPlaylists()
+                    navPath.append(created)
+                    return true
                 }
-                Button("Cancel", role: .cancel) { newPlaylistName = "" }
-            } message: {
-                Text("Enter a name for the new playlist.")
             }
         }
         .task { await loadPlaylists() }

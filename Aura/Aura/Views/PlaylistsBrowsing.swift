@@ -252,3 +252,128 @@ struct PlaylistRowView: View {
         return hours > 0 ? String(localized: "\(hours) h \(minutes) min") : String(localized: "\(max(minutes, 1)) min")
     }
 }
+
+/// A new playlist: its name, an optional description, and the folder it goes in, which can
+/// be a new one at any level. A folder is only a name prefix ("Mixes/Summer/Name") on the server.
+struct CreatePlaylistSheet: View {
+    let folders: [String]
+    let startFolder: String
+    /// Creates the playlist from its full name and description; false when the server refused.
+    let onCreate: (String, String) async -> Bool
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.appAccentColor) private var accentColor
+    @State private var name = ""
+    @State private var comment = ""
+    @State private var folder = ""
+    @State private var newFolder = ""
+    @State private var isCreating = false
+    @State private var failed = false
+    @FocusState private var nameFocused: Bool
+
+    private var cleanName: String { name.trimmingCharacters(in: .whitespaces) }
+    private var cleanNewFolder: String {
+        newFolder.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "/", with: "-")
+    }
+    private var fullName: String {
+        folder + (cleanNewFolder.isEmpty ? "" : cleanNewFolder + "/") + cleanName
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    VStack(spacing: 16) {
+                        Image(systemName: "music.note.list")
+                            .font(.system(size: 44))
+                            .foregroundStyle(accentColor)
+                            .frame(width: 120, height: 120)
+                            .background(accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+                        TextField("Playlist Name", text: $name)
+                            .font(.title2.bold())
+                            .multilineTextAlignment(.center)
+                            .focused($nameFocused)
+                            .submitLabel(.done)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    TextField("Description (optional)", text: $comment, axis: .vertical)
+                        .lineLimit(1...4)
+                }
+
+                Section {
+                    folderRow(path: "", title: String(localized: "No Folder"), depth: 0)
+                    ForEach(folders, id: \.self) { path in
+                        let parts = path.split(separator: "/")
+                        folderRow(path: path, title: String(parts.last ?? ""), depth: parts.count)
+                    }
+                    HStack(spacing: 12) {
+                        Image(systemName: "folder.badge.plus")
+                            .foregroundStyle(accentColor)
+                        TextField(folder.isEmpty ? String(localized: "New Folder")
+                                                 : String(localized: "New Folder in \(String(folder.dropLast()))"),
+                                  text: $newFolder)
+                    }
+                } header: {
+                    Text("Folder")
+                } footer: {
+                    if !cleanName.isEmpty {
+                        Text("Saved on your server as “\(fullName)”. A folder shows once two playlists share it.")
+                    }
+                }
+            }
+            .navigationTitle("New Playlist")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    if isCreating {
+                        ProgressView()
+                    } else {
+                        Button("Create") { create() }
+                            .fontWeight(.semibold)
+                            .disabled(cleanName.isEmpty)
+                    }
+                }
+            }
+            .alert("Couldn't create the playlist", isPresented: $failed) {
+                Button("OK", role: .cancel) {}
+            }
+        }
+        .onAppear {
+            folder = startFolder
+            nameFocused = true
+        }
+    }
+
+    private func folderRow(path: String, title: String, depth: Int) -> some View {
+        Button {
+            folder = path
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: path.isEmpty ? "tray" : "folder.fill")
+                    .foregroundStyle(accentColor)
+                Text(title).foregroundStyle(.primary)
+                Spacer()
+                if folder == path {
+                    Image(systemName: "checkmark")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(accentColor)
+                }
+            }
+            .padding(.leading, CGFloat(max(depth - 1, 0)) * 20)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func create() {
+        isCreating = true
+        Task {
+            let ok = await onCreate(fullName, comment.trimmingCharacters(in: .whitespacesAndNewlines))
+            isCreating = false
+            if ok { dismiss() } else { failed = true }
+        }
+    }
+}
