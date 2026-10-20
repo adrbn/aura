@@ -92,9 +92,14 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 **Coming in 1.4** (being tested)
 
 - **Pitch.** Up or down a semitone at a time from Now Playing's menu, as on a turntable: the speed goes with it. The next song starts back at 0.
-- **Playlist folders.** Name playlists `Folder/Name` and they sit in a folder on the Playlists tab; swipe right to come back out, long-press one to pin, rename or select what's in it.
+- **Playlist folders.** Name playlists `Folder/Name` and they sit in a folder on the Playlists tab; swipe right to come back out, long-press one to pin, rename, select or delete what's in it. Deleting a folder can keep its playlists, moved up a level.
+- **New playlist, done properly.** One sheet to create or edit a playlist: its cover, its name, a description, and a folder picker that moves it or makes a new folder at any level.
+- **A playlist that fills itself up.** An empty playlist offers Add Songs: a search that adds one tap at a time and opens on suggestions. Every playlist ends with a Suggestions section of similar songs, each one a tap away.
+- **Undo, at the top.** Deleting a playlist or removing a song says so in the toast at the top of the screen, with an Undo button.
 - **Pins, in place.** Hold a pinned playlist and drag it to reorder, and a menu switch puts pins back in the list without unpinning them.
 - **Multi-disc albums** list each disc under its own heading, and artists and titles sort by their sort tags.
+- **Sorts that stay put.** The order you pick for Songs, Favourites, Albums, Artists or Playlists is still there when you come back.
+- **Several music folders at once.** Tick any of your server's folders in Settings → Music Folders (Navidrome 0.58 or later for more than one).
 - **Keep a playlist downloaded**: its new songs download whenever Aura opens with your server in reach.
 - **Animated covers**, WebP or GIF, on Now Playing and the album page.
 - **SharePlay** over FaceTime, everyone streaming from the same server; **`aura://` links** for Shortcuts; and **Chinese and Russian**.

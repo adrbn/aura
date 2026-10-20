@@ -18,6 +18,13 @@ For 1.4:
 - `aura://` links play a playlist or an album, shuffled or not, and play, pause or skip, for Shortcuts and other apps.
 - Aura speaks Simplified Chinese and Russian.
 - The App Store build asks for a rating once per version, after twenty songs, and About has a Rate Aura row.
+- A long press on a folder also offers Delete Folder, which keeps its playlists by moving them up a level or deletes them too, with an undo.
+- New and edit playlist share one sheet: the cover, a large name, a description and a folder picker that moves the playlist or makes a folder at any level.
+- An empty playlist offers Add Songs, a search sheet that adds one tap at a time and opens on suggestions; every playlist ends with a Suggestions section of similar songs.
+- Deleting a playlist or removing a song shows in the top toast with an Undo button, and sheets and confirmations take the app's look.
+- Renaming the playlist that's playing renames the source shown in Now Playing.
+- The sort picked on Songs, Favourites, Albums, Artists and Playlists is remembered ([#1](https://github.com/adrbn/aura/issues/1)).
+- Settings → Music Folders ticks several folders at once, on Navidrome 0.58 or later ([#2](https://github.com/adrbn/aura/issues/2)).
 
 ## [1.3.0] — 2026-10-20
 

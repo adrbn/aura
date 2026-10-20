@@ -94,9 +94,14 @@ reprend le tout.
 **Dans la 1.4** (en test)
 
 - **La tonalité.** Un demi-ton plus haut ou plus bas depuis le menu d'En cours de lecture, comme sur une platine : la vitesse suit. Le morceau suivant repart à 0.
-- **Des dossiers de playlists.** Nommez vos playlists `Dossier/Nom` et elles se rangent dans un dossier de l'onglet Playlists ; balayez vers la droite pour en sortir, appui long pour tout épingler, renommer ou sélectionner.
+- **Des dossiers de playlists.** Nommez vos playlists `Dossier/Nom` et elles se rangent dans un dossier de l'onglet Playlists ; balayez vers la droite pour en sortir, appui long pour tout épingler, renommer, sélectionner ou supprimer. Supprimer un dossier peut garder ses playlists, remontées d'un niveau.
+- **Une nouvelle playlist, bien faite.** Une seule fenêtre pour créer ou modifier une playlist : sa pochette, son nom, une description, et un choix de dossier qui la déplace ou crée un dossier à n'importe quel niveau.
+- **Une playlist qui se remplit.** Une playlist vide propose Ajouter des morceaux : une recherche qui ajoute d'un geste et s'ouvre sur des suggestions. Chaque playlist se termine par une section Suggestions de morceaux proches, à un geste.
+- **Annuler, en haut.** Supprimer une playlist ou retirer un morceau s'affiche dans la notification en haut de l'écran, avec un bouton Annuler.
 - **Les épingles, sur place.** Maintenez une playlist épinglée et glissez-la pour la déplacer, et un interrupteur du menu remet les épingles dans la liste sans les retirer.
 - **Les albums à plusieurs disques** listent chaque disque sous son titre, et artistes et morceaux se trient selon leurs tags de tri.
+- **Des tris qui restent.** L'ordre choisi pour Morceaux, Favoris, Albums, Artistes ou Playlists est toujours là quand vous revenez.
+- **Plusieurs dossiers de musique à la fois.** Cochez ceux de votre serveur dans Réglages → Dossiers de musique (Navidrome 0.58 ou plus récent pour en cocher plusieurs).
 - **Une playlist gardée téléchargée** : ses nouveaux morceaux se téléchargent dès qu'Aura s'ouvre avec le serveur à portée.
 - **Les pochettes animées**, WebP ou GIF, dans En cours de lecture et sur la page d'album.
 - **SharePlay** sur FaceTime, chacun écoutant depuis le même serveur ; des **liens `aura://`** pour Raccourcis ; et le **chinois et le russe**.
