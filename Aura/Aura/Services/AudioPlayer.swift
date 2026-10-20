@@ -120,21 +120,22 @@ final class AudioPlayer {
 
     private var player: AVPlayer?
 
-    /// Experimental, sideload only: the song played up or down by whole semitones. It is a
+    /// The song played up or down by whole semitones. It is a
     /// turntable's pitch — the speed goes with it — since AVPlayer can't move one without the
     /// other. Back to 0 at the next song.
     var pitchSemitones = 0 {
         didSet { applyPitch() }
     }
 
-    // ponytail: the Lock Screen and the car still count song time at 1×, so their progress bar
-    // drifts from the real one while the pitch is off zero. Pass the rate on if this ever ships.
+    /// The speed the pitch sets, passed to the Lock Screen and the car so their bar keeps time.
+    private var pitchRate: Float { Float(pow(2, Double(pitchSemitones) / 12)) }
+
     private func applyPitch() {
         guard let player else { return }
         if pitchSemitones != 0 { player.currentItem?.audioTimePitchAlgorithm = .varispeed }
-        let rate = Float(pow(2, Double(pitchSemitones) / 12))
-        player.defaultRate = rate
-        if player.rate != 0 { player.rate = rate }
+        player.defaultRate = pitchRate
+        if player.rate != 0 { player.rate = pitchRate }
+        updateNowPlayingInfo()
     }
     private var timeObserver: Any?
     private var originalQueue: [Song] = []
@@ -3227,10 +3228,10 @@ final class AudioPlayer {
             MPMediaItemPropertyAlbumTitle: song.album ?? String(localized: "Unknown"),
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(pitchRate) : 0.0,
             // What the rate returns to after a pause, so a car's progress bar keeps moving
             // on its own between updates instead of waiting for the next one.
-            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: Double(pitchRate),
             // Without a media type the system does not reliably classify this as music,
             // which is what decides whether it appears where music is expected. The content
             // identifier gives the item a stable name across processes, so anything that
