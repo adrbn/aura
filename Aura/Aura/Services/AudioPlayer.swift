@@ -117,21 +117,24 @@ final class AudioPlayer {
 
     private var player: AVPlayer?
 
-    /// Experimental, sideload only: the song played up or down by whole semitones. It is a
-    /// turntable's pitch — the speed goes with it — since AVPlayer can't move one without the
-    /// other. Held for the session, back to 0 at the next launch.
+    /// The song played up or down by whole semitones, its speed untouched — shifted in the
+    /// EQ's audio tap. Held for the session, back to 0 at the next launch.
     var pitchSemitones = 0 {
-        didSet { applyPitch() }
+        didSet { EqualizerManager.shared.setPitch(semitones: pitchSemitones) }
     }
 
-    // ponytail: the Lock Screen and the car still count song time at 1×, so their progress bar
-    // drifts from the real one while the pitch is off zero. Pass the rate on if this ever ships.
-    private func applyPitch() {
+    /// How fast the song plays, its pitch kept. Held for the session, back to 1× at the next launch.
+    var playbackSpeed: Float = 1 {
+        didSet { applySpeed() }
+    }
+
+    static let playbackSpeeds: [Float] = [0.5, 0.75, 1, 1.25, 1.5, 2]
+
+    private func applySpeed() {
         guard let player else { return }
-        if pitchSemitones != 0 { player.currentItem?.audioTimePitchAlgorithm = .varispeed }
-        let rate = Float(pow(2, Double(pitchSemitones) / 12))
-        player.defaultRate = rate
-        if player.rate != 0 { player.rate = rate }
+        player.defaultRate = playbackSpeed
+        if player.rate != 0 { player.rate = playbackSpeed }
+        updateNowPlayingInfo()
     }
     private var timeObserver: Any?
     private var originalQueue: [Song] = []
@@ -644,7 +647,7 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVQueuePlayer(playerItem: playerItem)
-        applyPitch()
+        applySpeed()
         applyOutputVolume(for: song)
         resetScrobbleProgress()
         player?.pause()
@@ -1098,7 +1101,7 @@ final class AudioPlayer {
         observeBuffer(playerItem, songId: song.id)
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVQueuePlayer(playerItem: playerItem)
-        applyPitch()
+        applySpeed()
         // This path never applied the fader: every song started from here played at full
         // level until the fader was next touched.
         applyOutputVolume(for: song)
@@ -1194,7 +1197,6 @@ final class AudioPlayer {
               let current = queuePlayer.currentItem,
               let server = ServerManager.shared.currentServer else { return }
         let item = makePlayerItem(for: song, server: server, bitRate: AppSettings.shared.effectiveStreamingQuality.bitRate)
-        if pitchSemitones != 0 { item.audioTimePitchAlgorithm = .varispeed }
         EqualizerManager.shared.attachToPlayerItem(item)
         queuePlayer.insert(item, after: current)
         queuePlayer.actionAtItemEnd = .advance
@@ -1242,7 +1244,7 @@ final class AudioPlayer {
 
         activateAudioSession()
         queuePlayer.play()
-        applyPitch()
+        applySpeed()
         isPlaying = true
         currentSong = song
         publishPlaybackState()
@@ -1866,7 +1868,7 @@ final class AudioPlayer {
         EqualizerManager.shared.attachToPlayerItem(item)
         watchEnd(of: item)
         player?.replaceCurrentItem(with: item)
-        applyPitch()
+        applySpeed()
         if isPlaying { player?.play() }
         return true
     }
@@ -2625,7 +2627,7 @@ final class AudioPlayer {
         bufferProgress = 0
         incoming.automaticallyWaitsToMinimizeStalling = true
         player = incoming
-        applyPitch()
+        applySpeed()
         observePlayerItem(item, song: full)
         observeBuffer(item, songId: full.id)
         watchPlayback(of: item)
@@ -3225,10 +3227,10 @@ final class AudioPlayer {
             MPMediaItemPropertyAlbumTitle: song.album ?? String(localized: "Unknown"),
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(playbackSpeed) : 0.0,
             // What the rate returns to after a pause, so a car's progress bar keeps moving
             // on its own between updates instead of waiting for the next one.
-            MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
+            MPNowPlayingInfoPropertyDefaultPlaybackRate: Double(playbackSpeed),
             // Without a media type the system does not reliably classify this as music,
             // which is what decides whether it appears where music is expected. The content
             // identifier gives the item a stable name across processes, so anything that

@@ -1981,10 +1981,17 @@ struct SongActionsRow: View {
     }
     #endif
 
-    #if !APPSTORE_BUILD
-    /// Experimental: the song a semitone at a time up or down, speed and all, as on a turntable.
-    private var pitchMenu: some View {
+    /// The speed, its pitch kept, and the pitch a semitone at a time, its speed kept.
+    private var speedMenu: some View {
         Menu {
+            Picker(selection: Binding(get: { player.playbackSpeed }, set: { player.playbackSpeed = $0 })) {
+                ForEach(AudioPlayer.playbackSpeeds, id: \.self) { speed in
+                    Text(speed.formatted(.number.precision(.fractionLength(0...2))) + "×")
+                }
+            } label: {
+                Label("Speed", systemImage: "gauge.with.dots.needle.67percent")
+            }
+            .pickerStyle(.menu)
             ControlGroup {
                 Button { player.pitchSemitones -= 1 } label: {
                     Label("Down", systemImage: "minus")
@@ -1997,13 +2004,14 @@ struct SongActionsRow: View {
                     Label("Up", systemImage: "plus")
                 }
                 .disabled(player.pitchSemitones >= 6)
+            } label: {
+                Text("Pitch")
             }
             .menuActionDismissBehavior(.disabled)
         } label: {
-            Label("Pitch (Beta)", systemImage: "tuningfork")
+            Label("Speed & Pitch", systemImage: "gauge.with.dots.needle.67percent")
         }
     }
-    #endif
 
     private var actions: some View {
         HStack(spacing: 2) {
@@ -2036,9 +2044,7 @@ struct SongActionsRow: View {
                 Button { showEqualizer = true } label: {
                     Label("Equalizer", systemImage: "slider.vertical.3")
                 }
-                #if !APPSTORE_BUILD
-                pitchMenu
-                #endif
+                speedMenu
                 if !DownloadManager.shared.isDownloaded(song.id) {
                     Button {
                         Task { await DownloadManager.shared.downloadSong(song) }

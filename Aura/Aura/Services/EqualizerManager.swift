@@ -21,6 +21,15 @@ final class EqualizerManager: @unchecked Sendable {
         applyBands(preset == .custom ? AppSettings.shared.eqCustomBands : preset.bands)
     }
 
+    /// The pitch shift every tap applies, in cents, the speed untouched.
+    private(set) var pitchCents: Float = 0
+
+    func setPitch(semitones: Int) {
+        lock.lock()
+        pitchCents = Float(semitones * 100)
+        lock.unlock()
+    }
+
     func applyBands(_ newGains: [Float]) {
         guard newGains.count == 5 else { return }
         lock.lock()
@@ -96,10 +105,10 @@ final class EqualizerManager: @unchecked Sendable {
     }
 
     /// The gains and their revision, read together.
-    fileprivate func snapshot() -> (gains: [Float], revision: Int) {
+    fileprivate func snapshot() -> (gains: [Float], revision: Int, pitch: Float) {
         lock.lock()
         defer { lock.unlock() }
-        return (gains, revision)
+        return (gains, revision, pitchCents)
     }
 
     // MARK: - Biquad
@@ -140,10 +149,79 @@ private final class EQTapContext {
     private var builtRevision = -1
     private var sampleRate: Float = 44100
     private var delayBuffers: [[Float]] = EQTapContext.freshDelays()
+    /// Apple's time-pitch unit, fed from the tap's source, for a pitch that leaves the speed alone.
+    private var pitchUnit: AudioUnit?
+    private var pitchActive = false
+    private var renderTime = AudioTimeStamp()
+    fileprivate var tap: MTAudioProcessingTap?
 
     init(manager: EqualizerManager) { self.manager = manager }
 
-    deinit { if let setup { vDSP_biquad_DestroySetup(setup) } }
+    deinit {
+        if let setup { vDSP_biquad_DestroySetup(setup) }
+        if let pitchUnit { AudioUnitUninitialize(pitchUnit); AudioComponentInstanceDispose(pitchUnit) }
+    }
+
+    /// Builds the time-pitch unit for the tap's format; without it the pitch stays at zero.
+    func preparePitch(format: AudioStreamBasicDescription, maxFrames: CMItemCount) {
+        if let pitchUnit { AudioUnitUninitialize(pitchUnit); AudioComponentInstanceDispose(pitchUnit) }
+        pitchUnit = nil
+        var description = AudioComponentDescription(
+            componentType: kAudioUnitType_FormatConverter, componentSubType: kAudioUnitSubType_NewTimePitch,
+            componentManufacturer: kAudioUnitManufacturer_Apple, componentFlags: 0, componentFlagsMask: 0)
+        guard let component = AudioComponentFindNext(nil, &description) else { return }
+        var unit: AudioUnit?
+        guard AudioComponentInstanceNew(component, &unit) == noErr, let unit else { return }
+        var asbd = format
+        var frames = UInt32(maxFrames)
+        let size = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
+        var callback = AURenderCallbackStruct(inputProc: pitchSource,
+                                              inputProcRefCon: Unmanaged.passUnretained(self).toOpaque())
+        guard AudioUnitSetProperty(unit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &asbd, size) == noErr,
+              AudioUnitSetProperty(unit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 0, &asbd, size) == noErr,
+              AudioUnitSetProperty(unit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0,
+                                   &frames, UInt32(MemoryLayout<UInt32>.size)) == noErr,
+              AudioUnitSetProperty(unit, kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0,
+                                   &callback, UInt32(MemoryLayout<AURenderCallbackStruct>.size)) == noErr,
+              AudioUnitInitialize(unit) == noErr
+        else {
+            AudioComponentInstanceDispose(unit)
+            AppLogger.shared.log("⚠️ Pitch: time-pitch unit unavailable")
+            return
+        }
+        renderTime = AudioTimeStamp()
+        renderTime.mFlags = .sampleTimeValid
+        pitchUnit = unit
+    }
+
+    /// Fills `bufferList` with the source audio, through the time-pitch unit when the pitch is
+    /// off zero. Returns false when the source couldn't be read.
+    func render(_ bufferList: UnsafeMutablePointer<AudioBufferList>, frames: CMItemCount,
+                flagsOut: UnsafeMutablePointer<MTAudioProcessingTapFlags>,
+                framesOut: UnsafeMutablePointer<CMItemCount>) -> Bool {
+        guard let tap else { return false }
+        let cents = manager.snapshot().pitch
+        guard cents != 0, let pitchUnit else {
+            if pitchActive, let pitchUnit { AudioUnitReset(pitchUnit, kAudioUnitScope_Global, 0) }
+            pitchActive = false
+            return MTAudioProcessingTapGetSourceAudio(tap, frames, bufferList, flagsOut, nil, framesOut) == noErr
+        }
+        pitchActive = true
+        AudioUnitSetParameter(pitchUnit, kNewTimePitchParam_Pitch, kAudioUnitScope_Global, 0, cents, 0)
+        var actionFlags = AudioUnitRenderActionFlags()
+        let status = AudioUnitRender(pitchUnit, &actionFlags, &renderTime, 0, UInt32(frames), bufferList)
+        renderTime.mSampleTime += Double(frames)
+        framesOut.pointee = frames
+        return status == noErr
+    }
+
+    /// The time-pitch unit asks for source audio: read it from the tap.
+    fileprivate func pullSource(_ ioData: UnsafeMutablePointer<AudioBufferList>, frames: UInt32) -> OSStatus {
+        guard let tap else { return -1 }
+        var flags = MTAudioProcessingTapFlags()
+        var got: CMItemCount = 0
+        return MTAudioProcessingTapGetSourceAudio(tap, CMItemCount(frames), ioData, &flags, nil, &got)
+    }
 
     private static func freshDelays() -> [[Float]] {
         [[Float](repeating: 0, count: 12), [Float](repeating: 0, count: 12)]
@@ -205,7 +283,9 @@ private func eqTapPrepare(
     processingFormat: UnsafePointer<AudioStreamBasicDescription>
 ) {
     let context = Unmanaged<EQTapContext>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).takeUnretainedValue()
+    context.tap = tap
     context.prepare(sampleRate: Float(processingFormat.pointee.mSampleRate))
+    context.preparePitch(format: processingFormat.pointee, maxFrames: maxFrames)
 }
 
 private func eqTapUnprepare(tap: MTAudioProcessingTap) {}
@@ -218,10 +298,20 @@ private func eqTapProcess(
     numberFramesOut: UnsafeMutablePointer<CMItemCount>,
     flagsOut: UnsafeMutablePointer<MTAudioProcessingTapFlags>
 ) {
-    let status = MTAudioProcessingTapGetSourceAudio(
-        tap, numberFrames, bufferListInOut, flagsOut, nil, numberFramesOut
-    )
-    guard status == noErr else { return }
     let context = Unmanaged<EQTapContext>.fromOpaque(MTAudioProcessingTapGetStorage(tap)).takeUnretainedValue()
+    guard context.render(bufferListInOut, frames: numberFrames, flagsOut: flagsOut, framesOut: numberFramesOut)
+    else { return }
     context.process(bufferListInOut, frames: numberFrames)
+}
+
+private func pitchSource(
+    refCon: UnsafeMutableRawPointer,
+    actionFlags: UnsafeMutablePointer<AudioUnitRenderActionFlags>,
+    timeStamp: UnsafePointer<AudioTimeStamp>,
+    bus: UInt32,
+    frames: UInt32,
+    ioData: UnsafeMutablePointer<AudioBufferList>?
+) -> OSStatus {
+    guard let ioData else { return -1 }
+    return Unmanaged<EQTapContext>.fromOpaque(refCon).takeUnretainedValue().pullSource(ioData, frames: frames)
 }

@@ -509,7 +509,7 @@ struct ArtistsFullListView: View {
         let base = searchText.isEmpty ? allArtists : allArtists.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         switch sortOrder {
         case .name:
-            return base.sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+            return base.sorted { $0.sortKey.localizedCompare($1.sortKey) == .orderedAscending }
         case .mostPlayed:
             return base.sorted { ($0.playCount ?? 0) > ($1.playCount ?? 0) }
         case .albumCount:

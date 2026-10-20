@@ -150,7 +150,18 @@ struct AlbumDetailView: View {
                     // Song list
                     if let songs = album.song {
                         let isSingle = songs.count <= 1
+                        let multiDisc = Set(songs.compactMap(\.discNumber)).count > 1
                         ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
+                            // Each disc of a multi-disc release under its own heading.
+                            if multiDisc, let disc = song.discNumber,
+                               index == 0 || songs[index - 1].discNumber != disc {
+                                Text("Disc \(disc)")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, index == 0 ? 0 : 12)
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                            }
                             SongRowView(
                                 song: song,
                                 showArt: false,

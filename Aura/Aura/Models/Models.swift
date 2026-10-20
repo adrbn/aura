@@ -751,6 +751,8 @@ struct Song: Identifiable, Codable, Hashable {
     /// default — see `creditedArtists` for the fallback.
     var artists: [ArtistRef]?
     let track: Int?
+    /// Which disc of a multi-disc release the song is on.
+    var discNumber: Int? = nil
     let year: Int?
     let genre: String?
     let coverArt: String?
@@ -776,8 +778,12 @@ struct Song: Identifiable, Codable, Hashable {
     /// address of its thirty-second preview here. Nothing about it can be asked of the
     /// server or told to it: no stream, no star, no scrobble, no lyrics by id.
     var preview: String? = nil
+    /// OpenSubsonic: the title to sort by, from the files' titlesort tag.
+    var sortName: String? = nil
 
     var isExplicit: Bool { explicit == true }
+    /// What alphabetical lists sort on: the sort tag when the files carry one.
+    var sortKey: String { sortName.flatMap { $0.isEmpty ? nil : $0 } ?? title }
     var isPreview: Bool { preview != nil }
 
     /// Cover art to display for this song. Songs without embedded art get
@@ -838,8 +844,12 @@ struct Artist: Identifiable, Codable, Hashable {
     let starred: String?
     let artistImageUrl: String?
     let playCount: Int?
+    /// OpenSubsonic: the name to sort by, from the files' artistsort tag ("Beatles, The").
+    var sortName: String? = nil
 
     var isStarred: Bool { starred != nil }
+    /// What alphabetical lists sort on: the sort tag when the files carry one.
+    var sortKey: String { sortName.flatMap { $0.isEmpty ? nil : $0 } ?? name }
 }
 
 struct ArtistIndex: Codable {
