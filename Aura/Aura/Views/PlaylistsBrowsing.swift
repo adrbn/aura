@@ -191,6 +191,7 @@ struct QuietChip: View {
 /// A playlist as one row of the list layout: cover, name, what's in it.
 struct PlaylistRowView: View {
     let playlist: Playlist
+    var title: String? = nil
     var isPinned: Bool = false
 
     var body: some View {
@@ -198,7 +199,7 @@ struct PlaylistRowView: View {
             PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
                               cacheToken: playlist.changed, size: 56, cornerRadius: 8)
             VStack(alignment: .leading, spacing: 2) {
-                Text(playlist.name)
+                Text(title ?? playlist.name)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)

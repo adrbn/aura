@@ -24,6 +24,8 @@ struct PlaylistsView: View {
     @State private var scrollY: CGFloat = 0
     @State private var filter: PlaylistFilter = .all
     @State private var downloadedIds: Set<String> = []
+    /// The folder being browsed, as a name prefix ending in "/" ("" is the top).
+    @State private var folder = ""
     /// The list is the default. The key is new with that change: the grid was the default
     /// before, and anyone still on it under the old key never chose it, so everyone starts
     /// on the list once and what they pick from here on is kept.
@@ -73,7 +75,38 @@ struct PlaylistsView: View {
             ($0.comment ?? "").localizedCaseInsensitiveContains(searchText)
         }
         let unpinned = filtered.filter { !appSettings.isPinned($0.id) }
-        return sortPlaylists(unpinned)
+        return sortPlaylists(searchText.isEmpty ? folderLevel(unpinned).loose : unpinned)
+    }
+
+    /// The folders at this level, from playlists named "Folder/Name", as other apps do.
+    var folders: [(name: String, count: Int)] {
+        folderLevel(filteredPlaylists.filter { !appSettings.isPinned($0.id) }).folders
+    }
+
+    /// Splits the playlists under `folder` into its subfolders and the playlists right in it.
+    /// A folder needs two playlists, so a lone "AC/DC" stays a playlist.
+    private func folderLevel(_ list: [Playlist]) -> (folders: [(name: String, count: Int)], loose: [Playlist]) {
+        var groups: [String: [Playlist]] = [:]
+        var loose: [Playlist] = []
+        for playlist in list where playlist.name.hasPrefix(folder) {
+            let rest = playlist.name.dropFirst(folder.count)
+            if let slash = rest.firstIndex(of: "/"), slash != rest.startIndex {
+                groups[String(rest[..<slash]), default: []].append(playlist)
+            } else {
+                loose.append(playlist)
+            }
+        }
+        loose += groups.values.filter { $0.count == 1 }.flatMap { $0 }
+        let folders = groups.filter { $0.value.count > 1 }
+            .map { (name: $0.key, count: $0.value.count) }
+            .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+        return (folders, loose)
+    }
+
+    /// A playlist's name inside the folder being browsed, without the folder's path.
+    private func shownName(_ playlist: Playlist) -> String {
+        guard !folder.isEmpty, playlist.name.hasPrefix(folder) else { return playlist.name }
+        return String(playlist.name.dropFirst(folder.count))
     }
 
     /// When searching, return all matching playlists in a single sorted list (pinned badge preserved but not separated)
@@ -211,8 +244,13 @@ struct PlaylistsView: View {
                             .padding(.top, 8)
                     } else {
                         VStack(alignment: .leading, spacing: layout == .grid ? 16 : 8) {
-                            if !pinnedPlaylists.isEmpty {
+                            if !folder.isEmpty {
+                                folderBackRow
+                            } else if !pinnedPlaylists.isEmpty {
                                 playlistCollection(pinnedPlaylists)
+                            }
+                            if !folders.isEmpty {
+                                folderList
                             }
                             playlistCollection(unpinnedPlaylists)
                         }
@@ -421,6 +459,59 @@ struct PlaylistsView: View {
         }
     }
 
+    /// Back up one folder level, with the folder's name as the heading.
+    private var folderBackRow: some View {
+        Button {
+            let parts = folder.split(separator: "/").dropLast()
+            folder = parts.isEmpty ? "" : parts.joined(separator: "/") + "/"
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left").font(.headline)
+                Text(folder.split(separator: "/").last.map(String.init) ?? "")
+                    .font(.title3.weight(.semibold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(.primary)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal)
+    }
+
+    private var folderList: some View {
+        VStack(spacing: 0) {
+            ForEach(folders, id: \.name) { entry in
+                Button {
+                    folder += entry.name + "/"
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "folder.fill")
+                            .font(.title2)
+                            .foregroundStyle(accentColor)
+                            .frame(width: 56, height: 56)
+                            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 8))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.name)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            Text("\(entry.count) playlists")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
+            }
+        }
+        .padding(.horizontal)
+    }
+
     private func selectionMark(_ playlist: Playlist, onCover: Bool) -> some View {
         let isSelected = selectedPlaylistIds.contains(playlist.id)
         return Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -434,14 +525,14 @@ struct PlaylistsView: View {
     private func playlistItem(_ playlist: Playlist, isPinned: Bool) -> some View {
         switch layout {
         case .grid:
-            PlaylistCardView(playlist: playlist, isPinned: isPinned, showSongCount: isSelecting)
+            PlaylistCardView(playlist: playlist, title: shownName(playlist), isPinned: isPinned, showSongCount: isSelecting)
                 .overlay(alignment: .topLeading) {
                     if isSelecting { selectionMark(playlist, onCover: true).padding(8) }
                 }
         case .list:
             HStack(spacing: 12) {
                 if isSelecting { selectionMark(playlist, onCover: false) }
-                PlaylistRowView(playlist: playlist, isPinned: isPinned)
+                PlaylistRowView(playlist: playlist, title: shownName(playlist), isPinned: isPinned)
             }
             .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
         }
@@ -707,6 +798,7 @@ struct PlaylistsView: View {
 
 struct PlaylistCardView: View {
     let playlist: Playlist
+    var title: String? = nil
     var isPinned: Bool = false
     var showSongCount: Bool = false
 
@@ -727,7 +819,7 @@ struct PlaylistCardView: View {
                         .padding(6)
                 }
             }
-            Text(playlist.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
+            Text(title ?? playlist.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
             if showSongCount {
                 Text("\(playlist.songCount ?? 0) songs")
                     .font(.caption2)
