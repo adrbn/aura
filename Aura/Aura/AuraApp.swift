@@ -92,7 +92,10 @@ struct AuraApp: App {
                             audioPlayer.saveQueueOnServer()
                         } else if newPhase == .active && wasInBackground {
                             wasInBackground = false
-                            Task { await serverManager.settleModeOnOpen() }
+                            Task {
+                                await serverManager.settleModeOnOpen()
+                                audioPlayer.resumeQueueFromServer()
+                            }
                         }
                     }
                     .onChange(of: appSettings.activeTheme) { _, _ in
@@ -113,7 +116,10 @@ struct AuraApp: App {
             }
             // Opens online if the server answers, offline if it doesn't — decided while the
             // splash is up, so the app usually appears in the right mode from the start.
-            .task { await serverManager.settleModeOnOpen() }
+            .task {
+                await serverManager.settleModeOnOpen()
+                audioPlayer.resumeQueueFromServer()
+            }
             .task {
                 // Pinned playlists follow you between devices; start listening for the
                 // Mac's changes before anything can touch them here.

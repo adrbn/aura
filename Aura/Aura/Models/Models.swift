@@ -814,8 +814,20 @@ struct Album: Identifiable, Codable, Hashable {
     let starred: String?
     let created: String?
     let playCount: Int?
+    /// OpenSubsonic: the release's MusicBrainz types ("album", "single", "ep"…), when tagged.
+    var releaseTypes: [String]? = nil
 
     var isStarred: Bool { starred != nil }
+
+    /// A single or an EP: the server's release type when the files carry one, otherwise a
+    /// short release — three songs or fewer, or six or fewer under half an hour.
+    var isSingleOrEP: Bool {
+        if let type = releaseTypes?.first?.lowercased(), !type.isEmpty {
+            return type == "single" || type == "ep"
+        }
+        guard let count = songCount else { return false }
+        return count <= 3 || (count <= 6 && (duration ?? .max) < 30 * 60)
+    }
 }
 
 struct Artist: Identifiable, Codable, Hashable {

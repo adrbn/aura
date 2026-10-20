@@ -215,30 +215,12 @@ struct ArtistDetailView: View {
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
             } else if !albums.isEmpty {
-                Text("Albums")
-                    .font(.title2.bold())
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 4, trailing: 16))
-
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 16)], spacing: 16) {
-                    ForEach(albums) { album in
-                        Button {
-                            selectedAlbumId = album.id
-                        } label: {
-                            VStack(alignment: .leading, spacing: 4) {
-                                CoverArtImage(coverArt: album.coverArt, size: 180, cornerRadius: 12)
-                                Text(album.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
-                                Text(album.year != nil ? String(album.year!) : " ").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-                            }
-                            .frame(width: 180)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                // Full albums first, then the singles and EPs under their own heading, as
+                // Apple Music splits them.
+                let longPlays = albums.filter { !$0.isSingleOrEP }
+                let shortPlays = albums.filter(\.isSingleOrEP)
+                if !longPlays.isEmpty { albumGrid("Albums", longPlays) }
+                if !shortPlays.isEmpty { albumGrid("Singles & EPs", shortPlays) }
             }
 
             ListEndSpacer()
@@ -294,6 +276,34 @@ struct ArtistDetailView: View {
             AlbumDetailView(albumId: albumId)
         }
         .task { await loadArtist() }
+    }
+
+    @ViewBuilder
+    private func albumGrid(_ title: LocalizedStringKey, _ albums: [Album]) -> some View {
+        Text(title)
+            .font(.title2.bold())
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 4, trailing: 16))
+
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 16)], spacing: 16) {
+            ForEach(albums) { album in
+                Button {
+                    selectedAlbumId = album.id
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        CoverArtImage(coverArt: album.coverArt, size: 180, cornerRadius: 12)
+                        Text(album.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
+                        Text(album.year != nil ? String(album.year!) : " ").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    .frame(width: 180)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
     }
 
     private func loadArtist() async {

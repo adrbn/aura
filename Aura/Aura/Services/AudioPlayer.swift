@@ -475,7 +475,12 @@ final class AudioPlayer {
     /// relaunch resumes exactly where the user left off. Call when the app leaves the
     /// foreground: iOS can terminate a backgrounded app with no further callback, and the
     /// periodic saves elsewhere fire on track changes (position 0), not mid-song.
-    func persistPlaybackState() { saveLastPlayback() }
+    func persistPlaybackState() {
+        saveLastPlayback()
+        // When Aura was last left, for `resumeQueueFromServer` to tell a newer queue from
+        // another client. Not stamped by every save: autoplay saves right after a restore.
+        UserDefaults.standard.set(Date(), forKey: Self.lastPlaybackSavedAtKey)
+    }
 
     /// Hands the queue to the server (savePlayQueue) when the app leaves the foreground,
     /// for other clients to resume. Best effort: offline, it is simply not sent.
@@ -493,6 +498,47 @@ final class AudioPlayer {
                                                               current: song.id, position: position)
             } catch {
                 AppLogger.shared.log("💾 savePlayQueue failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private static let lastPlaybackSavedAtKey = "aura.lastPlaybackSavedAt"
+
+    /// Picks up the queue another client left on the server — a desktop player, the web
+    /// UI — when Aura opens with nothing playing and that queue is newer than Aura's own
+    /// session. It loads paused, at the saved position, as a restored session does.
+    func resumeQueueFromServer() {
+        guard !isPlaying, !isEffectivelyOffline,
+              let server = ServerManager.shared.currentServer else { return }
+        let savedAt = UserDefaults.standard.object(forKey: Self.lastPlaybackSavedAtKey) as? Date ?? .distantPast
+        Task {
+            // ponytail: "Aura" is every Aura's client name, so a queue another Aura saved
+            // isn't picked up; a per-device client name would allow it.
+            guard let remote = try? await SubsonicClient.shared.getPlayQueue(server: server),
+                  remote.changedBy != "Aura",
+                  let songs = remote.entry, !songs.isEmpty,
+                  let stamp = remote.changed,
+                  // Fractions of a second come in varying lengths: the second is enough.
+                  let changed = ISO8601DateFormatter().date(from: String(stamp.prefix(19)) + "Z"),
+                  changed > savedAt else { return }
+            await MainActor.run {
+                guard !self.isPlaying else { return }
+                let index = songs.firstIndex { $0.id == remote.current } ?? 0
+                let position = TimeInterval(remote.position ?? 0) / 1000
+                self.currentSong = songs[index]
+                self.queue = songs
+                self.originalQueue = songs
+                self.queueIndex = index
+                self.userQueue = []
+                self.playbackSource = .unknown
+                self.autoplayFromIndex = nil
+                self.currentTime = position
+                self.pendingSeekTime = position > 1 ? position : nil
+                self.preparePlayback(songs[index])
+                self.loadLyrics(for: songs[index])
+                self.lineUpAutoplay(songs[index])
+                self.saveLastPlayback()
+                AppLogger.shared.log("🎵 Resumed the queue \(remote.changedBy ?? "another client") saved: \(songs.count) songs")
             }
         }
     }

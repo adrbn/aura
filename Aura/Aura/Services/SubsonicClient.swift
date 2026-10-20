@@ -210,6 +210,24 @@ actor SubsonicClient {
         _ = try await fetchData(from: url)
     }
 
+    /// The queue saved on the server, by Aura or another client. `position` is in
+    /// milliseconds, `changedBy` the saving client's name.
+    struct PlayQueue: Decodable {
+        let entry: [Song]?
+        let current: String?
+        let position: Int?
+        let changed: String?
+        let changedBy: String?
+    }
+
+    func getPlayQueue(server: ServerConfig) async throws -> PlayQueue {
+        guard let url = buildURL(server: server, endpoint: "getPlayQueue") else {
+            throw SubsonicClientError.invalidURL
+        }
+        let data = try await fetchData(from: url)
+        return try decodeSubsonic(data: data, key: "playQueue", as: PlayQueue.self)
+    }
+
     /// `rating` is 1–5, or 0 to clear it.
     func setRating(server: ServerConfig, id: String, rating: Int) async throws {
         guard let url = buildURL(server: server, endpoint: "setRating",
