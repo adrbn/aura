@@ -12,7 +12,7 @@
 **Your music server, on your iPhone.** A native iPhone and Apple Watch player for Navidrome and Subsonic:
 lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
 
-<a href="https://apps.apple.com/app/id6818241470"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="56"></a>
+<a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="56"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
 <a href="#what-it-does"><img src="docs/assets/btn-features.svg" alt="Features" height="40"></a>&nbsp;
@@ -30,7 +30,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 [![Latest release](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&style=flat-square&labelColor=121212&color=EB534D&label=release)](https://github.com/adrbn/aura/releases/latest)
 [![License GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-EB534D?style=flat-square&labelColor=121212)](LICENSE)
 
-<sub><a href="https://apps.apple.com/app/id6818241470">On the App Store</a> as <b>Aura: Self-Hosted Music</b> · Free and open source · Bring your own server</sub>
+<sub><a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github">On the App Store</a> as <b>Aura: Self-Hosted Music</b> · Free and open source · Bring your own server</sub>
 
 English · [Français](README.fr.md)
 
@@ -155,7 +155,7 @@ the signature expires after 7 days and the sideloading tool has to refresh it; t
 
 ### App Store
 
-[Get **Aura: Self-Hosted Music** on the App Store](https://apps.apple.com/app/id6818241470). Free, with no in-app purchases.
+[Get **Aura: Self-Hosted Music** on the App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github). Free, with no in-app purchases.
 
 ## Requirements
 

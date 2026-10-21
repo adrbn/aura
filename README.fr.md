@@ -12,7 +12,7 @@
 **Votre serveur de musique, sur votre iPhone.** Un lecteur natif pour iPhone et Apple Watch, pour Navidrome et Subsonic :
 streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vous écoutez vraiment, et toute votre bibliothèque hors ligne.
 
-<a href="https://apps.apple.com/app/id6818241470"><img src="docs/assets/badge-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>
+<a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download-fr.svg" alt="Télécharger l'IPA" height="40"></a>&nbsp;
 <a href="#ce-que-fait-aura"><img src="docs/assets/btn-features-fr.svg" alt="Fonctions" height="40"></a>&nbsp;
@@ -30,7 +30,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 [![Dernière version](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&style=flat-square&labelColor=121212&color=EB534D&label=version)](https://github.com/adrbn/aura/releases/latest)
 [![Licence GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-EB534D?style=flat-square&labelColor=121212)](LICENSE)
 
-<sub><a href="https://apps.apple.com/app/id6818241470">Sur l'App Store</a> sous le nom <b>Aura: Self-Hosted Music</b> · Gratuit et libre · Apportez votre serveur</sub>
+<sub><a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github">Sur l'App Store</a> sous le nom <b>Aura: Self-Hosted Music</b> · Gratuit et libre · Apportez votre serveur</sub>
 
 [English](README.md) · Français
 
@@ -158,7 +158,7 @@ limite d'iOS, pas d'Aura.
 
 ### App Store
 
-[Installez **Aura: Self-Hosted Music** depuis l'App Store](https://apps.apple.com/app/id6818241470). Gratuite, sans achats intégrés.
+[Installez **Aura: Self-Hosted Music** depuis l'App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github). Gratuite, sans achats intégrés.
 
 ## Configuration requise
 
