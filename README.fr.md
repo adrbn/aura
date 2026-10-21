@@ -89,7 +89,7 @@ reprend le tout.
 - **Un widget En cours de lecture** pour l'écran d'accueil : le morceau et sa pochette, avec précédent, lecture-pause et suivant en taille moyenne.
 - **À votre goût.** Clair ou sombre, la couleur d'accent de votre choix, et les onglets et les sections de l'accueil dans l'ordre que vous voulez.
 - **Une horloge en paysage.** Activez-la dans les Réglages et tournez le téléphone sur le côté pendant la lecture : l'heure en grand, le morceau à côté, et un tap sur la pochette pour les paroles, une ligne à la fois.
-- **Prêt pour l'iPhone Duo** (prochaine version). Ouvert, Aura tourne avec l'appareil : En cours de lecture garde le lecteur à gauche avec les paroles ou la file d'attente à côté, et les pages d'album, de playlist, de mix et de radio posent leur pochette à gauche avec le titre et les boutons à côté. Plié, le lecteur garde les proportions d'un téléphone sur les écrans courts.
+- **Prêt pour l'iPhone Duo.** Ouvert, Aura tourne avec l'appareil : En cours de lecture garde le lecteur à gauche avec les paroles ou la file d'attente à côté, et les pages d'album, de playlist, de mix et de radio posent leur pochette à gauche avec le titre et les boutons à côté. Plié, le lecteur garde les proportions d'un téléphone sur les écrans courts.
 
 **Dans la 1.4** (en test)
 

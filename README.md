@@ -87,7 +87,7 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **A Now Playing widget** for the Home Screen: the song and its cover, with previous, play-pause and next in the medium size.
 - **Yours to arrange.** Light or dark, any accent colour, and tabs and Home sections in the order you choose.
 - **A landscape clock.** Switch it on in Settings and turn the phone sideways while music plays: the time large, the song beside it, and a tap on the cover for the lyrics, one line at a time.
-- **Ready for iPhone Duo** (next version). Open, Aura turns with the device: Now Playing keeps the player on the left with the lyrics or the queue beside it, and album, playlist, mix and radio pages stand their cover at the left with the title and buttons next to it. Folded, the player keeps a phone's proportions on the short screens.
+- **Ready for iPhone Duo.** Open, Aura turns with the device: Now Playing keeps the player on the left with the lyrics or the queue beside it, and album, playlist, mix and radio pages stand their cover at the left with the title and buttons next to it. Folded, the player keeps a phone's proportions on the short screens.
 
 **Coming in 1.4** (being tested)
 
