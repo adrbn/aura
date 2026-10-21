@@ -55496,6 +55496,110 @@
           }
         }
       }
+    },
+    "No server? Try the Navidrome demo": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de serveur ? Essayez la démo Navidrome"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessun server? Prova la demo di Navidrome"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Sin servidor? Prueba la demo de Navidrome"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Server? Probiere die Navidrome-Demo"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sense servidor? Prova la demo de Navidrome"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geen server? Probeer de Navidrome-demo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有服务器？试试 Navidrome 演示"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет сервера? Попробуйте демо Navidrome"
+          }
+        }
+      }
+    },
+    "The demo server didn't answer. Try again in a moment.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le serveur de démo n'a pas répondu. Réessayez dans un instant."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il server demo non ha risposto. Riprova tra un momento."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor de demostración no respondió. Inténtalo de nuevo en un momento."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Demo-Server hat nicht geantwortet. Versuche es gleich noch einmal."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El servidor de demostració no ha respost. Torna-ho a provar d'aquí a un moment."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De demoserver reageerde niet. Probeer het zo opnieuw."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示服务器没有响应。请稍后再试。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Демо-сервер не ответил. Попробуйте ещё раз через минуту."
+          }
+        }
+      }
     }
   },
   "version": "1.1"

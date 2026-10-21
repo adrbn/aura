@@ -1,10 +1,17 @@
 import SwiftUI
+import StoreKit
 
 struct ContentView: View {
     @Environment(ServerManager.self) private var serverManager
     @Environment(AudioPlayer.self) private var audioPlayer
     @State private var selectedTab = 0
     @State private var showAddServer = false
+    @State private var isOpeningDemo = false
+    @State private var demoError: String?
+    @Environment(\.requestReview) private var requestReview
+    /// Songs started since the last rating prompt, and the version that prompt was for.
+    @AppStorage("review_songs") private var reviewSongs = 0
+    @AppStorage("review_version") private var reviewVersion = ""
     @State private var appSettings = AppSettings.shared
     @Environment(\.appAccentColor) private var accentColor
     @State private var showDownloadManager = false
@@ -106,6 +113,9 @@ struct ContentView: View {
             NavigationStack {
                 DownloadManagerView()
             }
+        }
+        .onChange(of: audioPlayer.currentSong?.id) { _, id in
+            askForRatingIfDue(songID: id)
         }
         .onChange(of: audioPlayer.pendingArtistId) { _, newId in
             guard newId != nil else { return }
@@ -385,9 +395,45 @@ struct ContentView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .padding(.horizontal, 40)
+            Button { Task { await tryDemo() } } label: {
+                if isOpeningDemo { ProgressView() } else { Text("No server? Try the Navidrome demo") }
+            }
+            .font(.subheadline.weight(.semibold))
+            .disabled(isOpeningDemo)
+            if let demoError {
+                Text(demoError).font(.footnote).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center).padding(.horizontal, 40)
+            }
             Spacer()
         }
         .sheet(isPresented: $showAddServer) { AddServerView() }
+    }
+
+    /// Asks for an App Store rating once per version, after 40 songs, never on the demo
+    /// server: someone listening that much to their own library has an opinion worth giving.
+    private func askForRatingIfDue(songID: String?) {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        guard songID != nil, reviewVersion != version,
+              serverManager.currentServer?.url.contains("demo.navidrome.org") == false else { return }
+        reviewSongs += 1
+        guard reviewSongs >= 40 else { return }
+        reviewSongs = 0
+        reviewVersion = version
+        requestReview()
+    }
+
+    /// The public Navidrome demo, so someone without a server of their own sees what Aura does.
+    private func tryDemo() async {
+        isOpeningDemo = true
+        demoError = nil
+        let demo = ServerConfig(url: "https://demo.navidrome.org", username: "demo",
+                                password: "demo", friendlyName: "Navidrome Demo")
+        if (try? await SubsonicClient.shared.ping(server: demo)) == true {
+            serverManager.addServer(demo)
+        } else {
+            demoError = String(localized: "The demo server didn't answer. Try again in a moment.")
+        }
+        isOpeningDemo = false
     }
 }
 
