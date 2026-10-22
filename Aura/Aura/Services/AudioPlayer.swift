@@ -651,6 +651,8 @@ final class AudioPlayer {
         EqualizerManager.shared.attachToPlayerItem(playerItem, fadeOut: song.isPreview ? Self.previewFade : nil)
         player = AVQueuePlayer(playerItem: playerItem)
         applyOutputVolume(for: song)
+        // A new player starts at 1×: a song played again on repeat keeps the pitch it shows.
+        applyPitch()
         resetScrobbleProgress()
         player?.pause()
 
@@ -1106,6 +1108,7 @@ final class AudioPlayer {
         // This path never applied the fader: every song started from here played at full
         // level until the fader was next touched.
         applyOutputVolume(for: song)
+        applyPitch()
         watchPlayback(of: playerItem)
 
         // Initialize duration from song metadata so Now Playing info shows it immediately
@@ -1871,6 +1874,7 @@ final class AudioPlayer {
         EqualizerManager.shared.attachToPlayerItem(item)
         watchEnd(of: item)
         player?.replaceCurrentItem(with: item)
+        applyPitch()
         if isPlaying { player?.play() }
         return true
     }
