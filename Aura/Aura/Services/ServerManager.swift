@@ -8,7 +8,11 @@ final class ServerManager {
 
     var servers: [ServerConfig] = []
     var currentServer: ServerConfig?
-    var isConnected = false
+    var isConnected = false {
+        didSet { if isConnected, let url = currentServer?.url { UserDefaults.standard.set(Date(), forKey: "lastSeen." + url) } }
+    }
+    /// The last time the current server answered, shown while it can't be reached.
+    var lastSeen: Date? { currentServer.flatMap { UserDefaults.standard.object(forKey: "lastSeen." + $0.url) as? Date } }
     var connectionError: String?
     /// True when the device has any network path available (WiFi/cellular/wired)
     var hasNetwork = true

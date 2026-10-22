@@ -189,7 +189,11 @@ struct OfflineStatusLine: View {
 
     private var text: String {
         if !serverManager.hasNetwork { return String(localized: "Offline · No internet connection") }
-        if !serverManager.isConnected { return String(localized: "Offline · Server unreachable") }
+        if !serverManager.isConnected {
+            guard let lastSeen = serverManager.lastSeen else { return String(localized: "Offline · Server unreachable") }
+            let seen = lastSeen.formatted(.relative(presentation: .named, unitsStyle: .abbreviated))
+            return String(localized: "Server unreachable · seen \(seen)")
+        }
         return String(localized: "Offline · Server reachable")
     }
 
