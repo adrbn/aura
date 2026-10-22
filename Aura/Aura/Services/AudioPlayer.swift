@@ -612,11 +612,17 @@ final class AudioPlayer {
     /// The item for a song: its preview's address for a release not on the server, else the
     /// download, the cache or the server's stream.
     private func makePlayerItem(for song: Song, server: ServerConfig, bitRate: Int?) -> AVPlayerItem {
+        let item: AVPlayerItem
         if let preview = song.preview, let url = URL(string: preview) {
-            return AVPlayerItem(url: url)
+            item = AVPlayerItem(url: url)
+        } else {
+            item = AudioCacheManager.shared.playerItem(songId: song.id, server: server, bitRate: bitRate,
+                                                      songSuffix: song.suffix, songContentType: song.contentType)
         }
-        return AudioCacheManager.shared.playerItem(songId: song.id, server: server, bitRate: bitRate,
-                                                  songSuffix: song.suffix, songContentType: song.contentType)
+        // Set before the item plays: switched on mid-song, the pitch moved only the speed.
+        // At 1× varispeed changes nothing.
+        item.audioTimePitchAlgorithm = .varispeed
+        return item
     }
 
     /// Load the stream URL and set up AVPlayer without starting playback
