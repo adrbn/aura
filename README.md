@@ -9,7 +9,7 @@
 
 # Aura
 
-**Your music server, on your iPhone.** A native iPhone and Apple Watch player for Navidrome and Subsonic:
+**Your music server, on your iPhone.** A native iPhone, Apple Watch and Mac player for Navidrome and Subsonic:
 lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="56"></a>
@@ -109,13 +109,21 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **Animated covers**, WebP or GIF, on Now Playing and the album page.
 - **SharePlay** over FaceTime, everyone streaming from the same server; **`aura://` links** for Shortcuts; and **Chinese and Russian**.
 
-**Aura for Mac** (preview for macOS 26, [download the app](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360) or build the `Aura-mac` scheme)
+## Aura for Mac
+
+A preview for macOS 26, from the same code as the iPhone app: [download it](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360) ([install steps](#mac-preview)) or build the `Aura-mac` scheme.
 
 - **The whole library in one window**: a sidebar with Home, Made For You, the Radar, Wrapped, Songs, Playlists, Albums, Artists, Downloads and your pinned playlists, and the player across the bottom.
 - **Up Next as a side pane** that slides in from the right: drag to reorder, shuffle or clear, and a right-click for Play Next, Go to Album, Start Radio, rating and download.
 - **Lyrics full screen**, word by word, with the cover beside them, both sized to the window.
 - **Play on your iPhone from the Mac**, or on the Mac from the iPhone, over the same Wi-Fi: transport, queue edits and volume go across, and your AirPods stay with the device that plays.
-- **Downloads, the equaliser and a menu bar player**, and album pages that list what the release is missing with Get All (sideload build).
+- **Downloads, the equaliser and a menu bar player**, and album pages that list what the release is missing with Get All (opt-in Get It, under Settings → Developer).
+
+<p align="center">
+  <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura for Mac on Navidrome's demo server: Home with recent albums and the Made For You mixes, the sidebar and the player bar" />
+  <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura for Mac on Navidrome's demo server: an album page with its songs and ratings, and Up Next open as a pane on the right" />
+</p>
+<p align="center"><sub>These captures use Navidrome's public demo server.</sub></p>
 
 ## Screenshots
 
@@ -128,11 +136,6 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 <p align="center">
   <img src="docs/assets/shots-duo.webp" width="100%" alt="Aura open on the iPhone Duo: Now Playing with the queue and its Playing Next head beside the player, and an album page with the cover at the left and the title and buttons beside it" />
 </p>
-<p align="center">
-  <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura for Mac on Navidrome's demo server: Home with recent albums and the Made For You mixes, the sidebar and the player bar" />
-  <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura for Mac on Navidrome's demo server: an album page with its songs and ratings, and Up Next open as a pane on the right" />
-</p>
-<p align="center"><sub>The Mac captures use Navidrome's public demo server.</sub></p>
 
 ## Two builds
 

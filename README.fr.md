@@ -9,7 +9,7 @@
 
 # Aura
 
-**Votre serveur de musique, sur votre iPhone.** Un lecteur natif pour iPhone et Apple Watch, pour Navidrome et Subsonic :
+**Votre serveur de musique, sur votre iPhone.** Un lecteur natif pour iPhone, Apple Watch et Mac, pour Navidrome et Subsonic :
 streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vous écoutez vraiment, et toute votre bibliothèque hors ligne.
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>
@@ -111,13 +111,21 @@ reprend le tout.
 - **Les pochettes animées**, WebP ou GIF, dans En cours de lecture et sur la page d'album.
 - **SharePlay** sur FaceTime, chacun écoutant depuis le même serveur ; des **liens `aura://`** pour Raccourcis ; et le **chinois et le russe**.
 
-**Aura pour Mac** (aperçu pour macOS 26, [téléchargez l'app](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360) ou compilez le schéma `Aura-mac`)
+## Aura pour Mac
+
+Un aperçu pour macOS 26, fait du même code que l'app iPhone : [téléchargez-le](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360) ([étapes d'installation](#mac-aper%C3%A7u)) ou compilez le schéma `Aura-mac`.
 
 - **Toute la bibliothèque dans une fenêtre** : une barre latérale avec Accueil, Pour vous, le Radar, Wrapped, Titres, Playlists, Albums, Artistes, Téléchargements et vos playlists épinglées, et le lecteur en bas.
 - **À suivre dans un panneau latéral** qui glisse depuis la droite : glisser pour réordonner, mélanger ou vider, et un clic droit pour Lire ensuite, Accéder à l'album, Lancer la radio, la note et le téléchargement.
 - **Les paroles en plein écran**, mot par mot, la pochette à côté, toutes deux à la taille de la fenêtre.
 - **Lire sur l'iPhone depuis le Mac**, ou sur le Mac depuis l'iPhone, sur le même Wi-Fi : lecture, file d'attente et volume passent d'un appareil à l'autre, et vos AirPods restent sur celui qui joue.
-- **Téléchargements, égaliseur et lecteur dans la barre des menus**, et des pages d'album qui listent ce qui manque à la sortie avec Tout récupérer (version sideload).
+- **Téléchargements, égaliseur et lecteur dans la barre des menus**, et des pages d'album qui listent ce qui manque à la sortie avec Tout récupérer (Get It, à activer dans Réglages → Developer).
+
+<p align="center">
+  <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura pour Mac sur le serveur de démo public de Navidrome : l'accueil avec les albums récents et les mix Pour vous, la barre latérale et la barre du lecteur" />
+  <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura pour Mac sur le serveur de démo public de Navidrome : une page d'album avec ses morceaux et leurs notes, et À suivre ouvert en panneau à droite" />
+</p>
+<p align="center"><sub>Ces captures viennent du serveur de démo public de Navidrome.</sub></p>
 
 ## Captures d'écran
 
@@ -130,11 +138,6 @@ reprend le tout.
 <p align="center">
   <img src="docs/assets/shots-duo.webp" width="100%" alt="Aura ouvert sur l'iPhone Duo : En cours de lecture avec la file d'attente et sa tête Playing Next à côté du lecteur, et une page d'album avec la pochette à gauche, le titre et les boutons à côté" />
 </p>
-<p align="center">
-  <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura pour Mac sur le serveur de démo public de Navidrome : l'accueil avec les albums récents et les mix Pour vous, la barre latérale et la barre du lecteur" />
-  <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura pour Mac sur le serveur de démo public de Navidrome : une page d'album avec ses morceaux et leurs notes, et À suivre ouvert en panneau à droite" />
-</p>
-<p align="center"><sub>Les captures Mac viennent du serveur de démo public de Navidrome.</sub></p>
 
 ## Deux versions
 
