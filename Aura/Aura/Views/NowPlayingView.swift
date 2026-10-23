@@ -1860,6 +1860,7 @@ struct SongActionsRow: View {
 
     @Environment(AudioPlayer.self) private var player
     @State private var heartPop = false
+    @State private var showMacRemote = false
     @State private var showSync = false
 
     private var isStarred: Bool { player.currentSong?.isStarred ?? false }
@@ -2048,6 +2049,9 @@ struct SongActionsRow: View {
                         Label("SharePlay", systemImage: "shareplay")
                     }
                 }
+                Button { showMacRemote = true } label: {
+                    Label("Control Mac", systemImage: "macbook")
+                }
                 if !DownloadManager.shared.isDownloaded(song.id) {
                     Button {
                         Task { await DownloadManager.shared.downloadSong(song) }
@@ -2066,6 +2070,7 @@ struct SongActionsRow: View {
         .fullScreenCover(isPresented: $showSync) {
             LyricsSyncView(song: song, lines: player.lyrics)
         }
+        .sheet(isPresented: $showMacRemote) { MacRemoteView() }
     }
 }
 

@@ -22,8 +22,13 @@
 	</dict>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Aura saves the covers you choose to keep to your photo library.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_aura-remote._tcp</string>
+		<string>_aura-remote._udp</string>
+	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Aura connects to the music server on your local network that you configure.</string>
+	<string>Aura connects to the music server on your local network that you configure, and to Aura on your Mac so this iPhone can control it.</string>
 	<key>NSSiriUsageDescription</key>
 	<string>Aura uses Siri so you can ask for an artist, an album, a song or a playlist out loud.</string>
 	<key>INIntentsSupported</key>
