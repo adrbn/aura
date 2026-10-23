@@ -129,6 +129,7 @@ struct MacSidebar: View {
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .focused($searching)
+                .onExitCommand { searching = false }
             if !query.isEmpty {
                 Button { query = "" } label: {
                     Image(systemName: "xmark.circle.fill")

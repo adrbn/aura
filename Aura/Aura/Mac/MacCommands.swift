@@ -103,18 +103,31 @@ struct MacCommands: Commands {
 
 /// Space plays and pauses wherever the focus is. As a menu shortcut alone it never fired:
 /// the focused list or table took the key first and spent it on its own selection.
+/// A text field keeps the key only once something is typed in it: the window opens with the
+/// search field focused, and an empty field has no use for a space.
 enum MacSpaceKey {
     private static var monitor: Any?
+    private static var clicks: Any?
 
     static func install() {
         guard monitor == nil else { return }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            let typing = event.window?.firstResponder is NSText
+            let typing = (event.window?.firstResponder as? NSText).map { !$0.string.isEmpty } ?? false
             guard event.keyCode == 49, !typing,
                   event.modifierFlags.intersection([.command, .option, .control, .shift]).isEmpty,
                   AudioPlayer.shared.currentSong != nil else { return event }
             AudioPlayer.shared.togglePlayPause()
             return nil
+        }
+        // A click anywhere outside the field being typed in leaves it, as Escape does.
+        clicks = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { event in
+            guard let window = event.window,
+                  let editor = window.firstResponder as? NSText,
+                  let field = editor.delegate as? NSView else { return event }
+            if !field.bounds.contains(field.convert(event.locationInWindow, from: nil)) {
+                window.makeFirstResponder(nil)
+            }
+            return event
         }
     }
 }
