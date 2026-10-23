@@ -10,6 +10,7 @@
 		0031110FB412232B510DA63F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332E4899162985D5A2BE70F9 /* Foundation.framework */; };
 		00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7507C823E9A1C89305C77937 /* MacHomeView.swift */; };
 		016B640B9D48D7E4C4EED3A0 /* MissingSongsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B9C92CA58D03F28FB04AFA4 /* MissingSongsSection.swift */; };
+		04DEC0DD19686DB542D3B2CF /* WrappedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009B /* WrappedView.swift */; };
 		04F7CA033ED93B4CD795E072 /* SongLinkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7A1E179BB18A52978EC7635 /* SongLinkService.swift */; };
 		06665240EFF5CFD599AC09F2 /* WatchLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4729DBCE407138E2BDA845 /* WatchLink.swift */; };
 		08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */; };
@@ -1230,6 +1231,7 @@
 				991A110B0E7FA52152F62F1C /* ReleaseFetcher.swift in Sources */,
 				93A24E354EF7A23BE301B32E /* RadarReleasesSection.swift in Sources */,
 				9B89E264789D61EEEB41E8AC /* MacRadarView.swift in Sources */,
+				04DEC0DD19686DB542D3B2CF /* WrappedView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

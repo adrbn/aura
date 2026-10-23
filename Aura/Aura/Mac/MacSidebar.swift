@@ -15,7 +15,7 @@ struct MacSidebar: View {
         // scrolled on under the server picker and the two were drawn over each other.
         VStack(spacing: 0) {
         List(selection: $section) {
-            ForEach([MacSection.home, .mixes, .radar]) { item in
+            ForEach([MacSection.home, .mixes, .radar, .wrapped]) { item in
                 Label(item.label, systemImage: item.symbol).tag(item)
             }
             Section("Library") {

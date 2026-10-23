@@ -51,17 +51,26 @@ struct WrappedView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
+            #if os(iOS)
             .padding(.bottom, 90 + BottomChrome.shared.cardInset)
+            #else
+            .padding(.bottom, 24)
+            // A phone's column, centred: stretched across a window the rows read as empty.
+            .frame(maxWidth: 760)
+            .frame(maxWidth: .infinity)
+            #endif
             .animation(.easeInOut(duration: 0.25), value: isLoading)
         }
         .scrollIndicators(.hidden)
         .background(Color.themeBg)
         .navigationTitle("Wrapped")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
         // Source / period filters and Save live in a toolbar menu so the stats sit right
         // under the hero instead of being pushed down by stacked controls.
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .primaryAction) {
                 Menu {
                     if lastfmAvailable {
                         Picker("Source", selection: $source) {
@@ -571,10 +580,15 @@ struct WrappedView: View {
                     .contentShape(Rectangle())
 
                     if let sid = artist.serverId {
+                        #if os(iOS)
                         NavigationLink {
                             ArtistDetailView(artistId: sid, artistName: artist.name, coverArt: artist.serverCoverArt)
                         } label: { row }
                         .buttonStyle(.plain)
+                        #else
+                        Button { AudioPlayer.shared.pendingArtistId = sid } label: { row }
+                            .buttonStyle(.plain)
+                        #endif
                     } else {
                         row
                     }
@@ -600,8 +614,13 @@ struct WrappedView: View {
                     .contentShape(Rectangle())
 
                     if let sid = album.serverId {
+                        #if os(iOS)
                         NavigationLink { AlbumDetailView(albumId: sid) } label: { row }
                             .buttonStyle(.plain)
+                        #else
+                        Button { AudioPlayer.shared.pendingAlbumId = sid } label: { row }
+                            .buttonStyle(.plain)
+                        #endif
                     } else {
                         row
                     }
@@ -755,7 +774,11 @@ private struct WrappedArtwork: View {
 
     private var placeholder: some View {
         ZStack {
+            #if os(iOS)
             Color(.systemGray5)
+            #else
+            Color.secondary.opacity(0.2)
+            #endif
             Image(systemName: "music.note").foregroundStyle(.secondary).font(.system(size: size * 0.4))
         }
     }
