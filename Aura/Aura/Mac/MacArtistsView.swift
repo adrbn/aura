@@ -18,7 +18,7 @@ struct MacArtistsView: View {
                              subtitle: artist.albumCount.map { String(localized: "\($0) albums") },
                              placeholderName: artist.name, circular: true)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MacPressStyle())
         }
         .navigationTitle("Artists")
         // A plain filter over an already-loaded list, not a server search: the artist list
@@ -61,7 +61,6 @@ struct MacArtistDetailView: View {
                     MacSongTable(songs: Array(topSongs.prefix(10)),
                                  source: .artist(id: artist.id, name: artist.name))
                         .frame(height: 260)
-                        .padding(.horizontal, 16)
                 }
 
                 sectionTitle("Albums")
@@ -73,10 +72,10 @@ struct MacArtistDetailView: View {
                                          subtitle: album.year.map(String.init),
                                          placeholderName: album.name)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(MacPressStyle())
                     }
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 28)
                 .padding(.bottom, 28)
             }
         }
@@ -85,7 +84,7 @@ struct MacArtistDetailView: View {
     }
 
     private func sectionTitle(_ text: LocalizedStringKey) -> some View {
-        Text(text).auraDisplay(34).padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 8)
+        Text(text).auraDisplay(34).padding(.horizontal, 28).padding(.top, 14).padding(.bottom, 8)
     }
 
     private func load() async {

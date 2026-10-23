@@ -17,6 +17,10 @@ import AppKit
 /// Full screen is left alone: the system fades that same view on purpose there, and the
 /// buttons are meant to be absent until the pointer reaches the top of the screen.
 struct MacWindowChrome: NSViewRepresentable {
+    /// Read only so that folding the sidebar runs an update: SwiftUI hides the buttons'
+    /// container again when it does, and nothing else would put them back.
+    var sidebarVisible = true
+
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSView {
@@ -28,6 +32,9 @@ struct MacWindowChrome: NSViewRepresentable {
 
     func updateNSView(_ view: NSView, context: Context) {
         DispatchQueue.main.async { context.coordinator.attach(to: view.window) }
+        // Again once the sidebar's slide is over: SwiftUI hides the container at its end,
+        // which took the buttons and, with them, the room above every page's title.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { context.coordinator.attach(to: view.window) }
     }
 
     final class Coordinator {
@@ -69,6 +76,8 @@ struct MacWindowChrome: NSViewRepresentable {
             window.isMovableByWindowBackground = true
             window.toolbar = nil
 
+            let full = window.styleMask.contains(.fullScreen)
+            MainActor.assumeIsolated { MacWindowState.shared.isFullScreen = full }
             guard !window.styleMask.contains(.fullScreen) else { return }
             for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
                 guard let view = window.standardWindowButton(button) else { continue }
@@ -90,4 +99,11 @@ struct MacWindowChrome: NSViewRepresentable {
             }
         }
     }
+}
+
+/// Whether the window is in full screen, for the layout that has no title bar to clear there.
+@MainActor @Observable
+final class MacWindowState {
+    static let shared = MacWindowState()
+    var isFullScreen = false
 }

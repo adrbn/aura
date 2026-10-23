@@ -80,6 +80,10 @@ struct ContentView: View {
                     .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.fetches.map(\.id))
                 #endif
 
+                PlayingElsewhereRow()
+                    .padding(.bottom, audioPlayer.hasQueue || RemoteLink.shared.connected != nil ? 0 : tabBarGap)
+                    .animation(.smooth(duration: 0.35), value: RemoteLink.shared.playingElsewhere?.playing)
+
                 // Above the fetch card, which a stack otherwise draws on top while it leaves.
                 if audioPlayer.hasQueue || RemoteLink.shared.connected != nil {
                     MiniPlayerView()

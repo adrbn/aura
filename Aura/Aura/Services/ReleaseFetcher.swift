@@ -147,6 +147,10 @@ final class ReleaseFetcher {
         fetches.insert(fetch, at: 0)
         save()
         start(fetch.id)
+        #if os(macOS)
+        // The Mac has no Live Activity: a toast says it's under way, the card follows it.
+        ToastManager.shared.show(String(localized: "On its way"), icon: "arrow.down.circle.fill")
+        #endif
     }
 
     /// Starts fetching the songs a library album is missing, as the release it's a copy of —
@@ -296,6 +300,13 @@ final class ReleaseFetcher {
                 } catch {
                     if Task.isCancelled { return false }
                     guard reachable else {
+                        AppLogger.shared.log("⬇️ slskd search failed: \(error)")
+                        // Answering but refusing the sign-in isn't "unreachable": that sent people
+                        // checking an address that was right all along.
+                        if case SlskdError.authFailedDetail(_, 401) = error {
+                            fail(id, String(localized: "slskd refused the sign-in — check the username and password in Settings"))
+                            return false
+                        }
                         fail(id, String(localized: "Soulseek isn't reachable — check it in Settings"))
                         return false
                     }

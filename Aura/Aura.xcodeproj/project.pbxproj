@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E1000002000000000000A0D7 /* MacFetchNotices.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A0D6 /* MacFetchNotices.swift */; };
+		A0C0FFEE0000000000000D04 /* MacMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C0FFEE0000000000000D05 /* MacMotion.swift */; };
+		A0C0FFEE0000000000000D03 /* FetchProgressBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00D /* FetchProgressBanner.swift */; };
 		A0C0FFEE0000000000000D02 /* WorkshopGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A00F /* WorkshopGrid.swift */; };
 		A0C0FFEE0000000000000D01 /* DayGlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */; };
 		0031110FB412232B510DA63F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332E4899162985D5A2BE70F9 /* Foundation.framework */; };
@@ -320,6 +323,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E1000002000000000000A0D6 /* MacFetchNotices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacFetchNotices.swift; sourceTree = "<group>"; };
+		A0C0FFEE0000000000000D05 /* MacMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacMotion.swift; sourceTree = "<group>"; };
 		06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPreferences.swift; sourceTree = "<group>"; };
 		126D52F5E3B9BA144C1DCFB0 /* MadeForYouSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MadeForYouSettingsView.swift; sourceTree = "<group>"; };
 		12F316BCC5018DF788F0B8F8 /* LyricsTranslationSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsTranslationSettingsView.swift; sourceTree = "<group>"; };
@@ -640,6 +645,8 @@
 				2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */,
 				48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */,
 				88855F68FD1F326A2B289FF3 /* MacGrid.swift */,
+				A0C0FFEE0000000000000D05 /* MacMotion.swift */,
+				E1000002000000000000A0D6 /* MacFetchNotices.swift */,
 				972B2D4634806C3FA589AE66 /* MacMixesView.swift */,
 				50A7A8D3269A4534007744BF /* MacPlayerBar.swift */,
 				61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */,
@@ -1178,6 +1185,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1000002000000000000A0D7 /* MacFetchNotices.swift in Sources */,
+				A0C0FFEE0000000000000D04 /* MacMotion.swift in Sources */,
+				A0C0FFEE0000000000000D03 /* FetchProgressBanner.swift in Sources */,
 				A0C0FFEE0000000000000D02 /* WorkshopGrid.swift in Sources */,
 				A0C0FFEE0000000000000D01 /* DayGlow.swift in Sources */,
 				D6CD0FB601529915A9B3255C /* Models.swift in Sources */,

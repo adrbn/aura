@@ -23,7 +23,7 @@ struct MacSongsView: View {
             } else if songs.isEmpty {
                 ContentUnavailableView("No songs", systemImage: "music.note")
             } else {
-                HStack(spacing: 10) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text("Songs").auraDisplay(52)
                     Text("^[\(songs.count) song](inflect: true)")
                         .font(.system(size: 11))
@@ -36,7 +36,7 @@ struct MacSongsView: View {
                     }
                     .controlSize(.small)
                 }
-                .padding(.horizontal, 26)
+                .padding(.horizontal, 28)
                 .padding(.top, 26)
                 .padding(.bottom, 10)
                 MacSongTable(songs: songs, source: .songs)

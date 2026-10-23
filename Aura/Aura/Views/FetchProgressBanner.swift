@@ -243,7 +243,7 @@ private struct FetchCard: View {
 
 /// The four steps — look, download, add, ready — as a ring of four arcs: the ones done
 /// full, the current one filling, and the step's own sign in the middle.
-private struct FetchStepsRing: View {
+struct FetchStepsRing: View {
     let fetch: ReleaseFetch
     let tint: Color
 
@@ -251,7 +251,7 @@ private struct FetchStepsRing: View {
     /// The gap between two arcs, as a share of the circle.
     private static let gap = 0.035
 
-    private var steps: Int { ReleaseFetchAttributes.steps }
+    private var steps: Int { FetchSteps.count }
 
     private var symbol: String {
         switch fetch.stage {
@@ -291,6 +291,10 @@ private struct FetchStepsRing: View {
 
 /// How full each of the four steps is — look, download, add, ready.
 enum FetchSteps {
+    /// Look, download, add, ready. Here rather than read off the Live Activity's
+    /// attributes, which the Mac doesn't build.
+    static let count = 4
+
     static func fill(_ index: Int, of fetch: ReleaseFetch) -> CGFloat {
         if fetch.stage == .failed { return index == 0 ? 1 : 0 }
         if index < fetch.step || fetch.stage == .ready { return 1 }

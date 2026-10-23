@@ -14,7 +14,6 @@ struct MacArtistLinks: View {
 
     @State private var player = AudioPlayer.shared
     @State private var serverManager = ServerManager.shared
-    @State private var hovered: String?
 
     var body: some View {
         let credits = song?.creditedArtists ?? []
@@ -29,12 +28,10 @@ struct MacArtistLinks: View {
                     Text(credit.name)
                         .font(.system(size: size))
                         .foregroundStyle(colour)
-                        .underline(hovered == credit.name)
                         .lineLimit(1)
                         .fixedSize()
                 }
                 .buttonStyle(.plain)
-                .onHover { hovered = $0 ? credit.name : nil }
             }
         }
     }

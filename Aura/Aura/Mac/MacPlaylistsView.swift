@@ -23,7 +23,7 @@ struct MacPlaylistsView: View {
                         }
                     }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MacPressStyle())
             .contextMenu { MacPinButton(playlistId: playlist.id, asLabel: true) }
         }
         .navigationTitle("Playlists")
@@ -61,7 +61,7 @@ struct MacPlaylistDetailView: View {
             Divider()
             MacSongTable(songs: songs, source: .playlist(id: playlist.id, name: playlist.name))
         }
-        .background { ZStack { ArtworkCanvas(coverArt: playlist.coverArt); MacFadingGrid() } }
+        .background { ZStack { ArtworkCanvas(coverArt: playlist.coverArt, height: 640); MacFadingGrid() } }
         .navigationTitle(playlist.name)
         .task { await load() }
     }

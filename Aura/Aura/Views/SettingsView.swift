@@ -902,7 +902,7 @@ struct SettingsView: View {
                         .textInputAutocapitalization(.never)
                 }
                 LabeledContent("Password") {
-                    SecureField("slskd", text: $appSettings.slskdPassword)
+                    SecureField("Password", text: $appSettings.slskdPassword)
                         .multilineTextAlignment(.trailing)
                 }
             } header: {

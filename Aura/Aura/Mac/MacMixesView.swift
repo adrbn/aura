@@ -40,15 +40,16 @@ struct MacMixesView: View {
             Text("Made For You")
                 .auraDisplay(52)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 26)
+                .padding(.horizontal, 28)
                 .padding(.top, 26)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 168, maximum: 230), spacing: 20)],
                       spacing: 22) {
                 ForEach(generator.mixes) { mix in
-                    NavigationLink(value: mix) { tile(mix) }.buttonStyle(.plain)
+                    NavigationLink(value: mix) { tile(mix) }.buttonStyle(MacPressStyle())
                 }
             }
-            .padding(24)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 20)
         }
     }
 
@@ -59,6 +60,7 @@ struct MacMixesView: View {
                 EditorialMixCover(mix: mix, size: geo.size.width, cornerRadius: 10)
             }
             .aspectRatio(1, contentMode: .fit)
+            .macHoverLift()
             VStack(alignment: .leading, spacing: 1) {
                 Text(mix.title).font(.system(size: 12, weight: .medium)).lineLimit(1)
                 Text(mix.subtitle).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)

@@ -15,6 +15,7 @@ struct MacPlayerBar: View {
     /// Playback keeps reporting its own position throughout, so binding the slider straight
     /// to `currentTime` would let each report yank the knob out from under the pointer.
     @State private var scrubbing: Double?
+    @Environment(\.colorScheme) private var scheme
 
     private var song: Song? { player.currentSong }
     private let flank: CGFloat = 320
@@ -33,10 +34,10 @@ struct MacPlayerBar: View {
         .frame(height: 92)
         // A wash rather than a bar. It has to separate itself from the artwork scrolling
         // behind it without becoming a second, opaque surface.
-        .background(.black.opacity(0.35))
+        .background(scheme == .dark ? Color.black.opacity(0.35) : Color.white.opacity(0.45))
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
-            Rectangle().fill(.white.opacity(0.07)).frame(height: 1)
+            Rectangle().fill(.primary.opacity(0.07)).frame(height: 1)
         }
         .popover(isPresented: $showQueue, arrowEdge: .top) { MacQueueView() }
         .popover(isPresented: $showEqualizer, arrowEdge: .top) { MacEqualizerView() }
@@ -82,6 +83,8 @@ struct MacPlayerBar: View {
                 Button { player.toggleFavorite() } label: {
                     Image(systemName: song?.starred != nil ? "heart.fill" : "heart")
                         .font(.system(size: 12))
+                        .contentTransition(.symbolEffect(.replace))
+                        .symbolEffect(.bounce, value: song?.starred != nil)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(song?.starred != nil ? Color.appAccent : .secondary)
@@ -90,6 +93,20 @@ struct MacPlayerBar: View {
             Spacer(minLength: 0)
         }
         .frame(width: flank, alignment: .leading)
+        .contextMenu {
+            if let song {
+                if let albumId = song.albumId {
+                    Button("Go to Album") { player.pendingAlbumId = albumId }
+                }
+                if let artistId = song.artistId {
+                    Button("Go to Artist") { player.pendingArtistId = artistId }
+                }
+                Divider()
+                Button(song.starred != nil ? LocalizedStringKey("Unfavourite") : "Favourite") { player.toggleFavorite() }
+                MacRatingMenu(songs: [song])
+                MacDownloadMenuItem(songs: [song])
+            }
+        }
     }
 
     // MARK: Centre — transport and scrubber
@@ -106,9 +123,10 @@ struct MacPlayerBar: View {
                 Button { player.togglePlayPause() } label: {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 15))
-                        .foregroundStyle(.black)
+                        .contentTransition(.symbolEffect(.replace))
+                        .foregroundStyle(Color.canvas)
                         .frame(width: 36, height: 36)
-                        .background(Circle().fill(.white))
+                        .background(Circle().fill(.primary))
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -224,8 +242,7 @@ struct MacPlayerBar: View {
         }
     }
 
-    /// Reads as plain text until the pointer is over it, then underlines — a link that
-    /// doesn't shout, which is what a transport bar wants.
+    /// Reads as plain text, a link that doesn't shout, which is what a transport bar wants.
     @ViewBuilder
     private func linkedText(_ text: String, size: CGFloat, weight: Font.Weight,
                             colour: HierarchicalShapeStyle, action: @escaping () -> Void) -> some View {
@@ -257,17 +274,14 @@ private struct HoverLink: View {
     let weight: Font.Weight
     let colour: HierarchicalShapeStyle
     let action: () -> Void
-    @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
             Text(text)
                 .font(.system(size: size, weight: weight))
                 .foregroundStyle(colour)
-                .underline(hovering)
                 .lineLimit(1)
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
     }
 }

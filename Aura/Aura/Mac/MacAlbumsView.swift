@@ -24,7 +24,7 @@ struct MacAlbumsView: View {
                 MacCoverTile(coverArt: album.coverArt, title: album.name,
                              subtitle: album.artist ?? String(localized: "Unknown Artist"), placeholderName: album.name)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MacPressStyle())
         }
         .task(id: order) { await load() }
     }
@@ -78,7 +78,7 @@ struct MacAlbumDetailView: View {
                          showsAlbum: false, showsTrackNumber: true)
         }
         // The page opens in the light of its cover, as on the iPhone.
-        .background { ZStack { ArtworkCanvas(coverArt: album.coverArt); MacFadingGrid() } }
+        .background { ZStack { ArtworkCanvas(coverArt: album.coverArt, height: 640); MacFadingGrid() } }
         .navigationTitle(album.name)
         .task { await load() }
     }

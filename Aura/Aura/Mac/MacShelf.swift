@@ -53,6 +53,7 @@ struct MacPlayableCard: View {
     var play: (() -> Void)?
 
     @State private var hovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
@@ -84,6 +85,7 @@ struct MacPlayableCard: View {
                 }
             }
             .frame(width: width, height: width)
+            .scaleEffect(hovering && !reduceMotion ? 1.035 : 1)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(.system(size: 12, weight: .medium)).lineLimit(1)
@@ -94,6 +96,6 @@ struct MacPlayableCard: View {
             .frame(width: width, alignment: circular ? .center : .leading)
         }
         .onHover { hovering = $0 }
-        .animation(.easeOut(duration: 0.16), value: hovering)
+        .animation(.spring(duration: 0.3, bounce: 0.25), value: hovering)
     }
 }

@@ -17,6 +17,8 @@ struct MacBackground: View {
                 GlowField(hue: DayHue.hue(at: Date()),
                           time: reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate,
                           isDark: scheme == .dark)
+                    // On white the dark-mode strength flooded the page and the sidebar.
+                    .opacity(scheme == .dark ? 1 : 0.4)
             }
             .frame(height: 420)
             if grid { MacFadingGrid() }

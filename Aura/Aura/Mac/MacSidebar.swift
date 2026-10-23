@@ -4,6 +4,8 @@ import SwiftUI
 struct MacSidebar: View {
     @Binding var section: MacSection?
     @Binding var query: String
+    /// The section already showing, clicked again: back to its top, as a tab bar does.
+    var reselect: () -> Void = {}
     @FocusState private var searching: Bool
     @State private var serverManager = ServerManager.shared
     @State private var settings = AppSettings.shared
@@ -14,13 +16,16 @@ struct MacSidebar: View {
         // The footer under the list, not a safe-area inset: as an inset the playlists
         // scrolled on under the server picker and the two were drawn over each other.
         VStack(spacing: 0) {
+        // Above the list rather than an inset over it: as an inset the list scrolled on
+        // under the wordmark and the search field, drawn through them.
+        header
         List(selection: $section) {
             ForEach([MacSection.home, .mixes, .radar, .wrapped]) { item in
-                Label(item.label, systemImage: item.symbol).tag(item)
+                row(item)
             }
             Section("Library") {
                 ForEach([MacSection.songs, .playlists, .albums, .artists, .downloads]) { item in
-                    Label(item.label, systemImage: item.symbol).tag(item)
+                    row(item)
                 }
             }
             // The playlists you pinned — here rather than buried in a grid, which is the
@@ -49,14 +54,29 @@ struct MacSidebar: View {
         // read as three panels bolted together.
         .scrollContentBackground(.hidden)
         .scrollIndicators(.never)
-        .safeAreaInset(edge: .top, spacing: 0) { header }
             footer
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.leading, 10)
                 .padding(.vertical, 6)
         }
+        // The same fixed room as the pages, so the wordmark doesn't jump either.
+        .safeAreaPadding(.top, MacWindowState.shared.isFullScreen ? 20 : MacRootView.topRoom)
+        .ignoresSafeArea(.container, edges: .top)
         .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 280)
         .task(id: serverManager.currentServer?.id) { await loadPlaylists() }
+    }
+
+    /// The symbol in the accent, set by hand: left to the sidebar it took the accent at low
+    /// strength and only the selected row's showed, barely.
+    private func row(_ item: MacSection) -> some View {
+        Label {
+            Text(item.label)
+        } icon: {
+            Image(systemName: item.symbol)
+                .foregroundStyle(Color.accentColor)
+        }
+        .tag(item)
+        .simultaneousGesture(TapGesture().onEnded { if section == item { reselect() } })
     }
 
     /// Where a Mac app keeps the account it is signed into, and the settings that go with
@@ -86,9 +106,13 @@ struct MacSidebar: View {
     /// It also gives the content area its full height back.
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("aura")
-                .auraDisplay(30)
-                .foregroundStyle(.primary)
+            HStack {
+                Text("aura")
+                    .auraDisplay(30)
+                    .foregroundStyle(.primary)
+                Spacer()
+                MacSidebarButton()
+            }
             searchField
         }
         .padding(.horizontal, 14)
@@ -125,14 +149,39 @@ struct MacSidebar: View {
         .padding(.vertical, 7)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(.white.opacity(searching ? 0.13 : 0.07))
+                .fill(.primary.opacity(searching ? 0.13 : 0.07))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(searching ? Color.appAccent.opacity(0.85) : .white.opacity(0.06),
+                .strokeBorder(searching ? Color.appAccent.opacity(0.85) : .primary.opacity(0.06),
                               lineWidth: searching ? 1.5 : 1)
         )
         .animation(.easeOut(duration: 0.15), value: searching)
         .animation(.easeOut(duration: 0.15), value: query.isEmpty)
+    }
+}
+
+/// Folds the sidebar away or brings it back: in its header while it shows, beside the
+/// window's buttons while it's folded. `⌃⌘S` from the View menu does the same.
+struct MacSidebarButton: View {
+    /// Over the page rather than in the sidebar: drawn as the back button is, so the two
+    /// read as a pair instead of a bare glyph left in the corner.
+    var floating = false
+    @State private var preferences = MacPreferences.shared
+
+    var body: some View {
+        Button {
+            withAnimation(.smooth(duration: 0.3)) { preferences.sidebarVisible.toggle() }
+        } label: {
+            Image(systemName: "sidebar.left")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(floating ? .primary : .secondary)
+                .frame(width: floating ? 30 : 28, height: floating ? 30 : 28)
+                .background { if floating { Circle().fill(.regularMaterial) } }
+                .overlay { if floating { Circle().stroke(.primary.opacity(0.10), lineWidth: 0.5) } }
+                .contentShape(Circle())
+        }
+        .buttonStyle(MacPressStyle())
+        .help(preferences.sidebarVisible ? "Hide Sidebar" : "Show Sidebar")
     }
 }

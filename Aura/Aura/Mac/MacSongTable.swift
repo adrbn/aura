@@ -24,6 +24,8 @@ struct MacSongTable: View {
                 Text(song.title)
                     .foregroundStyle(song.id == player.currentSong?.id ? Color.appAccent : .primary)
                     .lineLimit(1)
+                    // Air between rows, as on the phone, rather than a spreadsheet's 20pt.
+                    .padding(.vertical, 5)
             }
             // The title takes whatever width is spare; artist and album stop at what a name
             // needs, instead of three equal thirds with a gulf in each.
@@ -34,10 +36,12 @@ struct MacSongTable: View {
             }
             .width(min: 110, ideal: 200, max: 280)
 
-            TableColumn("Album") { song in
-                Text(showsAlbum ? (song.album ?? "") : "").foregroundStyle(.secondary).lineLimit(1)
+            if showsAlbum {
+                TableColumn("Album") { song in
+                    Text(song.album ?? "").foregroundStyle(.secondary).lineLimit(1)
+                }
+                .width(min: 110, ideal: 220, max: 300)
             }
-            .width(min: showsAlbum ? 110 : 0, ideal: showsAlbum ? 220 : 0, max: showsAlbum ? 300 : 0)
 
             TableColumn("Rating") { song in
                 MacStars(song: song)
@@ -75,6 +79,7 @@ struct MacSongTable: View {
         if song.id == player.currentSong?.id {
             Image(systemName: player.isPlaying ? "speaker.wave.2.fill" : "speaker.fill")
                 .font(.system(size: 10))
+                .symbolEffect(.variableColor.iterative, isActive: player.isPlaying)
                 .foregroundStyle(Color.appAccent)
         } else if showsTrackNumber {
             Text(song.track.map(String.init) ?? "")
@@ -108,25 +113,48 @@ struct MacDetailHeader<Actions: View>: View {
     /// A mix's own cover, drawn instead of the server's artwork.
     var mix: Mix?
     @ViewBuilder var actions: Actions
+    @Environment(\.macTopRoom) private var topRoom
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 22) {
-            if let mix {
-                EditorialMixCover(mix: mix, size: 260, cornerRadius: 12)
-            } else {
-                CoverArtImage(coverArt: coverArt, size: 260, cornerRadius: 12,
-                              placeholderName: placeholderName)
+        // Beside the cover while the window is wide enough for the buttons whole; under it
+        // otherwise, rather than cutting the title and buttons down to "…".
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .bottom, spacing: 22) {
+                cover
+                text
+                Spacer(minLength: 0)
             }
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title).auraDisplay(64).lineLimit(2)
-                Text(subtitle).font(.callout).foregroundStyle(.secondary)
-                HStack(spacing: 10) { actions }.padding(.top, 4)
+            VStack(alignment: .leading, spacing: 18) {
+                cover
+                text
             }
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 28)
+        .padding(.horizontal, 28)
+        .padding(.top, 26 + topRoom)
         .padding(.bottom, 18)
+    }
+}
+
+private extension MacDetailHeader {
+    @ViewBuilder var cover: some View {
+        if let mix {
+            EditorialMixCover(mix: mix, size: 260, cornerRadius: 12)
+        } else {
+            CoverArtImage(coverArt: coverArt, size: 260, cornerRadius: 12,
+                          placeholderName: placeholderName)
+        }
+    }
+
+    var text: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // A long title wraps and, past three lines, shrinks, instead of ending in "…".
+            Text(title).auraDisplay(64).lineLimit(3).minimumScaleFactor(0.55)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(subtitle).font(.callout).foregroundStyle(.secondary)
+            HStack(spacing: 10) { actions }.fixedSize().padding(.top, 4)
+        }
+        .frame(minWidth: 340, alignment: .leading)
     }
 }
 

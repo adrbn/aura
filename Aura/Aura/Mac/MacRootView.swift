@@ -47,6 +47,12 @@ struct MacRootView: View {
     /// Owned here rather than left to the split view. With the toolbar gone there is no
     /// system button to restore a collapsed sidebar, so its state has to be ours to set.
     @State private var preferences = MacPreferences.shared
+    @State private var windowState = MacWindowState.shared
+    /// The title bar's height with its toolbar, which every section's top is laid out below;
+    /// less in full screen, where there's no bar.
+    static let topRoom: CGFloat = 52
+    private var topRoom: CGFloat { windowState.isFullScreen ? 20 : Self.topRoom }
+    @State private var swipe = MacSwipeBack.shared
 
     var body: some View {
         let panel = MacSettingsPanel.shared
@@ -57,7 +63,7 @@ struct MacRootView: View {
                 MacServerSetupView()
             }
         }
-        .blur(radius: panel.isShown ? 10 : 0)
+        .blur(radius: panel.isShown || Self.fetchPanelShown ? 10 : 0)
         .overlay {
             if panel.isShown {
                 ZStack {
@@ -71,9 +77,32 @@ struct MacRootView: View {
             }
         }
         .animation(.smooth(duration: 0.25), value: panel.isShown)
+        #if !APPSTORE_BUILD
+        .overlay {
+            if MacFetchPanel.shared.isShown {
+                ZStack {
+                    Color.black.opacity(0.45)
+                        .ignoresSafeArea()
+                        .onTapGesture { MacFetchPanel.shared.isShown = false }
+                    MacFetchPanelView()
+                        .transition(.scale(scale: 0.96).combined(with: .opacity))
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.smooth(duration: 0.25), value: MacFetchPanel.shared.isShown)
+        #endif
         // No scroll bars anywhere: trackpad and wheel scroll, and the bars only drew over covers.
         .scrollIndicators(.hidden)
         .preferredColorScheme(AppSettings.shared.appearanceMode.colorScheme)
+    }
+
+    private static var fetchPanelShown: Bool {
+        #if APPSTORE_BUILD
+        false
+        #else
+        MacFetchPanel.shared.isShown
+        #endif
     }
 
     private var browser: some View {
@@ -81,7 +110,7 @@ struct MacRootView: View {
         // inset, and its last rows sat under the bar out of reach.
         VStack(spacing: 0) {
         NavigationSplitView(columnVisibility: columnVisibility) {
-            MacSidebar(section: $section, query: $query)
+            MacSidebar(section: $section, query: $query) { path = NavigationPath() }
         } detail: {
             // A plain VStack, not a safe-area inset. As an inset the bar was handed the
             // whole height and centred itself in it, landing halfway down the window. Here
@@ -95,25 +124,26 @@ struct MacRootView: View {
                     // section back — search is a lens over the library, not a place in it.
                     Group {
                         if query.trimmingCharacters(in: .whitespaces).isEmpty {
+                            // Each section arrives with a short fade and rise rather than a cut.
                             detail
+                                .id(section)
+                                .transition(.opacity.combined(with: .offset(y: 10)))
                         } else {
                             MacSearchView(query: $query)
                         }
                     }
-                    .navigationDestination(for: Album.self) { MacAlbumDetailView(album: $0) }
-                    .navigationDestination(for: Artist.self) { MacArtistDetailView(artist: $0) }
-                    .navigationDestination(for: Playlist.self) { MacPlaylistDetailView(playlist: $0) }
-                    .navigationDestination(for: Mix.self) { MacMixDetailView(mix: $0) }
+                    // A fixed room above the titles. Left to the window it came and went: SwiftUI
+                    // puts a toolbar back on every section change and `MacWindowChrome` takes it
+                    // off a moment later, so each title landed low, then jumped up.
+                    .safeAreaPadding(.top, topRoom)
+                    .ignoresSafeArea(.container, edges: .top)
+                    .navigationDestination(for: Album.self) { pushed(MacAlbumDetailView(album: $0)) }
+                    .navigationDestination(for: Artist.self) { pushed(MacArtistDetailView(artist: $0)) }
+                    .navigationDestination(for: Playlist.self) { pushed(MacPlaylistDetailView(playlist: $0)) }
+                    .navigationDestination(for: Mix.self) { pushed(MacMixDetailView(mix: $0)) }
+                    .animation(.smooth(duration: 0.28), value: section)
                     .macPendingNavigation(path: $path)
                 }
-                // The way back.
-                //
-                // SwiftUI's own back button is a toolbar item, and this window has no
-                // toolbar — so pushing into a playlist, album or artist was a one-way
-                // trip. Hiding the toolbar bought a clean title bar and quietly took
-                // navigation with it; this puts it back, in the detail column's own
-                // top-left corner, clear of the window buttons over the sidebar.
-                .overlay(alignment: .topLeading) { backButton }
             }
         }
         // Spans the full width, under the sidebar as well — the transport belongs to the
@@ -124,25 +154,68 @@ struct MacRootView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        // Get It's progress, top-right as the system's notifications are: a card that folds
+        // into a ring once read.
+        .overlay(alignment: .topTrailing) {
+            VStack(alignment: .trailing, spacing: 8) {
+                PlayingElsewhereRow()
+                #if !APPSTORE_BUILD
+                MacFetchNotices()
+                #endif
+            }
+            .animation(.smooth(duration: 0.35), value: RemoteLink.shared.playingElsewhere?.playing)
+            // From the window's top, in the title bar's row, where the system's own land.
+            .padding(.top, 24)
+            .padding(.trailing, 16)
+            .ignoresSafeArea()
+        }
         MacPlayerBar()
         }
+        // With the sidebar folded, its button waits beside the window's own three.
+        .overlay(alignment: .topLeading) {
+            if !preferences.sidebarVisible {
+                MacSidebarButton(floating: true).padding(.leading, windowState.isFullScreen ? 18 : 80).padding(.top, 11).ignoresSafeArea().transition(.opacity)
+            }
+        }
+        // What an action did ("Getting …", "Added to queue"), at the top of the window.
+        .overlay(alignment: .top) { ToastOverlay().padding(.top, 20) }
         // Behind everything, including the sidebar. The lists and grids above are made
         // transparent so it shows through rather than being covered by their own material.
         .background(MacBackground())
-        .background(MacWindowChrome().frame(width: 0, height: 0))
+        .background(MacWindowChrome(sidebarVisible: preferences.sidebarVisible).frame(width: 0, height: 0))
         // Safe to hide now: the buttons no longer depend on it. With the title bar itself
         // made transparent rather than removed, there is nothing left for a toolbar to do
         // but paint a strip. The sidebar toggles from the View menu.
         .toolbar(.hidden, for: .windowToolbar)
+        // The section's name no longer turns up grey in the title bar.
+        .toolbar(removing: .title)
         // Changing section starts a fresh trail. Keeping the old one would leave you on an
         // album you reached from Search after clicking Artists.
         .onChange(of: section) { _, _ in path = NavigationPath() }
         .task {
             MacSpaceKey.install()
+            swipe.canGoBack = { !path.isEmpty }
+            swipe.goBack = { if !path.isEmpty { path.removeLast() } }
+            swipe.install()
             if !serverManager.isConnected { await serverManager.testConnection() }
         }
     }
 
+    /// A pushed page, laid out from the window's top whatever the window's safe area says
+    /// (it came and went with the toolbar SwiftUI keeps putting back, and the page jumped):
+    /// its header keeps the same fixed room as the sections, and the way back sits in it.
+    /// The button rides on the page: laid over the stack, it sat under the stack's own
+    /// AppKit view and never showed.
+    private func pushed(_ page: some View) -> some View {
+        page
+            .environment(\.macTopRoom, topRoom)
+            .ignoresSafeArea(.container, edges: .top)
+            .overlay(alignment: .topLeading) { backButton }
+            .macPageEntrance()
+    }
+
+    /// SwiftUI's own back button is a toolbar item, and this window has no toolbar, so a
+    /// pushed page carries this one in its top-left corner, clear of the window buttons.
     /// Shown only when there is somewhere to go back to. `⌘[` as well as the button,
     /// because that is the shortcut every other Mac app answers to.
     @ViewBuilder private var backButton: some View {
@@ -160,8 +233,11 @@ struct MacRootView: View {
             .buttonStyle(.plain)
             .keyboardShortcut("[", modifiers: .command)
             .help("Back")
-            .padding(.leading, 18)
-            .padding(.top, 14)
+            // In the room above the cover, level with the window's buttons and clear of
+            // them, and of the sidebar's while the sidebar is folded.
+            .padding(.leading, preferences.sidebarVisible ? 18 : windowState.isFullScreen ? 56 : 118)
+            .padding(.top, 11)
+            .ignoresSafeArea()
             .transition(.opacity)
         }
     }
@@ -171,7 +247,9 @@ struct MacRootView: View {
     private var columnVisibility: Binding<NavigationSplitViewVisibility> {
         Binding(
             get: { preferences.sidebarVisible ? .all : .detailOnly },
-            set: { preferences.sidebarVisible = $0 != .detailOnly }
+            // Only ever opened from here. Folding is the button's and the View menu's: the split
+            // view folded it by itself when a page was pushed, and the preference followed.
+            set: { if $0 != .detailOnly { preferences.sidebarVisible = true } }
         )
     }
 

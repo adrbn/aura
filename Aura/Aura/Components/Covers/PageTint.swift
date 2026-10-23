@@ -109,12 +109,13 @@ struct TintedCanvas: View {
 /// `TintedCanvas` in the colour of a cover-art id.
 struct ArtworkCanvas: View {
     let coverArt: String?
+    var height: CGFloat = 440
 
     @State private var loaded: (key: String, color: UIColor)?
 
     var body: some View {
         let tint = coverArt.flatMap { key in loaded?.key == key ? loaded?.color : PageTint.cached(key) }
-        TintedCanvas(tint: tint)
+        TintedCanvas(tint: tint, height: height)
             .task(id: coverArt) {
                 guard let coverArt, loaded?.key != coverArt,
                       let color = await PageTint.load(coverArt), !Task.isCancelled else { return }

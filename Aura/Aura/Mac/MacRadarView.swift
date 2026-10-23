@@ -10,16 +10,18 @@ struct MacRadarView: View {
         Group {
             if let radar = radarService.current, !radar.releases.isEmpty {
                 List {
+                    // The rows' own inset, so the title and the covers line up as on every page.
                     Text("Radar")
                         .auraDisplay(52)
                         .listRowSeparator(.hidden)
-                        .padding(.top, 10)
+                        .listRowInsets(EdgeInsets(top: 26, leading: 16, bottom: 4, trailing: 16))
                     RadarReleaseRows(releases: radar.releases, held: wholeOnServer(radar)) { release in
                         Task { await play(release, held: wholeOnServer(radar).contains(release.id)) }
                     }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .padding(.horizontal, 12)
             } else if !AppSettings.shared.radarEnabled {
                 ContentUnavailableView("Radar is off", systemImage: "dot.radiowaves.left.and.right")
             } else {

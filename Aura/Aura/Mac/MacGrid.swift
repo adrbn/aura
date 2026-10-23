@@ -24,7 +24,7 @@ struct MacGrid<Item: Identifiable, Tile: View>: View {
                     Spacer()
                     if let trailing { trailing }
                 }
-                .padding(.horizontal, 26)
+                .padding(.horizontal, 28)
                 .padding(.top, 26)
                 .padding(.bottom, 4)
             }
@@ -48,11 +48,32 @@ struct MacGrid<Item: Identifiable, Tile: View>: View {
                 ) {
                     ForEach(items) { tile($0) }
                 }
-                .padding(24)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
             }
             .scrollContentBackground(.hidden)
         }
     }
+}
+
+/// A cover rising a little under the pointer, the way a card answers on a desk: a slight
+/// spring up and a deeper shadow. Still under Reduce Motion, where only the shadow changes.
+struct MacHoverLift: ViewModifier {
+    var scale: CGFloat = 1.035
+    @State private var hovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(hovering && !reduceMotion ? scale : 1)
+            .shadow(color: .black.opacity(hovering ? 0.35 : 0), radius: hovering ? 14 : 0, y: hovering ? 8 : 0)
+            .animation(.spring(duration: 0.3, bounce: 0.25), value: hovering)
+            .onHover { hovering = $0 }
+    }
+}
+
+extension View {
+    func macHoverLift(scale: CGFloat = 1.035) -> some View { modifier(MacHoverLift(scale: scale)) }
 }
 
 struct MacLoadingState: View {
@@ -78,6 +99,7 @@ struct MacCoverTile: View {
                               placeholderName: placeholderName)
             }
             .aspectRatio(1, contentMode: .fit)
+            .macHoverLift()
             VStack(alignment: .leading, spacing: 1) {
                 Text(title).font(.system(size: 12, weight: .medium)).lineLimit(1)
                 if let subtitle {

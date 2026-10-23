@@ -10,6 +10,7 @@ import SwiftUI
 /// behind it, rather than a second window to find and close. Sections down the side, the
 /// way the window keeps its library.
 struct MacSettingsView: View {
+    @Environment(\.colorScheme) private var scheme
     enum Pane: String, CaseIterable, Identifiable {
         case playback, lyrics, library, appearance, translation, developer
         var id: String { rawValue }
@@ -105,7 +106,7 @@ struct MacSettingsView: View {
         .padding(.horizontal, 12)
         .frame(width: 230)
         // A shade darker than the pane beside it, so the two read as sidebar and page.
-        .background(.black.opacity(0.22))
+        .background(.primary.opacity(scheme == .dark ? 0.22 : 0.04))
     }
 
     @ViewBuilder
@@ -423,7 +424,7 @@ private struct MacDeveloperSettings: View {
                     .textFieldStyle(.roundedBorder).frame(width: 220)
             }
             SettingsRow(title: "Password", detail: "slskd's own web sign-in, not your Soulseek account.", last: true) {
-                SecureField("slskd", text: $settings.slskdPassword)
+                SecureField("Password", text: $settings.slskdPassword)
                     .textFieldStyle(.roundedBorder).frame(width: 220)
             }
         }

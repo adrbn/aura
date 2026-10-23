@@ -76,7 +76,8 @@ struct MacHomeView: View {
                     spacing: 12
                 ) {
                     ForEach(picks) { album in
-                        NavigationLink(value: album) { quickTile(album) }.buttonStyle(.plain)
+                        NavigationLink(value: album) { quickTile(album) }.buttonStyle(MacPressStyle())
+                            .macHoverLift(scale: 1.015)
                     }
                 }
                 .padding(.horizontal, 28)
@@ -117,7 +118,7 @@ struct MacHomeView: View {
                     play: { play(mix.songs, source: .mix(id: mix.id, name: mix.title)) }
                 )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MacPressStyle())
         }
     }
 
@@ -138,7 +139,7 @@ struct MacHomeView: View {
                     play: { Task { await playAlbum(album) } }
                 )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MacPressStyle())
         }
     }
 
@@ -153,7 +154,7 @@ struct MacHomeView: View {
                     play: { Task { await playPlaylist(playlist) } }
                 )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MacPressStyle())
         }
     }
 

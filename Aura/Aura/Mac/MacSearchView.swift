@@ -34,8 +34,8 @@ struct MacSearchView: View {
                         }
                         .font(.subheadline)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 24)
+                    .buttonStyle(MacPressStyle())
+                    .padding(.horizontal, 28)
                     .padding(.top, 16)
                 }
 
@@ -47,7 +47,7 @@ struct MacSearchView: View {
                                          placeholderName: artist.name, circular: true)
                                 .frame(width: 132)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(MacPressStyle())
                     }
                 }
 
@@ -59,7 +59,7 @@ struct MacSearchView: View {
                                          subtitle: album.artist, placeholderName: album.name)
                                 .frame(width: 132)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(MacPressStyle())
                     }
                 }
 
@@ -72,7 +72,7 @@ struct MacSearchView: View {
                                          placeholderName: playlist.name)
                                 .frame(width: 132)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(MacPressStyle())
                     }
                 }
 
@@ -84,7 +84,7 @@ struct MacSearchView: View {
                                        queue: results.songs)
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 28)
                     .padding(.bottom, 28)
                 }
             }
@@ -93,14 +93,14 @@ struct MacSearchView: View {
 
     private func header(_ text: LocalizedStringKey) -> some View {
         Text(text).auraDisplay(34)
-            .padding(.horizontal, 24).padding(.top, 18).padding(.bottom, 8)
+            .padding(.horizontal, 28).padding(.top, 18).padding(.bottom, 8)
     }
 
     private func row<T: Identifiable, V: View>(_ items: [T],
                                                @ViewBuilder tile: @escaping (T) -> V) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 18) { ForEach(items) { tile($0) } }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 28)
         }
     }
 

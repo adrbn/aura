@@ -49,8 +49,12 @@ final class RemoteLink: NSObject {
     struct Device: Hashable {
         let peer: MCPeerID
         let kind: String
+        /// What it plays right now, "title — artist", nil while it's paused or idle.
+        var playing: String? = nil
         var name: String { peer.displayName }
         var symbol: String { RemoteLink.symbol(for: kind) }
+        static func == (a: Device, b: Device) -> Bool { a.peer == b.peer }
+        func hash(into hasher: inout Hasher) { hasher.combine(peer) }
     }
 
     /// The other Auras in reach.
@@ -88,6 +92,8 @@ final class RemoteLink: NSObject {
     private var sentQueue: [String]?
     private var bringing = true
     private var lastShown: (id: String?, playing: Bool, time: Double) = (nil, false, 0)
+    /// What the announcement last said this device plays, to announce again once it changes.
+    private var announced: String?
 
     private func makeSession() -> MCSession {
         let session = MCSession(peer: peer, securityIdentity: nil, encryptionPreference: .required)
@@ -114,16 +120,13 @@ final class RemoteLink: NSObject {
 
     func start() {
         guard advertiser == nil else { return }
-        let advertiser = MCNearbyServiceAdvertiser(peer: peer, discoveryInfo: ["kind": Self.kind], serviceType: Self.service)
-        advertiser.delegate = self
-        advertiser.startAdvertisingPeer()
-        self.advertiser = advertiser
+        announce()
         let browser = MCNearbyServiceBrowser(peer: peer, serviceType: Self.service)
         browser.delegate = self
         browser.startBrowsingForPeers()
         self.browser = browser
         ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            Task { @MainActor in RemoteLink.shared.broadcast() }
+            Task { @MainActor in RemoteLink.shared.tick() }
         }
         #if os(iOS)
         // The volume buttons, while this iPhone plays on another device, set that one's volume.
@@ -132,6 +135,43 @@ final class RemoteLink: NSObject {
             Task { @MainActor in if RemoteLink.shared.connected != nil { RemoteLink.shared.send(.volume(volume)) } }
         }
         #endif
+    }
+
+    private var ticks = 0
+
+    private func tick() {
+        broadcast()
+        announce()
+        // A peer already found isn't reported again when its announcement changes: looking
+        // afresh every few seconds is what shows a song started on the other device.
+        ticks += 1
+        if ticks % 5 == 0, connected == nil, let browser {
+            browser.stopBrowsingForPeers()
+            browser.startBrowsingForPeers()
+        }
+    }
+
+    /// Announces this device, with what it plays: the others see it playing without
+    /// connecting. An announcement can't change, so a new one replaces it.
+    private func announce() {
+        let player = AudioPlayer.shared
+        let playing = connected == nil && player.isPlaying
+            ? player.currentSong.map { "\($0.title.prefix(80)) — \($0.artist?.prefix(60) ?? "")" } : nil
+        guard advertiser == nil || playing != announced else { return }
+        announced = playing
+        advertiser?.stopAdvertisingPeer()
+        var info = ["kind": Self.kind]
+        info["playing"] = playing
+        let advertiser = MCNearbyServiceAdvertiser(peer: peer, discoveryInfo: info, serviceType: Self.service)
+        advertiser.delegate = self
+        advertiser.startAdvertisingPeer()
+        self.advertiser = advertiser
+    }
+
+    /// Another Aura playing at the same time as this one, which plays nothing of it.
+    var playingElsewhere: Device? {
+        guard connected == nil, controllers.isEmpty else { return nil }
+        return devices.first { $0.playing != nil }
     }
 
     // MARK: Played on
@@ -337,7 +377,7 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
             guard peerID != peer else { return }
             // A device that relaunched comes back under a new identity with the same name.
             devices.removeAll { $0.name == peerID.displayName }
-            devices.append(Device(peer: peerID, kind: info?["kind"] ?? "mac"))
+            devices.append(Device(peer: peerID, kind: info?["kind"] ?? "mac", playing: info?["playing"]))
         }
     }
 
@@ -388,5 +428,53 @@ struct RemoteBand: View {
             // The text sits just above the home indicator, not a whole safe area higher.
             .padding(.bottom, max(5, bottomInset - 14))
             .background(colour)
+    }
+}
+
+/// Another Aura playing at the same time, the Mac on the phone, the phone on the Mac: what it plays, and a tap to
+/// control it from here. Left alone, this device plays its own music beside it.
+struct PlayingElsewhereRow: View {
+    @Environment(\.appAccentColor) private var accentColor
+    @State private var dismissed: String?
+
+    var body: some View {
+        let link = RemoteLink.shared
+        if let device = link.playingElsewhere, let playing = device.playing, dismissed != "\(device.name)|\(playing)" {
+            // One line: what plays, where, and the one thing to do about it. Left alone, this
+            // device goes on playing its own music.
+            HStack(spacing: 8) {
+                Image(systemName: device.symbol)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(accentColor)
+                (Text(playing).foregroundStyle(.primary) + Text(" · \(device.name)").foregroundStyle(.secondary))
+                    .font(.caption.weight(.medium))
+                    .lineLimit(1)
+                Button("Control") { link.connect(to: device, bringing: false) }
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(accentColor)
+                    .buttonStyle(.plain)
+                Button {
+                    withAnimation(.smooth(duration: 0.3)) { dismissed = "\(device.name)|\(playing)" }
+                } label: {
+                    Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundStyle(.secondary)
+                        .frame(width: 18, height: 18)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Dismiss")
+            }
+            .padding(.leading, 12).padding(.trailing, 8)
+            .frame(height: 32)
+            .glassEffect(.regular, in: Capsule())
+            #if os(iOS)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 8)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            #else
+            .frame(maxWidth: 420, alignment: .trailing)
+            .fixedSize()
+            .transition(.move(edge: .trailing).combined(with: .opacity))
+            #endif
+        }
     }
 }
