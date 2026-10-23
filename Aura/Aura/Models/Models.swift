@@ -505,7 +505,10 @@ extension Color {
         #if canImport(UIKit)
         return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCanvas : .systemBackground })
         #else
-        return .platformBackground
+        return Color(nsColor: NSColor(name: nil) {
+            $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                ? NSColor(red: 0x12 / 255, green: 0x12 / 255, blue: 0x12 / 255, alpha: 1) : .white
+        })
         #endif
     }()
     static var themeSecondaryBg: Color {

@@ -194,11 +194,7 @@ struct MacPlayerBar: View {
                 Button { link.playHere() } label: {
                     Label("This Mac", systemImage: link.connected == nil ? "checkmark" : "macbook")
                 }
-                ForEach(link.devices, id: \.self) { device in
-                    Button { link.connect(to: device) } label: {
-                        Label(device.name, systemImage: link.connected == device ? "checkmark" : device.symbol)
-                    }
-                }
+                ForEach(link.devices, id: \.self) { RemoteDeviceItem(device: $0) }
                 Divider()
                 // Speakers, headphones and AirPlay are the Mac's own to choose, in its Sound settings.
                 Button {

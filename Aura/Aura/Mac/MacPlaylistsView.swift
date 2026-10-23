@@ -61,6 +61,7 @@ struct MacPlaylistDetailView: View {
             Divider()
             MacSongTable(songs: songs, source: .playlist(id: playlist.id, name: playlist.name))
         }
+        .background { ZStack { ArtworkCanvas(coverArt: playlist.coverArt); MacFadingGrid() } }
         .navigationTitle(playlist.name)
         .task { await load() }
     }

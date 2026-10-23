@@ -25,15 +25,19 @@ struct MacSongTable: View {
                     .foregroundStyle(song.id == player.currentSong?.id ? Color.appAccent : .primary)
                     .lineLimit(1)
             }
+            // The title takes whatever width is spare; artist and album stop at what a name
+            // needs, instead of three equal thirds with a gulf in each.
+            .width(min: 180, ideal: 380)
 
             TableColumn("Artist") { song in
                 Text(song.artist ?? String(localized: "Unknown Artist")).foregroundStyle(.secondary).lineLimit(1)
             }
+            .width(min: 110, ideal: 200, max: 280)
 
             TableColumn("Album") { song in
                 Text(showsAlbum ? (song.album ?? "") : "").foregroundStyle(.secondary).lineLimit(1)
             }
-            .width(showsAlbum ? nil : 0)
+            .width(min: showsAlbum ? 110 : 0, ideal: showsAlbum ? 220 : 0, max: showsAlbum ? 300 : 0)
 
             TableColumn("Rating") { song in
                 MacStars(song: song)
@@ -48,6 +52,11 @@ struct MacSongTable: View {
             .width(52)
         }
         .scrollContentBackground(.hidden)
+        // No striped rows running on past the last song: a five-song album ended in a wall
+        // of empty stripes.
+        .alternatingRowBackgrounds(.disabled)
+        // Rows start on the header's left edge, the cover's, rather than a step inside it.
+        .padding(.horizontal, 12)
         .contextMenu(forSelectionType: Song.ID.self) { ids in
             Button("Play") { play(ids) }
             Button("Play Next") { chosen(ids).reversed().forEach { player.playNext($0) } }
@@ -103,13 +112,13 @@ struct MacDetailHeader<Actions: View>: View {
     var body: some View {
         HStack(alignment: .bottom, spacing: 22) {
             if let mix {
-                EditorialMixCover(mix: mix, size: 210, cornerRadius: 12)
+                EditorialMixCover(mix: mix, size: 260, cornerRadius: 12)
             } else {
-                CoverArtImage(coverArt: coverArt, size: 210, cornerRadius: 12,
+                CoverArtImage(coverArt: coverArt, size: 260, cornerRadius: 12,
                               placeholderName: placeholderName)
             }
             VStack(alignment: .leading, spacing: 8) {
-                Text(title).auraDisplay(52).lineLimit(2)
+                Text(title).auraDisplay(64).lineLimit(2)
                 Text(subtitle).font(.callout).foregroundStyle(.secondary)
                 HStack(spacing: 10) { actions }.padding(.top, 4)
             }

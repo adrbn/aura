@@ -77,6 +77,8 @@ struct MacAlbumDetailView: View {
                          source: .album(id: album.id, name: album.name),
                          showsAlbum: false, showsTrackNumber: true)
         }
+        // The page opens in the light of its cover, as on the iPhone.
+        .background { ZStack { ArtworkCanvas(coverArt: album.coverArt); MacFadingGrid() } }
         .navigationTitle(album.name)
         .task { await load() }
     }

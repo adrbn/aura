@@ -86,6 +86,7 @@ final class RemoteLink: NSObject {
     private var local = (song: Song?.none, queue: Queue(songs: [], upNext: [], index: 0), volume: 1.0)
     /// The queue as last sent, to send it again only once it changes.
     private var sentQueue: [String]?
+    private var bringing = true
     private var lastShown: (id: String?, playing: Bool, time: Double) = (nil, false, 0)
 
     private func makeSession() -> MCSession {
@@ -180,8 +181,11 @@ final class RemoteLink: NSObject {
 
     // MARK: Playing on
 
-    func connect(to device: Device) {
+    /// `bringing`: what plays here moves over and replaces what plays there. Without it,
+    /// this device stops and takes the remote of what the other one already plays.
+    func connect(to device: Device, bringing: Bool = true) {
         if connected != nil { playHere() }
+        self.bringing = bringing
         invited = device.peer
         browser?.invitePeer(device.peer, to: outgoing, withContext: accountKey, timeout: 15)
     }
@@ -220,7 +224,7 @@ final class RemoteLink: NSObject {
         accent = Color.appAccent
         send(.accent(red: Double(tone.red), green: Double(tone.green), blue: Double(tone.blue)))
         // What this device was playing moves over, from the same moment.
-        if wasPlaying, let song = local.song {
+        if bringing, wasPlaying, let song = local.song {
             send(.playSong(song, queue: local.queue.songs, index: local.queue.index, source: .unknown, at: time))
         }
     }
@@ -339,6 +343,28 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         Task { @MainActor in devices.removeAll { $0.peer == peerID } }
+    }
+}
+
+/// A device in a "Play on" menu. While this one plays, it asks which music goes on: the
+/// song playing here, or the one already playing there.
+struct RemoteDeviceItem: View {
+    let device: RemoteLink.Device
+
+    var body: some View {
+        let link = RemoteLink.shared
+        if AudioPlayer.shared.isPlaying, link.connected == nil {
+            Menu {
+                Button("Send This Song") { link.connect(to: device) }
+                Button("Control What It Plays") { link.connect(to: device, bringing: false) }
+            } label: {
+                Label(device.name, systemImage: device.symbol)
+            }
+        } else {
+            Button { link.connect(to: device) } label: {
+                Label(device.name, systemImage: link.connected == device ? "checkmark" : device.symbol)
+            }
+        }
     }
 }
 

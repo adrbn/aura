@@ -1,8 +1,10 @@
 import Foundation
+import os
 
 @Observable
 final class AppLogger {
     static let shared = AppLogger()
+    private static let system = Logger(subsystem: "com.aura", category: "app")
     private static let timestampFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -30,6 +32,8 @@ final class AppLogger {
         let entry = LogEntry(timestamp: Date(), level: level, message: message)
         let timestamp = Self.timestampFormatter.string(from: entry.timestamp)
         print("[Aura] \(timestamp) [\(level.rawValue)] \(message)")
+        // Also to the system log, where Console and `log stream` read a running app's lines.
+        Self.system.log("\(message, privacy: .public)")
         DispatchQueue.main.async {
             self.entries.append(entry)
             if self.entries.count > self.maxEntries {

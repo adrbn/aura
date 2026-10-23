@@ -49,6 +49,7 @@ struct MacRootView: View {
     @State private var preferences = MacPreferences.shared
 
     var body: some View {
+        let panel = MacSettingsPanel.shared
         Group {
             if serverManager.hasServer {
                 browser
@@ -56,7 +57,23 @@ struct MacRootView: View {
                 MacServerSetupView()
             }
         }
-        .preferredColorScheme(.dark)
+        .blur(radius: panel.isShown ? 10 : 0)
+        .overlay {
+            if panel.isShown {
+                ZStack {
+                    Color.black.opacity(0.45)
+                        .ignoresSafeArea()
+                        .onTapGesture { panel.isShown = false }
+                    MacSettingsView()
+                        .transition(.scale(scale: 0.96).combined(with: .opacity))
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.smooth(duration: 0.25), value: panel.isShown)
+        // No scroll bars anywhere: trackpad and wheel scroll, and the bars only drew over covers.
+        .scrollIndicators(.hidden)
+        .preferredColorScheme(AppSettings.shared.appearanceMode.colorScheme)
     }
 
     private var browser: some View {
@@ -121,6 +138,7 @@ struct MacRootView: View {
         // album you reached from Search after clicking Artists.
         .onChange(of: section) { _, _ in path = NavigationPath() }
         .task {
+            MacSpaceKey.install()
             if !serverManager.isConnected { await serverManager.testConnection() }
         }
     }

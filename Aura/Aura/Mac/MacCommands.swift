@@ -13,6 +13,10 @@ struct MacCommands: Commands {
         // Replaces the New Window item: this app has one window and nothing to put in a
         // second one.
         CommandGroup(replacing: .newItem) { }
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings…") { MacSettingsPanel.shared.isShown.toggle() }
+                .keyboardShortcut(",")
+        }
 
         CommandGroup(after: .toolbar) {
             // The window buttons hide themselves in full screen, which is the only way to
@@ -93,6 +97,24 @@ struct MacCommands: Commands {
             }
             .keyboardShortcut("0", modifiers: [.command, .option])
             .disabled(player.pitchSemitones == 0)
+        }
+    }
+}
+
+/// Space plays and pauses wherever the focus is. As a menu shortcut alone it never fired:
+/// the focused list or table took the key first and spent it on its own selection.
+enum MacSpaceKey {
+    private static var monitor: Any?
+
+    static func install() {
+        guard monitor == nil else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            let typing = event.window?.firstResponder is NSText
+            guard event.keyCode == 49, !typing,
+                  event.modifierFlags.intersection([.command, .option, .control, .shift]).isEmpty,
+                  AudioPlayer.shared.currentSong != nil else { return event }
+            AudioPlayer.shared.togglePlayPause()
+            return nil
         }
     }
 }

@@ -360,7 +360,9 @@ final class MixGenerator {
 
         if cache.needsRegeneration(for: serverId, hasMixes: !mixes.isEmpty,
                                    bucket: TimeBucket.current.rawValue) {
-            await generate()
+            // Its own task, not the caller's: a page that reloads as the app starts cancelled
+            // every request mid-way, and the shelf stayed empty until the next generation.
+            await Task { await generate() }.value
         }
     }
 
@@ -450,6 +452,12 @@ final class MixGenerator {
         // Generating takes many round-trips, and the user can switch servers while it runs.
         // The result belongs to the server it was built from, so file it there either way —
         // but only put it on screen if that server is still the active one.
+        // Nothing built means the server didn't answer, not that the library has no music:
+        // the mixes already there stay rather than an empty shelf replacing them.
+        guard !built.isEmpty || !MixPreferences.anyOn else {
+            AppLogger.shared.log("🎚 Auto-mixes: nothing built, keeping the last ones")
+            return
+        }
         let now = Date()
         cache.save(built, for: server.id, bucket: bucket.rawValue, at: now)
         cache.recordServed(built.flatMap { $0.songs.map(\.id) }, for: server.id)

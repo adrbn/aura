@@ -188,11 +188,7 @@ struct AudioOutputButtonWrapper: View {
                     Button { link.playHere() } label: {
                         Label("This iPhone", systemImage: link.connected == nil ? "checkmark" : "iphone")
                     }
-                    ForEach(link.devices, id: \.self) { device in
-                        Button { link.connect(to: device) } label: {
-                            Label(device.name, systemImage: link.connected == device ? "checkmark" : device.symbol)
-                        }
-                    }
+                    ForEach(link.devices, id: \.self) { RemoteDeviceItem(device: $0) }
                     Divider()
                     Button { AudioOutputContainerView.presentRoutePicker() } label: {
                         Label("AirPlay & Bluetooth", systemImage: "airplayaudio")
