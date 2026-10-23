@@ -90,7 +90,7 @@ final class ReleaseFetcher {
     private static let scanEvery: TimeInterval = 4 * 60
     private static let importLimit: TimeInterval = 90 * 60
     private static let readyKept: TimeInterval = 30 * 60
-    private static let readyShown: TimeInterval = 10 * 60
+    private static let readyShown: TimeInterval = 2 * 60
     // A failure is read once, then it is clutter: a day on the banner kept a card no one
     // could act on sitting above the player, back again at every launch.
     private static let failedKept: TimeInterval = 60
