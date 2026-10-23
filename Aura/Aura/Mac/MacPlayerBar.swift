@@ -55,7 +55,7 @@ struct MacPlayerBar: View {
         HStack(spacing: 12) {
             Button {
                 guard song != nil else { return }
-                withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying = true }
+                withAnimation(.easeInOut(duration: 0.28)) { player.isShowingNowPlaying.toggle() }
             } label: {
                 CoverArtImage(coverArt: song?.coverArt, size: 60, cornerRadius: 7)
                     .shadow(color: .black.opacity(0.4), radius: 5, y: 2)

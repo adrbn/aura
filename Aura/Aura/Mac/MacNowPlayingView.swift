@@ -189,7 +189,9 @@ struct MacLyricsSheet: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
-                LazyVStack(alignment: .leading, spacing: 30) {
+                // Not lazy: a lazy stack only estimates the heights of lines it hasn't drawn,
+                // so scrollTo aimed at a guess and corrected itself mid-move, a visible hitch.
+                VStack(alignment: .leading, spacing: 30) {
                     Spacer().frame(height: paneHeight * 0.42)
                     ForEach(Array(player.lyrics.enumerated()), id: \.element.id) { index, line in
                         // Only the line being sung redraws on the display link, and only
@@ -260,6 +262,9 @@ struct MacLyricsSheet: View {
         }
             .foregroundStyle(.white.opacity(synced ? opacity(distance) : 0.8))
             .blur(radius: synced ? blur(distance) : 0)
+            // Flattened into one GPU layer before the scale, so the line change animates a
+            // texture instead of laying out and blurring 80pt text again on every frame.
+            .drawingGroup()
             // The sung line at full size and the rest at two thirds. A big delta on purpose:
             // it is what lets you find your place across a room without reading anything.
             .scaleEffect(isCurrent || !synced ? 1 : 0.66, anchor: .leading)
