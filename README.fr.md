@@ -15,7 +15,8 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download-fr.svg" alt="Télécharger l'IPA" height="40"></a>&nbsp;
-<a href="#mac-aper%C3%A7u"><img src="docs/assets/btn-mac-fr.svg" alt="Télécharger pour Mac" height="40"></a>&nbsp;
+<a href="#mac-aper%C3%A7u"><img src="docs/assets/btn-mac-fr.svg" alt="Télécharger pour Mac" height="40"></a>
+<br>
 <a href="#ce-que-fait-aura"><img src="docs/assets/btn-features-fr.svg" alt="Fonctions" height="40"></a>&nbsp;
 <a href="#deux-versions"><img src="docs/assets/btn-builds-fr.svg" alt="Deux versions" height="40"></a>&nbsp;
 <a href="#compiler-depuis-les-sources"><img src="docs/assets/btn-source-fr.svg" alt="Compiler" height="40"></a>
@@ -29,7 +30,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#configuration-requise)
 [![Navidrome / Subsonic](https://img.shields.io/badge/serveur-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#configuration-requise)
 [![Aucun pistage](https://img.shields.io/badge/pistage-aucun-EB534D?style=flat-square&labelColor=121212)](#confidentialit%C3%A9)
-[![Dernière version](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&style=flat-square&labelColor=121212&color=EB534D&label=version)](https://github.com/adrbn/aura/releases/latest)
+[![Dernière version](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&filter=v*&style=flat-square&labelColor=121212&color=EB534D&label=version)](https://github.com/adrbn/aura/releases/latest)
 [![Licence GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-EB534D?style=flat-square&labelColor=121212)](LICENSE)
 
 <sub><a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github">Sur l'App Store</a> sous le nom <b>Aura: Self-Hosted Music</b> · Gratuit et libre · Apportez votre serveur</sub>
