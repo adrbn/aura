@@ -20,9 +20,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
   <img src="docs/assets/aura-hero.svg" alt="Aura sur deux iPhone et une Apple Watch, en captures de l'app : En cours de lecture et paroles synchronisées, Accueil, une radio et un album" width="600">
 </picture>
 <br><br>
-<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" alt="Offrir un café sur Ko-fi" height="64"></a>
-
-<br>
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" alt="Offrir un café sur Ko-fi" height="64"></a><br><br>
 
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20aper%C3%A7u-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
