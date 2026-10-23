@@ -1,6 +1,266 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Your Mac's language. Songs already in it aren't translated.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'idioma del teu Mac. Les cançons que ja hi són no es tradueixen."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Sprache deines Macs. Titel, die bereits in dieser Sprache sind, werden nicht übersetzt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El idioma de tu Mac. Las canciones que ya están en ese idioma no se traducen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La langue de votre Mac. Les chansons déjà dans cette langue ne sont pas traduites."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La lingua del tuo Mac. I brani già in questa lingua non vengono tradotti."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De taal van je Mac. Nummers die daar al in staan, worden niet vertaald."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Язык вашего Mac. Песни, уже написанные на нем, не переводятся."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的 Mac 语言。已是该语言的歌曲不会被翻译。"
+          }
+        }
+      }
+    },
+    "A song translated once is kept on this Mac, and comes back offline.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una cançó traduïda una vegada es queda en aquest Mac i torna a aparèixer sense connexió."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein einmal übersetzter Songtext bleibt auf diesem Mac gespeichert und ist auch offline verfügbar."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una canción traducida una vez se guarda en este Mac, y vuelve a aparecer sin conexión."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une chanson traduite une fois reste sur ce Mac, même hors ligne."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un brano tradotto una volta resta su questo Mac, anche offline."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Een nummer dat eenmaal vertaald is, blijft op deze Mac staan en werkt ook offline."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Однажды переведенная песня сохраняется на этом Mac и доступна офлайн."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歌曲翻译一次后会保留在这台 Mac 上，离线时也能显示。"
+          }
+        }
+      }
+    },
+    "The key stays in this Mac's Keychain.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clau es queda al clauer d'aquest Mac."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Schlüssel bleibt im Schlüsselbund dieses Macs."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clave se queda en el llavero de este Mac."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La clé reste dans le trousseau de ce Mac."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La chiave resta nel portachiavi di questo Mac."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De sleutel blijft in de sleutelhanger van deze Mac."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ключ хранится в Связке ключей этого Mac."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "密钥保存在这台 Mac 的钥匙串中。"
+          }
+        }
+      }
+    },
+    "Click the translate button beside the lyrics to show or hide the translation.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fes clic al botó de traducció al costat de la lletra per mostrar o amagar la traducció."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klicke auf die Übersetzungsschaltfläche neben dem Songtext, um die Übersetzung ein- oder auszublenden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haz clic en el botón de traducción junto a la letra para mostrar u ocultar la traducción."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquer sur le bouton de traduction à côté des paroles pour afficher ou masquer la traduction."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fai clic sul pulsante di traduzione accanto al testo per mostrare o nascondere la traduzione."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klik op de vertaalknop naast de songtekst om de vertaling te tonen of te verbergen."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите кнопку перевода рядом с текстом, чтобы показать или скрыть перевод."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按歌词旁的翻译按钮即可显示或隐藏翻译。"
+          }
+        }
+      }
+    },
+    "Sign in, click **Create API key**, then copy it.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicia la sessió, fes clic a **Create API key** i després copia-la."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anmelden, auf **Create API key** klicken und ihn kopieren."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicia sesión, haz clic en **Create API key** y luego cópiala."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez-vous, cliquez sur **Create API key**, puis copiez-la."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accedi, fai clic su **Create API key**, poi copiala."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meld je aan, klik op **Create API key** en kopieer de sleutel."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Войдите, нажмите **Create API key** и скопируйте ключ."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录后点按 **Create API key**，然后拷贝。"
+          }
+        }
+      }
+    },
     "No Rating": {
       "localizations": {
         "ca": {

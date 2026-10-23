@@ -7,6 +7,9 @@ import SwiftUI
 /// is the whole reason to want this on a desktop.
 struct MacNowPlayingView: View {
     @State private var player = AudioPlayer.shared
+    @State private var translator = LyricsTranslator.shared
+    @State private var settings = AppSettings.shared
+    @Environment(\.openSettings) private var openSettings
     let close: () -> Void
 
     var body: some View {
@@ -89,6 +92,30 @@ struct MacNowPlayingView: View {
         .help("Fetch these lyrics again")
     }
 
+    /// Shows or hides a translation under each line, as the phone's button does. Without a
+    /// key it opens the settings where one is pasted.
+    private var translateButton: some View {
+        let on = settings.translateLyrics && !translator.needsKey
+            && (translator.hasTranslation || translator.isWorking)
+        return Button {
+            guard !translator.needsKey else { openSettings(); return }
+            settings.translateLyrics = !on
+            settings.save()
+            if !on { translator.translateMissing() }
+        } label: {
+            Image(systemName: "translate")
+                .font(.system(size: 11))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(.white.opacity(on ? 0.22 : 0.10)))
+                .symbolEffect(.pulse, isActive: on && translator.isWorking)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.white.opacity(on ? 0.9 : 0.6))
+        .padding(24)
+        .help(translator.failure ?? String(localized: on ? "Hide translation" : "Translate lyrics"))
+    }
+
     private var lyricsPane: some View {
         Group {
             if player.isLoadingLyrics {
@@ -114,10 +141,23 @@ struct MacNowPlayingView: View {
                     .frame(maxWidth: .infinity)
                     // Matching is a guess when the server has no sheet of its own, and a
                     // guess needs a way out. Discards what was found and asks again.
-                    .overlay(alignment: .bottomTrailing) { refetchButton }
+                    .overlay(alignment: .bottomTrailing) {
+                        HStack(spacing: 0) {
+                            if translator.isAvailable { translateButton.padding(.trailing, -16) }
+                            refetchButton
+                        }
+                    }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Each sheet is looked at for its language, so the button is ready; a song is only
+        // sent to Gemini when the button is clicked for it.
+        .task(id: player.lyrics.map(\.text)) {
+            await translator.show(songId: player.currentSong?.id,
+                                  song: LyricsSong(title: player.currentSong?.title,
+                                                   artist: player.currentSong?.artist),
+                                  texts: player.lyrics.map(\.text))
+        }
     }
 }
 
@@ -128,6 +168,8 @@ struct MacNowPlayingView: View {
 /// but laid out for a wide pane rather than a phone's column.
 struct MacLyricsSheet: View {
     @State private var player = AudioPlayer.shared
+    @State private var translator = LyricsTranslator.shared
+    @State private var settings = AppSettings.shared
     @State private var currentIndex: Int?
     /// Half the pane, so line one can sit in the middle like every other line.
     @State private var paneHeight: CGFloat = 600
@@ -200,8 +242,15 @@ struct MacLyricsSheet: View {
         let focus = currentIndex ?? 0
         let distance = abs(index - focus)
         let isCurrent = index == focus
-        return text(for: line, isCurrent: isCurrent)
-            .font(.system(size: 44, weight: .bold))
+        return VStack(alignment: .leading, spacing: 8) {
+            text(for: line, isCurrent: isCurrent)
+                .font(.system(size: 44, weight: .bold))
+            if settings.translateLyrics, let translation = translator.lines[line.text], !translation.isEmpty {
+                Text(translation)
+                    .font(.system(size: 26, weight: .semibold))
+                    .opacity(0.6)
+            }
+        }
             .foregroundStyle(.white.opacity(synced ? opacity(distance) : 0.8))
             .blur(radius: synced ? blur(distance) : 0)
             // The sung line at full size and the rest at two thirds. A big delta on purpose:

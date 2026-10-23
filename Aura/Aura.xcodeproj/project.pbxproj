@@ -16,6 +16,7 @@
 		08E4C34DF24A10EBBA4861E3 /* DayGlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CC48FEAC7904215D8AB02D6 /* DayGlow.swift */; };
 		0A1F89D1ABA2F4604606726A /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
 		0A3112A686D5D037ACD3FFCC /* CarPlayArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7027618C0439D47187558051 /* CarPlayArtwork.swift */; };
+		0AA3AF383DFB71CA7D2EED6B /* LyricsTranslationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F316BCC5018DF788F0B8F8 /* LyricsTranslationSettingsView.swift */; };
 		0C0C91083850C250BECEEC43 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
 		0CF35D1498580545AAB8E5CF /* MacArtistLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */; };
 		0DD7E850D3FA7DC35FC4AB8C /* LyricsOverrides.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB20C2630F70AD51EC1D03F /* LyricsOverrides.swift */; };
@@ -89,6 +90,7 @@
 		AA11BB22CC33DD44EE55F401 /* LyricWordTimingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55F402 /* LyricWordTimingTests.swift */; };
 		AE1AEF37014E99B74EC9C0E0 /* MacAlbumsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29B621CC4AF2D3304AEB48D /* MacAlbumsView.swift */; };
 		B14BB8B8B6119F8BED515D05 /* AudioCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000087 /* AudioCacheManager.swift */; };
+		B200E13254CF6BCF34DDF81C /* LyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B002 /* LyricsTranslator.swift */; };
 		B225BE723A71BD7C8986CD35 /* MacWindowChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */; };
 		B308A21EB72F34D0B1A95848 /* AppTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F3 /* AppTypography.swift */; };
 		B3BFA808FAD49E93A7FD8F14 /* UpNextPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAEB2AEB2052627E49050B2F /* UpNextPage.swift */; };
@@ -240,6 +242,7 @@
 		F7121339D268A340E4E09F3A /* CarPlayBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C03CBFD9194F991514A276 /* CarPlayBrowser.swift */; };
 		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
 		F9FA80A12F501CE2B050FF14 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
+		FAA4E169C5417E5CAF16E1CD /* GeminiLyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */; };
 		FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC935E192C9737FFC79738ED /* MacSongRow.swift */; };
 		FB688442D8147551C7C26966 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C2DD223260297B0A1DE6EA /* Backdrop.swift */; };
 		FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
@@ -1204,6 +1207,9 @@
 				E6D21EF991F5EA4A588D4CFF /* LocalSearch.swift in Sources */,
 				60C8B2F4D550FADE0808953B /* LibraryIndex.swift in Sources */,
 				7529DE0BB0988A378773F250 /* MacSettingsView.swift in Sources */,
+				B200E13254CF6BCF34DDF81C /* LyricsTranslator.swift in Sources */,
+				FAA4E169C5417E5CAF16E1CD /* GeminiLyricsTranslator.swift in Sources */,
+				0AA3AF383DFB71CA7D2EED6B /* LyricsTranslationSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

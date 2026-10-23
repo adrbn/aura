@@ -5,6 +5,12 @@ import SwiftUI
 /// Gemini is the only translator. Without a key nothing is translated, so this screen is
 /// mostly a setup: what it gives, three steps to a free key, a field that takes a paste.
 struct LyricsTranslationSettingsView: View {
+    #if os(macOS)
+    private static let onMac = true
+    #else
+    private static let onMac = false
+    #endif
+
     private enum Check: Equatable {
         case idle, checking, works
         case failed(String)
@@ -40,24 +46,28 @@ struct LyricsTranslationSettingsView: View {
             Section {
                 LabeledContent("Translated Into", value: targetName)
             } footer: {
-                Text("Your iPhone's language. Songs already in it aren't translated.")
+                Text(Self.onMac ? LocalizedStringKey("Your Mac's language. Songs already in it aren't translated.") : LocalizedStringKey("Your iPhone's language. Songs already in it aren't translated."))
             }
 
             Section {
                 Label("Only the lyrics you translate go to Google, with the song's title and artist.",
                       systemImage: "text.quote")
-                Label("A song translated once is kept on this iPhone, and comes back offline.",
+                Label(Self.onMac ? LocalizedStringKey("A song translated once is kept on this Mac, and comes back offline.") : LocalizedStringKey("A song translated once is kept on this iPhone, and comes back offline."),
                       systemImage: "arrow.down.circle")
-                Label("The key stays in this iPhone's Keychain.", systemImage: "key")
+                Label(Self.onMac ? LocalizedStringKey("The key stays in this Mac's Keychain.") : LocalizedStringKey("The key stays in this iPhone's Keychain."), systemImage: "key")
             } header: {
                 Text("Privacy")
             } footer: {
                 Text("On Google's free tier, what you send may be used to improve Google's products.")
             }
         }
+        #if os(iOS)
         .endsAboveBottomChrome()
-        .navigationTitle("Lyrics Translation")
         .navigationBarTitleDisplayMode(.inline)
+        #else
+        .formStyle(.grouped)
+        #endif
+        .navigationTitle("Lyrics Translation")
     }
 
     // MARK: What it is
@@ -95,12 +105,14 @@ struct LyricsTranslationSettingsView: View {
                 }
             }
             step(2) {
-                Text("Sign in, tap **Create API key**, then copy it.")
+                Text(Self.onMac ? LocalizedStringKey("Sign in, click **Create API key**, then copy it.") : LocalizedStringKey("Sign in, tap **Create API key**, then copy it."))
             }
             step(3) {
                 HStack(spacing: 10) {
                     SecureField("Paste the key", text: $key)
+                        #if os(iOS)
                         .textInputAutocapitalization(.never)
+                        #endif
                         .autocorrectionDisabled()
                         .onSubmit(save)
                     // Pastes without the system's "Allow Paste" prompt, and saves at once.
@@ -151,7 +163,7 @@ struct LyricsTranslationSettingsView: View {
         } header: {
             Text("Gemini")
         } footer: {
-            Text("Tap the translate button above the lyrics to show or hide the translation.")
+            Text(Self.onMac ? LocalizedStringKey("Click the translate button beside the lyrics to show or hide the translation.") : LocalizedStringKey("Tap the translate button above the lyrics to show or hide the translation."))
         }
     }
 

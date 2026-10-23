@@ -8,6 +8,9 @@ struct MacSettingsView: View {
             MacPlaybackSettings().tabItem { Label("Playback", systemImage: "play.circle") }
             MacLibrarySettings().tabItem { Label("Library", systemImage: "music.note.house") }
             MacAppearanceSettings().tabItem { Label("Appearance", systemImage: "paintpalette") }
+            LyricsTranslationSettingsView()
+                .frame(height: 560)
+                .tabItem { Label("Lyrics Translation", systemImage: "translate") }
         }
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
