@@ -214,16 +214,13 @@ final class SearchIndex {
     /// standalone artist is already present, drop the comma-joined variants so the
     /// results aren't cluttered with near-duplicate rows.
     private func collapseCollaborationArtists(_ artists: [Artist]) -> [Artist] {
-        let standalone = Set(artists
-            .filter { !$0.name.contains(",") }
-            .map { $0.name.lowercased() })
-        return artists.filter { artist in
-            guard artist.name.contains(",") else { return true }
-            let primary = artist.name
-                .split(separator: ",").first
-                .map { $0.trimmingCharacters(in: .whitespaces).lowercased() } ?? ""
-            return !standalone.contains(primary)
+        // Every separator a credit uses — ", ", " & ", " x ", " feat. " — not just the comma:
+        // "Flume & Chet Faker" stood beside "Flume" too.
+        func parts(_ name: String) -> Set<String> {
+            Set(SongQuery.creditedNames(name).map { $0.lowercased() }).subtracting([name.lowercased()])
         }
+        let standalone = Set(artists.filter { parts($0.name).isEmpty }.map { $0.name.lowercased() })
+        return artists.filter { parts($0.name).isDisjoint(with: standalone) }
     }
 
     func searchOffline(query: String) async -> SearchResults {
