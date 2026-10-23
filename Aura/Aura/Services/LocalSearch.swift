@@ -165,7 +165,8 @@ enum LocalSearch {
         /// word, is too short to judge, or nothing is close enough.
         func correction(for word: String) -> String? {
             guard word.count >= 4, !hasWord(startingWith: word), Int(word) == nil else { return nil }
-            let allowed = word.count >= 8 ? 2 : 1
+            // "avvici" is two edits from "avicii": a name typed by ear needs both.
+            let allowed = word.count >= 6 ? 2 : 1
             let typed = Array(word)
             var best: (word: String, distance: Int, count: Int)?
             for (candidate, c, count) in spelled {

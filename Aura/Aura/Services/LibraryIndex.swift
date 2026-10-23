@@ -103,31 +103,44 @@ final class LibraryIndex {
         }
     }
 
-    /// Every song, album and artist, page by page. nil when the server won't list them
-    /// (an empty search lists every song on Navidrome; not every server does).
+    /// Every song, album and artist, several pages at a time. nil when the server won't list
+    /// them (an empty search lists every song on Navidrome; not every server does).
     private static func download(server: ServerConfig) async -> (songs: [Song], albums: [Album], artists: [Artist])? {
         let client = SubsonicClient.shared
         do {
-            var songs: [Song] = []
-            while true {
-                let page = try await client.search3(server: server, query: "", artistCount: 0, albumCount: 0,
-                                                    songCount: pageSize, songOffset: songs.count).song ?? []
-                songs += page
-                if page.count < pageSize { break }
+            async let artists = client.getArtists(server: server)
+            let songs = try await pages { offset in
+                try await client.search3(server: server, query: "", artistCount: 0, albumCount: 0,
+                                         songCount: pageSize, songOffset: offset).song ?? []
             }
             guard !songs.isEmpty else { return nil }
-            var albums: [Album] = []
-            while true {
-                let page = try await client.getAlbumList2(server: server, type: "alphabeticalByName",
-                                                          size: pageSize, offset: albums.count)
-                albums += page
-                if page.count < pageSize { break }
+            let albums = try await pages { offset in
+                try await client.getAlbumList2(server: server, type: "alphabeticalByName", size: pageSize, offset: offset)
             }
-            let artists = try await client.getArtists(server: server)
-            return (songs, albums, artists)
+            return (songs, albums, try await artists)
         } catch {
             AppLogger.shared.log("🔎 Library index not built: \(error.localizedDescription)")
             return nil
+        }
+    }
+
+    /// Fetches pages four at a time until one comes back short.
+    private static func pages<T: Sendable>(_ fetch: @escaping @Sendable (Int) async throws -> [T]) async throws -> [T] {
+        var all: [T] = []
+        var offset = 0
+        while true {
+            let batch = 4
+            let results = try await withThrowingTaskGroup(of: (Int, [T]).self) { group in
+                for i in 0..<batch { let o = offset + i * pageSize; group.addTask { (o, try await fetch(o)) } }
+                var got: [(Int, [T])] = []
+                for try await r in group { got.append(r) }
+                return got.sorted { $0.0 < $1.0 }.map(\.1)
+            }
+            for page in results {
+                all += page
+                if page.count < pageSize { return all }
+            }
+            offset += batch * pageSize
         }
     }
 

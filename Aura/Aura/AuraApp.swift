@@ -121,6 +121,8 @@ struct AuraApp: App {
             .task {
                 await serverManager.settleModeOnOpen()
                 audioPlayer.resumeQueueFromServer()
+                // Ready before the first search, not started by it.
+                LibraryIndex.shared.refreshIfNeeded()
                 await DownloadManager.shared.syncKeptPlaylists()
             }
             .task { await SharePlay.shared.observeSessions() }
