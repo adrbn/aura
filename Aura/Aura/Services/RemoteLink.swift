@@ -49,8 +49,10 @@ final class RemoteLink: NSObject {
     struct Device: Hashable {
         let peer: MCPeerID
         let kind: String
-        /// What it plays right now, "title — artist", nil while it's paused or idle.
+        /// The title it plays right now, nil while it's paused or idle; its artist and cover.
         var playing: String? = nil
+        var artist: String? = nil
+        var cover: String? = nil
         var name: String { peer.displayName }
         var symbol: String { RemoteLink.symbol(for: kind) }
         static func == (a: Device, b: Device) -> Bool { a.peer == b.peer }
@@ -155,13 +157,15 @@ final class RemoteLink: NSObject {
     /// connecting. An announcement can't change, so a new one replaces it.
     private func announce() {
         let player = AudioPlayer.shared
-        let playing = connected == nil && player.isPlaying
-            ? player.currentSong.map { "\($0.title.prefix(80)) — \($0.artist?.prefix(60) ?? "")" } : nil
-        guard advertiser == nil || playing != announced else { return }
-        announced = playing
+        let song = connected == nil && player.isPlaying ? player.currentSong : nil
+        guard advertiser == nil || song?.id != announced else { return }
+        announced = song?.id
         advertiser?.stopAdvertisingPeer()
         var info = ["kind": Self.kind]
-        info["playing"] = playing
+        // Kept short: the whole announcement has to fit in a Bonjour record.
+        info["playing"] = song.map { String($0.title.prefix(80)) }
+        info["artist"] = song?.artist.map { String($0.prefix(60)) }
+        info["cover"] = song?.coverArt.map { String($0.prefix(80)) }
         let advertiser = MCNearbyServiceAdvertiser(peer: peer, discoveryInfo: info, serviceType: Self.service)
         advertiser.delegate = self
         advertiser.startAdvertisingPeer()
@@ -377,7 +381,8 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
             guard peerID != peer else { return }
             // A device that relaunched comes back under a new identity with the same name.
             devices.removeAll { $0.name == peerID.displayName }
-            devices.append(Device(peer: peerID, kind: info?["kind"] ?? "mac", playing: info?["playing"]))
+            devices.append(Device(peer: peerID, kind: info?["kind"] ?? "mac", playing: info?["playing"],
+                                  artist: info?["artist"], cover: info?["cover"]))
         }
     }
 
@@ -440,39 +445,51 @@ struct PlayingElsewhereRow: View {
     var body: some View {
         let link = RemoteLink.shared
         if let device = link.playingElsewhere, let playing = device.playing, dismissed != "\(device.name)|\(playing)" {
-            // One line: what plays, where, and the one thing to do about it. Left alone, this
-            // device goes on playing its own music.
-            HStack(spacing: 8) {
-                Image(systemName: device.symbol)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(accentColor)
-                (Text(playing).foregroundStyle(.primary) + Text(" · \(device.name)").foregroundStyle(.secondary))
-                    .font(.caption.weight(.medium))
-                    .lineLimit(1)
-                Button("Control") { link.connect(to: device, bringing: false) }
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(accentColor)
-                    .buttonStyle(.plain)
+            // The mini player's own shape, over it: a second player, the other device's. Left
+            // alone, this device goes on playing its own music.
+            HStack(spacing: 12) {
+                CoverArtImage(coverArt: device.cover, size: 44, cornerRadius: 6,
+                              placeholderName: playing, placeholderKind: .song)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(playing)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Label(device.name, systemImage: device.symbol)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(accentColor)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 4)
+                Button { link.connect(to: device, bringing: false) } label: {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                        .background(accentColor, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Control")
                 Button {
                     withAnimation(.smooth(duration: 0.3)) { dismissed = "\(device.name)|\(playing)" }
                 } label: {
-                    Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundStyle(.secondary)
-                        .frame(width: 18, height: 18)
+                    Image(systemName: "xmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
+                        .frame(width: 26, height: 36)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Dismiss")
             }
-            .padding(.leading, 12).padding(.trailing, 8)
-            .frame(height: 32)
-            .glassEffect(.regular, in: Capsule())
+            .padding(.leading, 16).padding(.trailing, 10)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+            .onTapGesture { link.connect(to: device, bringing: false) }
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22))
             #if os(iOS)
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 16)
             .padding(.bottom, 8)
             .transition(.move(edge: .bottom).combined(with: .opacity))
             #else
-            .frame(maxWidth: 420, alignment: .trailing)
-            .fixedSize()
+            .frame(width: 340)
             .transition(.move(edge: .trailing).combined(with: .opacity))
             #endif
         }
