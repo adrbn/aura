@@ -1,15 +1,10 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura sur deux iPhone et une Apple Watch, en captures de l'app : En cours de lecture et paroles synchronisées, Accueil, une radio et un album" width="860">
-</picture>
-
 <img src="docs/assets/icon.png" width="72" height="72" alt="Icône de l'app Aura">
 
 # Aura
 
-**Votre serveur de musique, sur votre iPhone.** Un lecteur natif pour iPhone, Apple Watch et Mac, pour Navidrome et Subsonic :
+**Votre serveur de musique, sur votre iPhone, votre Apple Watch et votre Mac.** Un lecteur natif pour Navidrome et Subsonic :
 streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vous écoutez vraiment, et toute votre bibliothèque hors ligne.
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>
@@ -19,6 +14,11 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 <br>
 <a href="#ce-que-fait-aura"><img src="docs/assets/btn-features-fr.svg" alt="Fonctions" height="40"></a>&nbsp;
 <a href="#compiler-depuis-les-sources"><img src="docs/assets/btn-source-fr.svg" alt="Compiler" height="40"></a>
+<br><br>
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
+  <img src="docs/assets/aura-hero.svg" alt="Aura sur deux iPhone et une Apple Watch, en captures de l'app : En cours de lecture et paroles synchronisées, Accueil, une radio et un album" width="600">
+</picture>
 <br><br>
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" alt="Offrir un café sur Ko-fi" height="64"></a>
 
