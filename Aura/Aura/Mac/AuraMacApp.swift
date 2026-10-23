@@ -39,5 +39,7 @@ struct AuraMacApp: App {
         // instead makes an ordinary title bar transparent and lets the content run under it,
         // which looks identical and keeps the buttons.
         .commands { MacCommands(player: player) }
+
+        Settings { MacSettingsView() }
     }
 }

@@ -67,6 +67,8 @@ struct MacSongRow: View {
             Button("Play") { play() }
             Button("Play Next") { player.playNext(song) }
             Button("Add to Queue") { player.addToQueue(song) }
+            Divider()
+            MacRatingMenu(songs: [song])
         }
     }
 

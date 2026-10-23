@@ -53,6 +53,22 @@ struct MacCommands: Commands {
             }
             .keyboardShortcut("l", modifiers: .command)
             .disabled(player.currentSong == nil)
+            MacRatingMenu(songs: player.currentSong.map { [$0] } ?? [])
+
+            Divider()
+
+            // A turntable's pitch, for this song only, as on the phone.
+            Button("Pitch Up") { player.pitchSemitones += 1 }
+                .keyboardShortcut(.upArrow, modifiers: [.command, .option])
+                .disabled(player.currentSong == nil || player.pitchSemitones >= 6)
+            Button("Pitch Down") { player.pitchSemitones -= 1 }
+                .keyboardShortcut(.downArrow, modifiers: [.command, .option])
+                .disabled(player.currentSong == nil || player.pitchSemitones <= -6)
+            Button("Normal Pitch") {
+                player.pitchSemitones = 0
+            }
+            .keyboardShortcut("0", modifiers: [.command, .option])
+            .disabled(player.pitchSemitones == 0)
         }
     }
 }
