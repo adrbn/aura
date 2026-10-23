@@ -24,9 +24,9 @@ struct MiniPlayerView: View {
                                     color: .primary,
                                     alignment: .leading,
                                     isActive: !player.isShowingNowPlaying)
-                        // While the phone controls a Mac, the line under the title says where it plays.
-                        if let mac = RemoteLink.shared.connected {
-                            Label(mac.displayName, systemImage: "macbook")
+                        // While this plays on another device, or another plays on this one, the line says so.
+                        if let band = RemoteLink.shared.bandText {
+                            Label(band.text, systemImage: band.symbol)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(RemoteLink.shared.accent ?? accentColor)
                                 .lineLimit(1)

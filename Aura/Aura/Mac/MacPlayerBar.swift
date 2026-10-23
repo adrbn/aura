@@ -41,9 +41,9 @@ struct MacPlayerBar: View {
         .popover(isPresented: $showQueue, arrowEdge: .top) { MacQueueView() }
         .popover(isPresented: $showEqualizer, arrowEdge: .top) { MacEqualizerView() }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            // While a phone controls this Mac, the band in the accent says which.
-            if let phone = RemoteLink.shared.controllers.first {
-                RemoteBand(text: String(localized: "Controlled from \(phone.displayName)"), systemImage: "iphone")
+            // While this Mac plays on another device, or another plays on it, the band says so.
+            if let band = RemoteLink.shared.bandText {
+                RemoteBand(text: band.text, systemImage: band.symbol)
             }
         }
     }
@@ -116,7 +116,7 @@ struct MacPlayerBar: View {
 
                 iconButton("forward.fill", size: 16, help: "Next") { player.next() }
                 iconButton(player.repeatMode == .one ? "repeat.1" : "repeat",
-                           active: player.repeatMode != .off, help: "Repeat") { cycleRepeat() }
+                           active: player.repeatMode != .off, help: "Repeat") { player.cycleRepeat() }
             }
 
             scrubber
@@ -167,6 +167,7 @@ struct MacPlayerBar: View {
             iconButton("slider.horizontal.3", active: EqualizerManager.shared.isEnabled,
                        help: "Equaliser") { showEqualizer.toggle() }
             iconButton("list.bullet", help: "Queue") { showQueue.toggle() }
+            devicePicker
 
             HStack(spacing: 6) {
                 Image(systemName: volumeSymbol)
@@ -180,6 +181,33 @@ struct MacPlayerBar: View {
             .help("Volume")
         }
         .frame(width: flank, alignment: .trailing)
+    }
+
+    /// Where the music plays: this Mac, or another Aura on the same Wi-Fi.
+    @ViewBuilder
+    private var devicePicker: some View {
+        let link = RemoteLink.shared
+        if !link.devices.isEmpty || link.connected != nil {
+            Menu {
+                Button { link.playHere() } label: {
+                    Label("This Mac", systemImage: link.connected == nil ? "checkmark" : "macbook")
+                }
+                ForEach(link.devices, id: \.self) { device in
+                    Button { link.connect(to: device) } label: {
+                        Label(device.name, systemImage: link.connected == device ? "checkmark" : device.symbol)
+                    }
+                }
+            } label: {
+                Image(systemName: link.connected?.symbol ?? "hifispeaker.and.homepod")
+                    .font(.system(size: 13))
+                    .frame(width: 22, height: 22)
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .foregroundStyle(link.connected != nil ? Color.appAccent : .secondary)
+            .help("Play on")
+        }
     }
 
     private var volumeSymbol: String {
@@ -216,13 +244,6 @@ struct MacPlayerBar: View {
         .help(help)
     }
 
-    private func cycleRepeat() {
-        player.repeatMode = switch player.repeatMode {
-        case .off: .all
-        case .all: .one
-        case .one: .off
-        }
-    }
 }
 
 private struct HoverLink: View {

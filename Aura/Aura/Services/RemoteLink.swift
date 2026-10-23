@@ -2,23 +2,27 @@ import Foundation
 import SwiftUI
 import MultipeerConnectivity
 import CryptoKit
+import AVFoundation
 #if canImport(UIKit)
 import UIKit
 #endif
 
-/// The iPhone as a remote for the Mac, on the same Wi-Fi. The Mac advertises itself; the
-/// phone finds it, connects, and from then on its own player shows what the Mac plays and
-/// sends it every play, pause, skip and seek. A Mac only lets in a phone signed into the
-/// same server account as itself.
+/// Aura playing on another Aura on the same Wi-Fi: the iPhone on the Mac, the Mac on the
+/// iPhone, either on an iPad. Every Aura announces itself and looks for the others. The one
+/// in control mirrors the other in its own player (what plays, the queue, the moment) and
+/// sends it every play, pause, skip, seek, queue edit and volume change. A device only lets
+/// in one signed into the same server account as itself.
 @MainActor @Observable
 final class RemoteLink: NSObject {
     static let shared = RemoteLink()
     private static let service = "aura-remote"
 
     enum Command: Codable {
-        case play, pause, playPause, next, previous, seek(Double), shuffle, cycleRepeat
+        case play, pause, playPause, next, previous, seek(Double), shuffle, cycleRepeat, volume(Double)
         case playSong(Song, queue: [Song]?, index: Int, source: PlaybackSource, at: Double)
-        /// The phone's accent, so both ends show the same colour.
+        case setQueue(Queue)
+        case removeFromQueue(Int)
+        /// The controller's accent, so both ends show the same colour.
         case accent(red: Double, green: Double, blue: Double)
     }
 
@@ -29,6 +33,7 @@ final class RemoteLink: NSObject {
         var duration: Double = 0
         var isShuffled = false
         var repeatMode: RepeatMode = .off
+        var volume: Double = 1
         /// Sent only when it changed since the last state: a queue can be hundreds of songs.
         var queue: Queue?
     }
@@ -39,66 +44,110 @@ final class RemoteLink: NSObject {
         var index: Int
     }
 
-    /// Macs found on the network (phone side).
-    private(set) var macs: [MCPeerID] = []
-    /// The Mac being controlled (phone side).
-    private(set) var connected: MCPeerID?
-    /// The phones controlling this Mac (Mac side).
+    private enum Message: Codable { case command(Command), state(State) }
+
+    struct Device: Hashable {
+        let peer: MCPeerID
+        let kind: String
+        var name: String { peer.displayName }
+        var symbol: String { RemoteLink.symbol(for: kind) }
+    }
+
+    /// The other Auras in reach.
+    private(set) var devices: [Device] = []
+    /// The one this device plays on.
+    private(set) var connected: Device?
+    /// The ones playing on this device.
     private(set) var controllers: [MCPeerID] = []
-    /// The band's colour: the controlling phone's accent, on both ends.
+    /// The band's colour: the controller's accent, on both ends.
     private(set) var accent: Color?
 
     #if os(macOS)
+    static let kind = "mac"
     private let peer = MCPeerID(displayName: Host.current().localizedName ?? "Mac")
     #else
+    static let kind = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
     private let peer = MCPeerID(displayName: UIDevice.current.name)
     #endif
-    @ObservationIgnored private lazy var session: MCSession = {
-        let session = MCSession(peer: peer, securityIdentity: nil, encryptionPreference: .required)
-        session.delegate = self
-        return session
-    }()
+    nonisolated static func symbol(for kind: String) -> String {
+        switch kind { case "mac": "macbook"; case "ipad": "ipad"; default: "iphone" }
+    }
+
+    /// Where this device plays on another.
+    @ObservationIgnored private lazy var outgoing = makeSession()
+    /// Where others play on this device.
+    @ObservationIgnored private lazy var incoming = makeSession()
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
     private var ticker: Timer?
-    /// What the phone was on before it took control, given back when it lets go.
-    private var localSong: Song?
-    private var localQueue = Queue(songs: [], upNext: [], index: 0)
-    /// The queue as last sent (Mac side), to send it again only once it changes.
+    private var volumeWatch: NSKeyValueObservation?
+    private var invited: MCPeerID?
+    /// What this device was on before it took control of another, given back after.
+    private var local = (song: Song?.none, queue: Queue(songs: [], upNext: [], index: 0), volume: 1.0)
+    /// The queue as last sent, to send it again only once it changes.
     private var sentQueue: [String]?
+    private var lastShown: (id: String?, playing: Bool, time: Double) = (nil, false, 0)
 
-    /// The server account, hashed: the one thing a phone and a Mac must share to pair.
+    private func makeSession() -> MCSession {
+        let session = MCSession(peer: peer, securityIdentity: nil, encryptionPreference: .required)
+        session.delegate = self
+        return session
+    }
+
+    /// The server account, hashed: the one thing two devices must share to pair.
     private var accountKey: Data? {
         guard let server = ServerManager.shared.currentServer else { return nil }
         return Data(SHA256.hash(data: Data("\(server.url)|\(server.username)".utf8)))
     }
 
-    // MARK: Mac
+    var bandText: (text: String, symbol: String)? {
+        if let connected { return (String(localized: "Playing on \(connected.name)"), connected.symbol) }
+        if let controller = controllers.first {
+            let kind = devices.first { $0.name == controller.displayName }?.kind ?? "iphone"
+            return (String(localized: "Controlled from \(controller.displayName)"), Self.symbol(for: kind))
+        }
+        return nil
+    }
 
-    func host() {
+    // MARK: Starting
+
+    func start() {
         guard advertiser == nil else { return }
-        let advertiser = MCNearbyServiceAdvertiser(peer: peer, discoveryInfo: nil, serviceType: Self.service)
+        let advertiser = MCNearbyServiceAdvertiser(peer: peer, discoveryInfo: ["kind": Self.kind], serviceType: Self.service)
         advertiser.delegate = self
         advertiser.startAdvertisingPeer()
         self.advertiser = advertiser
+        let browser = MCNearbyServiceBrowser(peer: peer, serviceType: Self.service)
+        browser.delegate = self
+        browser.startBrowsingForPeers()
+        self.browser = browser
         ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             Task { @MainActor in RemoteLink.shared.broadcast() }
         }
+        #if os(iOS)
+        // The volume buttons, while this iPhone plays on another device, set that one's volume.
+        volumeWatch = AVAudioSession.sharedInstance().observe(\.outputVolume) { session, _ in
+            let volume = Double(session.outputVolume)
+            Task { @MainActor in if RemoteLink.shared.connected != nil { RemoteLink.shared.send(.volume(volume)) } }
+        }
+        #endif
     }
 
+    // MARK: Played on
+
     private func broadcast() {
-        guard !session.connectedPeers.isEmpty else { return }
+        guard !incoming.connectedPeers.isEmpty else { return }
         let player = AudioPlayer.shared
         var now = State(song: player.currentSong, isPlaying: player.isPlaying,
                         currentTime: player.currentTime, duration: player.duration,
-                        isShuffled: player.isShuffled, repeatMode: player.repeatMode)
+                        isShuffled: player.isShuffled, repeatMode: player.repeatMode, volume: player.volume)
         let ids = [String(player.queueIndex)] + player.queue.map(\.id) + ["|"] + player.userQueue.map(\.id)
         if ids != sentQueue {
             now.queue = Queue(songs: player.queue, upNext: player.userQueue, index: player.queueIndex)
             sentQueue = ids
         }
-        guard let data = try? JSONEncoder().encode(now) else { return }
-        try? session.send(data, toPeers: session.connectedPeers, with: now.queue == nil ? .unreliable : .reliable)
+        guard let data = try? JSONEncoder().encode(Message.state(now)) else { return }
+        try? incoming.send(data, toPeers: incoming.connectedPeers, with: now.queue == nil ? .unreliable : .reliable)
     }
 
     private func perform(_ command: Command) {
@@ -112,40 +161,41 @@ final class RemoteLink: NSObject {
         case .seek(let time): player.seek(to: time)
         case .shuffle: player.toggleShuffle()
         case .cycleRepeat: player.cycleRepeat()
+        case .volume(let volume): player.volume = min(1, max(0, volume))
         case .playSong(let song, let queue, let index, let source, let time):
             player.playSong(song, fromQueue: queue, startIndex: index, source: source)
             if time > 1 { player.pendingSeekTime = time }
+        case .setQueue(let queue):
+            player.queue = queue.songs
+            player.userQueue = queue.upNext
+            player.queueIndex = min(queue.index, max(queue.songs.count - 1, 0))
+        case .removeFromQueue(let index):
+            if player.queue.indices.contains(index) { player.removeFromQueue(at: index) }
         case .accent(let red, let green, let blue):
             accent = Color(.sRGB, red: red, green: green, blue: blue)
         }
         broadcast()
     }
 
-    // MARK: Phone
+    // MARK: Playing on
 
-    func browse() {
-        guard browser == nil else { return }
-        let browser = MCNearbyServiceBrowser(peer: peer, serviceType: Self.service)
-        browser.delegate = self
-        browser.startBrowsingForPeers()
-        self.browser = browser
-    }
-
-    func connect(to mac: MCPeerID) {
+    func connect(to device: Device) {
         if connected != nil { playHere() }
-        browser?.invitePeer(mac, to: session, withContext: accountKey, timeout: 15)
+        invited = device.peer
+        browser?.invitePeer(device.peer, to: outgoing, withContext: accountKey, timeout: 15)
     }
 
-    /// Back to this iPhone: what the Mac was playing carries on here, from the same
-    /// moment, and the Mac stops.
+    /// Back to this device: what the other one was playing carries on here, from the same
+    /// moment, and the other one stops.
     func playHere() {
         guard connected != nil else { return }
         let player = AudioPlayer.shared
         let song = player.currentSong, queue = player.queue, index = player.queueIndex
         let time = player.currentTime, wasPlaying = player.isPlaying
         send(.pause)
-        // A moment for the pause to reach the Mac before the line drops.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.session.disconnect() }
+        // A moment for the pause to arrive before the line drops.
+        let session = outgoing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { session.disconnect() }
         letGo()
         guard wasPlaying, let song else { return }
         player.playSong(song, fromQueue: queue, startIndex: index)
@@ -153,71 +203,95 @@ final class RemoteLink: NSObject {
     }
 
     func send(_ command: Command) {
-        guard let connected, let data = try? JSONEncoder().encode(command) else { return }
-        try? session.send(data, toPeers: [connected], with: .reliable)
+        guard let connected, let data = try? JSONEncoder().encode(Message.command(command)) else { return }
+        try? outgoing.send(data, toPeers: [connected.peer], with: .reliable)
     }
 
-    private func takeControl(of mac: MCPeerID) {
+    private func takeControl(of peerID: MCPeerID) {
+        let device = devices.first { $0.peer == peerID } ?? Device(peer: peerID, kind: "mac")
         let player = AudioPlayer.shared
-        localSong = player.currentSong
-        localQueue = Queue(songs: player.queue, upNext: player.userQueue, index: player.queueIndex)
+        local = (player.currentSong, Queue(songs: player.queue, upNext: player.userQueue, index: player.queueIndex), player.volume)
         let wasPlaying = player.isPlaying, time = player.currentTime
         player.pause()
         player.remote = { command in MainActor.assumeIsolated { RemoteLink.shared.send(command) } }
-        connected = mac
-        // What this iPhone was playing moves to the Mac, from the same moment.
-        if wasPlaying, let song = localSong {
-            send(.playSong(song, queue: localQueue.songs, index: localQueue.index, source: .unknown, at: time))
-        }
+        connected = device
         let tone = Color.appAccent.resolve(in: EnvironmentValues())
         accent = Color.appAccent
         send(.accent(red: Double(tone.red), green: Double(tone.green), blue: Double(tone.blue)))
+        // What this device was playing moves over, from the same moment.
+        if wasPlaying, let song = local.song {
+            send(.playSong(song, queue: local.queue.songs, index: local.queue.index, source: .unknown, at: time))
+        }
     }
 
     private func letGo() {
         guard connected != nil else { return }
         connected = nil
+        if controllers.isEmpty { accent = nil }
         let player = AudioPlayer.shared
         player.remote = nil
+        player.remoteAnchor = nil
+        player.isMirroring = true
         player.isPlaying = false
-        player.currentSong = localSong
+        player.currentSong = local.song
         player.currentTime = 0
-        player.queue = localQueue.songs
-        player.userQueue = localQueue.upNext
-        player.queueIndex = localQueue.index
-        if let localSong { player.loadLyrics(for: localSong) }
+        player.queue = local.queue.songs
+        player.userQueue = local.queue.upNext
+        player.queueIndex = local.queue.index
+        player.volume = local.volume
+        player.isMirroring = false
+        if let song = local.song { player.loadLyrics(for: song) }
+        player.updateNowPlayingInfo()
     }
 
     private func mirror(_ state: State) {
         let player = AudioPlayer.shared
+        player.isMirroring = true
+        defer { player.isMirroring = false }
         if let song = state.song, song.id != player.currentSong?.id {
             player.currentSong = song
             player.loadLyrics(for: song)
+        }
+        // Re-anchored only when the reports drift from the running clock, so the word
+        // highlight never steps back by the network's delay.
+        let running = player.remoteAnchor.map { $0.time + (player.isPlaying ? Date().timeIntervalSince($0.at) : 0) }
+        if running == nil || abs(running! - state.currentTime) > 0.4 || state.isPlaying != player.isPlaying || state.song?.id != player.currentSong?.id {
+            player.remoteAnchor = (state.currentTime, Date())
         }
         player.isPlaying = state.isPlaying
         player.currentTime = state.currentTime
         player.duration = state.duration
         player.isShuffled = state.isShuffled
         player.repeatMode = state.repeatMode
+        player.volume = state.volume
         if let queue = state.queue {
             player.queue = queue.songs
             player.userQueue = queue.upNext
             player.queueIndex = queue.index
         }
+        // The lock screen and the Dynamic Island show the other device, refreshed when what
+        // they show changes, not every second (the elapsed time runs on by itself).
+        let expected = lastShown.time + (lastShown.playing ? 1 : 0)
+        if lastShown.id != state.song?.id || lastShown.playing != state.isPlaying || abs(state.currentTime - expected) > 2 {
+            player.updateNowPlayingInfo()
+            player.publishPlaybackState()
+        }
+        lastShown = (state.song?.id, state.isPlaying, state.currentTime)
     }
 }
 
 extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate {
     nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         Task { @MainActor in
-            if advertiser != nil {
+            if session === incoming {
                 controllers = session.connectedPeers
-                // A phone just in gets the whole queue with the next state.
+                // One just in gets the whole queue with the next state.
                 if state == .connected { sentQueue = nil }
-                if controllers.isEmpty { accent = nil }
-            } else if state == .connected {
+                if controllers.isEmpty, connected == nil { accent = nil }
+            } else if state == .connected, invited == peerID {
+                invited = nil
                 takeControl(of: peerID)
-            } else if state == .notConnected, connected == peerID {
+            } else if state == .notConnected, connected?.peer == peerID {
                 letGo()
             }
         }
@@ -225,10 +299,10 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
 
     nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         Task { @MainActor in
-            if advertiser != nil, let command = try? JSONDecoder().decode(Command.self, from: data) {
-                perform(command)
-            } else if connected == peerID, let state = try? JSONDecoder().decode(State.self, from: data) {
-                mirror(state)
+            switch try? JSONDecoder().decode(Message.self, from: data) {
+            case .command(let command) where session === incoming: perform(command)
+            case .state(let state) where session === outgoing && connected?.peer == peerID: mirror(state)
+            default: break
             }
         }
     }
@@ -241,16 +315,21 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
                                 withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         Task { @MainActor in
             let accepted = context != nil && context == accountKey
-            invitationHandler(accepted, accepted ? session : nil)
+            invitationHandler(accepted, accepted ? incoming : nil)
         }
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
-        Task { @MainActor in if !macs.contains(peerID) { macs.append(peerID) } }
+        Task { @MainActor in
+            guard peerID != peer else { return }
+            // A device that relaunched comes back under a new identity with the same name.
+            devices.removeAll { $0.name == peerID.displayName }
+            devices.append(Device(peer: peerID, kind: info?["kind"] ?? "mac"))
+        }
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
-        Task { @MainActor in macs.removeAll { $0 == peerID } }
+        Task { @MainActor in devices.removeAll { $0.peer == peerID } }
     }
 }
 

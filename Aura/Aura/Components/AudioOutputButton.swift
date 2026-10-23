@@ -177,7 +177,7 @@ struct AudioOutputButtonWrapper: View {
         Group {
             // With a Mac running Aura in reach, the output button picks where the music
             // plays: this iPhone, a Mac, or AirPlay and Bluetooth through the system's picker.
-            if link.macs.isEmpty && link.connected == nil {
+            if link.devices.isEmpty && link.connected == nil {
                 AudioOutputButton(
                     accentColor: UIColor(accentColor),
                     routeIcon: routeMonitor.routeIcon,
@@ -188,9 +188,9 @@ struct AudioOutputButtonWrapper: View {
                     Button { link.playHere() } label: {
                         Label("This iPhone", systemImage: link.connected == nil ? "checkmark" : "iphone")
                     }
-                    ForEach(link.macs, id: \.self) { mac in
-                        Button { link.connect(to: mac) } label: {
-                            Label(mac.displayName, systemImage: link.connected == mac ? "checkmark" : "macbook")
+                    ForEach(link.devices, id: \.self) { device in
+                        Button { link.connect(to: device) } label: {
+                            Label(device.name, systemImage: link.connected == device ? "checkmark" : device.symbol)
                         }
                     }
                     Divider()
@@ -198,7 +198,7 @@ struct AudioOutputButtonWrapper: View {
                         Label("AirPlay & Bluetooth", systemImage: "airplayaudio")
                     }
                 } label: {
-                    Image(systemName: link.connected != nil ? "macbook" : routeMonitor.routeIcon)
+                    Image(systemName: link.connected?.symbol ?? routeMonitor.routeIcon)
                         .font(.title2)
                         .foregroundStyle(link.connected != nil || routeMonitor.isExternalRoute ? accentColor : .white.opacity(0.6))
                 }
@@ -206,6 +206,5 @@ struct AudioOutputButtonWrapper: View {
             }
         }
         .frame(width: 34, height: 34)
-        .onAppear { link.browse() }
     }
 }

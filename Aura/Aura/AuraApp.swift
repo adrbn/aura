@@ -133,6 +133,7 @@ struct AuraApp: App {
                 // Pinned playlists follow you between devices; start listening for the
                 // Mac's changes before anything can touch them here.
                 PinSync.shared.start()
+                RemoteLink.shared.start()
                 // Spoken shortcut phrases match a parameter only against values handed to
                 // the system in advance, so the vocabulary has to be refreshed whenever the
                 // library might have changed — a playlist made on the web will not be

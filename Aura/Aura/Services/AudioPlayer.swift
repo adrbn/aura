@@ -19,8 +19,8 @@ final class AudioPlayer {
         // The pitch is for the song it was set on: the next one starts back at 0.
         didSet { if oldValue?.id != currentSong?.id, pitchSemitones != 0 { pitchSemitones = 0 } }
     }
-    var queue: [Song] = []
-    var userQueue: [Song] = []
+    var queue: [Song] = [] { didSet { syncQueueToRemote() } }
+    var userQueue: [Song] = [] { didSet { syncQueueToRemote() } }
     var queueIndex: Int = 0
     /// True while a favourite toggle is waiting on the server. The heart shows a pulse
     /// and stops accepting taps, so a slow round-trip can't be fired twenty times.
@@ -46,6 +46,7 @@ final class AudioPlayer {
     /// that resets on every launch is worse than none at all.
     var volume: Double = UserDefaults.standard.object(forKey: "aura_volume") as? Double ?? 1 {
         didSet {
+            if let remote, !isMirroring { remote(.volume(volume)); return }
             applyOutputVolume()
             UserDefaults.standard.set(volume, forKey: "aura_volume")
         }
@@ -54,6 +55,22 @@ final class AudioPlayer {
     /// Set while this player is a remote for Aura on a Mac (`RemoteLink`): every transport
     /// command goes there instead of to the local player.
     @ObservationIgnored var remote: ((RemoteLink.Command) -> Void)?
+    /// True while `RemoteLink` writes the other device's state in, so it isn't sent back.
+    @ObservationIgnored var isMirroring = false
+    /// The other device's moment and when it was reported, for `liveTime` while mirroring.
+    @ObservationIgnored var remoteAnchor: (time: TimeInterval, at: Date)?
+    @ObservationIgnored private var queueSyncPending = false
+
+    /// A queue edited here while playing on another device goes there, once per change
+    /// however many steps it took (a removal moves the index too).
+    private func syncQueueToRemote() {
+        guard remote != nil, !isMirroring, !queueSyncPending else { return }
+        queueSyncPending = true
+        DispatchQueue.main.async { [self] in
+            queueSyncPending = false
+            remote?(.setQueue(.init(songs: queue, upNext: userQueue, index: queueIndex)))
+        }
+    }
     var currentTime: TimeInterval = 0
     var duration: TimeInterval = 0
     var isShuffled = false
@@ -203,6 +220,10 @@ final class AudioPlayer {
     /// Falls back to the reported time while seeking, where the player's own answer is the
     /// old position until the seek lands.
     var liveTime: TimeInterval {
+        // Playing on another device: its last reported moment, run on since.
+        if remote != nil, let anchor = remoteAnchor {
+            return anchor.time + (isPlaying ? Date().timeIntervalSince(anchor.at) : 0)
+        }
         guard let player, !isSeeking else { return currentTime }
         let seconds = player.currentTime().seconds
         return seconds.isFinite ? streamOffset + seconds : currentTime
@@ -1711,7 +1732,7 @@ final class AudioPlayer {
     /// whatever was there before it. iOS can infer the state from the playback rate and so
     /// never strictly needed it — but the rate is ambiguous while paused with the session
     /// deactivated, which is exactly when Siri is asked to resume. Stated on both.
-    private func publishPlaybackState() {
+    func publishPlaybackState() {
         MPNowPlayingInfoCenter.default().playbackState = isPlaying ? .playing : .paused
     }
     func togglePlayPause() { if let remote { remote(.playPause); return }; if isPlaying { pause() } else { play() } }
@@ -2011,6 +2032,7 @@ final class AudioPlayer {
     }
 
     func removeFromQueue(at index: Int) {
+        if let remote { remote(.removeFromQueue(index)); return }
         guard index >= 0 && index < queue.count else { return }
         AppLogger.shared.log("➖ removeFromQueue idx \(index): \(queue[index].title)")
         if index < queueIndex {
@@ -3241,7 +3263,7 @@ final class AudioPlayer {
 
     // MARK: - Now Playing Info
 
-    private func updateNowPlayingInfo() {
+    func updateNowPlayingInfo() {
         guard let song = currentSong else { return }
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: song.title,

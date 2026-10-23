@@ -149,9 +149,8 @@ struct NowPlayingView: View {
                     .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { screenWidth = $0 }
                     // Under the action row, in the room it leaves above the home indicator.
                     .overlay(alignment: .bottom) {
-                        if let mac = RemoteLink.shared.connected {
-                            RemoteBand(text: String(localized: "Playing on \(mac.displayName)"),
-                                       systemImage: "macbook", bottomInset: safeBottom)
+                        if let band = RemoteLink.shared.bandText {
+                            RemoteBand(text: band.text, systemImage: band.symbol, bottomInset: safeBottom)
                         }
                     }
                     .cornerRadius(dragOffset > 0 ? min(dragOffset / 3, 30) : 0)

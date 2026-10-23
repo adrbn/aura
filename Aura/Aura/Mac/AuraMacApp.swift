@@ -26,7 +26,7 @@ struct AuraMacApp: App {
                     await serverManager.testConnection()
                     player.resumeQueueFromServer()
                     LibraryIndex.shared.refreshIfNeeded()
-                    RemoteLink.shared.host()
+                    RemoteLink.shared.start()
                 }
                 // Leaving the Mac hands the queue to the server, for the phone to pick up.
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
