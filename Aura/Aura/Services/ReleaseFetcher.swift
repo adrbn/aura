@@ -114,6 +114,10 @@ final class ReleaseFetcher {
         picked = Set(UserDefaults.standard.stringArray(forKey: Self.pickedKey) ?? [])
         // Whatever was under way when the app last quit picks up where it was.
         for fetch in fetches where fetch.isActive { start(fetch.id) }
+        // A finished card restored here lost the timer that would have let it go.
+        for fetch in fetches where fetch.stage == .ready {
+            letReadyGo(fetch.id, after: Self.readyShown - now.timeIntervalSince(fetch.downloaded ?? now))
+        }
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
                                                object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { ReleaseFetcher.shared.leaving() }
@@ -511,14 +515,18 @@ final class ReleaseFetcher {
             savePicked()
         }
         // The banner lets it go after a while; the Lock Screen keeps it a little longer.
+        letReadyGo(id, after: Self.readyShown)
+        guard let song = liked, let server = ServerManager.shared.currentServer else { return }
+        try? await SubsonicClient.shared.star(server: server, id: song.id)
+    }
+
+    private func letReadyGo(_ id: String, after seconds: TimeInterval) {
         Task { [weak self] in
-            try? await Task.sleep(for: .seconds(Self.readyShown))
+            try? await Task.sleep(for: .seconds(max(0, seconds)))
             guard self?.fetch(for: id)?.stage == .ready else { return }
             self?.fetches.removeAll { $0.id == id }
             self?.save()
         }
-        guard let song = liked, let server = ServerManager.shared.currentServer else { return }
-        try? await SubsonicClient.shared.star(server: server, id: song.id)
     }
 
     private func fail(_ id: String, _ reason: String) {
