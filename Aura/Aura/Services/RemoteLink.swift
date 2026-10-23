@@ -6,6 +6,9 @@ import AVFoundation
 #if canImport(UIKit)
 import UIKit
 #endif
+#if os(iOS)
+import MediaPlayer
+#endif
 
 /// Aura playing on another Aura on the same Wi-Fi: the iPhone on the Mac, the Mac on the
 /// iPhone, either on an iPad. Every Aura announces itself and looks for the others. The one
@@ -215,6 +218,9 @@ final class RemoteLink: NSObject {
         var now = State(song: player.currentSong, isPlaying: player.isPlaying,
                         currentTime: player.currentTime, duration: player.duration,
                         isShuffled: player.isShuffled, repeatMode: player.repeatMode, volume: player.volume)
+        #if os(iOS)
+        now.volume = Double(AVAudioSession.sharedInstance().outputVolume)
+        #endif
         let ids = [String(player.queueIndex)] + player.queue.map(\.id) + ["|"] + player.userQueue.map(\.id)
         if ids != sentQueue {
             now.queue = Queue(songs: player.queue, upNext: player.userQueue, index: player.queueIndex)
@@ -236,7 +242,14 @@ final class RemoteLink: NSObject {
         case .seek(let time): player.seek(to: time)
         case .shuffle: player.toggleShuffle()
         case .cycleRepeat: player.cycleRepeat()
-        case .volume(let volume): player.volume = min(1, max(0, volume))
+        case .volume(let volume):
+            #if os(iOS)
+            // The iPhone's own volume, the one its buttons set, rather than Aura's fader
+            // under it: at a low system volume the Mac's slider topped out quiet.
+            Self.setSystemVolume(Float(min(1, max(0, volume))))
+            #else
+            player.volume = min(1, max(0, volume))
+            #endif
         case .playSong(let song, let queue, let index, let source, let time):
             player.playSong(song, fromQueue: queue, startIndex: index, source: source)
             if time > 1 { player.pendingSeekTime = time }
@@ -279,6 +292,16 @@ final class RemoteLink: NSObject {
         player.playSong(song, fromQueue: queue, startIndex: index)
         if time > 1 { player.pendingSeekTime = time }
     }
+
+    #if os(iOS)
+    /// iOS sets its volume only through the system's own slider, kept here off screen.
+    private static let volumeView = MPVolumeView(frame: CGRect(x: -100, y: -100, width: 1, height: 1))
+
+    private static func setSystemVolume(_ volume: Float) {
+        guard let slider = volumeView.subviews.lazy.compactMap({ $0 as? UISlider }).first else { return }
+        slider.value = volume
+    }
+    #endif
 
     func send(_ command: Command) {
         guard let connected, let data = try? JSONEncoder().encode(Message.command(command)) else { return }
