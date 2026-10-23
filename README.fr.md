@@ -15,20 +15,19 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download-fr.svg" alt="Télécharger l'IPA" height="40"></a>&nbsp;
-<a href="#mac-aper%C3%A7u"><img src="docs/assets/btn-mac-fr.svg" alt="Télécharger pour Mac" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360"><img src="docs/assets/btn-mac-fr.svg" alt="Télécharger pour Mac" height="40"></a>
 <br>
 <a href="#ce-que-fait-aura"><img src="docs/assets/btn-features-fr.svg" alt="Fonctions" height="40"></a>&nbsp;
-<a href="#deux-versions"><img src="docs/assets/btn-builds-fr.svg" alt="Deux versions" height="40"></a>&nbsp;
 <a href="#compiler-depuis-les-sources"><img src="docs/assets/btn-source-fr.svg" alt="Compiler" height="40"></a>
 <br><br>
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" alt="Offrir un café sur Ko-fi" height="64"></a>
 
 <br>
 
-[![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#configuration-requise)
-[![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20aper%C3%A7u-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#mac-aper%C3%A7u)
-[![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#configuration-requise)
-[![Navidrome / Subsonic](https://img.shields.io/badge/serveur-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#configuration-requise)
+[![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20aper%C3%A7u-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
+[![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
+[![Navidrome / Subsonic](https://img.shields.io/badge/serveur-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#obtenir-aura)
 [![Aucun pistage](https://img.shields.io/badge/pistage-aucun-EB534D?style=flat-square&labelColor=121212)](#confidentialit%C3%A9)
 [![Dernière version](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&filter=v*&style=flat-square&labelColor=121212&color=EB534D&label=version)](https://github.com/adrbn/aura/releases/latest)
 [![Licence GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-EB534D?style=flat-square&labelColor=121212)](LICENSE)
@@ -42,10 +41,9 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 ---
 
 Aura lit la musique de votre propre serveur. Branchez-le sur Navidrome, ou sur n'importe quel serveur qui parle l'API
-Subsonic, et votre bibliothèque est dans votre iPhone : en qualité d'origine, avec les paroles en rythme, des mix tirés
-de ce que vous écoutez vraiment, un Radar des sorties de vos artistes, et tout ce que vous avez téléchargé toujours là
-quand le réseau tombe. Sur l'Apple Watch, c'est une télécommande et une bibliothèque au poignet ; en voiture, CarPlay
-reprend le tout.
+Subsonic, et votre bibliothèque est dans votre iPhone, sur votre Apple Watch, dans CarPlay et sur votre Mac : en
+qualité d'origine, avec les paroles en rythme, des mix tirés de ce que vous écoutez vraiment, un Radar des sorties de
+vos artistes, et tout ce que vous avez téléchargé toujours là quand le réseau tombe.
 
 > **Aura est un client, pas un service de musique.** Il se branche sur un serveur Navidrome ou compatible Subsonic qui
 > est à vous, ou auquel vous avez accès. Il lit votre bibliothèque ; il n'héberge pas de musique, n'en fournit pas et
@@ -66,104 +64,92 @@ reprend le tout.
   </tr>
 </table>
 
-**Et aussi**
+<sub>Marqué <b>1.4</b> : déjà dans l'IPA bêta 1.4 et l'app Mac, sur l'App Store à la prochaine mise à jour.</sub>
 
-- **Une file d'attente qui montre la suite.** Elle s'ouvre à la place de la pochette, avec l'aléatoire et la répétition en tête. Lire ensuite, ajouter à la fin, glisser pour réordonner. Dès qu'un album, une playlist ou un artiste joue, la lecture automatique aligne des morceaux proches sous son propre titre, et la musique ne s'arrête pas au dernier morceau.
-- **Lecture sans blanc.** Le morceau suivant est préparé derrière celui qui joue : albums live et mix de DJ s'enchaînent sans coupure.
-- **Lecture aléatoire, répétition d'un morceau ou de tout, et un minuteur de veille** qui coupe après un temps donné ou à la fin du morceau.
-- **Des notes.** Notez un morceau de une à cinq étoiles dans ses infos ; la note part sur votre serveur, et attend sur l'iPhone quand vous êtes hors ligne.
-- **Scrobbling.** Les écoutes partent vers votre serveur, et l'iPhone les garde en attendant quand vous êtes hors ligne.
-- **Des paroles prêtes à temps.** Les paroles du morceau suivant sont cherchées dès que celui qui joue passe 80 %, pour s'afficher dès qu'il commence.
-- **Des paroles que vous pouvez corriger.** Décalez le minutage si votre casque Bluetooth est en retard, ou calez vous-même les paroles d'un morceau : touchez *Now* au début de chaque ligne marquée. Votre minutage reste sur l'iPhone et passe avant toutes les autres sources. Pour un duo, un remix ou une autre version, Aura vérifie que les paroles correspondent à la version qui joue.
-- **La traduction des paroles**, en option, sous chaque ligne, par Gemini de Google avec votre propre clé d'API gratuite (Réglages → Paroles → Traduction). Un morceau n'est envoyé que quand vous touchez traduire, et seulement ses lignes, son titre et son artiste. Les traductions sont gardées pour l'écoute hors ligne.
-- **Enregistrer une radio comme playlist** sur votre serveur, pochette comprise.
-- **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe, avec des Recherches récentes de ce que vous avez écouté.
-- **Des playlists à votre façon.** En grille ou en liste, filtrées par épinglées, radios, mix, les vôtres, partagées ou téléchargées. Créez-les, réordonnez-les, donnez-leur une pochette tirée de vos photos ; les changements partent sur votre serveur.
-- **Des pages aux couleurs de leur pochette.** Quand votre serveur n'a pas la pochette d'un album, Aura la trouve dans le catalogue de Deezer.
-- **Tous les formats de votre serveur.** WMA, APE, WavPack, DSD et les autres fichiers que l'iPhone ne sait pas lire sont convertis en MP3 par votre serveur, à toutes les qualités, en streaming comme en téléchargement.
-- **Un cache de streaming.** Ce que vous écoutez en streaming est gardé au fil de la lecture, jusqu'à la taille que vous fixez, et un mode hors ligne que vous activez le reste d'un lancement à l'autre.
-- **Plusieurs serveurs**, qu'on change depuis le titre de l'accueil, et des bibliothèques réparties en dossiers de musique. Un serveur peut avoir une seconde adresse, celle de la maison, utilisée dès qu'elle répond.
-- **Une qualité pour le réseau cellulaire**, distincte de celle du Wi-Fi, et la file d'attente enregistrée sur votre serveur quand vous quittez l'app, pour qu'un autre client la reprenne.
-- **En sept langues :** français, anglais, italien, espagnol, allemand, catalan et néerlandais.
-- **Sur l'écran verrouillé**, dans le Centre de contrôle et dans la Dynamic Island, avec AirPlay.
-- **CarPlay** (version App Store) : l'accueil avec les mix et le Radar, vos playlists, les derniers albums, une liste d'artistes, un onglet Téléchargé qui joue sans connexion, et un bouton Radio dans En cours de lecture qui enchaîne une musique proche du morceau.
-- **Siri et Raccourcis** dans les sept langues de l'app : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, lancer vos favoris, mettre un morceau à suivre ou dans la file, aimer le morceau en cours, et lecture, pause, suivant, précédent, aléatoire ou répétition.
-- **Des liens de partage.** Partagez un morceau sous forme de liens qui l'ouvrent sur d'autres services.
-- **Un widget En cours de lecture** pour l'écran d'accueil : le morceau et sa pochette, avec précédent, lecture-pause et suivant en taille moyenne.
-- **À votre goût.** Clair ou sombre, la couleur d'accent de votre choix, et les onglets et les sections de l'accueil dans l'ordre que vous voulez.
-- **Une horloge en paysage.** Activez-la dans les Réglages et tournez le téléphone sur le côté pendant la lecture : l'heure en grand, le morceau à côté, et un tap sur la pochette pour les paroles, une ligne à la fois.
-- **Prêt pour l'iPhone Duo.** Ouvert, Aura tourne avec l'appareil : En cours de lecture garde le lecteur à gauche avec les paroles ou la file d'attente à côté, et les pages d'album, de playlist, de mix et de radio posent leur pochette à gauche avec le titre et les boutons à côté. Plié, le lecteur garde les proportions d'un téléphone sur les écrans courts.
+**L'écoute**
 
-**Dans la 1.4** (en test)
+- **Une file d'attente qui montre la suite**, à la place de la pochette : lire ensuite, ajouter à la fin, glisser pour réordonner. Quand un album ou une playlist se termine, la lecture automatique enchaîne des morceaux proches.
+- **Lecture sans blanc**, aléatoire, répétition d'un morceau ou de tout, et un minuteur de veille qui coupe après un temps donné ou à la fin du morceau.
+- **Tous les formats de votre serveur** : WMA, APE, WavPack, DSD et les autres sont convertis en MP3 par votre serveur. Une qualité à part pour le réseau cellulaire, et un cache de streaming jusqu'à la taille que vous fixez.
+- **Pour vous, à votre goût** <sup>1.4</sup> : chaque mix activé ou non, les genres des mix par genre, et 25, 50 ou 100 morceaux par mix.
+- **La tonalité** <sup>1.4</sup>, un demi-ton à la fois, comme sur une platine. **SharePlay** <sup>1.4</sup> sur FaceTime, chacun écoutant depuis le même serveur.
 
-- **La tonalité.** Un demi-ton plus haut ou plus bas depuis le menu d'En cours de lecture, comme sur une platine : la vitesse suit. Le morceau suivant repart à 0.
-- **Des dossiers de playlists.** Nommez vos playlists `Dossier/Nom` et elles se rangent dans un dossier de l'onglet Playlists ; balayez vers la droite pour en sortir, appui long pour tout épingler, renommer, sélectionner ou supprimer. Supprimer un dossier peut garder ses playlists, remontées d'un niveau.
-- **Une nouvelle playlist, bien faite.** Une seule fenêtre pour créer ou modifier une playlist : sa pochette, son nom, une description, et un choix de dossier qui la déplace ou crée un dossier à n'importe quel niveau.
-- **Une playlist qui se remplit.** Une playlist vide propose Ajouter des morceaux : une recherche qui ajoute d'un geste et s'ouvre sur des suggestions. Chaque playlist se termine par une section Suggestions de morceaux proches, à un geste.
-- **Annuler, en haut.** Supprimer une playlist ou retirer un morceau s'affiche dans la notification en haut de l'écran, avec un bouton Annuler.
-- **Les épingles, sur place.** Maintenez une playlist épinglée et glissez-la pour la déplacer, et un interrupteur du menu remet les épingles dans la liste sans les retirer.
-- **Les albums à plusieurs disques** listent chaque disque sous son titre, et artistes et morceaux se trient selon leurs tags de tri.
-- **Des tris qui restent.** L'ordre choisi pour Morceaux, Favoris, Albums, Artistes ou Playlists est toujours là quand vous revenez.
-- **Plusieurs dossiers de musique à la fois.** Cochez ceux de votre serveur dans Réglages → Dossiers de musique, et toute l'app suit : l'accueil, la bibliothèque, la recherche, les favoris et les mix (Navidrome 0.58 ou plus récent pour en cocher plusieurs).
-- **Pour vous, à votre goût.** Réglages → Pour vous active ou coupe chaque mix, choisit les genres des mix par genre, et fixe 25, 50 ou 100 morceaux par mix.
-- **Une meilleure liste de morceaux.** Une recherche dedans, le nombre de morceaux, les favoris dans l'ordre où vous les avez aimés, et Écoutés récemment et Écoutés souvent qui listent les morceaux vraiment écoutés, par dernière écoute et nombre d'écoutes.
-- **Une playlist gardée téléchargée** : ses nouveaux morceaux se téléchargent dès qu'Aura s'ouvre avec le serveur à portée.
-- **Les pochettes animées**, WebP ou GIF, dans En cours de lecture et sur la page d'album.
-- **SharePlay** sur FaceTime, chacun écoutant depuis le même serveur ; des **liens `aura://`** pour Raccourcis ; et le **chinois et le russe**.
+**Les paroles**
 
-## Aura pour Mac
+- **Prêtes à temps** : les paroles du morceau suivant sont cherchées avant qu'il commence. Pour un duo, un remix ou une autre version, Aura vérifie qu'elles correspondent à la version qui joue.
+- **À corriger vous-même** : décalez le minutage si votre casque Bluetooth est en retard, ou calez vous-même les paroles d'un morceau, un geste par ligne.
+- **La traduction**, en option, sous chaque ligne, par Gemini de Google avec votre propre clé d'API gratuite. Seul le morceau que vous traduisez est envoyé : ses lignes, son titre et son artiste.
 
-Un aperçu pour macOS 26, fait du même code que l'app iPhone : [téléchargez-le](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360) ([étapes d'installation](#mac-aper%C3%A7u)) ou compilez le schéma `Aura-mac`.
+**Votre bibliothèque**
 
-- **Toute la bibliothèque dans une fenêtre** : une barre latérale avec Accueil, Pour vous, le Radar, Wrapped, Titres, Playlists, Albums, Artistes, Téléchargements et vos playlists épinglées, et le lecteur en bas.
-- **À suivre dans un panneau latéral** qui glisse depuis la droite : glisser pour réordonner, mélanger ou vider, et un clic droit pour Lire ensuite, Accéder à l'album, Lancer la radio, la note et le téléchargement.
-- **Les paroles en plein écran**, mot par mot, la pochette à côté, toutes deux à la taille de la fenêtre.
-- **Lire sur l'iPhone depuis le Mac**, ou sur le Mac depuis l'iPhone, sur le même Wi-Fi : lecture, file d'attente et volume passent d'un appareil à l'autre, et vos AirPods restent sur celui qui joue.
-- **Téléchargements, égaliseur et lecteur dans la barre des menus**, et des pages d'album qui listent ce qui manque à la sortie avec Tout récupérer (Get It, à activer dans Réglages → Developer).
+- **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe.
+- **Des playlists à votre façon** : en grille ou en liste, des filtres, des pochettes tirées de vos photos, des dossiers nommés `Dossier/Nom` <sup>1.4</sup>, une section Suggestions et Ajouter des morceaux <sup>1.4</sup>, et Annuler <sup>1.4</sup>. Enregistrez n'importe quelle radio comme playlist ; les changements partent sur votre serveur.
+- **Les notes et le scrobbling** partent sur votre serveur, et attendent sur l'iPhone quand vous êtes hors ligne. Une playlist gardée téléchargée <sup>1.4</sup> télécharge ses nouveaux morceaux toute seule.
+- **Plusieurs serveurs**, chacun avec une adresse de la maison en option, et plusieurs dossiers de musique à la fois <sup>1.4</sup>.
+- **Des pages aux couleurs de leur pochette**, des pochettes animées <sup>1.4</sup>, les albums à plusieurs disques <sup>1.4</sup>, les tags de tri, et des tris qui restent <sup>1.4</sup>.
+
+**Autour de l'iPhone**
+
+- **Écran verrouillé, Centre de contrôle, Dynamic Island et AirPlay**, et un widget En cours de lecture pour l'écran d'accueil.
+- **Siri et Raccourcis** : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, mettre en file, aimer, passer. Des **liens `aura://`** <sup>1.4</sup> pour Raccourcis.
+- **Des liens de partage** qui ouvrent un morceau sur d'autres services.
+- **À votre goût** : clair ou sombre, la couleur d'accent de votre choix, onglets et sections de l'accueil dans votre ordre, une horloge en paysage, et des mises en page pour l'iPhone Duo.
+- **Neuf langues** : français, anglais, italien, espagnol, allemand, catalan, néerlandais, plus le chinois et le russe <sup>1.4</sup>.
+
+## Sur chaque appareil
+
+**iPhone**
+
+<p align="center">
+  <img src="docs/assets/shots-ios.webp" width="100%" alt="L'app iPhone : En cours de lecture, l'accueil avec les mix, une radio, les paroles en rythme, une page d'artiste, la bibliothèque, les téléchargements avec CarPlay et l'Apple Watch, et la confidentialité" />
+</p>
+
+**Apple Watch** : En cours de lecture, les paroles, la file d'attente et la bibliothèque au poignet, la Digital Crown sur le volume.
+
+<p align="center">
+  <img src="docs/assets/shots-watch.webp" width="64%" alt="L'app Apple Watch : En cours de lecture, les paroles, la file d'attente et la bibliothèque" />
+</p>
+
+**CarPlay** (version App Store) : l'accueil avec les mix et le Radar, vos playlists, les derniers albums, vos artistes,
+un onglet Téléchargé qui joue sans connexion, et un bouton Radio qui enchaîne une musique proche du morceau.
+
+**Mac** (aperçu, macOS 26) : fait du même code que l'app iPhone. Toute la bibliothèque dans une fenêtre avec une barre
+latérale ; À suivre dans un panneau latéral à réordonner en glissant, avec un clic droit pour Lire ensuite, Lancer la
+radio, la note et le téléchargement ; les paroles en plein écran ; les téléchargements, l'égaliseur et un lecteur dans la
+barre des menus. Lisez sur l'iPhone depuis le Mac, ou l'inverse, sur le même Wi-Fi : lecture, file d'attente et volume
+passent d'un appareil à l'autre, et vos AirPods restent sur celui qui joue.
 
 <p align="center">
   <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura pour Mac sur le serveur de démo public de Navidrome : l'accueil avec les albums récents et les mix Pour vous, la barre latérale et la barre du lecteur" />
   <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura pour Mac sur le serveur de démo public de Navidrome : une page d'album avec ses morceaux et leurs notes, et À suivre ouvert en panneau à droite" />
 </p>
-<p align="center"><sub>Ces captures viennent du serveur de démo public de Navidrome.</sub></p>
+<p align="center"><sub>Les captures Mac viennent du serveur de démo public de Navidrome.</sub></p>
 
-## Captures d'écran
+**iPhone Duo** : ouvert, En cours de lecture garde le lecteur à gauche avec les paroles ou la file d'attente à côté.
 
-<p align="center">
-  <img src="docs/assets/shots-ios.webp" width="100%" alt="L'app iPhone : En cours de lecture, l'accueil et ses mix, une radio, les paroles synchronisées, une page artiste, la bibliothèque, les téléchargements avec CarPlay et l'Apple Watch, et la confidentialité" />
-</p>
-<p align="center">
-  <img src="docs/assets/shots-watch.webp" width="64%" alt="L'app Apple Watch : En cours de lecture, les paroles, À suivre et la bibliothèque" />
-</p>
 <p align="center">
   <img src="docs/assets/shots-duo.webp" width="100%" alt="Aura ouvert sur l'iPhone Duo : En cours de lecture avec la file d'attente et sa tête Playing Next à côté du lecteur, et une page d'album avec la pochette à gauche, le titre et les boutons à côté" />
 </p>
 
-## Deux versions
+## Obtenir Aura
 
-Les deux sont gratuites, et tout ce qui n'est pas listé ici est identique dans les deux.
+Tout est gratuit, sans compte et sans achats intégrés.
 
-| | Version App Store | IPA à installer soi-même |
-|---|---|---|
-| CarPlay | Oui | Non : re-signer l'IPA fait perdre l'autorisation CarPlay d'Apple |
-| Get It (Soulseek via votre propre [slskd](https://github.com/slskd/slskd)) | Non | À activer, dans Réglages → Developer Options |
-| Vérification NetEase du minutage des paroles pour les remix et les versions modifiées | Non | Oui |
+| | App Store | IPA (à installer soi-même) | Mac (aperçu) |
+|---|---|---|---|
+| Fonctionne sur | iPhone, Apple Watch, CarPlay | iPhone, Apple Watch | Mac |
+| Demande | iOS 26, watchOS 26 | iOS 26, watchOS 26, un outil de sideload | macOS 26, Apple silicon ou Intel |
+| CarPlay | Oui | Non : re-signer fait perdre l'autorisation CarPlay d'Apple | – |
+| Get It (Soulseek via votre propre [slskd](https://github.com/slskd/slskd)) | Non | À activer, Réglages → Developer Options | À activer, Réglages → Developer |
+| Vérification NetEase du minutage des paroles | Non | Oui | Oui |
+| Télécharger | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Dernier IPA](https://github.com/adrbn/aura/releases/latest) | [Zip Mac](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.360/Aura-mac-1.4.0-build.360.zip) |
 
-**Get It** va chercher ce qui manque à votre bibliothèque : une sortie du Radar, un résultat Deezer dans la recherche,
-les morceaux manquants d'un album que vous n'avez qu'en partie (un par un, ou avec Get All), ou le cœur sur un extrait
-dans En cours de lecture. Aura trouve la sortie sur Soulseek via votre slskd, la télécharge et attend que votre serveur
-l'ajoute, avec une carte au-dessus du mini-lecteur et une Activité en direct qui suit chaque étape. Rien ne passe par le
-serveur de quelqu'un d'autre. Ne téléchargez que la musique que vous avez le droit d'avoir.
+Chaque version demande un serveur [Navidrome](https://www.navidrome.org), ou n'importe quel serveur qui parle l'API
+Subsonic 1.16.1 (les extensions OpenSubsonic sont utilisées quand il les propose). Pas encore de serveur ? Essayez la
+démo publique de Navidrome : `https://demo.navidrome.org`, utilisateur `demo`, mot de passe `demo`.
 
-La **vérification NetEase** demande au catalogue de NetEase, par titre, artiste et durée, des paroles minutées sur
-l'enregistrement exact, parce que les sources de paroles rangent souvent un remix sous le minutage de l'original.
-
-La version à installer soi-même peut aussi suivre une liste de suivi SoulSync depuis le Radar, et écrire sur votre
-serveur, en fichiers `.lrc` via File Browser, les paroles que vous avez calées à la main.
-
-## Installation
-
-### Installer l'IPA soi-même
+<details>
+<summary><b>Installer l'IPA</b></summary>
 
 1. Installez un outil de sideload sur votre iPhone : [AltStore](https://altstore.io), [SideStore](https://sidestore.io) ou Feather.
 2. Téléchargez `Aura-v<version>-build.<numéro>.ipa` depuis la [dernière version](https://github.com/adrbn/aura/releases/latest). Chaque version indique sa somme de contrôle SHA-256.
@@ -175,11 +161,10 @@ Installer un nouvel IPA par-dessus un ancien garde vos serveurs, mots de passe, 
 identifiant Apple gratuit, la signature expire au bout de 7 jours et l'outil de sideload doit la renouveler ; c'est une
 limite d'iOS, pas d'Aura.
 
-### App Store
+</details>
 
-[Installez **Aura: Self-Hosted Music** depuis l'App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github). Gratuite, sans achats intégrés.
-
-### Mac (aperçu)
+<details>
+<summary><b>Installer l'app Mac</b></summary>
 
 1. Téléchargez [`Aura-mac-1.4.0-build.360.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.360/Aura-mac-1.4.0-build.360.zip) depuis la [version Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360), qui indique sa somme SHA-256, et ouvrez-le.
 2. Glissez **Aura.app** dans **Applications**.
@@ -188,17 +173,29 @@ limite d'iOS, pas d'Aura.
 
 L'app Mac est un aperçu : c'est l'app iPhone qui est testée tous les jours.
 
-## Configuration requise
+</details>
 
-- Un iPhone sous iOS 26 ou plus récent.
-- Une Apple Watch sous watchOS 26 ou plus récent, pour l'app de la montre.
-- Un Mac sous macOS 26 ou plus récent, Apple silicon ou Intel, pour l'aperçu Mac.
-- Un serveur [Navidrome](https://www.navidrome.org), ou n'importe quel serveur qui parle l'API Subsonic 1.16.1. Les extensions OpenSubsonic sont utilisées quand le serveur les propose.
+<details>
+<summary><b>Ce que font Get It et la vérification NetEase</b></summary>
 
-Pas encore de serveur ? Essayez Aura avec la démo publique de Navidrome : `https://demo.navidrome.org`, utilisateur
-`demo`, mot de passe `demo`.
+**Get It** va chercher ce qui manque à votre bibliothèque : une sortie du Radar, un résultat Deezer dans la recherche,
+les morceaux manquants d'un album que vous n'avez qu'en partie (un par un, ou avec Tout récupérer), ou le cœur sur un
+extrait dans En cours de lecture. Aura trouve la sortie sur Soulseek via votre slskd, la télécharge et attend que votre
+serveur l'ajoute, en suivant chaque étape à l'écran. Rien ne passe par le serveur de quelqu'un d'autre. Ne téléchargez
+que la musique que vous avez le droit d'avoir.
+
+La **vérification NetEase** demande au catalogue de NetEase, par titre, artiste et durée, des paroles minutées sur
+l'enregistrement exact, parce que les sources de paroles rangent souvent un remix sous le minutage de l'original.
+
+Les versions hors App Store peuvent aussi suivre une liste de suivi SoulSync depuis le Radar, et écrire sur votre
+serveur, en fichiers `.lrc` via File Browser, les paroles que vous avez calées à la main.
+
+</details>
 
 ## Compiler depuis les sources
+
+<details>
+<summary><b>Cloner, signer, choisir un schéma</b></summary>
 
 ```bash
 git clone https://github.com/adrbn/aura
@@ -219,32 +216,29 @@ Les polices (Vavin et Archivo, toutes deux sous SIL OFL 1.1) sont dans le dépô
 ajouter.
 
 Les illustrations de cette page sont faites par [`docs/assets/make_svgs.py`](docs/assets/make_svgs.py) (Python,
-bibliothèque standard seulement) : `python3 docs/assets/make_svgs.py` régénère tous les SVG. Toutes les illustrations
-intègrent de vraies captures de l'app, gardées en petit dans `docs/assets/readme-src/`.
+bibliothèque standard seulement) : `python3 docs/assets/make_svgs.py` régénère tous les SVG à partir des vraies
+captures gardées en petit dans `docs/assets/readme-src/`.
+
+</details>
 
 ## Confidentialité
 
 Aura n'a pas de compte ni de statistiques d'usage, et n'envoie rien au développeur. Les mots de passe des serveurs sont
-gardés dans le trousseau d'iOS. L'app parle à votre serveur et aux services publics listés dans la
-[politique de confidentialité](https://adrbn.github.io/aura-site/privacy.html), qui dit exactement ce que chacun reçoit :
-paroles, crédits, pochettes, photos d'artistes, le Radar et les liens de partage.
+gardés dans le trousseau. L'app parle à votre serveur et aux services publics listés dans la
+[politique de confidentialité](https://adrbn.github.io/aura-site/privacy.html), qui dit exactement ce que chacun reçoit.
 
 ## Comment l'IA a servi
 
 Aura est le projet d'une seule personne, construit avec Claude Code, l'assistant de programmation d'Anthropic, qui a
 écrit l'essentiel du code à partir de mes descriptions. J'ai décidé de ce que fait Aura et de son allure, relu les
-changements, et testé les versions sur mon propre iPhone, avec ma propre bibliothèque. Chaque
-changement est dans l'historique des commits, avec un message qui dit ce qu'il fait et pourquoi. Les signalements de
-bugs sont les bienvenus : ils arrivent à une personne.
+changements, et testé les versions sur mon propre iPhone, avec ma propre bibliothèque. Chaque changement est dans
+l'historique des commits, avec un message qui dit ce qu'il fait et pourquoi.
 
-## Contribuer
+## Contribuer et soutenir
 
-Bugs et demandes de fonctions : [github.com/adrbn/aura/issues](https://github.com/adrbn/aura/issues). Les pull requests
-sont les bienvenues. Le [journal des modifications](CHANGELOG.md) (en anglais) dit ce qui a changé et pourquoi.
-
-## Soutenir
-
-Aura est gratuit, et le restera. S'il mérite sa place sur votre écran d'accueil :
+Bugs et demandes de fonctions : [issues](https://github.com/adrbn/aura/issues) ; ils arrivent à une personne. Les pull
+requests sont les bienvenues, et le [journal des modifications](CHANGELOG.md) (en anglais) dit ce qui a changé et
+pourquoi. Aura est gratuit, et le restera. S'il mérite sa place sur votre écran d'accueil :
 
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" height="64" alt="Offrir un café sur Ko-fi"></a>
 
@@ -255,11 +249,14 @@ Une étoile sur le dépôt aide aussi d'autres personnes à le trouver.
 [GPL-3.0](LICENSE) © 2026 adrbn. Vous pouvez partager et modifier Aura sous la même licence ; une version modifiée que
 vous distribuez doit rester ouverte, sous GPL-3.0.
 
-## Crédits
+<details>
+<summary><b>Crédits</b></summary>
 
 - [LRCLIB](https://lrclib.net) pour les paroles, [MusicBrainz](https://musicbrainz.org) pour les crédits des morceaux, le catalogue public de [Deezer](https://www.deezer.com) pour les pochettes, les photos d'artistes, le Radar, les extraits et les liens de partage, et l'API iTunes Search pour les liens de partage aussi.
 - En option, avec votre propre clé : [Google Gemini](https://ai.google.dev) pour la traduction des paroles et [Last.fm](https://www.last.fm) pour les statistiques d'écoute.
 - Polices : [Archivo](https://github.com/Omnibus-Type/Archivo) et Vavin, toutes deux sous SIL Open Font License 1.1.
-- Toutes les illustrations de cette page sont de vraies captures de l'app, sur la bibliothèque du développeur.
+- Les images iPhone, montre et Duo sont de vraies captures de l'app sur la bibliothèque du développeur ; les captures Mac viennent du serveur de démo public de Navidrome.
+
+</details>
 
 <sub>Aura n'est affilié ni à Navidrome, ni à Subsonic, ni à Apple. Toutes les marques appartiennent à leurs propriétaires respectifs.</sub>
