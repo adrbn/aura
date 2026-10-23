@@ -123,11 +123,8 @@ struct MacHomeView: View {
 
     @ViewBuilder
     private func mixArtwork(_ mix: Mix) -> some View {
-        if let nature = mix.generatedCover {
-            GeneratedCoverView(nature: nature, size: preferences.coverSize.shelfWidth, cornerRadius: 8)
-        } else {
-            MixCollageView(coverArts: mix.collageCoverArts, size: preferences.coverSize.shelfWidth, cornerRadius: 8)
-        }
+        // The phone's editorial cover: the most-played artist's photo under the mix's type.
+        EditorialMixCover(mix: mix, size: preferences.coverSize.shelfWidth, cornerRadius: 8)
     }
 
     private func albumShelf(_ title: LocalizedStringKey, _ albums: [Album]) -> some View {

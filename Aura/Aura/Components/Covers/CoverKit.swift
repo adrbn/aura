@@ -1,5 +1,9 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 import CoreText
 import CoreImage
 
@@ -267,6 +271,6 @@ enum CoverRendering {
         let renderer = ImageRenderer(content: cover.frame(width: side, height: side))
         renderer.scale = 2
         renderer.isOpaque = true
-        return renderer.uiImage?.jpegData(compressionQuality: 0.9)
+        return renderer.uiImage?.auraJPEGData(quality: 0.9)
     }
 }

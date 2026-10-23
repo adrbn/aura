@@ -1,5 +1,9 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 
 // The editorial templates. Each is laid out for a side of `s` points, so the same cover is
 // drawn crisp at 40 pt in a list and at 260 pt in a header. With no photo — while it loads,

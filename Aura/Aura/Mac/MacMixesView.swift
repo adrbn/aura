@@ -55,14 +55,8 @@ struct MacMixesView: View {
     private func tile(_ mix: Mix) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             GeometryReader { geo in
-                // A templated cover when the mix has a nature of its own — a genre, a time
-                // of day — and a collage of its songs when it doesn't.
-                if let nature = mix.generatedCover {
-                    GeneratedCoverView(nature: nature, size: geo.size.width, cornerRadius: 10)
-                } else {
-                    MixCollageView(coverArts: mix.collageCoverArts,
-                                   size: geo.size.width, cornerRadius: 10)
-                }
+                // The phone's editorial cover: the most-played artist's photo under the mix's type.
+                EditorialMixCover(mix: mix, size: geo.size.width, cornerRadius: 10)
             }
             .aspectRatio(1, contentMode: .fit)
             VStack(alignment: .leading, spacing: 1) {
@@ -83,7 +77,8 @@ struct MacMixDetailView: View {
                 coverArt: mix.coverArt,
                 title: mix.title,
                 subtitle: String(localized: "\(mix.subtitle) · \(mix.songs.count) songs"),
-                placeholderName: mix.title
+                placeholderName: mix.title,
+                mix: mix
             ) {
                 Button { play(shuffled: false) } label: { Label("Play", systemImage: "play.fill") }
                 Button { play(shuffled: true) } label: { Label("Shuffle", systemImage: "shuffle") }

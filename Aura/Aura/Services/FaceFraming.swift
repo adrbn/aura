@@ -1,5 +1,9 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 import Vision
 
 /// Frames an artist's photograph on the face instead of on the middle of the picture.
@@ -113,12 +117,17 @@ enum FaceFraming {
     /// The pixels as the photo is displayed. A JPEG carrying an EXIF rotation stores them
     /// sideways; read raw, the face and the "top" strip would come from the wrong axis.
     static func upright(_ image: UIImage) -> CGImage? {
+        #if os(macOS)
+        // AppKit applies the EXIF rotation when it decodes the file.
+        return image.cgImage
+        #else
         guard image.imageOrientation != .up else { return image.cgImage }
         let format = UIGraphicsImageRendererFormat()
         format.scale = image.scale
         return UIGraphicsImageRenderer(size: image.size, format: format)
             .image { _ in image.draw(at: .zero) }
             .cgImage
+        #endif
     }
 
     /// Size and top-left position of a photo of `imageSize` filling `box`: centred when there

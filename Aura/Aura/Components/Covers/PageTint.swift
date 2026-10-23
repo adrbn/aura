@@ -1,5 +1,9 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#else
+import AppKit
+#endif
 
 /// Spotify's page tint: the top of an album, playlist or mix page takes the artwork's colour
 /// and fades into the canvas, so every page opens in its own light.
@@ -40,7 +44,11 @@ enum PageTint {
         let neutral = s < 0.12
         let dark = UIColor(hue: h, saturation: neutral ? s : min(0.75, max(0.4, s)), brightness: 0.38, alpha: 1)
         let light = UIColor(hue: h, saturation: neutral ? s : 0.22, brightness: 0.96, alpha: 1)
+        #if os(iOS)
         return UIColor { $0.userInterfaceStyle == .dark ? dark : light }
+        #else
+        return NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light }
+        #endif
     }
 
     /// The picture's most present colour: the hue carrying the most saturated, lit pixels,

@@ -19,6 +19,38 @@ typealias PlatformFont = UIFont
 #else
 typealias PlatformImage = NSImage
 typealias PlatformFont = NSFont
+// The cover templates are drawn in UIKit's terms; on the Mac the same names are AppKit's,
+// with the few calls AppKit spells differently given below.
+typealias UIImage = NSImage
+typealias UIColor = NSColor
+
+extension NSImage {
+    var cgImage: CGImage? { cgImage(forProposedRect: nil, context: nil, hints: nil) }
+
+    convenience init(cgImage: CGImage) {
+        self.init(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+    }
+
+    /// Pixels and points are the same here: the size above is the bitmap's own.
+    enum Orientation { case up }
+    var scale: CGFloat { 1 }
+
+    convenience init(cgImage: CGImage, scale: CGFloat, orientation: Orientation) {
+        self.init(cgImage: cgImage)
+    }
+}
+
+extension ImageRenderer {
+    @MainActor var uiImage: NSImage? { nsImage }
+}
+
+extension Image {
+    init(uiImage: NSImage) { self.init(nsImage: uiImage) }
+}
+
+extension Color {
+    init(uiColor: NSColor) { self.init(nsColor: uiColor) }
+}
 #endif
 
 extension PlatformImage {
