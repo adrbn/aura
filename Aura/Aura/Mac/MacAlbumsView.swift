@@ -67,6 +67,10 @@ struct MacAlbumDetailView: View {
             ) {
                 Button { play(shuffled: false) } label: { Label("Play", systemImage: "play.fill") }
                 Button { play(shuffled: true) } label: { Label("Shuffle", systemImage: "shuffle") }
+                Button { Task { await DownloadManager.shared.downloadAlbum(songs, groupId: album.id) } } label: {
+                    Label("Download Album", systemImage: "arrow.down.circle")
+                }
+                .disabled(songs.isEmpty || songs.allSatisfy { DownloadManager.shared.isDownloaded($0.id) })
             }
             Divider()
             MacSongTable(songs: songs,

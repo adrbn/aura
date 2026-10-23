@@ -69,6 +69,7 @@ struct MacSongRow: View {
             Button("Add to Queue") { player.addToQueue(song) }
             Divider()
             MacRatingMenu(songs: [song])
+            MacDownloadMenuItem(songs: [song])
         }
     }
 

@@ -54,6 +54,7 @@ struct MacSongTable: View {
             Button("Add to Queue") { player.addToQueue(chosen(ids)) }
             Divider()
             MacRatingMenu(songs: chosen(ids))
+            MacDownloadMenuItem(songs: chosen(ids))
         } primaryAction: { ids in
             // Double-click, the only gesture anyone tries first on a Mac list.
             play(ids)
@@ -95,12 +96,18 @@ struct MacDetailHeader<Actions: View>: View {
     let title: String
     let subtitle: String
     var placeholderName: String?
+    /// A mix's own cover, drawn instead of the server's artwork.
+    var mix: Mix?
     @ViewBuilder var actions: Actions
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 22) {
-            CoverArtImage(coverArt: coverArt, size: 210, cornerRadius: 12,
-                          placeholderName: placeholderName)
+            if let mix {
+                EditorialMixCover(mix: mix, size: 210, cornerRadius: 12)
+            } else {
+                CoverArtImage(coverArt: coverArt, size: 210, cornerRadius: 12,
+                              placeholderName: placeholderName)
+            }
             VStack(alignment: .leading, spacing: 8) {
                 Text(title).auraDisplay(52).lineLimit(2)
                 Text(subtitle).font(.callout).foregroundStyle(.secondary)

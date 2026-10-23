@@ -19,7 +19,7 @@ struct MacSidebar: View {
                 Label(item.label, systemImage: item.symbol).tag(item)
             }
             Section("Library") {
-                ForEach([MacSection.songs, .playlists, .albums, .artists]) { item in
+                ForEach([MacSection.songs, .playlists, .albums, .artists, .downloads]) { item in
                     Label(item.label, systemImage: item.symbol).tag(item)
                 }
             }
@@ -48,6 +48,7 @@ struct MacSidebar: View {
         // its own vibrant material, which is exactly the seam that made the three regions
         // read as three panels bolted together.
         .scrollContentBackground(.hidden)
+        .scrollIndicators(.never)
         .safeAreaInset(edge: .top, spacing: 0) { header }
             footer
                 .frame(maxWidth: .infinity, alignment: .leading)
