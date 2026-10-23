@@ -176,18 +176,26 @@ final class LibraryIndex {
             typed.isEmpty || LocalSearch.words(name).joined(separator: " ").hasPrefix(typed)
                 || LocalSearch.words(name).contains { $0.hasPrefix(typed) }
         }
+        // What's already typed narrows the offer: after artist:Avicii, album: offers his.
+        let context = LocalSearch.parse(head)
+        func fits(_ doc: LocalSearch.Doc) -> Bool { context.isEmpty || LocalSearch.score(context, doc) != nil }
+        let songs = context.isEmpty ? corpus.songs : corpus.songs.indices.filter { fits(corpus.songDocs[$0]) }.map { corpus.songs[$0] }
         let names: [String]
         switch field {
         case "artist", "by":
-            names = corpus.artists.filter { !$0.name.contains(",") && starts($0.name) }
+            names = corpus.artists.indices.filter { !corpus.artists[$0].name.contains(",") && starts(corpus.artists[$0].name) && fits(corpus.artistDocs[$0]) }
+                .map { corpus.artists[$0] }
                 .sorted { ($0.albumCount ?? 0) > ($1.albumCount ?? 0) }.map(\.name)
         case "album":
-            names = corpus.albums.filter { starts($0.name) }
+            names = corpus.albums.indices.filter { starts(corpus.albums[$0].name) && fits(corpus.albumDocs[$0]) }
+                .map { corpus.albums[$0] }
                 .sorted { ($0.playCount ?? 0) > ($1.playCount ?? 0) }.map(\.name)
         case "genre":
-            names = corpus.genres.filter(starts)
+            let held = Set(songs.compactMap(\.genre))
+            names = corpus.genres.filter { held.contains($0) && starts($0) }
         case "year", "annee", "année":
-            names = corpus.years.map(String.init).filter { typed.isEmpty || $0.hasPrefix(typed) }
+            let held = Set(songs.compactMap(\.year))
+            names = corpus.years.filter { held.contains($0) }.map(String.init).filter { typed.isEmpty || $0.hasPrefix(typed) }
         default:
             return []
         }

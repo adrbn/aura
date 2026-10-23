@@ -66,7 +66,9 @@ enum LocalSearch {
                 let value = String(text[text.index(after: colon)...])
                 if name == "year" || name == "annee" || name == "année" {
                     if let years = yearRange(value) { query.years = years; continue }
-                } else if let field = fieldNames[name], !value.isEmpty {
+                } else if let field = fieldNames[name] {
+                    // "album:" with nothing after it yet is no search for the word "album".
+                    if value.isEmpty { continue }
                     term.field = field
                     text = value
                 }
