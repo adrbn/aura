@@ -15,6 +15,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="56"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
+<a href="#mac-preview"><img src="docs/assets/btn-mac.svg" alt="Download for Mac" height="40"></a>&nbsp;
 <a href="#what-it-does"><img src="docs/assets/btn-features.svg" alt="Features" height="40"></a>&nbsp;
 <a href="#two-builds"><img src="docs/assets/btn-builds.svg" alt="Two builds" height="40"></a>&nbsp;
 <a href="#build-from-source"><img src="docs/assets/btn-source.svg" alt="Build from source" height="40"></a>
@@ -24,6 +25,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 <br>
 
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#requirements)
+[![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20preview-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#mac-preview)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#requirements)
 [![Navidrome / Subsonic](https://img.shields.io/badge/server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#requirements)
 [![No tracking](https://img.shields.io/badge/tracking-none-EB534D?style=flat-square&labelColor=121212)](#privacy)
@@ -106,7 +108,7 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **Animated covers**, WebP or GIF, on Now Playing and the album page.
 - **SharePlay** over FaceTime, everyone streaming from the same server; **`aura://` links** for Shortcuts; and **Chinese and Russian**.
 
-**Aura for Mac** (preview, built from source with the `Aura-mac` scheme)
+**Aura for Mac** (preview for macOS 26, [download the app](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360) or build the `Aura-mac` scheme)
 
 - **The whole library in one window**: a sidebar with Home, Made For You, the Radar, Wrapped, Songs, Playlists, Albums, Artists, Downloads and your pinned playlists, and the player across the bottom.
 - **Up Next as a side pane** that slides in from the right: drag to reorder, shuffle or clear, and a right-click for Play Next, Go to Album, Start Radio, rating and download.
@@ -125,6 +127,11 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 <p align="center">
   <img src="docs/assets/shots-duo.webp" width="100%" alt="Aura open on the iPhone Duo: Now Playing with the queue and its Playing Next head beside the player, and an album page with the cover at the left and the title and buttons beside it" />
 </p>
+<p align="center">
+  <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura for Mac on Navidrome's demo server: Home with recent albums and the Made For You mixes, the sidebar and the player bar" />
+  <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura for Mac on Navidrome's demo server: an album page with its songs and ratings, and Up Next open as a pane on the right" />
+</p>
+<p align="center"><sub>The Mac captures use Navidrome's public demo server.</sub></p>
 
 ## Two builds
 
@@ -165,10 +172,20 @@ the signature expires after 7 days and the sideloading tool has to refresh it; t
 
 [Get **Aura: Self-Hosted Music** on the App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github). Free, with no in-app purchases.
 
+### Mac (preview)
+
+1. Download [`Aura-mac-1.4.0-build.360.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.360/Aura-mac-1.4.0-build.360.zip) from the [Mac release](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.360), which lists its SHA-256 checksum, and open it.
+2. Drag **Aura.app** into **Applications**.
+3. Open Aura. The app is signed with a Developer ID but not notarized yet, so macOS blocks the first launch: go to **System Settings → Privacy & Security**, click **Open Anyway** next to Aura, and confirm.
+4. Enter your server's address, username and password.
+
+The Mac app is a preview: the iPhone app is the one tested every day.
+
 ## Requirements
 
 - iPhone with iOS 26 or later.
 - Apple Watch with watchOS 26 or later, for the watch app.
+- Mac with macOS 26 or later, Apple silicon or Intel, for the Mac preview.
 - A [Navidrome](https://www.navidrome.org) server, or any server speaking Subsonic API 1.16.1. OpenSubsonic extensions are used when the server offers them.
 
 No server yet? Try Aura against Navidrome's public demo: `https://demo.navidrome.org`, user `demo`, password `demo`.
@@ -186,7 +203,7 @@ open Aura/Aura.xcodeproj
 - Schemes and configurations:
   - **Aura**, with `Debug` and `Release`: the sideload build, with Get It and the NetEase check.
   - **Aura-AppStore**, with `Release-AppStore`: built with the `APPSTORE_BUILD` flag, which compiles the sideload-only features out.
-  - **Aura-mac**: a macOS preview build; only the iPhone is tested daily.
+  - **Aura-mac**: the Mac app, a preview; only the iPhone is tested daily.
 - CarPlay needs Apple's `carplay-audio` entitlement on your own team.
 - `scripts/watch-screenshots.sh` draws the watch app's pages on a Mac without a watch or simulator.
 

@@ -120,6 +120,7 @@ ICONS = {
                     "a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2zM6.5 17.5h1M15.5 17.5h1"),
     "code": ("s", "M8 7l-5 5 5 5M16 7l5 5-5 5M14 4.5l-4 15"),
     "check": ("s", "M7 12.5l3.2 3.2L17 9"),
+    "laptop": ("s", "M5 6a1.5 1.5 0 0 1 1.5-1.5h11A1.5 1.5 0 0 1 19 6v9H5zM2.5 15h19l-1 3a1.5 1.5 0 0 1-1.4 1H4.9a1.5 1.5 0 0 1-1.4-1z"),
 }
 
 
@@ -762,6 +763,7 @@ def card_devices():
 # --- buttons -------------------------------------------------------------------------------------------------
 BUTTONS = {
     "download": ("download", "Download IPA", "Télécharger l’IPA", True),
+    "mac": ("laptop", "Download for Mac", "Télécharger pour Mac", False),
     "features": ("grid", "Features", "Fonctions", False),
     "builds": ("builds", "Two builds", "Deux versions", False),
     "source": ("code", "Build from source", "Compiler", False),
