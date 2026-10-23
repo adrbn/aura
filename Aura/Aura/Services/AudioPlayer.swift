@@ -1733,7 +1733,9 @@ final class AudioPlayer {
     /// never strictly needed it — but the rate is ambiguous while paused with the session
     /// deactivated, which is exactly when Siri is asked to resume. Stated on both.
     func publishPlaybackState() {
-        MPNowPlayingInfoCenter.default().playbackState = isPlaying ? .playing : .paused
+        // A remote plays nothing here: saying it does makes the system pull the AirPods over
+        // to this device, away from the one actually playing.
+        MPNowPlayingInfoCenter.default().playbackState = isPlaying && remote == nil ? .playing : .paused
     }
     func togglePlayPause() { if let remote { remote(.playPause); return }; if isPlaying { pause() } else { play() } }
 
@@ -3271,7 +3273,7 @@ final class AudioPlayer {
             MPMediaItemPropertyAlbumTitle: song.album ?? String(localized: "Unknown"),
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(pitchRate) : 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying && remote == nil ? Double(pitchRate) : 0.0,
             // What the rate returns to after a pause, so a car's progress bar keeps moving
             // on its own between updates instead of waiting for the next one.
             MPNowPlayingInfoPropertyDefaultPlaybackRate: Double(pitchRate),
