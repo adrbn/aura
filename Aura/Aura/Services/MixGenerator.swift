@@ -380,7 +380,12 @@ final class MixGenerator {
         // random, then carve out time/mood mixes by energy band. No artist-centred mixes —
         // mixes are organised purely by time of day and mood.
         let picked = MixPreferences.genres
-        let userGenres = picked.isEmpty ? topGenres(recentSongs + starredSongs, limit: 4) : picked
+        var userGenres = picked.isEmpty ? topGenres(recentSongs + starredSongs, limit: 4) : picked
+        // No plays or favourites to read them from (a new device, or the server didn't answer
+        // in time): the library's biggest genres instead of none at all.
+        if userGenres.isEmpty, let all = try? await SubsonicClient.shared.getGenres(server: server) {
+            userGenres = all.sorted { ($0.songCount ?? 0) > ($1.songCount ?? 0) }.prefix(4).map(\.value)
+        }
         let length = MixPreferences.length
         let genres = Array(Set(Mood.allCases.flatMap { $0.genres }).union(userGenres))
         let served = cache.served(for: server.id)
@@ -503,6 +508,8 @@ final class MixGenerator {
         if seeds.count < 5 {
             seeds += starredSongs.shuffled().prefix(5 - seeds.count)
         }
+        // Neither: songs from anywhere in the library, rather than no discoveries at all.
+        if seeds.isEmpty { seeds = (try? await SubsonicClient.shared.getRandomSongs(server: server, size: 5)) ?? [] }
         guard !seeds.isEmpty else { return nil }
         var pool: [Song] = []
         await withTaskGroup(of: [Song].self) { group in

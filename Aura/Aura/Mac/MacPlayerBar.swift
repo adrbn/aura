@@ -199,6 +199,13 @@ struct MacPlayerBar: View {
                         Label(device.name, systemImage: link.connected == device ? "checkmark" : device.symbol)
                     }
                 }
+                Divider()
+                // Speakers, headphones and AirPlay are the Mac's own to choose, in its Sound settings.
+                Button {
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Sound-Settings.extension")!)
+                } label: {
+                    Label("AirPlay & Bluetooth", systemImage: "airplayaudio")
+                }
             } label: {
                 Image(systemName: link.connected?.symbol ?? "hifispeaker.and.homepod")
                     .font(.system(size: 13))

@@ -107,7 +107,7 @@ struct MacHomeView: View {
     private var mixesShelf: some View {
         MacShelf(title: "Made For You",
                  subtitle: "Built from what you've been listening to",
-                 items: generator.mixes) { mix in
+                 items: CoverArtists.distinctLeads(generator.mixes)) { mix in
             NavigationLink(value: mix) {
                 MacPlayableCard(
                     coverArt: nil,
