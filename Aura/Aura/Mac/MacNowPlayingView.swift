@@ -15,9 +15,13 @@ struct MacNowPlayingView: View {
     var body: some View {
         ZStack {
             background
-            HStack(spacing: 0) {
-                artworkPane
-                lyricsPane
+            // The cover grows with the window, as the lyrics do: fixed sizes left both small
+            // in a full-screen window.
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    artworkPane(cover: min(geo.size.width * 0.36, geo.size.height * 0.52))
+                    lyricsPane
+                }
             }
         }
         .overlay(alignment: .topTrailing) {
@@ -57,24 +61,24 @@ struct MacNowPlayingView: View {
         .clipped()
     }
 
-    private var artworkPane: some View {
-        VStack(spacing: 22) {
+    private func artworkPane(cover: CGFloat) -> some View {
+        VStack(spacing: 26) {
             Spacer()
-            CoverArtImage(coverArt: player.currentSong?.coverArt, size: 380, cornerRadius: 16)
+            CoverArtImage(coverArt: player.currentSong?.coverArt, size: cover, cornerRadius: 16)
                 .shadow(color: .black.opacity(0.5), radius: 30, y: 14)
             VStack(spacing: 6) {
                 Text(player.currentSong?.title ?? String(localized: "Nothing playing"))
-                    .auraDisplay(30)
+                    .auraDisplay(cover > 460 ? 38 : 30)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                 Text(player.currentSong?.artist ?? "")
-                    .font(.system(size: 14))
+                    .font(.system(size: cover > 460 ? 17 : 14))
                     .foregroundStyle(.white.opacity(0.7))
             }
-            .frame(width: 380)
+            .frame(width: cover)
             Spacer()
         }
-        .frame(width: 500)
+        .frame(width: cover + 120)
         .frame(maxHeight: .infinity)
     }
 
@@ -177,6 +181,9 @@ struct MacLyricsSheet: View {
     @State private var browsing = false
     @State private var browsingTimeout: Task<Void, Never>?
 
+    /// The sung line's size, with the pane's height: 48pt in a small window, up to 80.
+    private var lineSize: CGFloat { min(80, max(48, paneHeight * 0.085)) }
+
     private var synced: Bool { player.lyrics.contains { $0.time != nil } }
 
     var body: some View {
@@ -244,10 +251,10 @@ struct MacLyricsSheet: View {
         let isCurrent = index == focus
         return VStack(alignment: .leading, spacing: 8) {
             text(for: line, isCurrent: isCurrent)
-                .font(.system(size: 44, weight: .bold))
+                .font(.system(size: lineSize, weight: .bold))
             if settings.translateLyrics, let translation = translator.lines[line.text], !translation.isEmpty {
                 Text(translation)
-                    .font(.system(size: 26, weight: .semibold))
+                    .font(.system(size: lineSize * 0.6, weight: .semibold))
                     .opacity(0.6)
             }
         }
