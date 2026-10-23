@@ -109,6 +109,7 @@ struct MacRootView: View {
         // The bar under the split view rather than a safe-area inset: a Table ignores the
         // inset, and its last rows sat under the bar out of reach.
         VStack(spacing: 0) {
+        HStack(spacing: 0) {
         NavigationSplitView(columnVisibility: columnVisibility) {
             MacSidebar(section: $section, query: $query) { path = NavigationPath() }
         } detail: {
@@ -169,6 +170,14 @@ struct MacRootView: View {
             .padding(.trailing, 16)
             .ignoresSafeArea()
         }
+        if MacQueuePanel.shared.isShown {
+            // Up Next as a pane on the right, as the sidebar is on the left: it slides in
+            // from the queue button, and the library narrows beside it rather than under it.
+            MacQueueView()
+                .transition(.move(edge: .trailing))
+        }
+        }
+        .animation(.smooth(duration: 0.35), value: MacQueuePanel.shared.isShown)
         MacPlayerBar()
         }
         // With the sidebar folded, its button waits beside the window's own three.
@@ -208,7 +217,9 @@ struct MacRootView: View {
     /// AppKit view and never showed.
     private func pushed(_ page: some View) -> some View {
         page
-            .environment(\.macTopRoom, topRoom)
+            // The full room even in full screen, where the sections need less: the way back
+            // sits in it, above the cover.
+            .environment(\.macTopRoom, Self.topRoom)
             .ignoresSafeArea(.container, edges: .top)
             .overlay(alignment: .topLeading) { backButton }
             .macPageEntrance()
@@ -216,30 +227,28 @@ struct MacRootView: View {
 
     /// SwiftUI's own back button is a toolbar item, and this window has no toolbar, so a
     /// pushed page carries this one in its top-left corner, clear of the window buttons.
-    /// Shown only when there is somewhere to go back to. `⌘[` as well as the button,
-    /// because that is the shortcut every other Mac app answers to.
-    @ViewBuilder private var backButton: some View {
-        if !path.isEmpty {
-            Button {
-                path.removeLast()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 30, height: 30)
-                    .background(.regularMaterial, in: Circle())
-                    .overlay(Circle().stroke(.white.opacity(0.10), lineWidth: 0.5))
-            }
-            .buttonStyle(.plain)
-            .keyboardShortcut("[", modifiers: .command)
-            .help("Back")
-            // In the room above the cover, level with the window's buttons and clear of
-            // them, and of the sidebar's while the sidebar is folded.
-            .padding(.leading, preferences.sidebarVisible ? 18 : windowState.isFullScreen ? 56 : 118)
-            .padding(.top, 11)
-            .ignoresSafeArea()
-            .transition(.opacity)
+    /// `⌘[` as well as the button, because that is the shortcut every other Mac app answers to.
+    /// Not gated on the path: the page is built from the render before the push, whose path
+    /// was still empty, so the button never showed. A pushed page always has a way back.
+    private var backButton: some View {
+        Button {
+            if !path.isEmpty { path.removeLast() }
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 30, height: 30)
+                .background(.regularMaterial, in: Circle())
+                .overlay(Circle().stroke(.white.opacity(0.10), lineWidth: 0.5))
         }
+        .buttonStyle(.plain)
+        .keyboardShortcut("[", modifiers: .command)
+        .help("Back")
+        // In the room above the cover, level with the window's buttons and clear of
+        // them, and of the sidebar's while the sidebar is folded.
+        .padding(.leading, preferences.sidebarVisible ? 18 : windowState.isFullScreen ? 56 : 118)
+        .padding(.top, 11)
+        .ignoresSafeArea(.container, edges: .top)
     }
 
     /// Kept in a preference so the View menu can reach it: with no toolbar there is no

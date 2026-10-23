@@ -27,7 +27,7 @@ struct MacArtistLinks: View {
                 Button { open(credit) } label: {
                     Text(credit.name)
                         .font(.system(size: size))
-                        .foregroundStyle(colour)
+                        .macHoverTint(colour)
                         .lineLimit(1)
                         .fixedSize()
                 }
@@ -83,4 +83,23 @@ extension Song {
             ArtistRef(id: index == 0 ? (artistId ?? "") : "", name: name)
         }
     }
+}
+
+/// A link in text: its colour turns to the accent under the pointer, so it reads as
+/// clickable without an underline.
+private struct MacHoverTint: ViewModifier {
+    let base: AnyShapeStyle
+    @State private var hovered = false
+    @Environment(\.appAccentColor) private var accentColor
+
+    func body(content: Content) -> some View {
+        content
+            .foregroundStyle(hovered ? AnyShapeStyle(accentColor) : base)
+            .onHover { hovered = $0 }
+            .animation(.easeOut(duration: 0.12), value: hovered)
+    }
+}
+
+extension View {
+    func macHoverTint(_ base: some ShapeStyle) -> some View { modifier(MacHoverTint(base: AnyShapeStyle(base))) }
 }

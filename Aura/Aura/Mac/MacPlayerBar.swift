@@ -7,7 +7,6 @@ import SwiftUI
 /// that is to give the flanks equal weight rather than letting the content decide.
 struct MacPlayerBar: View {
     @State private var player = AudioPlayer.shared
-    @State private var showQueue = false
     @State private var showEqualizer = false
 
     /// Where the scrubber sits while it is being dragged.
@@ -39,7 +38,6 @@ struct MacPlayerBar: View {
         .overlay(alignment: .top) {
             Rectangle().fill(.primary.opacity(0.07)).frame(height: 1)
         }
-        .popover(isPresented: $showQueue, arrowEdge: .top) { MacQueueView() }
         .popover(isPresented: $showEqualizer, arrowEdge: .top) { MacEqualizerView() }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             // While this Mac plays on another device, or another plays on it, the band says so.
@@ -186,7 +184,7 @@ struct MacPlayerBar: View {
             }
             iconButton("slider.horizontal.3", active: EqualizerManager.shared.isEnabled,
                        help: "Equaliser") { showEqualizer.toggle() }
-            iconButton("list.bullet", help: "Queue") { showQueue.toggle() }
+            iconButton("list.bullet", active: MacQueuePanel.shared.isShown, help: "Queue") { MacQueuePanel.shared.isShown.toggle() }
             devicePicker
 
             HStack(spacing: 6) {
@@ -279,7 +277,7 @@ private struct HoverLink: View {
         Button(action: action) {
             Text(text)
                 .font(.system(size: size, weight: weight))
-                .foregroundStyle(colour)
+                .macHoverTint(colour)
                 .lineLimit(1)
         }
         .buttonStyle(.plain)
