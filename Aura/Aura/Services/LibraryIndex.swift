@@ -22,6 +22,8 @@ final class LibraryIndex {
         let songs: [Song], albums: [Album], artists: [Artist]
         let songDocs: [LocalSearch.Doc], albumDocs: [LocalSearch.Doc], artistDocs: [LocalSearch.Doc]
         let vocabulary: LocalSearch.Vocabulary
+        /// Most used first, for the operator suggestions.
+        let genres: [String], years: [Int]
 
         init(key: String, _ stored: Stored) {
             self.key = key
@@ -36,6 +38,10 @@ final class LibraryIndex {
             }
             artistDocs = artists.map { LocalSearch.Doc(artist: $0.name, popularity: $0.albumCount ?? 0) }
             vocabulary = LocalSearch.Vocabulary(songDocs + albumDocs + artistDocs)
+            var genreCounts: [String: Int] = [:]
+            for song in songs { if let g = song.genre, !g.isEmpty { genreCounts[g, default: 0] += 1 } }
+            genres = genreCounts.sorted { $0.value > $1.value }.map(\.key)
+            years = Set(songs.compactMap(\.year)).filter { $0 > 0 }.sorted(by: >)
         }
     }
 
@@ -88,7 +94,10 @@ final class LibraryIndex {
                 corpus = await Task.detached(priority: .utility) { Corpus(key: key, saved) }.value
             }
 
-            guard let status = try? await SubsonicClient.shared.getScanStatus(server: server), !status.scanning else { return }
+            guard let status = try? await SubsonicClient.shared.getScanStatus(server: server), !status.scanning,
+                  // ponytail: past this the index outweighs what a phone should hold in memory;
+                  // such a library keeps searching on the server.
+                  (status.count ?? 0) <= 150_000 else { return }
             let stamp = "\(status.lastScan ?? "")|\(status.count ?? -1)"
             guard saved?.stamp != stamp else { return }
             if saved != nil, let built = try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate,
@@ -141,6 +150,51 @@ final class LibraryIndex {
                 if page.count < pageSize { return all }
             }
             offset += batch * pageSize
+        }
+    }
+
+    // MARK: Operator suggestions
+
+    struct Chip: Hashable { let label: String; let query: String }
+
+    /// Taps that write the query: the operators while nothing is half-typed, and the names
+    /// in the library while one is (`artist:lo` → Lost Frequencies). Empty without an index,
+    /// since only the index understands them.
+    func chips(for query: String) -> [Chip] {
+        guard let corpus, corpus.key == currentKey else { return [] }
+        let head = query.hasSuffix(" ") || query.isEmpty ? query : String(query[..<(query.lastIndex(of: " ").map { query.index(after: $0) } ?? query.startIndex)])
+        let last = String(query.dropFirst(head.count))
+        if last.isEmpty {
+            var ops = ["artist:", "album:", "genre:", "year:", "\"", "-"]
+            if !query.trimmingCharacters(in: .whitespaces).isEmpty { ops.append("OR ") }
+            return ops.map { Chip(label: $0 == "\"" ? "\"…\"" : $0.trimmingCharacters(in: .whitespaces), query: query + $0) }
+        }
+        guard let colon = last.firstIndex(of: ":") else { return [] }
+        let field = last[..<colon].lowercased()
+        let typed = LocalSearch.fold(String(last[last.index(after: colon)...]).replacingOccurrences(of: "\"", with: ""))
+        func starts(_ name: String) -> Bool {
+            typed.isEmpty || LocalSearch.words(name).joined(separator: " ").hasPrefix(typed)
+                || LocalSearch.words(name).contains { $0.hasPrefix(typed) }
+        }
+        let names: [String]
+        switch field {
+        case "artist", "by":
+            names = corpus.artists.filter { !$0.name.contains(",") && starts($0.name) }
+                .sorted { ($0.albumCount ?? 0) > ($1.albumCount ?? 0) }.map(\.name)
+        case "album":
+            names = corpus.albums.filter { starts($0.name) }
+                .sorted { ($0.playCount ?? 0) > ($1.playCount ?? 0) }.map(\.name)
+        case "genre":
+            names = corpus.genres.filter(starts)
+        case "year", "annee", "année":
+            names = corpus.years.map(String.init).filter { typed.isEmpty || $0.hasPrefix(typed) }
+        default:
+            return []
+        }
+        var seen = Set<String>()
+        return names.filter { seen.insert($0.lowercased()).inserted }.prefix(8).map { name in
+            let value = name.contains(" ") ? "\"\(name)\"" : name
+            return Chip(label: name, query: head + field + ":" + value + " ")
         }
     }
 

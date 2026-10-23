@@ -105,6 +105,7 @@ struct SearchResultsContainer: View {
         // dropped the search field's keyboard focus, closing the keyboard after one letter.
         // A single List keeps the scroll view (and the field's focus) alive.
         List {
+            operatorChips
             if trimmedQuery.isEmpty {
                 recentsRows
             } else {
@@ -186,6 +187,34 @@ struct SearchResultsContainer: View {
     }
 
     // MARK: Recently searched (history with thumbnails)
+
+    /// The search operators one tap away, and the library's names while one is typed.
+    @ViewBuilder
+    private var operatorChips: some View {
+        let chips = LibraryIndex.shared.chips(for: query)
+        if !chips.isEmpty {
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    ForEach(chips, id: \.self) { chip in
+                        Button { query = chip.query } label: {
+                            Text(chip.label)
+                                .font(.subheadline.weight(.medium))
+                                .lineLimit(1)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(.white.opacity(0.1), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+            .scrollIndicators(.hidden)
+            .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 6, trailing: 0))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+        }
+    }
 
     @ViewBuilder
     private var recentsRows: some View {
