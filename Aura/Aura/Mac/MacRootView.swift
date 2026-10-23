@@ -160,11 +160,13 @@ struct MacRootView: View {
         .overlay(alignment: .topTrailing) {
             VStack(alignment: .trailing, spacing: 8) {
                 PlayingElsewhereRow()
+                MacDownloadNotice()
                 #if !APPSTORE_BUILD
                 MacFetchNotices()
                 #endif
             }
             .animation(.smooth(duration: 0.35), value: RemoteLink.shared.playingElsewhere?.playing)
+            .animation(.smooth(duration: 0.35), value: DownloadManager.shared.isDownloading)
             // From the window's top, in the title bar's row, where the system's own land.
             .padding(.top, 24)
             .padding(.trailing, 16)

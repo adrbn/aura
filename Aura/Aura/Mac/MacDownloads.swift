@@ -51,3 +51,60 @@ struct MacDownloadsView: View {
         .navigationTitle("Downloads")
     }
 }
+
+/// Keeping songs on this Mac, shown as Get It is: a glass card top-right while they come
+/// in, which says so once they're all here and then goes.
+struct MacDownloadNotice: View {
+    @State private var downloads = DownloadManager.shared
+    @State private var justFinished = false
+    @Environment(\.appAccentColor) private var accentColor
+
+    var body: some View {
+        // Always there, so the end of the downloads is seen once the card is gone.
+        ZStack {
+            if downloads.isDownloading || justFinished { card }
+        }
+        .onChange(of: downloads.isDownloading) { _, active in
+            guard !active else { return }
+            justFinished = true
+            Task {
+                try? await Task.sleep(for: .seconds(3))
+                withAnimation(.smooth(duration: 0.35)) { justFinished = false }
+            }
+        }
+    }
+
+    private var card: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(downloads.isDownloading ? (downloads.currentDownloadTitle ?? String(localized: "Downloading…")) : String(localized: "Downloaded"))
+                    .font(.callout.weight(.semibold))
+                    .lineLimit(1)
+                if downloads.isDownloading, downloads.totalQueueCount > 1 {
+                    Text("\(min(downloads.completedQueueCount + 1, downloads.totalQueueCount)) / \(downloads.totalQueueCount)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            ZStack {
+                if downloads.isDownloading {
+                    Circle().stroke(.primary.opacity(0.15), lineWidth: 2.5)
+                    Circle()
+                        .trim(from: 0, to: downloads.currentDownloadId.flatMap { downloads.downloadProgress[$0] } ?? 0)
+                        .stroke(accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(accentColor)
+                }
+            }
+            .frame(width: 22, height: 22)
+        }
+        .padding(.horizontal, 16)
+        .frame(width: 300, height: 46)
+        .glassEffect(.regular, in: Capsule())
+        .transition(.move(edge: .trailing).combined(with: .opacity))
+    }
+}
