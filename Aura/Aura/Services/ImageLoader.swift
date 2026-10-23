@@ -768,6 +768,15 @@ struct CoverArtImage: View {
         // re-download the whole screen. A changed cover/token yields a different key and
         // still refetches, as before.
         if image != nil, loadedKey == key { return }
+        // A big cover with nothing cached to show: the thumbnail first, which the server
+        // sends at once, rather than the placeholder until it has resized the large one.
+        let thumb = ArtworkCache.thumbSize
+        if resolvedImage == nil, cacheToken == nil, requestSize > thumb {
+            Task {
+                if let small = await ArtworkCache.shared.fetchImage(coverArt: coverArt, requestSize: thumb, key: "\(coverArt)_\(thumb)"),
+                   image == nil { image = small }
+            }
+        }
         if let result = await ArtworkCache.shared.fetchImage(coverArt: coverArt, requestSize: requestSize, key: key) {
             await MainActor.run { self.image = result; self.loadedKey = key }
         } else if let fb = fallbackCoverArt, fb != coverArt {

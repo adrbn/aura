@@ -42,10 +42,12 @@ struct MacNowPlayingView: View {
     private var background: some View {
         ZStack {
             Color.black
-            CoverArtImage(coverArt: player.currentSong?.coverArt, size: 900, cornerRadius: 0)
-                .blur(radius: 90)
+            // The player bar's size, so it is already loaded: blurred this far, a bigger one
+            // looks the same and kept the screen on a placeholder while the server resized it.
+            CoverArtImage(coverArt: player.currentSong?.coverArt, size: 60, cornerRadius: 0)
+                .blur(radius: 6)
                 .opacity(0.55)
-                .scaleEffect(1.4)
+                .scaleEffect(21)
             LinearGradient(colors: [.black.opacity(0.35), .black.opacity(0.75)],
                            startPoint: .top, endPoint: .bottom)
         }
