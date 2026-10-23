@@ -54,6 +54,9 @@ struct MacRootView: View {
     }
 
     private var browser: some View {
+        // The bar under the split view rather than a safe-area inset: a Table ignores the
+        // inset, and its last rows sat under the bar out of reach.
+        VStack(spacing: 0) {
         NavigationSplitView(columnVisibility: columnVisibility) {
             MacSidebar(section: $section, query: $query)
         } detail: {
@@ -98,7 +101,8 @@ struct MacRootView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) { MacPlayerBar() }
+        MacPlayerBar()
+        }
         // Behind everything, including the sidebar. The lists and grids above are made
         // transparent so it shows through rather than being covered by their own material.
         .background(MacBackground())

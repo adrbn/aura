@@ -12,7 +12,9 @@ struct AuraMacApp: App {
     @State private var player = AudioPlayer.shared
 
     var body: some Scene {
-        WindowGroup {
+        // One window: a WindowGroup opened a second one on relaunch, and macOS showed
+        // the two as tabs.
+        Window("Aura", id: "main") {
             MacRootView()
                 .environment(serverManager)
                 .environment(player)

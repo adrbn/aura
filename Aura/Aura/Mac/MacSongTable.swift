@@ -35,6 +35,11 @@ struct MacSongTable: View {
             }
             .width(showsAlbum ? nil : 0)
 
+            TableColumn("Rating") { song in
+                MacStars(song: song)
+            }
+            .width(78)
+
             TableColumn("Time") { song in
                 Text(MacFormat.duration(song.duration))
                     .monospacedDigit()
@@ -106,5 +111,26 @@ struct MacDetailHeader<Actions: View>: View {
         .padding(.horizontal, 24)
         .padding(.top, 28)
         .padding(.bottom, 18)
+    }
+}
+
+/// A song's stars, set by clicking one; clicking the one already set clears it.
+struct MacStars: View {
+    let song: Song
+    @State private var hovering = false
+
+    var body: some View {
+        let rating = SongRatings.shared.rating(for: song)
+        HStack(spacing: 1) {
+            ForEach(1...5, id: \.self) { star in
+                Image(systemName: star <= rating ? "star.fill" : "star")
+                    .font(.system(size: 9))
+                    .foregroundStyle(star <= rating ? Color.appAccent : .secondary)
+                    .opacity(star <= rating || hovering ? 1 : 0)
+                    .contentShape(Rectangle())
+                    .onTapGesture { SongRatings.shared.set(star == rating ? 0 : star, for: song) }
+            }
+        }
+        .onHover { hovering = $0 }
     }
 }
