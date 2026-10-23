@@ -40,6 +40,7 @@ final class SearchIndex {
     /// Fetch playlists + artists once for fuzzy matching, and build the playlist→song
     /// index in the background. Safe to call from multiple entry points; runs once.
     func prefetchIfNeeded() {
+        LibraryIndex.shared.refreshIfNeeded()
         guard !didPrefetch, prefetchTask == nil else { return }
         prefetchTask = Task { await prefetch() }
     }
@@ -84,29 +85,22 @@ final class SearchIndex {
 
     func search(query: String) async -> SearchResults {
         guard let server = ServerManager.shared.currentServer else { return SearchResults() }
+        if ServerManager.shared.isConnected, let found = await LibraryIndex.shared.search(query) {
+            let ranker = SearchRanking.shared
+            return SearchResults(
+                artists: ranker.ranked(collapseCollaborationArtists(found.artists), query: query) { $0.id },
+                albums: ranker.ranked(found.albums, query: query) { $0.id },
+                songs: ranker.ranked(found.songs, query: query) { $0.id },
+                playlists: ranker.ranked(playlists(for: query, songs: found.songs), query: query) { $0.id },
+                suggestedCorrection: found.corrected
+            )
+        }
         do {
             let result = try await SubsonicClient.shared.search3(server: server, query: query, songCount: 30)
             try Task.checkCancellation()
 
-            let allPls = cachedAllPlaylists ?? []
             let libraryArtists = cachedAllArtists ?? []
-            var matchingPlaylists = Fuzzy.matchPlaylists(allPls, query: query)
-
-            // Playlists that *contain* a matching song (via the prebuilt index).
-            let foundSongs = result.song ?? []
-            if !foundSongs.isEmpty {
-                let alreadyMatched = Set(matchingPlaylists.map { $0.id })
-                var additional = Set<String>()
-                for song in foundSongs {
-                    if let ids = playlistSongIdIndex[song.id] { additional.formUnion(ids) }
-                    if let ids = playlistSongIndex[song.title.lowercased()] { additional.formUnion(ids) }
-                }
-                additional.subtract(alreadyMatched)
-                let playlistMap = Dictionary(uniqueKeysWithValues: allPls.map { ($0.id, $0) })
-                for plId in additional {
-                    if let pl = playlistMap[plId] { matchingPlaylists.append(pl) }
-                }
-            }
+            let matchingPlaylists = playlists(for: query, songs: result.song ?? [])
 
             var finalSongs = result.song ?? []
             var finalAlbums = result.album ?? []
@@ -170,6 +164,26 @@ final class SearchIndex {
             // Offline fallback: search downloaded + cached songs locally.
             return await searchOffline(query: query)
         }
+    }
+
+    /// Playlists named like the query, then those that *contain* a matching song (via the
+    /// prebuilt index).
+    private func playlists(for query: String, songs foundSongs: [Song]) -> [Playlist] {
+        let allPls = cachedAllPlaylists ?? []
+        var matchingPlaylists = Fuzzy.matchPlaylists(allPls, query: query)
+        guard !foundSongs.isEmpty else { return matchingPlaylists }
+        let alreadyMatched = Set(matchingPlaylists.map { $0.id })
+        var additional = Set<String>()
+        for song in foundSongs {
+            if let ids = playlistSongIdIndex[song.id] { additional.formUnion(ids) }
+            if let ids = playlistSongIndex[song.title.lowercased()] { additional.formUnion(ids) }
+        }
+        additional.subtract(alreadyMatched)
+        let playlistMap = Dictionary(uniqueKeysWithValues: allPls.map { ($0.id, $0) })
+        for plId in additional {
+            if let pl = playlistMap[plId] { matchingPlaylists.append(pl) }
+        }
+        return matchingPlaylists
     }
 
     /// The artist a query is actually about.

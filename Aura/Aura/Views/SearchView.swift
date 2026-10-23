@@ -153,7 +153,8 @@ struct SearchResultsContainer: View {
         // sits with isSearching == false during those 350ms and the empty-state flashes.
         isSearching = true
         // `.task(id:)` cancels the previous run on each keystroke → debounce + cancel.
-        try? await Task.sleep(for: .milliseconds(350))
+        // Answered on the phone, a search needs only to wait out a burst of typing.
+        try? await Task.sleep(for: .milliseconds(LibraryIndex.shared.isReady ? 120 : 350))
         if Task.isCancelled { return }
 
         let found = await SearchIndex.shared.search(query: q)

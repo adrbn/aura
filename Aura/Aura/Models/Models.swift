@@ -986,7 +986,7 @@ struct TopSongsContainer: Decodable { let song: [Song]? }
 struct SimilarSongsContainer: Decodable { let song: [Song]? }
 struct GenresContainer: Decodable { let genre: [GenreEntry]? }
 struct GenreEntry: Codable { let songCount: Int?; let albumCount: Int?; let value: String }
-struct ScanStatus: Decodable { let scanning: Bool; let count: Int? }
+struct ScanStatus: Decodable { let scanning: Bool; let count: Int?; var lastScan: String? = nil }
 struct MusicFolder: Decodable, Identifiable { let id: Int; let name: String? }
 struct MusicFoldersContainer: Decodable { let musicFolder: [MusicFolder]? }
 
