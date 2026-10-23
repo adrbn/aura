@@ -151,8 +151,10 @@ struct NowPlayingView: View {
                     .overlay(alignment: .bottom) {
                         if let band = RemoteLink.shared.bandText {
                             RemoteBand(text: band.text, systemImage: band.symbol, bottomInset: safeBottom)
+                                .transition(.move(edge: .bottom))
                         }
                     }
+                    .animation(.smooth(duration: 0.35), value: RemoteLink.shared.bandText?.text)
                     .cornerRadius(dragOffset > 0 ? min(dragOffset / 3, 30) : 0)
                     .offset(y: dragOffset)
                     // Immersive artwork canvas: always dark, whatever the app appearance.

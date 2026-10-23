@@ -151,6 +151,7 @@ final class RemoteLink: NSObject {
     }
 
     private func perform(_ command: Command) {
+        handOver()
         let player = AudioPlayer.shared
         switch command {
         case .play: player.play()
@@ -224,6 +225,14 @@ final class RemoteLink: NSObject {
         }
     }
 
+    /// Another device plays on this one: this one stops playing on any other, or each
+    /// would drive the other. What the new controller plays comes over with its first command.
+    private func handOver() {
+        guard connected != nil else { return }
+        outgoing.disconnect()
+        letGo()
+    }
+
     private func letGo() {
         guard connected != nil else { return }
         connected = nil
@@ -286,7 +295,7 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
             if session === incoming {
                 controllers = session.connectedPeers
                 // One just in gets the whole queue with the next state.
-                if state == .connected { sentQueue = nil }
+                if state == .connected { sentQueue = nil; handOver() }
                 if controllers.isEmpty, connected == nil { accent = nil }
             } else if state == .connected, invited == peerID {
                 invited = nil
@@ -349,8 +358,9 @@ struct RemoteBand: View {
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(light ? .black : .white)
             .frame(maxWidth: .infinity)
-            .padding(.top, 7)
-            .padding(.bottom, 7 + bottomInset)
+            .padding(.top, 5)
+            // The text sits just above the home indicator, not a whole safe area higher.
+            .padding(.bottom, max(5, bottomInset - 14))
             .background(colour)
     }
 }

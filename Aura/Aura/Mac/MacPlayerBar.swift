@@ -44,8 +44,10 @@ struct MacPlayerBar: View {
             // While this Mac plays on another device, or another plays on it, the band says so.
             if let band = RemoteLink.shared.bandText {
                 RemoteBand(text: band.text, systemImage: band.symbol)
+                    .transition(.move(edge: .bottom))
             }
         }
+        .animation(.smooth(duration: 0.35), value: RemoteLink.shared.bandText?.text)
     }
 
     // MARK: Left — what is playing
