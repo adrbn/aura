@@ -48,6 +48,30 @@ struct MacCommands: Commands {
 
             Button("Shuffle") { player.toggleShuffle() }
                 .keyboardShortcut("s", modifiers: [.command, .shift])
+            Button("Repeat") { player.cycleRepeat() }
+                .keyboardShortcut("r", modifiers: .command)
+
+            Divider()
+
+            Button("Volume Up") { player.volume = min(1, player.volume + 0.1) }
+                .keyboardShortcut(.upArrow, modifiers: .command)
+            Button("Volume Down") { player.volume = max(0, player.volume - 0.1) }
+                .keyboardShortcut(.downArrow, modifiers: .command)
+
+            Divider()
+
+            Button("Show Lyrics") { player.isShowingNowPlaying.toggle() }
+                .keyboardShortcut("l", modifiers: [.command, .shift])
+                .disabled(player.currentSong == nil)
+            Button("Go to Album") { player.pendingAlbumId = player.currentSong?.albumId }
+                .keyboardShortcut("a", modifiers: [.command, .shift])
+                .disabled(player.currentSong?.albumId == nil || player.currentSong?.isPreview == true)
+            Button("Go to Artist") { player.pendingArtistId = player.currentSong?.artistId }
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+                .disabled(player.currentSong?.artistId == nil || player.currentSong?.isPreview == true)
+
+            Divider()
+
             Button(player.currentSong?.starred != nil ? "Unfavourite" : "Favourite") {
                 player.toggleFavorite()
             }

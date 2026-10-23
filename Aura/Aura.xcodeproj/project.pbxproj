@@ -258,6 +258,7 @@
 		F7121339D268A340E4E09F3A /* CarPlayBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C03CBFD9194F991514A276 /* CarPlayBrowser.swift */; };
 		F753E5E4EA8FBE84F541AD4C /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = A747572DB3C445E463CCE4D8 /* Platform.swift */; };
 		F9FA80A12F501CE2B050FF14 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */; };
+		FAA2AC0B54E14A7885B4F735 /* MacMenuBarPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1BA89C79F48F159635B01E /* MacMenuBarPlayer.swift */; };
 		FAA4E169C5417E5CAF16E1CD /* GeminiLyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */; };
 		FAD4BC08256BB71A4DAA1318 /* PreviewAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B001 /* PreviewAligner.swift */; };
 		FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC935E192C9737FFC79738ED /* MacSongRow.swift */; };
@@ -359,6 +360,7 @@
 		6451492AD8EFFAC5304A3D2E /* MacArtistLinks.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistLinks.swift; sourceTree = "<group>"; };
 		6480DFF57E2F7E6FEEAD13EB /* EqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
 		6920AE6BB3294A386042C0CE /* SoulSyncWatchlist.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SoulSyncWatchlist.swift; sourceTree = "<group>"; };
+		6E1BA89C79F48F159635B01E /* MacMenuBarPlayer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacMenuBarPlayer.swift; sourceTree = "<group>"; };
 		7027618C0439D47187558051 /* CarPlayArtwork.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CarPlayArtwork.swift; sourceTree = "<group>"; };
 		7507C823E9A1C89305C77937 /* MacHomeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacHomeView.swift; sourceTree = "<group>"; };
 		76A8532DB3793B0BFB41DBF6 /* OfflineTabs.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineTabs.swift; sourceTree = "<group>"; };
@@ -660,6 +662,7 @@
 				F3ED660F64818D6B1834B987 /* MacSettingsView.swift */,
 				BD0BA949F9603C6E217BAA2D /* MacRadarView.swift */,
 				D433233E999F9BDF5E9082FE /* MacDownloads.swift */,
+				6E1BA89C79F48F159635B01E /* MacMenuBarPlayer.swift */,
 			);
 			name = Mac;
 			path = Mac;
@@ -1248,6 +1251,7 @@
 				407F4E5E0A0D9B1BEBB426AC /* EditorialCovers.swift in Sources */,
 				9A99FF7FE56DCBF0F6041B3E /* PageTint.swift in Sources */,
 				5D01795BAB147FA69017CD24 /* FaceFraming.swift in Sources */,
+				FAA2AC0B54E14A7885B4F735 /* MacMenuBarPlayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -43,5 +43,11 @@ struct AuraMacApp: App {
         .commands { MacCommands(player: player) }
 
         Settings { MacSettingsView() }
+
+        // What's playing, from the menu bar, with the window closed or behind others.
+        MenuBarExtra("Aura", systemImage: "music.note") {
+            MacMenuBarPlayer()
+        }
+        .menuBarExtraStyle(.window)
     }
 }
