@@ -43,12 +43,7 @@ struct MacPlayerBar: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             // While a phone controls this Mac, the band in the accent says which.
             if let phone = RemoteLink.shared.controllers.first {
-                Label(String(localized: "Controlled from \(phone.displayName)"), systemImage: "iphone")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 5)
-                    .background(.tint)
+                RemoteBand(text: String(localized: "Controlled from \(phone.displayName)"), systemImage: "iphone")
             }
         }
     }

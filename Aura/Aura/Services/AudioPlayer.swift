@@ -227,7 +227,7 @@ final class AudioPlayer {
     /// Counts seeks, for SharePlay to notice one and pass it on.
     private(set) var seekCount = 0
     /// One-shot: a saved position to seek to as soon as the restored item is ready to play.
-    private var pendingSeekTime: TimeInterval?
+    var pendingSeekTime: TimeInterval?
     private var consecutiveFailures = 0
     /// Songs the player refused twice this session. Going back steps over them: landing on
     /// one again only skipped forward again, so the song before it could not be reached.
@@ -726,6 +726,7 @@ final class AudioPlayer {
     }
 
     func playSong(_ song: Song, fromQueue songs: [Song]? = nil, startIndex: Int = 0, source: PlaybackSource = .unknown) {
+        if let remote { remote(.playSong(song, queue: songs, index: startIndex, source: source, at: 0)); return }
         AppLogger.shared.log("🎵 playSong: \(song.title) | queue: \(songs?.count ?? 1) songs | idx: \(startIndex)")
         if case .radio = source {} else { isRadioMode = false }
         if source != playbackSource { sourceStarted?(source) }
@@ -1930,6 +1931,7 @@ final class AudioPlayer {
     }
 
     func toggleShuffle() {
+        if let remote { remote(.shuffle); return }
         isShuffled.toggle()
         syncRemoteModes()
         AppLogger.shared.log("🔀 shuffle: \(isShuffled)")
@@ -1965,6 +1967,7 @@ final class AudioPlayer {
     }
 
     func cycleRepeat() {
+        if let remote { remote(.cycleRepeat); return }
         repeatMode = repeatMode.next
         syncRemoteModes()
         AppLogger.shared.log("🔁 repeat: \(repeatMode)")

@@ -185,7 +185,7 @@ struct AudioOutputButtonWrapper: View {
                 )
             } else {
                 Menu {
-                    Button { link.disconnect() } label: {
+                    Button { link.playHere() } label: {
                         Label("This iPhone", systemImage: link.connected == nil ? "checkmark" : "iphone")
                     }
                     ForEach(link.macs, id: \.self) { mac in

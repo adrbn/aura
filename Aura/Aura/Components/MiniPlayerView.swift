@@ -24,10 +24,18 @@ struct MiniPlayerView: View {
                                     color: .primary,
                                     alignment: .leading,
                                     isActive: !player.isShowingNowPlaying)
-                        Text(song.artist ?? String(localized: "Unknown Artist"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                        // While the phone controls a Mac, the line under the title says where it plays.
+                        if let mac = RemoteLink.shared.connected {
+                            Label(mac.displayName, systemImage: "macbook")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(RemoteLink.shared.accent ?? accentColor)
+                                .lineLimit(1)
+                        } else {
+                            Text(song.artist ?? String(localized: "Unknown Artist"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
                     }
 
                     Spacer()
@@ -52,18 +60,6 @@ struct MiniPlayerView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    // While the phone controls a Mac, the band in the accent says where it plays.
-                    if let mac = RemoteLink.shared.connected {
-                        Label(String(localized: "Playing on \(mac.displayName)"), systemImage: "macbook")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
-                            .background(accentColor)
-                    }
-                }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
