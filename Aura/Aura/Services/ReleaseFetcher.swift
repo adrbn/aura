@@ -1,7 +1,9 @@
+#if os(iOS)
 import ActivityKit
+import UIKit
+#endif
 import Foundation
 import Observation
-import UIKit
 
 #if !APPSTORE_BUILD
 
@@ -118,6 +120,7 @@ final class ReleaseFetcher {
         for fetch in fetches where fetch.stage == .ready {
             letReadyGo(fetch.id, after: Self.readyShown - now.timeIntervalSince(fetch.downloaded ?? now))
         }
+        #if os(iOS)
         NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification,
                                                object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { ReleaseFetcher.shared.leaving() }
@@ -126,6 +129,7 @@ final class ReleaseFetcher {
                                                object: nil, queue: .main) { _ in
             MainActor.assumeIsolated { ReleaseFetcher.shared.returning() }
         }
+        #endif
     }
 
     func fetch(for id: String) -> ReleaseFetch? { fetches.first { $0.id == id } }
@@ -483,7 +487,9 @@ final class ReleaseFetcher {
 
     private func finish(_ id: String, songs: [Song]) async {
         update(id) { $0.stage = .ready; $0.downloaded = $0.downloaded ?? Date() }
+        #if os(iOS)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
         let liked = fetch(for: id)?.liked.flatMap { title in
             songs.first(where: { RadarRules.sameTitle($0.title, title) }) ?? (songs.count == 1 ? songs.first : nil)
         }
@@ -561,6 +567,7 @@ final class ReleaseFetcher {
         UserDefaults.standard.set(Array(picked), forKey: Self.pickedKey)
     }
 
+    #if os(iOS)
     /// The app going to the background: the Lock Screen gets the latest — the download's
     /// expected end included, which its bar runs to on its own once the app is asleep — and
     /// the fetch a few more seconds to move before iOS suspends it.
@@ -585,6 +592,8 @@ final class ReleaseFetcher {
         activities.isAsleep = false
         for fetch in fetches where fetch.isActive { start(fetch.id) }
     }
+
+    #endif
 
     private static func load() -> [ReleaseFetch] {
         guard let data = UserDefaults.standard.data(forKey: storeKey) else { return [] }
@@ -660,6 +669,7 @@ extension ReleaseFetch {
     }
 }
 
+#if os(iOS)
 /// A few seconds of background time, ended once — when they run out, or when iOS wants them
 /// back, whichever comes first.
 @MainActor
@@ -759,6 +769,18 @@ private final class ReleaseFetchActivities {
         Task { await activity.end(nil, dismissalPolicy: .immediate) }
     }
 }
+
+#else
+/// No Live Activities on the Mac: the release card in the app is the only progress shown.
+@MainActor
+private final class ReleaseFetchActivities {
+    var isAsleep = false
+    func show(_ fetch: ReleaseFetch, force: Bool = false) {}
+    func letGo(_ fetch: ReleaseFetch) {}
+    func endAll(except kept: Set<String>) {}
+    func end(_ id: String) {}
+}
+#endif
 
 /// How long the server takes to add a download to the library, from the last few measured.
 ///

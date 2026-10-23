@@ -130,9 +130,11 @@ struct RadarReleaseRow: View {
                     Label("Get It", systemImage: "arrow.down.circle")
                 }
                 #endif
+                #if os(iOS)
                 Button { showSoulseek = true } label: {
                     Label("Search by Hand", systemImage: "magnifyingglass")
                 }
+                #endif
             }
             if let artistId = release.artist.libraryId {
                 Button { player.pendingArtistId = artistId } label: {
@@ -272,7 +274,7 @@ struct RadarReleaseRow: View {
 
     @ViewBuilder
     private var soulseekSheet: some View {
-        #if !APPSTORE_BUILD
+        #if !APPSTORE_BUILD && os(iOS)
         NavigationStack {
             SlskdSearchView(initialQuery: "\(release.artist.name) \(release.title)")
                 .navigationTitle("Soulseek")

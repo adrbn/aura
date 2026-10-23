@@ -11,8 +11,11 @@ struct MacSidebar: View {
     @State private var playlists: [Playlist] = []
 
     var body: some View {
+        // The footer under the list, not a safe-area inset: as an inset the playlists
+        // scrolled on under the server picker and the two were drawn over each other.
+        VStack(spacing: 0) {
         List(selection: $section) {
-            ForEach([MacSection.home, .mixes]) { item in
+            ForEach([MacSection.home, .mixes, .radar]) { item in
                 Label(item.label, systemImage: item.symbol).tag(item)
             }
             Section("Library") {
@@ -45,9 +48,13 @@ struct MacSidebar: View {
         // its own vibrant material, which is exactly the seam that made the three regions
         // read as three panels bolted together.
         .scrollContentBackground(.hidden)
-        .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 280)
         .safeAreaInset(edge: .top, spacing: 0) { header }
-        .safeAreaInset(edge: .bottom, spacing: 0) { footer }
+            footer
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 10)
+                .padding(.vertical, 6)
+        }
+        .navigationSplitViewColumnWidth(min: 190, ideal: 210, max: 280)
         .task(id: serverManager.currentServer?.id) { await loadPlaylists() }
     }
 
@@ -56,6 +63,7 @@ struct MacSidebar: View {
     private var footer: some View {
         HStack(spacing: 4) {
             MacServerPicker()
+            Spacer(minLength: 0)
             MacOptionsMenu()
                 .padding(.trailing, 12)
         }

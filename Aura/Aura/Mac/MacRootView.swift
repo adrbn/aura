@@ -4,7 +4,7 @@ import SwiftUI
 /// has room to show a section and its detail at once, so several of the phone's screens
 /// become columns here rather than destinations of their own.
 enum MacSection: String, Hashable, CaseIterable, Identifiable {
-    case home, mixes, songs, playlists, albums, artists
+    case home, mixes, radar, songs, playlists, albums, artists
 
     var id: String { rawValue }
 
@@ -12,6 +12,7 @@ enum MacSection: String, Hashable, CaseIterable, Identifiable {
         switch self {
         case .home: return String(localized: "Home")
         case .mixes: return String(localized: "Made For You")
+        case .radar: return String(localized: "Radar")
         case .albums: return String(localized: "Albums")
         case .artists: return String(localized: "Artists")
         case .songs: return String(localized: "Songs")
@@ -23,6 +24,7 @@ enum MacSection: String, Hashable, CaseIterable, Identifiable {
         switch self {
         case .home: return "house"
         case .mixes: return "sparkles"
+        case .radar: return "dot.radiowaves.left.and.right"
         case .albums: return "square.stack"
         case .artists: return "music.mic"
         case .songs: return "music.note"
@@ -156,6 +158,7 @@ struct MacRootView: View {
         switch section ?? .home {
         case .home: MacHomeView()
         case .mixes: MacMixesView()
+        case .radar: MacRadarView()
         case .albums: MacAlbumsView()
         case .artists: MacArtistsView()
         case .songs: MacSongsView()
