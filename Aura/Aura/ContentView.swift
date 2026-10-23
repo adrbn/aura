@@ -81,7 +81,7 @@ struct ContentView: View {
                 #endif
 
                 // Above the fetch card, which a stack otherwise draws on top while it leaves.
-                if audioPlayer.hasQueue {
+                if audioPlayer.hasQueue || RemoteLink.shared.connected != nil {
                     MiniPlayerView()
                         .padding(.bottom, tabBarGap)
                         .zIndex(1)
@@ -194,7 +194,7 @@ struct ContentView: View {
 
             VStack(spacing: 0) {
                 Spacer()
-                if audioPlayer.hasQueue {
+                if audioPlayer.hasQueue || RemoteLink.shared.connected != nil {
                     MiniPlayerView()
                         .padding(.bottom, tabBarGap)
                 }
