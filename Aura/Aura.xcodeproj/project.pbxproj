@@ -98,7 +98,6 @@
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
 		A395A249C83D1902B6E912C2 /* OfflineLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3B5FB4CB9ED329D9240207 /* OfflineLibrary.swift */; };
 		A4D012EEB740D4855E6344B8 /* CoverKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FA /* CoverKit.swift */; };
-		A5911F84175BE4601157F5D1 /* MacRemoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DA779F364FC34F21B309599 /* MacRemoteView.swift */; };
 		A5CF83658D8D594FC39B114A /* SlskdClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB587064D721AA775E21C53 /* SlskdClient.swift */; };
 		A966843C05E005A327BAAA64 /* OfflinePlaylistsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000DE /* OfflinePlaylistsStore.swift */; };
 		AA11BB22CC33DD44EE55F001 /* MixCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55F002 /* MixCacheTests.swift */; };
@@ -351,7 +350,6 @@
 		48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacEqualizerView.swift; sourceTree = "<group>"; };
 		4BE00E8954AF9B98264A367E /* MacQueueView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacQueueView.swift; sourceTree = "<group>"; };
 		4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPendingNavigation.swift; sourceTree = "<group>"; };
-		4DA779F364FC34F21B309599 /* MacRemoteView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRemoteView.swift; sourceTree = "<group>"; };
 		4FB20C2630F70AD51EC1D03F /* LyricsOverrides.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsOverrides.swift; sourceTree = "<group>"; };
 		50A7A8D3269A4534007744BF /* MacPlayerBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPlayerBar.swift; sourceTree = "<group>"; };
 		52EF92C7DDB19233A3394D28 /* MacSongsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongsView.swift; sourceTree = "<group>"; };
@@ -827,7 +825,6 @@
 				FFB810DD93B73BC5A1020C86 /* LyricsSyncView.swift */,
 				3B9C92CA58D03F28FB04AFA4 /* MissingSongsSection.swift */,
 				126D52F5E3B9BA144C1DCFB0 /* MadeForYouSettingsView.swift */,
-				4DA779F364FC34F21B309599 /* MacRemoteView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1123,6 +1120,10 @@
 				"$(SRCROOT)/Aura/VavinCondensed-Regular-Latin.ttf",
 				"$(SRCROOT)/Aura/VavinCondensed-Bold-Latin.ttf",
 				"$(SRCROOT)/Aura/Vavin-OFL.txt",
+				"$(SRCROOT)/Aura/ArchivoXCondBlack.ttf",
+				"$(SRCROOT)/Aura/ArchivoExpBlack.ttf",
+				"$(SRCROOT)/Aura/ArchivoExpBold.ttf",
+				"$(SRCROOT)/Aura/Archivo-OFL.txt",
 			);
 			name = "Embed Vavin";
 			outputFileListPaths = (
@@ -1131,10 +1132,13 @@
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Regular-Latin.ttf",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/VavinCondensed-Bold-Latin.ttf",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Vavin-OFL.txt",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ArchivoXCondBlack.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ArchivoExpBlack.ttf",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/ArchivoExpBold.ttf",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Only Vavin. The two evaluation faces the iOS target can embed for comparison are\n# licensed for neither redistribution nor app embedding, and the Mac app has no\n# picker to compare them in.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\nfor F in \"$SRCROOT/Aura/VavinCondensed-Regular-Latin.ttf\" \\\n         \"$SRCROOT/Aura/VavinCondensed-Bold-Latin.ttf\" \\\n         \"$SRCROOT/Aura/Vavin-OFL.txt\"; do\n  [ -f \"$F\" ] || continue\n  cp \"$F\" \"$DEST/\" || { echo \"error: found $F but could not embed it\"; exit 1; }\ndone\n";
+			shellScript = "# Vavin and Archivo (the editorial covers), both SIL OFL. The two evaluation faces the iOS target can embed for comparison are\n# licensed for neither redistribution nor app embedding, and the Mac app has no\n# picker to compare them in.\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nmkdir -p \"$DEST\" || exit 1\nfor F in \"$SRCROOT/Aura/VavinCondensed-Regular-Latin.ttf\" \\\n         \"$SRCROOT/Aura/VavinCondensed-Bold-Latin.ttf\" \\\n         \"$SRCROOT/Aura/Vavin-OFL.txt\" \\\n         \"$SRCROOT/Aura/ArchivoXCondBlack.ttf\" \\\n         \"$SRCROOT/Aura/ArchivoExpBlack.ttf\" \\\n         \"$SRCROOT/Aura/ArchivoExpBold.ttf\" \\\n         \"$SRCROOT/Aura/Archivo-OFL.txt\"; do\n  [ -f \"$F\" ] || continue\n  cp \"$F\" \"$DEST/\" || { echo \"error: found $F but could not embed it\"; exit 1; }\ndone\n";
 		};
 		E100000700000000000000F0 /* Embed display fonts if present */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1413,7 +1417,6 @@
 				31C651534E3430D5020B99D6 /* LocalSearch.swift in Sources */,
 				C3A3AB013B4A3A070D6614D2 /* LibraryIndex.swift in Sources */,
 				8AB6BDD0EF6E5539493C9466 /* RemoteLink.swift in Sources */,
-				A5911F84175BE4601157F5D1 /* MacRemoteView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

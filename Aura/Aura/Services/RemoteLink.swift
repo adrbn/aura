@@ -6,31 +6,29 @@ import UIKit
 #endif
 
 /// The iPhone as a remote for the Mac, on the same Wi-Fi. The Mac advertises itself; the
-/// phone finds it, connects, sends transport commands and gets back what's playing once a
-/// second. A Mac only lets in a phone signed into the same server account as itself.
+/// phone finds it, connects, and from then on its own player shows what the Mac plays and
+/// sends it every play, pause, skip and seek. A Mac only lets in a phone signed into the
+/// same server account as itself.
 @MainActor @Observable
 final class RemoteLink: NSObject {
     static let shared = RemoteLink()
     private static let service = "aura-remote"
 
-    enum Command: Codable { case playPause, next, previous, seek(Double), volume(Double) }
+    enum Command: Codable { case play, pause, playPause, next, previous, seek(Double) }
 
-    struct State: Codable, Equatable {
-        var title: String?
-        var artist: String?
-        var coverArt: String?
+    struct State: Codable {
+        var song: Song?
         var isPlaying = false
         var currentTime: Double = 0
         var duration: Double = 0
-        var volume: Double = 1
     }
 
     /// Macs found on the network (phone side).
     private(set) var macs: [MCPeerID] = []
-    /// The Mac being controlled, once connected (phone side).
+    /// The Mac being controlled (phone side).
     private(set) var connected: MCPeerID?
-    /// What that Mac plays (phone side).
-    private(set) var state: State?
+    /// The phones controlling this Mac (Mac side).
+    private(set) var controllers: [MCPeerID] = []
 
     #if os(macOS)
     private let peer = MCPeerID(displayName: Host.current().localizedName ?? "Mac")
@@ -45,6 +43,8 @@ final class RemoteLink: NSObject {
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
     private var ticker: Timer?
+    /// What the phone was on before it took control, given back when it lets go.
+    private var localSong: Song?
 
     /// The server account, hashed: the one thing a phone and a Mac must share to pair.
     private var accountKey: Data? {
@@ -68,10 +68,8 @@ final class RemoteLink: NSObject {
     private func broadcast() {
         guard !session.connectedPeers.isEmpty else { return }
         let player = AudioPlayer.shared
-        let song = player.currentSong
-        let now = State(title: song?.title, artist: song?.artist, coverArt: song?.coverArt ?? song?.albumId,
-                        isPlaying: player.isPlaying, currentTime: player.currentTime,
-                        duration: player.duration, volume: player.volume)
+        let now = State(song: player.currentSong, isPlaying: player.isPlaying,
+                        currentTime: player.currentTime, duration: player.duration)
         guard let data = try? JSONEncoder().encode(now) else { return }
         try? session.send(data, toPeers: session.connectedPeers, with: .unreliable)
     }
@@ -79,11 +77,12 @@ final class RemoteLink: NSObject {
     private func perform(_ command: Command) {
         let player = AudioPlayer.shared
         switch command {
+        case .play: player.play()
+        case .pause: player.pause()
         case .playPause: player.togglePlayPause()
         case .next: player.next()
         case .previous: player.previous()
         case .seek(let time): player.seek(to: time)
-        case .volume(let volume): player.volume = min(1, max(0, volume))
         }
         broadcast()
     }
@@ -98,33 +97,62 @@ final class RemoteLink: NSObject {
         self.browser = browser
     }
 
-    func stopBrowsing() {
-        browser?.stopBrowsingForPeers()
-        browser = nil
-        macs = []
-    }
-
     func connect(to mac: MCPeerID) {
+        if connected != nil { disconnect() }
         browser?.invitePeer(mac, to: session, withContext: accountKey, timeout: 15)
     }
 
     func disconnect() {
         session.disconnect()
-        connected = nil
-        state = nil
+        letGo()
     }
 
     func send(_ command: Command) {
         guard let connected, let data = try? JSONEncoder().encode(command) else { return }
         try? session.send(data, toPeers: [connected], with: .reliable)
     }
+
+    private func takeControl(of mac: MCPeerID) {
+        let player = AudioPlayer.shared
+        localSong = player.currentSong
+        player.pause()
+        player.remote = { command in MainActor.assumeIsolated { RemoteLink.shared.send(command) } }
+        connected = mac
+    }
+
+    private func letGo() {
+        guard connected != nil else { return }
+        connected = nil
+        let player = AudioPlayer.shared
+        player.remote = nil
+        player.isPlaying = false
+        player.currentSong = localSong
+        player.currentTime = 0
+        if let localSong { player.loadLyrics(for: localSong) }
+    }
+
+    private func mirror(_ state: State) {
+        let player = AudioPlayer.shared
+        if let song = state.song, song.id != player.currentSong?.id {
+            player.currentSong = song
+            player.loadLyrics(for: song)
+        }
+        player.isPlaying = state.isPlaying
+        player.currentTime = state.currentTime
+        player.duration = state.duration
+    }
 }
 
 extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate {
     nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         Task { @MainActor in
-            if state == .connected, browser != nil { connected = peerID }
-            if state == .notConnected, connected == peerID { connected = nil; self.state = nil }
+            if advertiser != nil {
+                controllers = session.connectedPeers
+            } else if state == .connected {
+                takeControl(of: peerID)
+            } else if state == .notConnected, connected == peerID {
+                letGo()
+            }
         }
     }
 
@@ -132,8 +160,8 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
         Task { @MainActor in
             if advertiser != nil, let command = try? JSONDecoder().decode(Command.self, from: data) {
                 perform(command)
-            } else if let state = try? JSONDecoder().decode(State.self, from: data) {
-                self.state = state
+            } else if connected == peerID, let state = try? JSONDecoder().decode(State.self, from: data) {
+                mirror(state)
             }
         }
     }

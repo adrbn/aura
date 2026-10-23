@@ -51,6 +51,9 @@ final class AudioPlayer {
         }
     }
     var isPlaying = false
+    /// Set while this player is a remote for Aura on a Mac (`RemoteLink`): every transport
+    /// command goes there instead of to the local player.
+    @ObservationIgnored var remote: ((RemoteLink.Command) -> Void)?
     var currentTime: TimeInterval = 0
     var duration: TimeInterval = 0
     var isShuffled = false
@@ -1597,6 +1600,7 @@ final class AudioPlayer {
     }
 
     func play() {
+        if let remote { remote(.play); return }
         AppLogger.shared.log("▶️ play()")
         // If the session refuses us, say so instead of flipping the button to "playing"
         // over silence. A play that cannot happen is not a play.
@@ -1691,6 +1695,7 @@ final class AudioPlayer {
         #endif
     }
     func pause() {
+        if let remote { remote(.pause); return }
         AppLogger.shared.log("⏸ pause()")
         playbackWatchdog?.cancel()
         interruptionRecovery?.cancel()
@@ -1708,7 +1713,7 @@ final class AudioPlayer {
     private func publishPlaybackState() {
         MPNowPlayingInfoCenter.default().playbackState = isPlaying ? .playing : .paused
     }
-    func togglePlayPause() { if isPlaying { pause() } else { play() } }
+    func togglePlayPause() { if let remote { remote(.playPause); return }; if isPlaying { pause() } else { play() } }
 
     /// Begin caching the next track in queue when the current song is near completion
     private func prefetchNextTrack() {
@@ -1741,6 +1746,7 @@ final class AudioPlayer {
     }
 
     func next() {
+        if let remote { remote(.next); return }
         AppLogger.shared.log("⏭ next() request | queueCount: \(queue.count) | queueIdx: \(queueIndex) | current: \(currentSong?.title ?? "nil")")
 
         // Play from user queue first (songs added via "Add to Queue" / "Play Next")
@@ -1793,6 +1799,7 @@ final class AudioPlayer {
     /// Back a song — or, as the previous button does, to the start of this one once it's
     /// a few seconds in. A swipe across the cover always means the song before.
     func previous(restartsFirst: Bool = true) {
+        if let remote { remote(.previous); return }
         if restartsFirst, currentTime > 3 { AppLogger.shared.log("⏮ previous() → restart"); seek(to: 0); return }
         guard !queue.isEmpty else { return }
         // Wrap to the end, mirroring next(). Forward already loops via `% queue.count`;
@@ -1825,6 +1832,7 @@ final class AudioPlayer {
     }
 
     func seek(to time: TimeInterval) {
+        if let remote { remote(.seek(time)); return }
         guard let player = player else { return }
         // Every seek gets an id, so a completion belonging to a superseded one can be
         // recognised and ignored.

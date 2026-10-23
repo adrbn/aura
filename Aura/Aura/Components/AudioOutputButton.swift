@@ -117,6 +117,15 @@ class AudioOutputContainerView: UIView {
         triggerRoutePicker()
     }
 
+    /// The system's AirPlay and Bluetooth picker, opened from anywhere.
+    static func presentRoutePicker() {
+        guard let window = UIApplication.shared.connectedScenes.compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first else { return }
+        let picker = AVRoutePickerView(frame: .zero)
+        window.addSubview(picker)
+        picker.subviews.compactMap { $0 as? UIButton }.first?.sendActions(for: .touchUpInside)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { picker.removeFromSuperview() }
+    }
+
     private func triggerRoutePicker() {
         // AVRoutePickerView has an internal UIButton; simulate a tap on it
         for subview in picker.subviews {
@@ -162,13 +171,41 @@ struct AudioOutputButton: UIViewRepresentable {
 struct AudioOutputButtonWrapper: View {
     var accentColor: Color
     @State private var routeMonitor = AudioRouteMonitor.shared
+    private var link: RemoteLink { RemoteLink.shared }
 
     var body: some View {
-        AudioOutputButton(
-            accentColor: UIColor(accentColor),
-            routeIcon: routeMonitor.routeIcon,
-            isExternalRoute: routeMonitor.isExternalRoute
-        )
+        Group {
+            // With a Mac running Aura in reach, the output button picks where the music
+            // plays: this iPhone, a Mac, or AirPlay and Bluetooth through the system's picker.
+            if link.macs.isEmpty && link.connected == nil {
+                AudioOutputButton(
+                    accentColor: UIColor(accentColor),
+                    routeIcon: routeMonitor.routeIcon,
+                    isExternalRoute: routeMonitor.isExternalRoute
+                )
+            } else {
+                Menu {
+                    Button { link.disconnect() } label: {
+                        Label("This iPhone", systemImage: link.connected == nil ? "checkmark" : "iphone")
+                    }
+                    ForEach(link.macs, id: \.self) { mac in
+                        Button { link.connect(to: mac) } label: {
+                            Label(mac.displayName, systemImage: link.connected == mac ? "checkmark" : "macbook")
+                        }
+                    }
+                    Divider()
+                    Button { AudioOutputContainerView.presentRoutePicker() } label: {
+                        Label("AirPlay & Bluetooth", systemImage: "airplayaudio")
+                    }
+                } label: {
+                    Image(systemName: link.connected != nil ? "macbook" : routeMonitor.routeIcon)
+                        .font(.title2)
+                        .foregroundStyle(link.connected != nil || routeMonitor.isExternalRoute ? accentColor : .white.opacity(0.6))
+                }
+                .accessibilityLabel("Play on")
+            }
+        }
         .frame(width: 34, height: 34)
+        .onAppear { link.browse() }
     }
 }
