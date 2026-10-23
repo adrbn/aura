@@ -91,20 +91,40 @@ struct MacPlayerBar: View {
             Spacer(minLength: 0)
         }
         .frame(width: flank, alignment: .leading)
-        .contextMenu {
-            if let song {
-                if let albumId = song.albumId {
-                    Button("Go to Album") { player.pendingAlbumId = albumId }
-                }
-                if let artistId = song.artistId {
-                    Button("Go to Artist") { player.pendingArtistId = artistId }
-                }
-                Divider()
-                Button(song.starred != nil ? LocalizedStringKey("Unfavourite") : "Favourite") { player.toggleFavorite() }
-                MacRatingMenu(songs: [song])
-                MacDownloadMenuItem(songs: [song])
-            }
+        .overlay { MacRightClick { song.map(menu(for:)) } }
+    }
+
+    /// The song's menu, built in AppKit so it can open upward: the bar sits at the foot of
+    /// the screen, where a SwiftUI menu slides up over the pointer instead.
+    private func menu(for song: Song) -> NSMenu {
+        let menu = NSMenu()
+        if let albumId = song.albumId {
+            menu.add(String(localized: "Go to Album")) { player.pendingAlbumId = albumId }
         }
+        if let artistId = song.artistId {
+            menu.add(String(localized: "Go to Artist")) { player.pendingArtistId = artistId }
+        }
+        menu.add(String(localized: "Start Radio")) { player.startRadioFromSong(song) }
+        menu.addItem(.separator())
+        menu.add(song.starred != nil ? String(localized: "Unfavourite") : String(localized: "Favourite")) { player.toggleFavorite() }
+        let ratings = SongRatings.shared, current = ratings.rating(for: song)
+        let rating = NSMenu()
+        for stars in 0...5 {
+            let item = rating.add(stars == 0 ? String(localized: "No Rating") : String(repeating: "★", count: stars)) {
+                ratings.set(stars, for: song)
+            }
+            item.state = stars == current ? .on : .off
+        }
+        let ratingItem = NSMenuItem(title: String(localized: "Rating"), action: nil, keyEquivalent: "")
+        ratingItem.submenu = rating
+        menu.addItem(ratingItem)
+        let downloads = DownloadManager.shared
+        if downloads.isDownloaded(song.id) {
+            menu.add(String(localized: "Remove Download")) { downloads.deleteSong(song.id) }
+        } else {
+            menu.add(String(localized: "Download")) { Task { await downloads.downloadAlbum([song]) } }
+        }
+        return menu
     }
 
     // MARK: Centre — transport and scrubber
@@ -176,7 +196,7 @@ struct MacPlayerBar: View {
     // MARK: Right — lyrics, EQ, queue, volume
 
     private var secondary: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: 12) {
             Spacer(minLength: 0)
             iconButton("quote.bubble", active: player.isShowingNowPlaying, help: "Lyrics") {
                 guard song != nil else { return }
@@ -189,12 +209,12 @@ struct MacPlayerBar: View {
 
             HStack(spacing: 6) {
                 Image(systemName: volumeSymbol)
-                    .font(.system(size: 10))
+                    .font(.system(size: 14))
                     .foregroundStyle(.secondary)
-                    .frame(width: 12)
+                    .frame(width: 20)
                 Slider(value: $player.volume, in: 0...1)
-                    .controlSize(.mini)
-                    .frame(width: 78)
+                    .controlSize(.small)
+                    .frame(width: 96)
             }
             .help("Volume")
         }
@@ -220,8 +240,8 @@ struct MacPlayerBar: View {
                 }
             } label: {
                 Image(systemName: link.connected?.symbol ?? "hifispeaker.and.homepod")
-                    .font(.system(size: 13))
-                    .frame(width: 22, height: 22)
+                    .font(.system(size: 16))
+                    .frame(width: 30, height: 30)
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
@@ -251,12 +271,12 @@ struct MacPlayerBar: View {
         }
     }
 
-    private func iconButton(_ symbol: String, size: CGFloat = 13, active: Bool = false,
+    private func iconButton(_ symbol: String, size: CGFloat = 16, active: Bool = false,
                             help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: size))
-                .frame(width: 22, height: 22)
+                .frame(width: 30, height: 30)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -281,5 +301,51 @@ private struct HoverLink: View {
                 .lineLimit(1)
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// A menu item that runs a closure.
+private final class MacMenuAction: NSObject {
+    let run: () -> Void
+    init(_ run: @escaping () -> Void) { self.run = run }
+    @objc func fire() { run() }
+}
+
+extension NSMenu {
+    @discardableResult
+    func add(_ title: String, _ action: @escaping () -> Void) -> NSMenuItem {
+        let handler = MacMenuAction(action)
+        let item = NSMenuItem(title: title, action: #selector(MacMenuAction.fire), keyEquivalent: "")
+        item.target = handler
+        item.representedObject = handler  // the item keeps its handler alive
+        addItem(item)
+        return item
+    }
+}
+
+/// Right-click opens `menu` with its top-left corner at the pointer, or its bottom-left
+/// when the screen has no room below. Left clicks pass through to the views beneath.
+struct MacRightClick: NSViewRepresentable {
+    let menu: () -> NSMenu?
+
+    func makeNSView(context: Context) -> Catcher { Catcher() }
+    func updateNSView(_ view: Catcher, context: Context) { view.build = menu }
+
+    final class Catcher: NSView {
+        var build: () -> NSMenu? = { nil }
+
+        override func hitTest(_ point: NSPoint) -> NSView? {
+            let type = NSApp.currentEvent?.type
+            return type == .rightMouseDown || type == .rightMouseUp ? super.hitTest(point) : nil
+        }
+
+        override func rightMouseDown(with event: NSEvent) {
+            guard let menu = build(), let window else { return }
+            let at = convert(event.locationInWindow, from: nil)
+            let room = window.convertPoint(toScreen: event.locationInWindow).y - (window.screen?.visibleFrame.minY ?? 0)
+            let height = menu.size.height
+            let top = room < height ? (isFlipped ? at.y - height : at.y + height) : at.y
+            menu.popUp(positioning: nil, at: NSPoint(x: at.x, y: top), in: self)
+        }
     }
 }

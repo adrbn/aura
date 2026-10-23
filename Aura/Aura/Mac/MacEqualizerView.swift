@@ -10,12 +10,16 @@ struct MacEqualizerView: View {
     private let labels = ["60", "230", "910", "3.6k", "14k"]
     private let range: ClosedRange<Float> = -12...12
 
+    @Environment(\.appAccentColor) private var accentColor
+    private static let faderHeight: CGFloat = 150
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Equaliser").auraDisplay(22)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Equaliser").auraDisplay(24)
                 Spacer()
                 Button("Flat") { apply(EQPreset.flat.bands, preset: .flat) }
+                    .buttonStyle(.borderless)
                     .disabled(gains.allSatisfy { $0 == 0 })
             }
 
@@ -23,41 +27,63 @@ struct MacEqualizerView: View {
                 ForEach(EQPreset.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
             }
             .labelsHidden()
+            .frame(maxWidth: .infinity)
 
-            HStack(alignment: .bottom, spacing: 18) {
+            HStack(spacing: 0) {
                 ForEach(Array(labels.enumerated()), id: \.offset) { index, label in
-                    band(index: index, label: label)
+                    band(index: index, label: label).frame(maxWidth: .infinity)
                 }
             }
-            .frame(height: 180)
+            // The 0 dB line across every band, so a curve reads at a glance.
+            .background {
+                Rectangle().fill(.primary.opacity(0.12)).frame(height: 1)
+            }
         }
-        .padding(18)
-        .frame(width: 380)
+        .padding(20)
+        .frame(width: 300)
     }
 
+    private func gain(_ index: Int) -> Float { gains.indices.contains(index) ? gains[index] : 0 }
+
     private func band(index: Int, label: String) -> some View {
-        VStack(spacing: 6) {
-            Text(gains.indices.contains(index) ? String(format: "%+.0f", gains[index]) : "0")
-                .font(.system(size: 10).monospacedDigit())
+        VStack(spacing: 8) {
+            Text(String(format: "%+.0f", gain(index)))
+                .font(.system(size: 10, weight: .medium).monospacedDigit())
                 .foregroundStyle(.secondary)
-            Slider(
-                value: Binding(
-                    get: { gains.indices.contains(index) ? gains[index] : 0 },
-                    set: { newValue in
-                        guard gains.indices.contains(index) else { return }
-                        gains[index] = newValue
-                        // Any hand adjustment makes the setting Custom — otherwise the
-                        // named preset would keep claiming credit for bands it no longer
-                        // describes, and reselecting it would appear to do nothing.
-                        apply(gains, preset: .custom)
-                    }
-                ),
-                in: range
-            )
-            .rotationEffect(.degrees(-90))
-            .frame(width: 130)
-            .frame(width: 26, height: 130)
+            fader(index: index)
             Text(label).font(.system(size: 10)).foregroundStyle(.secondary)
+        }
+    }
+
+    /// A thin track filled from 0 dB to the band's gain, dragged anywhere along it.
+    private func fader(index: Int) -> some View {
+        let h = Self.faderHeight
+        let span = CGFloat(range.upperBound - range.lowerBound)
+        let y = h / 2 - CGFloat(gain(index)) / span * h
+        return ZStack(alignment: .top) {
+            Capsule().fill(.primary.opacity(0.12)).frame(width: 4, height: h)
+            Capsule().fill(accentColor)
+                .frame(width: 4, height: abs(y - h / 2))
+                .offset(y: min(y, h / 2))
+            Circle().fill(.white)
+                .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+                .frame(width: 14, height: 14)
+                .offset(y: y - 7)
+        }
+        .frame(width: 28, height: h)
+        .contentShape(Rectangle())
+        .gesture(DragGesture(minimumDistance: 0).onChanged { drag in
+            guard gains.indices.contains(index) else { return }
+            let value = Float((h / 2 - drag.location.y) / h * span)
+            gains[index] = min(range.upperBound, max(range.lowerBound, value.rounded()))
+            // Any hand adjustment makes the setting Custom — otherwise the named preset
+            // would keep claiming credit for bands it no longer describes.
+            apply(gains, preset: .custom)
+        })
+        .onTapGesture(count: 2) {
+            guard gains.indices.contains(index) else { return }
+            gains[index] = 0
+            apply(gains, preset: .custom)
         }
     }
 
