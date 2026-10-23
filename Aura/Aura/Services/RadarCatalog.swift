@@ -182,7 +182,9 @@ enum RadarRules {
     /// A title reduced to its words: case, accents, ligatures, punctuation and the store's
     /// " - Single" / " - EP" suffixes don't stop a release matching the album on the server.
     static func normalized(_ title: String) -> String {
-        var s = SongQuery.fold(title).trimmingCharacters(in: .whitespaces)
+        // Featured artists dropped: Deezer writes "Chalk feat. Jim-E Stack" where the file
+        // has "Chalk" and the guest in its artist tag.
+        var s = SongQuery.fold(SongQuery.cleanTitle(title)).trimmingCharacters(in: .whitespaces)
         for suffix in [" - single", " - ep"] where s.hasSuffix(suffix) {
             s = String(s.dropLast(suffix.count))
         }
