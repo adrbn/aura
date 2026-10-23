@@ -147,9 +147,31 @@ final class RemoteLink: NSObject {
         // A peer already found isn't reported again when its announcement changes: looking
         // afresh every few seconds is what shows a song started on the other device.
         ticks += 1
-        if ticks % 5 == 0, connected == nil, let browser {
-            browser.stopBrowsingForPeers()
+        // Each fresh browser finds the others again; one not found for a while has gone.
+        devices.removeAll { device in
+            device != connected && Date().timeIntervalSince(lastFound[device.name] ?? .distantPast) > 20
+        }
+        if ticks % 6 == 0, connected == nil, let old = browser {
+            // A fresh browser rather than the same one stopped and started: restarting one
+            // crashed in CFNetwork, cancelling a search still being torn down.
+            old.stopBrowsingForPeers()
+            old.delegate = nil
+            retire(old)
+            let browser = MCNearbyServiceBrowser(peer: peer, serviceType: Self.service)
+            browser.delegate = self
             browser.startBrowsingForPeers()
+            self.browser = browser
+        }
+    }
+
+    private var lastFound: [String: Date] = [:]
+
+    /// Kept alive a few seconds after being stopped, for the network to finish with it.
+    private var retired: [NSObject] = []
+    private func retire(_ object: NSObject) {
+        retired.append(object)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            self?.retired.removeAll { $0 === object }
         }
     }
 
@@ -160,7 +182,11 @@ final class RemoteLink: NSObject {
         let song = connected == nil && player.isPlaying ? player.currentSong : nil
         guard advertiser == nil || song?.id != announced else { return }
         announced = song?.id
-        advertiser?.stopAdvertisingPeer()
+        if let old = advertiser {
+            old.stopAdvertisingPeer()
+            old.delegate = nil
+            retire(old)
+        }
         var info = ["kind": Self.kind]
         // Kept short: the whole announcement has to fit in a Bonjour record.
         info["playing"] = song.map { String($0.title.prefix(80)) }
@@ -381,6 +407,7 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
             guard peerID != peer else { return }
             // A device that relaunched comes back under a new identity with the same name.
             devices.removeAll { $0.name == peerID.displayName }
+            lastFound[peerID.displayName] = Date()
             devices.append(Device(peer: peerID, kind: info?["kind"] ?? "mac", playing: info?["playing"],
                                   artist: info?["artist"], cover: info?["cover"]))
         }
