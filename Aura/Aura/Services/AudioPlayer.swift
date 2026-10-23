@@ -2856,18 +2856,35 @@ final class AudioPlayer {
         //    reachable (its audio is streaming). Gating on it skipped the server on
         //    auto-load, so lyrics only appeared after a manual "Try Again". `isEffectivelyOffline`
         //    is the honest signal, and the loading spinner covers the rare unreachable-server wait.
-        if let server = ServerManager.shared.currentServer, !isEffectivelyOffline {
-            if lyricsSource == .structured {
-                if await tryStructuredLyrics(server: server, song: song, generation: generation) { return true }
-                if await tryLegacyLyrics(server: server, song: song, generation: generation) { return true }
-            } else {
-                if await tryLegacyLyrics(server: server, song: song, generation: generation) { return true }
-                if await tryStructuredLyrics(server: server, song: song, generation: generation) { return true }
-            }
+        guard let server = ServerManager.shared.currentServer, !isEffectivelyOffline else {
+            // 2. Fall back to LRCLIB community lyrics when the server has none / is offline.
+            return await tryLRCLIB(song: song, generation: generation)
         }
-        // 2. Fall back to LRCLIB community lyrics when the server has none / is offline.
-        if await tryLRCLIB(song: song, generation: generation) { return true }
-        return false
+        // A server that looks lyrics up elsewhere on a first play can take twenty seconds
+        // over it: past a few, LRCLIB is asked too, and the first to answer is shown.
+        let fromServer = Task { await tryServerLyrics(server: server, song: song, generation: generation) }
+        let quick = await withTaskGroup(of: Bool?.self) { group in
+            group.addTask { await fromServer.value }
+            group.addTask { try? await Task.sleep(for: .seconds(4)); return nil }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+        if let quick { return quick ? true : await tryLRCLIB(song: song, generation: generation) }
+        if await tryLRCLIB(song: song, generation: generation) {
+            fromServer.cancel()
+            return true
+        }
+        return await fromServer.value
+    }
+
+    private func tryServerLyrics(server: ServerConfig, song: Song, generation: Int) async -> Bool {
+        if lyricsSource == .structured {
+            if await tryStructuredLyrics(server: server, song: song, generation: generation) { return true }
+            return await tryLegacyLyrics(server: server, song: song, generation: generation)
+        }
+        if await tryLegacyLyrics(server: server, song: song, generation: generation) { return true }
+        return await tryStructuredLyrics(server: server, song: song, generation: generation)
     }
 
 
