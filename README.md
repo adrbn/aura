@@ -106,6 +106,14 @@ Watch app is a remote and a library on your wrist; in the car, CarPlay lays it a
 - **Animated covers**, WebP or GIF, on Now Playing and the album page.
 - **SharePlay** over FaceTime, everyone streaming from the same server; **`aura://` links** for Shortcuts; and **Chinese and Russian**.
 
+**Aura for Mac** (preview, built from source with the `Aura-mac` scheme)
+
+- **The whole library in one window**: a sidebar with Home, Made For You, the Radar, Wrapped, Songs, Playlists, Albums, Artists, Downloads and your pinned playlists, and the player across the bottom.
+- **Up Next as a side pane** that slides in from the right: drag to reorder, shuffle or clear, and a right-click for Play Next, Go to Album, Start Radio, rating and download.
+- **Lyrics full screen**, word by word, with the cover beside them, both sized to the window.
+- **Play on your iPhone from the Mac**, or on the Mac from the iPhone, over the same Wi-Fi: transport, queue edits and volume go across, and your AirPods stay with the device that plays.
+- **Downloads, the equaliser and a menu bar player**, and album pages that list what the release is missing with Get All (sideload build).
+
 ## Screenshots
 
 <p align="center">

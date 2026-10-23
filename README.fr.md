@@ -108,6 +108,14 @@ reprend le tout.
 - **Les pochettes animées**, WebP ou GIF, dans En cours de lecture et sur la page d'album.
 - **SharePlay** sur FaceTime, chacun écoutant depuis le même serveur ; des **liens `aura://`** pour Raccourcis ; et le **chinois et le russe**.
 
+**Aura pour Mac** (aperçu, à compiler soi-même avec le schéma `Aura-mac`)
+
+- **Toute la bibliothèque dans une fenêtre** : une barre latérale avec Accueil, Pour vous, le Radar, Wrapped, Titres, Playlists, Albums, Artistes, Téléchargements et vos playlists épinglées, et le lecteur en bas.
+- **À suivre dans un panneau latéral** qui glisse depuis la droite : glisser pour réordonner, mélanger ou vider, et un clic droit pour Lire ensuite, Accéder à l'album, Lancer la radio, la note et le téléchargement.
+- **Les paroles en plein écran**, mot par mot, la pochette à côté, toutes deux à la taille de la fenêtre.
+- **Lire sur l'iPhone depuis le Mac**, ou sur le Mac depuis l'iPhone, sur le même Wi-Fi : lecture, file d'attente et volume passent d'un appareil à l'autre, et vos AirPods restent sur celui qui joue.
+- **Téléchargements, égaliseur et lecteur dans la barre des menus**, et des pages d'album qui listent ce qui manque à la sortie avec Tout récupérer (version sideload).
+
 ## Captures d'écran
 
 <p align="center">
