@@ -151,7 +151,7 @@ final class RemoteLink: NSObject {
         devices.removeAll { device in
             device != connected && Date().timeIntervalSince(lastFound[device.name] ?? .distantPast) > 20
         }
-        if ticks % 6 == 0, connected == nil, let old = browser {
+        if ticks % 6 == 0, connected == nil, controllers.isEmpty, let old = browser {
             // A fresh browser rather than the same one stopped and started: restarting one
             // crashed in CFNetwork, cancelling a search still being torn down.
             old.stopBrowsingForPeers()
@@ -179,7 +179,10 @@ final class RemoteLink: NSObject {
     /// connecting. An announcement can't change, so a new one replaces it.
     private func announce() {
         let player = AudioPlayer.shared
-        let song = connected == nil && player.isPlaying ? player.currentSong : nil
+        // Never while linked: the announcement that let a controller in carries its session,
+        // and replacing it dropped the link seconds later.
+        guard advertiser == nil || (connected == nil && controllers.isEmpty) else { return }
+        let song = player.isPlaying ? player.currentSong : nil
         guard advertiser == nil || song?.id != announced else { return }
         announced = song?.id
         if let old = advertiser {
@@ -374,8 +377,18 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
             } else if state == .connected, invited == peerID {
                 invited = nil
                 takeControl(of: peerID)
-            } else if state == .notConnected, connected?.peer == peerID {
+            } else if state == .notConnected, let lost = connected, lost.peer == peerID {
                 letGo()
+                // Dropped rather than handed back: link up again, or the next Space plays here
+                // and pulls the AirPods away from the device that was playing.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    MainActor.assumeIsolated {
+                        let link = RemoteLink.shared
+                        guard link.connected == nil, link.invited == nil,
+                              let device = link.devices.first(where: { $0.name == lost.name }) else { return }
+                        link.connect(to: device, bringing: false)
+                    }
+                }
             }
         }
     }
