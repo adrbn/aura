@@ -111,7 +111,7 @@ struct MacSearchView: View {
         }
         isSearching = true
         // Debounced by `.task(id:)`, which cancels the previous run on every keystroke.
-        try? await Task.sleep(for: .milliseconds(300))
+        try? await Task.sleep(for: .milliseconds(LibraryIndex.shared.isReady ? 120 : 300))
         guard !Task.isCancelled else { return }
         let found = await SearchIndex.shared.search(query: q)
         guard !Task.isCancelled else { return }

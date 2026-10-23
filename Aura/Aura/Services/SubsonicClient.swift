@@ -31,8 +31,16 @@ actor SubsonicClient {
         let hash = Insecure.MD5.hash(data: data)
         let token = hash.map { String(format: "%02hhx", $0) }.joined()
         let user = server.username.addingPercentEncoding(withAllowedCharacters: queryValueAllowed) ?? server.username
-        return "u=\(user)&t=\(token)&s=\(salt)&v=1.16.1&c=Aura&f=json"
+        return "u=\(user)&t=\(token)&s=\(salt)&v=1.16.1&c=\(Self.clientName)&f=json"
     }
+
+    /// The name the server records each request under. The Mac's is its own, so a queue
+    /// one leaves is a queue the other picks up (`resumeQueueFromServer`).
+    #if os(macOS)
+    static let clientName = "Aura for Mac"
+    #else
+    static let clientName = "Aura"
+    #endif
 
     private func buildURL(server: ServerConfig, endpoint: String, params: [String: String] = [:], musicFolderIds: [Int] = []) -> URL? {
         var urlString = "\(server.baseURL)/rest/\(endpoint)?\(Self.authQuery(for: server))"

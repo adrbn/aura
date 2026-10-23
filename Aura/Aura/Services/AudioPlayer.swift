@@ -518,10 +518,10 @@ final class AudioPlayer {
               let server = ServerManager.shared.currentServer else { return }
         let savedAt = UserDefaults.standard.object(forKey: Self.lastPlaybackSavedAtKey) as? Date ?? .distantPast
         Task {
-            // ponytail: "Aura" is every Aura's client name, so a queue another Aura saved
-            // isn't picked up; a per-device client name would allow it.
+            // Not one this app saved itself. The phone and the Mac go by different names, so
+            // each picks up the other's; another iPhone's Aura shares the phone's and isn't.
             guard let remote = try? await SubsonicClient.shared.getPlayQueue(server: server),
-                  remote.changedBy != "Aura",
+                  remote.changedBy != SubsonicClient.clientName,
                   let songs = remote.entry, !songs.isEmpty,
                   let stamp = remote.changed,
                   // Fractions of a second come in varying lengths: the second is enough.
