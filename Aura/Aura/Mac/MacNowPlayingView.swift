@@ -236,6 +236,19 @@ struct MacLyricsSheet: View {
             }
             .onChange(of: player.currentTime) { _, _ in track(proxy: proxy) }
             .onChange(of: player.currentSong?.id) { _, _ in currentIndex = nil }
+            // Translations make every line taller, so the sung line slid down the pane until
+            // the next line change scrolled again. Re-centre as soon as they show, hide or land.
+            .onChange(of: settings.translateLyrics) { _, _ in recenter(proxy: proxy) }
+            .onChange(of: translator.lines.count) { _, _ in recenter(proxy: proxy) }
+        }
+    }
+
+    private func recenter(proxy: ScrollViewProxy) {
+        // Next turn of the run loop: the taller lines have to be laid out before the
+        // scroll can aim at the new centre.
+        DispatchQueue.main.async {
+            guard let currentIndex, !browsing else { return }
+            withAnimation(Self.lineChange) { proxy.scrollTo(currentIndex, anchor: .center) }
         }
     }
 
