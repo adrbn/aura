@@ -46,9 +46,21 @@ struct AuraMacApp: App {
         .commands { MacCommands(player: player) }
 
         // What's playing, from the menu bar, with the window closed or behind others.
-        MenuBarExtra("Aura", systemImage: "music.note") {
+        MenuBarExtra {
             MacMenuBarPlayer()
+        } label: {
+            Image(nsImage: Self.menuBarMark)
         }
         .menuBarExtraStyle(.window)
     }
+
+    /// The app icon's play mark, as a template so the menu bar tints it like its neighbours.
+    private static let menuBarMark: NSImage = {
+        let renderer = ImageRenderer(content: PlayMark().fill(.black).frame(width: 12, height: 14))
+        renderer.scale = 2
+        let image = renderer.nsImage ?? NSImage()
+        image.isTemplate = true
+        image.accessibilityDescription = "Aura"
+        return image
+    }()
 }
