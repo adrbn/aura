@@ -42,6 +42,8 @@ struct MacRootView: View {
     @State private var player = AudioPlayer.shared
     @State private var section: MacSection? = .home
     @State private var path = NavigationPath()
+    /// Bumped when a section showing at its root is clicked again, to rebuild it at its top.
+    @State private var rootReset = 0
     /// One search field for the whole window, rather than a section you have to go to.
     @State private var query = ""
     /// Owned here rather than left to the split view. With the toolbar gone there is no
@@ -98,6 +100,17 @@ struct MacRootView: View {
         .preferredColorScheme(AppSettings.shared.appearanceMode.colorScheme)
     }
 
+    /// A section clicked again, as a tab tapped again on the iPhone: out of search and back
+    /// to the section's root, or, already there, back to its top.
+    private func reselect() {
+        if !query.isEmpty || !path.isEmpty {
+            query = ""
+            path = NavigationPath()
+        } else {
+            rootReset += 1
+        }
+    }
+
     private static var fetchPanelShown: Bool {
         #if APPSTORE_BUILD
         false
@@ -112,7 +125,7 @@ struct MacRootView: View {
         VStack(spacing: 0) {
         HStack(spacing: 0) {
         NavigationSplitView(columnVisibility: columnVisibility) {
-            MacSidebar(section: $section) { path = NavigationPath() }
+            MacSidebar(section: $section) { reselect() }
         } detail: {
             // A plain VStack, not a safe-area inset. As an inset the bar was handed the
             // whole height and centred itself in it, landing halfway down the window. Here
@@ -128,7 +141,7 @@ struct MacRootView: View {
                         if query.trimmingCharacters(in: .whitespaces).isEmpty {
                             // Each section arrives with a short fade and rise rather than a cut.
                             detail
-                                .id(section)
+                                .id("\(String(describing: section))-\(rootReset)")
                                 .transition(.opacity.combined(with: .offset(y: 10)))
                         } else {
                             MacSearchView(query: $query)

@@ -73,6 +73,9 @@ struct MacSidebar: View {
             Image(systemName: item.symbol)
                 .foregroundStyle(Color.accentColor)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // The whole row answers a second click, not just the glyphs of its label.
+        .contentShape(Rectangle())
         .tag(item)
         .simultaneousGesture(TapGesture().onEnded { if section == item { reselect() } })
     }

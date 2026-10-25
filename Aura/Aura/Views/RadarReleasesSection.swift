@@ -43,6 +43,16 @@ struct RadarReleaseRow: View {
         #endif
     }
 
+    // The Mac's text styles run a size or two under the phone's, which left the rows small
+    // in a wide window; there they match the Mac's own song rows.
+    #if os(macOS)
+    private static let titleFont = Font.system(size: 14, weight: .medium)
+    private static let detailFont = Font.system(size: 12)
+    #else
+    private static let titleFont = Font.subheadline.weight(.medium)
+    private static let detailFont = Font.caption
+    #endif
+
     var body: some View {
         HStack(spacing: 12) {
             // The app's artwork cache, not AsyncImage: that kept an empty square for good
@@ -52,11 +62,11 @@ struct RadarReleaseRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(release.title)
-                    .font(.subheadline.weight(.medium))
+                    .font(Self.titleFont)
                     .foregroundStyle(isCurrent ? AnyShapeStyle(accentColor) : AnyShapeStyle(.primary))
                     .lineLimit(1)
                 Text(details)
-                    .font(.caption)
+                    .font(Self.detailFont)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
