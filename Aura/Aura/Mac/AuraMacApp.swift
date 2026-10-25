@@ -19,6 +19,8 @@ struct AuraMacApp: App {
                 .environment(serverManager)
                 .environment(player)
                 .frame(minWidth: 900, minHeight: 560)
+                // aura:// links, as on the phone: Shortcuts on this Mac can play and pause.
+                .onOpenURL { AuraURL.open($0) }
                 .task {
                     PinSync.shared.start()
                     // As the phone opens: the server tried, the queue the phone left picked

@@ -2,6 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.adrbn.aura.mac</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>aura</string>
+			</array>
+		</dict>
+	</array>
 	<!-- Self-hosted servers are reached over plain HTTP far more often than not: a box on
 	     the LAN, or an IP on a tailnet, neither of which has a certificate anyone would
 	     issue. Without this, App Transport Security refuses the connection outright and the
