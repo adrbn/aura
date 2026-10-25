@@ -114,6 +114,10 @@ struct MacDetailHeader<Actions: View>: View {
     var mix: Mix?
     @ViewBuilder var actions: Actions
     @Environment(\.macTopRoom) private var topRoom
+    @State private var width: CGFloat = 900
+
+    /// The artwork grows with the window instead of staying a 260 pt stamp on a big screen.
+    private var coverSide: CGFloat { min(360, max(220, width * 0.26)) }
 
     var body: some View {
         // Beside the cover while the window is wide enough for the buttons whole; under it
@@ -133,15 +137,16 @@ struct MacDetailHeader<Actions: View>: View {
         .padding(.horizontal, 28)
         .padding(.top, 26 + topRoom)
         .padding(.bottom, 18)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
     }
 }
 
 private extension MacDetailHeader {
     @ViewBuilder var cover: some View {
         if let mix {
-            EditorialMixCover(mix: mix, size: 260, cornerRadius: 12)
+            EditorialMixCover(mix: mix, size: coverSide, cornerRadius: 12)
         } else {
-            CoverArtImage(coverArt: coverArt, size: 260, cornerRadius: 12,
+            CoverArtImage(coverArt: coverArt, size: coverSide, cornerRadius: 12,
                           placeholderName: placeholderName)
         }
     }

@@ -101,9 +101,9 @@ struct MacCoverTile: View {
             .aspectRatio(1, contentMode: .fit)
             .macHoverLift()
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 12, weight: .medium)).lineLimit(1)
+                Text(title).font(.system(size: 13, weight: .medium)).lineLimit(1)
                 if let subtitle {
-                    Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                    Text(subtitle).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: circular ? .center : .leading)

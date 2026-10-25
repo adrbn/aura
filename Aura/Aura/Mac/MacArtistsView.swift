@@ -41,6 +41,7 @@ struct MacArtistDetailView: View {
     @State private var player = AudioPlayer.shared
     @State private var albums: [Album] = []
     @State private var topSongs: [Song] = []
+    @State private var preferences = MacPreferences.shared
 
     var body: some View {
         ScrollView {
@@ -64,7 +65,8 @@ struct MacArtistDetailView: View {
                 }
 
                 sectionTitle("Albums")
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 148, maximum: 210), spacing: 20)],
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: preferences.coverSize.gridMinimum,
+                                                   maximum: preferences.coverSize.gridMaximum), spacing: 20)],
                           spacing: 22) {
                     ForEach(albums) { album in
                         NavigationLink(value: album) {

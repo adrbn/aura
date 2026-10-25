@@ -6,6 +6,7 @@ struct MacSearchView: View {
     @Binding var query: String
     @State private var results = SearchResults()
     @State private var isSearching = false
+    @State private var preferences = MacPreferences.shared
 
     var body: some View {
         Group {
@@ -45,7 +46,7 @@ struct MacSearchView: View {
                         NavigationLink(value: artist) {
                             MacCoverTile(coverArt: artist.coverArt, title: artist.name,
                                          placeholderName: artist.name, circular: true)
-                                .frame(width: 132)
+                                .frame(width: preferences.coverSize.shelfWidth)
                         }
                         .buttonStyle(MacPressStyle())
                     }
@@ -57,7 +58,7 @@ struct MacSearchView: View {
                         NavigationLink(value: album) {
                             MacCoverTile(coverArt: album.coverArt, title: album.name,
                                          subtitle: album.artist, placeholderName: album.name)
-                                .frame(width: 132)
+                                .frame(width: preferences.coverSize.shelfWidth)
                         }
                         .buttonStyle(MacPressStyle())
                     }
@@ -70,7 +71,7 @@ struct MacSearchView: View {
                             MacCoverTile(coverArt: playlist.coverArt, title: playlist.name,
                                          subtitle: playlist.songCount.map { String(localized: "\($0) songs") },
                                          placeholderName: playlist.name)
-                                .frame(width: 132)
+                                .frame(width: preferences.coverSize.shelfWidth)
                         }
                         .buttonStyle(MacPressStyle())
                     }
@@ -78,7 +79,9 @@ struct MacSearchView: View {
 
                 if !results.songs.isEmpty {
                     header("Songs")
-                    LazyVStack(spacing: 2) {
+                    // Two columns or more on a wide window, so a short list of hits doesn't
+                    // stretch one row's title and its album a whole screen apart.
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 380), spacing: 24)], spacing: 2) {
                         ForEach(results.songs) { song in
                             MacSongRow(song: song, source: .search(query: query),
                                        queue: results.songs)
@@ -101,7 +104,9 @@ struct MacSearchView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 18) { ForEach(items) { tile($0) } }
                 .padding(.horizontal, 28)
+                .padding(.vertical, 4)
         }
+        .scrollClipDisabled()
     }
 
     private func run() async {

@@ -19,24 +19,24 @@ struct MacSongRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                CoverArtImage(coverArt: song.coverArt, size: 46, cornerRadius: 5)
+                CoverArtImage(coverArt: song.coverArt, size: 52, cornerRadius: 6)
                 if hovering {
                     Color.black.opacity(0.45)
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
                     Image(systemName: "play.fill")
                         .font(.system(size: 14))
                         .foregroundStyle(.white)
                 }
             }
-            .frame(width: 46, height: 46)
+            .frame(width: 52, height: 52)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(isCurrent ? Color.appAccent : .primary)
                     .lineLimit(1)
                 Text(song.artist ?? String(localized: "Unknown Artist"))
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -44,7 +44,7 @@ struct MacSongRow: View {
             Spacer(minLength: 16)
 
             Text(song.album ?? "")
-                .font(.system(size: 11))
+                .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(maxWidth: 220, alignment: .trailing)
