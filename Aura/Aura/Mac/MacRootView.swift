@@ -51,7 +51,8 @@ struct MacRootView: View {
     /// The title bar's row, which holds the search field and which every section's top is
     /// laid out below — in full screen too, where the field still sits there.
     static let topRoom: CGFloat = 52
-    private var topRoom: CGFloat { Self.topRoom }
+    /// The pages sit lower than the sidebar: the search pill takes the band above them.
+    static let pageRoom: CGFloat = 66
     @State private var swipe = MacSwipeBack.shared
 
     var body: some View {
@@ -136,7 +137,7 @@ struct MacRootView: View {
                     // A fixed room above the titles. Left to the window it came and went: SwiftUI
                     // puts a toolbar back on every section change and `MacWindowChrome` takes it
                     // off a moment later, so each title landed low, then jumped up.
-                    .safeAreaPadding(.top, topRoom)
+                    .safeAreaPadding(.top, Self.pageRoom)
                     .ignoresSafeArea(.container, edges: .top)
                     .navigationDestination(for: Album.self) { pushed(MacAlbumDetailView(album: $0)) }
                     .navigationDestination(for: Artist.self) { pushed(MacArtistDetailView(artist: $0)) }
@@ -150,7 +151,7 @@ struct MacRootView: View {
             // rather than of the sidebar: it stays put while sections change beneath it.
             .overlay(alignment: .top) {
                 MacSearchBar(query: $query)
-                    .padding(.top, windowState.isFullScreen ? 10 : 9)
+                    .padding(.top, 16)
                     .ignoresSafeArea(.container, edges: .top)
             }
             // Picking a section leaves the search, as it hands the page back.
@@ -230,7 +231,7 @@ struct MacRootView: View {
         page
             // The full room even in full screen, where the sections need less: the way back
             // sits in it, above the cover.
-            .environment(\.macTopRoom, Self.topRoom)
+            .environment(\.macTopRoom, Self.pageRoom)
             .ignoresSafeArea(.container, edges: .top)
             .overlay(alignment: .topLeading) { backButton }
             .macPageEntrance()
@@ -258,7 +259,7 @@ struct MacRootView: View {
         // In the room above the cover, level with the window's buttons and clear of
         // them, and of the sidebar's while the sidebar is folded.
         .padding(.leading, preferences.sidebarVisible ? 18 : windowState.isFullScreen ? 56 : 118)
-        .padding(.top, 11)
+        .padding(.top, 18)
         .ignoresSafeArea(.container, edges: .top)
     }
 
