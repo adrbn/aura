@@ -81,7 +81,7 @@ struct MacSearchView: View {
                     header("Songs")
                     // Two columns or more on a wide window, so a short list of hits doesn't
                     // stretch one row's title and its album a whole screen apart.
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 380), spacing: 24)], spacing: 2) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 600), spacing: 32)], spacing: 2) {
                         ForEach(results.songs) { song in
                             MacSongRow(song: song, source: .search(query: query),
                                        queue: results.songs)

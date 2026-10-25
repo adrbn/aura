@@ -157,7 +157,7 @@ private extension MacDetailHeader {
             Text(title).auraDisplay(64).lineLimit(3).minimumScaleFactor(0.55)
                 .fixedSize(horizontal: false, vertical: true)
             Text(subtitle).font(.callout).foregroundStyle(.secondary)
-            HStack(spacing: 10) { actions }.fixedSize().padding(.top, 4)
+            HStack(spacing: 10) { actions }.font(.system(size: 14, weight: .medium)).controlSize(.extraLarge).fixedSize().padding(.top, 4)
         }
         .frame(minWidth: 340, alignment: .leading)
     }
