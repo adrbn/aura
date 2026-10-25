@@ -47,9 +47,20 @@ struct ContentView: View {
     /// value read once then kept the phone's gap until something else redrew the bars.
     @State private var tabBarBeside = false
 
+    /// A tap on the tab already open sets it again: on Search that empties the field, as
+    /// the other tabs go back to their first page.
+    private var tabSelection: Binding<Int> {
+        Binding(get: { selectedTab }, set: { tab in
+            if tab == selectedTab, appSettings.tabOrder.indices.contains(tab), appSettings.tabOrder[tab] == .search {
+                NotificationCenter.default.post(name: .searchTabReselected, object: nil)
+            }
+            selectedTab = tab
+        })
+    }
+
     private var mainContent: some View {
         ZStack(alignment: .bottom) {
-            TabView(selection: $selectedTab) {
+            TabView(selection: tabSelection) {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
                     Tab(tab.title, systemImage: tab.icon, value: index) {
                         tabContent(for: tab)
@@ -184,7 +195,7 @@ struct ContentView: View {
     /// iPhone holds, with the mini player and Now Playing where they always are.
     private var offlineContent: some View {
         ZStack(alignment: .bottom) {
-            TabView(selection: $selectedTab) {
+            TabView(selection: tabSelection) {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
                     Tab(tab.title, systemImage: tab.icon, value: index) {
                         offlineTabContent(for: tab)

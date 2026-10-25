@@ -53,7 +53,15 @@ struct SearchView: View {
                 .toolbar(.hidden, for: .navigationBar)
                 .searchDestinations()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .searchTabReselected)) { _ in
+            query = ""
+            path = NavigationPath()
+        }
     }
+}
+
+extension Notification.Name {
+    static let searchTabReselected = Notification.Name("searchTabReselected")
 }
 
 // MARK: - Shared navigation destinations
