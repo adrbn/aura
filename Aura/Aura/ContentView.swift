@@ -431,7 +431,7 @@ struct ContentView: View {
         guard songID != nil, reviewVersion != version,
               serverManager.currentServer?.url.contains("demo.navidrome.org") == false else { return }
         reviewSongs += 1
-        guard reviewSongs >= 40 else { return }
+        guard reviewSongs >= 10 else { return }
         reviewSongs = 0
         reviewVersion = version
         requestReview()
