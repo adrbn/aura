@@ -3,10 +3,8 @@ import SwiftUI
 /// The window's permanent navigation, and where the server identity lives.
 struct MacSidebar: View {
     @Binding var section: MacSection?
-    @Binding var query: String
     /// The section already showing, clicked again: back to its top, as a tab bar does.
     var reselect: () -> Void = {}
-    @FocusState private var searching: Bool
     @State private var serverManager = ServerManager.shared
     @State private var settings = AppSettings.shared
     @State private var player = AudioPlayer.shared
@@ -99,11 +97,8 @@ struct MacSidebar: View {
         playlists = (try? await SubsonicClient.shared.getPlaylists(server: server)) ?? []
     }
 
-    /// Wordmark and search, in the space the hidden title bar frees up.
-    ///
-    /// Search belongs here rather than above the content: it is a fixture of the app, not of
-    /// whatever page you are on, and the Mac's own music app puts it in exactly this corner.
-    /// It also gives the content area its full height back.
+    /// The wordmark, in the space the hidden title bar frees up. Search lives in the title
+    /// bar's row above the content (`MacSearchBar`).
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -113,52 +108,10 @@ struct MacSidebar: View {
                 Spacer()
                 MacSidebarButton()
             }
-            searchField
         }
         .padding(.horizontal, 14)
         .padding(.top, 28)
         .padding(.bottom, 10)
-    }
-
-    private var searchField: some View {
-        HStack(spacing: 7) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(searching ? Color.appAccent : .secondary)
-            TextField("", text: $query, prompt: Text("Search").font(.system(size: 13)))
-                .textFieldStyle(.plain)
-                .font(.system(size: 13))
-                .focused($searching)
-                .onExitCommand { searching = false }
-            if !query.isEmpty {
-                Button { query = "" } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .transition(.opacity)
-            } else {
-                // The shortcut, shown until it is needed — the Mac convention for a field
-                // you are expected to reach for by keyboard.
-                Text("⌘F")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.horizontal, 9)
-        .padding(.vertical, 7)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(.primary.opacity(searching ? 0.13 : 0.07))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(searching ? Color.appAccent.opacity(0.85) : .primary.opacity(0.06),
-                              lineWidth: searching ? 1.5 : 1)
-        )
-        .animation(.easeOut(duration: 0.15), value: searching)
-        .animation(.easeOut(duration: 0.15), value: query.isEmpty)
     }
 }
 

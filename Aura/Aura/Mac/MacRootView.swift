@@ -48,10 +48,10 @@ struct MacRootView: View {
     /// system button to restore a collapsed sidebar, so its state has to be ours to set.
     @State private var preferences = MacPreferences.shared
     @State private var windowState = MacWindowState.shared
-    /// The title bar's height with its toolbar, which every section's top is laid out below;
-    /// less in full screen, where there's no bar.
+    /// The title bar's row, which holds the search field and which every section's top is
+    /// laid out below — in full screen too, where the field still sits there.
     static let topRoom: CGFloat = 52
-    private var topRoom: CGFloat { windowState.isFullScreen ? 20 : Self.topRoom }
+    private var topRoom: CGFloat { Self.topRoom }
     @State private var swipe = MacSwipeBack.shared
 
     var body: some View {
@@ -111,7 +111,7 @@ struct MacRootView: View {
         VStack(spacing: 0) {
         HStack(spacing: 0) {
         NavigationSplitView(columnVisibility: columnVisibility) {
-            MacSidebar(section: $section, query: $query) { path = NavigationPath() }
+            MacSidebar(section: $section) { path = NavigationPath() }
         } detail: {
             // A plain VStack, not a safe-area inset. As an inset the bar was handed the
             // whole height and centred itself in it, landing halfway down the window. Here
@@ -146,6 +146,15 @@ struct MacRootView: View {
                     .macPendingNavigation(path: $path)
                 }
             }
+            // In the title bar's row, centred over the page, as a fixture of the window
+            // rather than of the sidebar: it stays put while sections change beneath it.
+            .overlay(alignment: .top) {
+                MacSearchBar(query: $query)
+                    .padding(.top, windowState.isFullScreen ? 10 : 9)
+                    .ignoresSafeArea(.container, edges: .top)
+            }
+            // Picking a section leaves the search, as it hands the page back.
+            .onChange(of: section) { _, _ in query = "" }
         }
         // Spans the full width, under the sidebar as well — the transport belongs to the
         // window, not to whichever section happens to be showing.
@@ -292,5 +301,53 @@ enum MacFormat {
 
     static func time(_ interval: TimeInterval) -> String {
         duration(interval.isFinite && interval > 0 ? Int(interval) : 0)
+    }
+}
+
+/// The window's one search field, a pill in the title bar's row. `⌘F` reaches it from
+/// anywhere; Escape leaves it.
+struct MacSearchBar: View {
+    @Binding var query: String
+    @FocusState private var searching: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(searching ? Color.appAccent : .secondary)
+            TextField("", text: $query, prompt: Text("Search").font(.system(size: 13)))
+                .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .focused($searching)
+                .onExitCommand { searching = false }
+            if !query.isEmpty {
+                Button { query = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .transition(.opacity)
+            } else {
+                Text("⌘F")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 34)
+        .frame(maxWidth: 440)
+        .background(Capsule().fill(.primary.opacity(searching ? 0.14 : 0.08)))
+        .overlay(
+            Capsule().strokeBorder(searching ? Color.appAccent.opacity(0.85) : .primary.opacity(0.07),
+                                   lineWidth: searching ? 1.5 : 1)
+        )
+        .contentShape(Capsule())
+        .onTapGesture { searching = true }
+        // A hidden button carries the shortcut, so it works whatever has focus.
+        .background(Button("") { searching = true }.keyboardShortcut("f", modifiers: .command).opacity(0))
+        .padding(.horizontal, 120)
+        .animation(.easeOut(duration: 0.15), value: searching)
+        .animation(.easeOut(duration: 0.15), value: query.isEmpty)
     }
 }
