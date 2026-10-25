@@ -645,9 +645,9 @@ extension ReleaseFetch {
                          bytesPerSecond > 0 ? "\(Int64(bytesPerSecond).formatted(.byteCount(style: .file)))/s" : nil]
             return parts.compactMap { $0 }.joined(separator: " · ")
         case .importing:
-            guard let end = importEnd else { return "" }
-            let minutes = Int((end.timeIntervalSinceNow / 60).rounded(.up))
-            return minutes > 1 ? String(localized: "About \(minutes) min left") : String(localized: "Any moment now")
+            // No countdown: the minutes were a median of past imports, so every fetch showed
+            // the same number and it never matched the server's sweep.
+            return String(localized: "Ready soon")
         case .ready:
             return String(localized: "Tap to play")
         case .failed:

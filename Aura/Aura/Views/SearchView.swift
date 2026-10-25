@@ -119,6 +119,10 @@ struct SearchResultsContainer: View {
             } else {
                 resultsRows
             }
+            // Under the recents as under the results: the last row clears the mini player.
+            ListEndSpacer(height: 140)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
         // A plain List holds every row to 44pt, so the one-line rows — "Did you mean", "Show
@@ -378,9 +382,6 @@ struct SearchResultsContainer: View {
             }
         }
 
-        ListEndSpacer(height: 140)
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
     }
 
     // MARK: Made For You

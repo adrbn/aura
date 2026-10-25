@@ -71,7 +71,9 @@ struct ReleaseFetchLiveActivity: Widget {
                     }
                 }
                 Spacer(minLength: 0)
-                if let end = context.state.waitEnd, end > .now {
+                // Only the download's own window counts down; the server's import has no
+                // real clock, so it says "Ready soon" instead of a number that never matched.
+                if context.state.step == 1, let end = context.state.waitEnd, end > .now {
                     Text(timerInterval: Date.now...end, countsDown: true)
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
@@ -124,7 +126,7 @@ struct ReleaseFetchLiveActivity: Widget {
     /// download's share when there isn't one yet.
     @ViewBuilder
     private func compactValue(_ state: ReleaseFetchAttributes.ContentState) -> some View {
-        if state.step == 1 || state.step == 2, let end = state.waitEnd, end > .now {
+        if state.step == 1, let end = state.waitEnd, end > .now {
             Text(timerInterval: Date.now...end, countsDown: true)
                 .font(.caption2.monospacedDigit())
                 .frame(maxWidth: 44)
