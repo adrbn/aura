@@ -120,7 +120,7 @@ struct SearchResultsContainer: View {
                 resultsRows
             }
             // Under the recents as under the results: the last row clears the mini player.
-            ListEndSpacer(height: 140)
+            ListEndSpacer()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }
