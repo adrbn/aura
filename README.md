@@ -10,7 +10,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="56"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
-<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.362"><img src="docs/assets/btn-mac.svg" alt="Download for Mac" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.363"><img src="docs/assets/btn-mac.svg" alt="Download for Mac" height="40"></a>
 <br>
 <a href="#what-it-does"><img src="docs/assets/btn-features.svg" alt="Features" height="40"></a>&nbsp;
 <a href="#build-from-source"><img src="docs/assets/btn-source.svg" alt="Build from source" height="40"></a>
@@ -138,7 +138,7 @@ All free, with no account and no in-app purchases.
 | CarPlay | Yes | No: re-signing drops Apple's CarPlay entitlement | – |
 | Get It (Soulseek via your own [slskd](https://github.com/slskd/slskd)) | No | Opt-in, Settings → Developer Options | Opt-in, Settings → Developer |
 | NetEase lyrics-timing check | No | Yes | Yes |
-| Download | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Latest IPA](https://github.com/adrbn/aura/releases/latest) | [Mac zip](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.362/Aura-mac-1.4.0-build.362.zip) |
+| Download | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Latest IPA](https://github.com/adrbn/aura/releases/latest) | [Mac zip](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.363/Aura-mac-1.4.0-build.363.zip) |
 
 Every build needs a [Navidrome](https://www.navidrome.org) server, or any server speaking Subsonic API 1.16.1
 (OpenSubsonic extensions are used when offered). No server yet? Try Navidrome's public demo:
@@ -161,7 +161,7 @@ the signature expires after 7 days and the sideloading tool has to refresh it; t
 <details>
 <summary><b>Install the Mac app</b></summary>
 
-1. Download [`Aura-mac-1.4.0-build.362.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.362/Aura-mac-1.4.0-build.362.zip) from the [Mac release](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.362), which lists its SHA-256 checksum, and open it.
+1. Download [`Aura-mac-1.4.0-build.363.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.363/Aura-mac-1.4.0-build.363.zip) from the [Mac release](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.363), which lists its SHA-256 checksum, and open it.
 2. Drag **Aura.app** into **Applications**.
 3. Open Aura. The app is signed with a Developer ID but not notarized yet, so macOS blocks the first launch: go to **System Settings → Privacy & Security**, click **Open Anyway** next to Aura, and confirm.
 4. Enter your server's address, username and password.
