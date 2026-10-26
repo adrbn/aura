@@ -221,6 +221,11 @@ final class LibraryIndex {
                 corrected: changes.isEmpty ? nil : LocalSearch.rewrite(raw, changes: changes)
             )
         }.value
-        return found.songs.isEmpty && found.albums.isEmpty && found.artists.isEmpty ? nil : found
+        // A query with operators is the library's alone to answer: the server would read
+        // "genre:Electronic" as words and send back songs of any genre.
+        let query = LocalSearch.parse(raw)
+        let usesOperators = query.years != nil || query.alternatives.count > 1
+            || query.alternatives.joined().contains { $0.field != nil || $0.negated }
+        return found.songs.isEmpty && found.albums.isEmpty && found.artists.isEmpty && !usesOperators ? nil : found
     }
 }

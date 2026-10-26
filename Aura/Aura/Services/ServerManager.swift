@@ -478,9 +478,7 @@ final class ScrobbleQueue {
                 }
             }
             AppLogger.shared.log("📤 Scrobble flush done: \(sent)/\(queue.count) sent")
-            self.lock.lock()
-            self.isFlushing = false
-            self.lock.unlock()
+            self.lock.withLock { self.isFlushing = false }
         }
     }
 

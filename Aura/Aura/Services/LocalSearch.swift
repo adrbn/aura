@@ -83,6 +83,16 @@ enum LocalSearch {
         return query
     }
 
+    /// The query as plain words for Deezer, whose `artist:"…"` syntax no longer finds
+    /// anything: field names drop and their values stay, and what Deezer can't search by
+    /// (genre, year, `-word`, a second `OR` branch) is left out. Empty when nothing is left.
+    static func deezerQuery(_ raw: String) -> String {
+        guard let terms = parse(raw).alternatives.first else { return "" }
+        return terms.filter { !$0.negated && $0.field != .genre }
+            .map { $0.words.joined(separator: " ") }
+            .joined(separator: " ")
+    }
+
     private struct Token { var text: String; var quoted: Bool; var fieldBeforeQuote = false }
 
     /// Splits on spaces, keeping a quoted run whole — `artist:"daft punk"` too.

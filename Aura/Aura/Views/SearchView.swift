@@ -190,7 +190,8 @@ struct SearchResultsContainer: View {
         if deezer.query == q { return }
         try? await Task.sleep(for: .milliseconds(500))
         if Task.isCancelled { return }
-        guard let found = await RadarCatalog.search(q), !Task.isCancelled else { return }
+        let deezerQuery = LocalSearch.deezerQuery(q)
+        guard !deezerQuery.isEmpty, let found = await RadarCatalog.search(deezerQuery), !Task.isCancelled else { return }
         for _ in 0..<100 where searchedQuery != q {
             try? await Task.sleep(for: .milliseconds(100))
             if Task.isCancelled { return }

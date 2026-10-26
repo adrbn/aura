@@ -17,17 +17,24 @@ final class DownloadGate: @unchecked Sendable {
     init(limit: Int) { self.limit = limit }
 
     func acquire() async {
-        lock.lock()
-        if active < limit {
-            active += 1
-            lock.unlock()
-            return
-        }
-        // The continuation body runs synchronously, so unlocking inside it is safe and
-        // closes the race where a release could land between append and unlock.
+        if admit() { return }
+        // A slot freed since that check is taken here, under the same lock that queues the
+        // waiter, so a release can't land between the two.
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            waiters.append(continuation)
-            lock.unlock()
+            let admitted = lock.withLock { () -> Bool in
+                if active < limit { active += 1; return true }
+                waiters.append(continuation)
+                return false
+            }
+            if admitted { continuation.resume() }
+        }
+    }
+
+    private func admit() -> Bool {
+        lock.withLock {
+            guard active < limit else { return false }
+            active += 1
+            return true
         }
     }
 
@@ -435,11 +442,8 @@ final class ArtworkCache: @unchecked Sendable {
             }
             return local
         }
-        inFlightLock.lock()
-        if let existing = inFlight[key] {
-            inFlightLock.unlock()
-            return await existing.value
-        }
+        let (task, isOwner) = inFlightLock.withLock { () -> (Task<PlatformImage?, Never>, Bool) in
+        if let existing = inFlight[key] { return (existing, false) }
         let task = Task<PlatformImage?, Never> {
             guard let server = ServerManager.shared.currentServer,
                   let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: requestSize) else {
@@ -504,11 +508,11 @@ final class ArtworkCache: @unchecked Sendable {
             }
         }
         inFlight[key] = task
-        inFlightLock.unlock()
+        return (task, true)
+        }
+        guard isOwner else { return await task.value }
         let result = await task.value
-        inFlightLock.lock()
-        inFlight[key] = nil
-        inFlightLock.unlock()
+        inFlightLock.withLock { inFlight[key] = nil }
         if result == nil, hasNoArtwork(coverArt) {
             return await standIn(for: coverArt, requestSize: requestSize, key: key)
         }
@@ -601,13 +605,14 @@ final class ArtworkCache: @unchecked Sendable {
         guard let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: Self.proofSize),
               let (proof, _) = try? await imageSession.data(for: ServerHeaders.request(url)) else { return true }
         let isArtwork = Self.sha256Hex(proof) != hash
-        placeholderLock.lock(); defer { placeholderLock.unlock() }
-        if isArtwork {
-            artworkHashes.insert(hash)
-            provenArtworkCovers.insert(coverArt)
-        } else {
-            genericHashes.insert(hash)
-            missingArtCovers.insert(coverArt)
+        placeholderLock.withLock {
+            if isArtwork {
+                artworkHashes.insert(hash)
+                provenArtworkCovers.insert(coverArt)
+            } else {
+                genericHashes.insert(hash)
+                missingArtCovers.insert(coverArt)
+            }
         }
         return isArtwork
     }
