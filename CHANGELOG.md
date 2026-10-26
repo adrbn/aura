@@ -17,7 +17,7 @@ For 1.4:
 - SharePlay over FaceTime keeps the queue, the song, the position and play or pause in step, each phone streaming from the same server.
 - `aura://` links play a playlist or an album, shuffled or not, and play, pause or skip, for Shortcuts and other apps.
 - Aura speaks Simplified Chinese and Russian.
-- The App Store build asks for a rating once per version, after twenty songs, and About has a Rate Aura row.
+- The App Store build asks for a rating once per version, after ten songs, never on the demo server, and About has a Rate Aura row.
 - A long press on a folder also offers Delete Folder, which keeps its playlists by moving them up a level or deletes them too, with an undo.
 - New and edit playlist share one sheet: the cover, a large name, a description and a folder picker that moves the playlist or makes a folder at any level.
 - An empty playlist offers Add Songs, a search sheet that adds one tap at a time and opens on suggestions; every playlist ends with a Suggestions section of similar songs.
@@ -29,6 +29,14 @@ For 1.4:
 - The songs list has a search, shows its song count, no longer re-sorts thousands of rows on every redraw, and names its first order (Date Liked on Favourites, Server Order on Songs) instead of Default.
 - Recently and Frequently Played list the songs themselves, by last play and play count, instead of every song of the albums played.
 - Server Unreachable and No Internet Connection show in the app's language.
+- Search runs on the phone over the whole library, kept on disk and refreshed after a server scan. It fixes typos in every word and takes `artist:`, `album:`, `title:`, `genre:` and `year:`, `"phrases"`, `-word` and `OR`. The operators sit as taps above the results, and while one is typed the library's own names finish it; an operator with nothing after it yet searches nothing.
+- Tapping the Search tab while it's open empties the field and goes back to the top.
+- The iPhone and Aura on a Mac on the same Wi-Fi control each other: what the other plays shows as a second mini player, and Now Playing's output button plays on the Mac, with its volume, queue and position following.
+- A server can have custom headers, one `Name: value` per line when adding it or in its details. They're kept in the Keychain and sent with every request: API, streaming, downloads, covers and lyrics ([#4](https://github.com/adrbn/aura/issues/4)).
+- The welcome screen offers the public Navidrome demo to try Aura without a server of your own.
+- When the server can't be reached, the line under a tab's title says when it last answered.
+- Lyrics no longer wait on a server slow to look a new song up: after four seconds LRCLIB is asked too, and the first answer shows.
+- Animations run at 120 Hz on ProMotion screens.
 
 ## [1.3.0] — 2026-10-20
 

@@ -80,16 +80,17 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
 
 **Votre bibliothèque**
 
-- **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe.
+- **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe, faite sur l'iPhone dans toute votre bibliothèque <sup>1.4</sup>, avec `artist:`, `album:`, `genre:` et `year:` à portée de doigt <sup>1.4</sup>.
 - **Des playlists à votre façon** : en grille ou en liste, des filtres, des pochettes tirées de vos photos, des dossiers nommés `Dossier/Nom` <sup>1.4</sup>, une section Suggestions et Ajouter des morceaux <sup>1.4</sup>, et Annuler <sup>1.4</sup>. Enregistrez n'importe quelle radio comme playlist ; les changements partent sur votre serveur.
 - **Les notes et le scrobbling** partent sur votre serveur, et attendent sur l'iPhone quand vous êtes hors ligne. Une playlist gardée téléchargée <sup>1.4</sup> télécharge ses nouveaux morceaux toute seule.
-- **Plusieurs serveurs**, chacun avec une adresse de la maison en option, et plusieurs dossiers de musique à la fois <sup>1.4</sup>.
+- **Plusieurs serveurs**, chacun avec une adresse de la maison et des en-têtes personnalisés <sup>1.4</sup> en option, et plusieurs dossiers de musique à la fois <sup>1.4</sup>.
 - **Des pages aux couleurs de leur pochette**, des pochettes animées <sup>1.4</sup>, les albums à plusieurs disques <sup>1.4</sup>, les tags de tri, et des tris qui restent <sup>1.4</sup>.
 
 **Autour de l'iPhone**
 
 - **Écran verrouillé, Centre de contrôle, Dynamic Island et AirPlay**, et un widget En cours de lecture pour l'écran d'accueil.
 - **Siri et Raccourcis** : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, mettre en file, aimer, passer. Des **liens `aura://`** <sup>1.4</sup> pour Raccourcis.
+- **Votre iPhone et votre Mac** <sup>1.4</sup> se pilotent l'un l'autre sur le même Wi-Fi : lancez la lecture sur le Mac depuis En cours de lecture, et voyez ce que joue l'autre dans un second mini lecteur.
 - **Des liens de partage** qui ouvrent un morceau sur d'autres services.
 - **À votre goût** : clair ou sombre, la couleur d'accent de votre choix, onglets et sections de l'accueil dans votre ordre, une horloge en paysage, et des mises en page pour l'iPhone Duo.
 - **Neuf langues** : français, anglais, italien, espagnol, allemand, catalan, néerlandais, plus le chinois et le russe <sup>1.4</sup>.

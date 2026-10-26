@@ -79,16 +79,17 @@ download still there with no signal.
 
 **Your library**
 
-- **One search** across songs, albums, artists and playlists that forgives typos.
+- **One search** across songs, albums, artists and playlists that forgives typos, run on the iPhone over your whole library <sup>1.4</sup>, with `artist:`, `album:`, `genre:` and `year:` one tap away <sup>1.4</sup>.
 - **Playlists your way**: a grid or a list, filters, covers from your photos, folders named `Folder/Name` <sup>1.4</sup>, a Suggestions section and Add Songs <sup>1.4</sup>, and Undo <sup>1.4</sup>. Save any radio as a playlist; changes go to your server.
 - **Ratings and scrobbling** go to your server, and wait on the iPhone while you're offline. Keep a playlist downloaded <sup>1.4</sup>: its new songs download on their own.
-- **Several servers**, each with an optional home-network address, and several music folders at once <sup>1.4</sup>.
+- **Several servers**, each with an optional home-network address and custom headers <sup>1.4</sup>, and several music folders at once <sup>1.4</sup>.
 - **Pages in the colour of their artwork**, animated covers <sup>1.4</sup>, multi-disc albums <sup>1.4</sup>, sort tags, and sorts that stay put <sup>1.4</sup>.
 
 **Around the iPhone**
 
 - **Lock Screen, Control Center, Dynamic Island and AirPlay**, and a Now Playing widget for the Home Screen.
 - **Siri and Shortcuts**: play an artist, album, song, playlist or genre by name, queue, like, skip. **`aura://` links** <sup>1.4</sup> for Shortcuts.
+- **Your iPhone and your Mac** <sup>1.4</sup> control each other on the same Wi-Fi: play on the Mac from Now Playing, and see what the other plays in a second mini player.
 - **Share links** that open a song on other services.
 - **Yours to arrange**: light or dark, any accent colour, tabs and Home sections in your order, a landscape clock, and iPhone Duo layouts.
 - **Nine languages**: English, French, Italian, Spanish, German, Catalan, Dutch, plus Chinese and Russian <sup>1.4</sup>.
