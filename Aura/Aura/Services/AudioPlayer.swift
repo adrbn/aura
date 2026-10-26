@@ -1618,6 +1618,18 @@ final class AudioPlayer {
             UserDefaults.standard.set(version, forKey: "reviewPromptVersion")
             AppStore.requestReview(in: scene)
         }
+        #elseif os(macOS)
+        // The Mac app lives on GitHub, not the App Store, so it asks for a star and points
+        // to Ko-fi instead, with the same once-per-version rule, after ten songs.
+        let defaults = UserDefaults.standard
+        let plays = defaults.integer(forKey: "reviewPromptPlays") + 1
+        defaults.set(plays, forKey: "reviewPromptPlays")
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        guard plays >= 10, defaults.string(forKey: "reviewPromptVersion") != version,
+              ServerManager.shared.currentServer?.url.contains("demo.navidrome.org") == false
+        else { return }
+        defaults.set(version, forKey: "reviewPromptVersion")
+        Task { @MainActor in MacSupportPrompt.show() }
         #endif
     }
 

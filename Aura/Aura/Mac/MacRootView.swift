@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Top-level places in the Mac window. Deliberately fewer than the iPhone's tabs: a window
@@ -363,5 +364,32 @@ struct MacSearchBar: View {
         .padding(.horizontal, 120)
         .animation(.easeOut(duration: 0.15), value: searching)
         .animation(.easeOut(duration: 0.15), value: query.isEmpty)
+    }
+}
+
+/// Asked once per version after ten songs: a star on GitHub, where the Mac app is
+/// published, or a tip on Ko-fi. Either button opens the page in the browser.
+enum MacSupportPrompt {
+    @MainActor
+    static func show() {
+        let alert = NSAlert()
+        alert.messageText = String(localized: "Enjoying Aura on the Mac?")
+        alert.informativeText = String(localized: "Aura is free and made by one person. A star on GitHub helps other people find it, and a tip on Ko-fi keeps it going.")
+        alert.addButton(withTitle: String(localized: "Star on GitHub"))
+        alert.addButton(withTitle: String(localized: "Tip on Ko-fi"))
+        alert.addButton(withTitle: String(localized: "Later"))
+        let open: (NSApplication.ModalResponse) -> Void = { response in
+            let link: String? = switch response {
+            case .alertFirstButtonReturn: "https://github.com/adrbn/aura"
+            case .alertSecondButtonReturn: "https://ko-fi.com/adrbn"
+            default: nil
+            }
+            if let link, let url = URL(string: link) { NSWorkspace.shared.open(url) }
+        }
+        if let window = NSApp.keyWindow ?? NSApp.mainWindow {
+            alert.beginSheetModal(for: window, completionHandler: open)
+        } else {
+            open(alert.runModal())
+        }
     }
 }
