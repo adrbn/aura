@@ -151,7 +151,9 @@ struct SearchResultsContainer: View {
 
     private func runSearch() async {
         let q = trimmedQuery
-        guard !q.isEmpty else {
+        // Only an operator typed so far ("genre:"): its chips are the answer, not a search
+        // for the word "genre".
+        guard !q.isEmpty, !LocalSearch.parse(q).isEmpty else {
             results = SearchResults()
             isSearching = false; expandedSections = []
             searchedQuery = ""
@@ -181,7 +183,7 @@ struct SearchResultsContainer: View {
     /// what the library's own answer already holds, so it waits for that.
     private func runDeezerSearch() async {
         let q = trimmedQuery
-        guard appSettings.radarEnabled, q.count >= 2 else {
+        guard appSettings.radarEnabled, q.count >= 2, !LocalSearch.parse(q).isEmpty else {
             deezer = DeezerFinds()
             return
         }

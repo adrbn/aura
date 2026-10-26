@@ -111,7 +111,8 @@ struct MacSearchView: View {
 
     private func run() async {
         let q = query.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else {
+        // Only an operator typed so far ("genre:"): no search for the word itself.
+        guard !q.isEmpty, !LocalSearch.parse(q).isEmpty else {
             results = SearchResults(); isSearching = false; return
         }
         isSearching = true
