@@ -61,7 +61,7 @@ download still there with no signal.
   </tr>
 </table>
 
-<sub>Marked <b>1.4</b>: in the 1.4 beta IPA and the Mac app now, on the App Store with the next update.</sub>
+<sub>Marked <b>1.4</b>: new in 1.4, on the App Store now.</sub>
 
 **Listening**
 

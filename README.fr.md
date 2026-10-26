@@ -62,7 +62,7 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
   </tr>
 </table>
 
-<sub>Marqué <b>1.4</b> : déjà dans l'IPA bêta 1.4 et l'app Mac, sur l'App Store à la prochaine mise à jour.</sub>
+<sub>Marqué <b>1.4</b> : nouveau dans la 1.4, sur l'App Store maintenant.</sub>
 
 **L'écoute**
 
