@@ -83,8 +83,9 @@ struct MacSearchView: View {
                     // stretch one row's title and its album a whole screen apart.
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 600), spacing: 32)], spacing: 2) {
                         ForEach(results.songs) { song in
-                            MacSongRow(song: song, source: .search(query: query),
-                                       queue: results.songs)
+                            // One song and the music around it, as on the phone: the other
+                            // hits share a word with it, not a sound.
+                            MacSongRow(song: song, source: .search(query: query))
                         }
                     }
                     .padding(.horizontal, 28)
