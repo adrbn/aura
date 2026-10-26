@@ -101,6 +101,26 @@ struct MacSettingsView: View {
                 .buttonStyle(.plain)
             }
             Spacer()
+            Button { NSWorkspace.shared.open(URL(string: "https://ko-fi.com/adrbn")!) } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "cup.and.saucer.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.black)
+                        .frame(width: 24, height: 24)
+                        .background(Color.appAccent, in: RoundedRectangle(cornerRadius: 6))
+                    Text("Support Aura").font(.system(size: 13, weight: .medium)).lineLimit(1)
+                    Spacer(minLength: 0)
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Ko-fi")
+            .padding(.bottom, 16)
         }
         .padding(.top, 24)
         .padding(.horizontal, 12)

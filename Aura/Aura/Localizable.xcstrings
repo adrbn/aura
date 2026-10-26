@@ -57525,58 +57525,6 @@
         }
       }
     },
-    "Aura is free and made by one person. A star on GitHub helps other people find it, and a tip on Ko-fi keeps it going.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aura est gratuite et faite par une seule personne. Une étoile sur GitHub aide d'autres gens à la trouver, et un pourboire sur Ko-fi la fait vivre."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aura è gratuita e fatta da una sola persona. Una stella su GitHub aiuta altri a trovarla, e una mancia su Ko-fi la fa andare avanti."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aura es gratuita y la hace una sola persona. Una estrella en GitHub ayuda a que otros la encuentren, y una propina en Ko-fi la mantiene viva."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aura ist kostenlos und von einer einzigen Person gemacht. Ein Stern auf GitHub hilft anderen, sie zu finden, und ein Trinkgeld auf Ko-fi hält sie am Laufen."
-          }
-        },
-        "ca": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aura és gratuïta i la fa una sola persona. Una estrella a GitHub ajuda altres persones a trobar-la, i una propina a Ko-fi la manté viva."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aura is gratis en gemaakt door één persoon. Een ster op GitHub helpt anderen haar te vinden, en een fooi op Ko-fi houdt haar draaiende."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aura 免费，由一个人制作。在 GitHub 上点个星能帮更多人发现它，在 Ko-fi 上打赏能让它继续下去。"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aura бесплатна, её делает один человек. Звезда на GitHub помогает другим её найти, а чаевые на Ko-fi помогают ей жить дальше."
-          }
-        }
-      }
-    },
     "Star on GitHub": {
       "localizations": {
         "fr": {
@@ -57629,54 +57577,158 @@
         }
       }
     },
-    "Tip on Ko-fi": {
+    "Aura is free, with no ads and no subscription, and made by one person. A coffee on Ko-fi pays for the time it takes, and a star on GitHub helps other people find it.": {
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pourboire sur Ko-fi"
+            "value": "Aura est gratuite, sans pub ni abonnement, et faite par une seule personne. Un café sur Ko-fi paie le temps passé dessus, et une étoile sur GitHub aide d'autres gens à la trouver."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mancia su Ko-fi"
+            "value": "Aura è gratuita, senza pubblicità né abbonamento, e fatta da una sola persona. Un caffè su Ko-fi ripaga il tempo che richiede, e una stella su GitHub aiuta altri a trovarla."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Propina en Ko-fi"
+            "value": "Aura es gratuita, sin anuncios ni suscripción, y la hace una sola persona. Un café en Ko-fi paga el tiempo que lleva, y una estrella en GitHub ayuda a que otros la encuentren."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trinkgeld auf Ko-fi"
+            "value": "Aura ist kostenlos, ohne Werbung und ohne Abo, und von einer einzigen Person gemacht. Ein Kaffee auf Ko-fi bezahlt die Zeit, die sie kostet, und ein Stern auf GitHub hilft anderen, sie zu finden."
           }
         },
         "ca": {
           "stringUnit": {
             "state": "translated",
-            "value": "Propina a Ko-fi"
+            "value": "Aura és gratuïta, sense anuncis ni subscripció, i la fa una sola persona. Un cafè a Ko-fi paga el temps que hi dedica, i una estrella a GitHub ajuda altres persones a trobar-la."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fooi op Ko-fi"
+            "value": "Aura is gratis, zonder advertenties of abonnement, en gemaakt door één persoon. Een koffie op Ko-fi betaalt de tijd die het kost, en een ster op GitHub helpt anderen haar te vinden."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 Ko-fi 上打赏"
+            "value": "Aura 免费，无广告、无订阅，由一个人制作。在 Ko-fi 上请杯咖啡能补贴投入的时间，在 GitHub 上点个星能帮更多人发现它。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Чаевые на Ko-fi"
+            "value": "Aura бесплатна, без рекламы и подписки, и её делает один человек. Кофе на Ko-fi оплачивает потраченное время, а звезда на GitHub помогает другим её найти."
+          }
+        }
+      }
+    },
+    "Buy a Coffee on Ko-fi": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offrir un café sur Ko-fi"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offri un caffè su Ko-fi"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invitar a un café en Ko-fi"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einen Kaffee auf Ko-fi spendieren"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convidar a un cafè a Ko-fi"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trakteer op een koffie via Ko-fi"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Ko-fi 上请杯咖啡"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Угостить кофе на Ko-fi"
+          }
+        }
+      }
+    },
+    "Support Aura": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soutenir Aura"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sostieni Aura"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apoyar Aura"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura unterstützen"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Donar suport a Aura"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Steun Aura"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支持 Aura"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поддержать Aura"
           }
         }
       }

@@ -81,6 +81,17 @@ struct MacRootView: View {
             }
         }
         .animation(.smooth(duration: 0.25), value: panel.isShown)
+        .overlay {
+            if MacSupportPrompt.shared.isShown {
+                ZStack {
+                    Color.black.opacity(0.45).ignoresSafeArea()
+                    MacSupportCard()
+                        .transition(.scale(scale: 0.96).combined(with: .opacity))
+                }
+                .transition(.opacity)
+            }
+        }
+        .animation(.smooth(duration: 0.25), value: MacSupportPrompt.shared.isShown)
         #if !APPSTORE_BUILD
         .overlay {
             if MacFetchPanel.shared.isShown {
@@ -367,29 +378,73 @@ struct MacSearchBar: View {
     }
 }
 
-/// Asked once per version after ten songs: a star on GitHub, where the Mac app is
-/// published, or a tip on Ko-fi. Either button opens the page in the browser.
-enum MacSupportPrompt {
-    @MainActor
-    static func show() {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "Enjoying Aura on the Mac?")
-        alert.informativeText = String(localized: "Aura is free and made by one person. A star on GitHub helps other people find it, and a tip on Ko-fi keeps it going.")
-        alert.addButton(withTitle: String(localized: "Star on GitHub"))
-        alert.addButton(withTitle: String(localized: "Tip on Ko-fi"))
-        alert.addButton(withTitle: String(localized: "Later"))
-        let open: (NSApplication.ModalResponse) -> Void = { response in
-            let link: String? = switch response {
-            case .alertFirstButtonReturn: "https://github.com/adrbn/aura"
-            case .alertSecondButtonReturn: "https://ko-fi.com/adrbn"
-            default: nil
+/// Asked once per version after ten songs: a coffee on Ko-fi first, a star on GitHub (where
+/// the Mac app is published) beside it, and only a small cross to say no.
+@MainActor @Observable final class MacSupportPrompt {
+    static let shared = MacSupportPrompt()
+    var isShown = false
+
+    static func show() { shared.isShown = true }
+}
+
+struct MacSupportCard: View {
+    private static let kofi = URL(string: "https://ko-fi.com/adrbn")!
+    private static let github = URL(string: "https://github.com/adrbn/aura")!
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Enjoying Aura on the Mac?").auraDisplay(30)
+                .padding(.trailing, 30)
+            Text("Aura is free, with no ads and no subscription, and made by one person. A coffee on Ko-fi pays for the time it takes, and a star on GitHub helps other people find it.")
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 10) {
+                Button { open(Self.kofi) } label: {
+                    Label("Buy a Coffee on Ko-fi", systemImage: "cup.and.saucer.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 16)
+                        .frame(height: 38)
+                        .background(Color.appAccent, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.defaultAction)
+                Button { open(Self.github) } label: {
+                    Label("Star on GitHub", systemImage: "star")
+                        .font(.system(size: 14, weight: .medium))
+                        .padding(.horizontal, 16)
+                        .frame(height: 38)
+                        .background(.primary.opacity(0.1), in: Capsule())
+                }
+                .buttonStyle(.plain)
             }
-            if let link, let url = URL(string: link) { NSWorkspace.shared.open(url) }
+            .padding(.top, 6)
         }
-        if let window = NSApp.keyWindow ?? NSApp.mainWindow {
-            alert.beginSheetModal(for: window, completionHandler: open)
-        } else {
-            open(alert.runModal())
+        .padding(28)
+        .frame(width: 440, alignment: .leading)
+        .background(MacBackground(grid: false))
+        .overlay(alignment: .topTrailing) {
+            Button { MacSupportPrompt.shared.isShown = false } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20, height: 20)
+                    .background(.primary.opacity(0.08), in: Circle())
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.cancelAction)
+            .help("Close")
+            .padding(12)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.primary.opacity(0.1)))
+        .shadow(color: .black.opacity(0.5), radius: 40, y: 16)
+    }
+
+    private func open(_ url: URL) {
+        NSWorkspace.shared.open(url)
+        MacSupportPrompt.shared.isShown = false
     }
 }
