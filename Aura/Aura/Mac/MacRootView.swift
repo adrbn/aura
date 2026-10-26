@@ -268,9 +268,10 @@ struct MacRootView: View {
     /// Not gated on the path: the page is built from the render before the push, whose path
     /// was still empty, so the button never showed. A pushed page always has a way back.
     private var backButton: some View {
-        Button {
-            if !path.isEmpty { path.removeLast() }
-        } label: {
+        // Through the swipe's handler, set up once the window is live: this closure is built
+        // with the page, from a copy of the view whose path was still empty, so testing the
+        // path here found nothing to remove and the button did nothing.
+        Button { swipe.goBack() } label: {
             Image(systemName: "chevron.left")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.primary)
