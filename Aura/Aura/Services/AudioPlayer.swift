@@ -538,7 +538,9 @@ final class AudioPlayer {
     /// UI — when Aura opens with nothing playing and that queue is newer than Aura's own
     /// session. It loads paused, at the saved position, as a restored session does.
     func resumeQueueFromServer() {
-        guard !isPlaying, !isEffectivelyOffline,
+        // Not while this device drives another: the queue lives there, and one picked up
+        // here would be sent over and replace it under the label of what it was playing.
+        guard remote == nil, !isPlaying, !isEffectivelyOffline,
               let server = ServerManager.shared.currentServer else { return }
         let savedAt = UserDefaults.standard.object(forKey: Self.lastPlaybackSavedAtKey) as? Date ?? .distantPast
         Task {
@@ -552,7 +554,7 @@ final class AudioPlayer {
                   let changed = ISO8601DateFormatter().date(from: String(stamp.prefix(19)) + "Z"),
                   changed > savedAt else { return }
             await MainActor.run {
-                guard !self.isPlaying else { return }
+                guard self.remote == nil, !self.isPlaying else { return }
                 let index = songs.firstIndex { $0.id == remote.current } ?? 0
                 let position = TimeInterval(remote.position ?? 0) / 1000
                 self.currentSong = songs[index]
