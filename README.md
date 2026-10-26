@@ -7,8 +7,8 @@
 **Your music server, on your iPhone, Apple Watch and Mac.** A native player for Navidrome and Subsonic:
 lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
 
-<a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/btn-appstore.svg" alt="Download on the App Store" height="56"></a>&nbsp;
-<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip.svg" alt="Buy me a coffee on Ko-fi" height="56"></a>
+<a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="48"></a>&nbsp;&nbsp;
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="Support me on Ko-fi" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
 <a href="https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.363"><img src="docs/assets/btn-mac.svg" alt="Download for Mac" height="40"></a>
