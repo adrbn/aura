@@ -79,15 +79,17 @@ struct MacSearchView: View {
 
                 if !results.songs.isEmpty {
                     header("Songs")
-                    // Two columns or more on a wide window, so a short list of hits doesn't
-                    // stretch one row's title and its album a whole screen apart.
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 600), spacing: 32)], spacing: 2) {
+                    // Columns of a set width, as many as fit, from the left: a full-screen
+                    // window adds columns rather than stretching a title and its album apart.
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 440, maximum: 500), spacing: 32, alignment: .leading)],
+                              alignment: .leading, spacing: 2) {
                         ForEach(results.songs) { song in
                             // One song and the music around it, as on the phone: the other
                             // hits share a word with it, not a sound.
                             MacSongRow(song: song, source: .search(query: query))
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 28)
                     .padding(.bottom, 28)
                 }
@@ -124,5 +126,10 @@ struct MacSearchView: View {
         guard !Task.isCancelled else { return }
         results = found
         isSearching = false
+        // Kept once it has rested on results for a moment, not at every keystroke.
+        guard !found.isEmpty else { return }
+        try? await Task.sleep(for: .seconds(1.5))
+        guard !Task.isCancelled else { return }
+        MacSearchHistory.shared.record(q)
     }
 }

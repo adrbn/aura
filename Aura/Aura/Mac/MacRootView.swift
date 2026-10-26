@@ -331,11 +331,36 @@ enum MacFormat {
     }
 }
 
+/// Searches that settled on results, newest first, for the search field's dropdown.
+@MainActor @Observable final class MacSearchHistory {
+    static let shared = MacSearchHistory()
+    private static let key = "mac_search_queries_v1"
+    private(set) var queries: [String] = UserDefaults.standard.stringArray(forKey: key) ?? []
+
+    /// A longer search replaces the one it grew out of, so "easy" then "easy lover" keeps one.
+    func record(_ raw: String) {
+        let query = raw.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return }
+        let lower = query.lowercased()
+        queries.removeAll { lower.hasPrefix($0.lowercased()) || $0.lowercased() == lower }
+        queries.insert(query, at: 0)
+        queries = Array(queries.prefix(8))
+        save()
+    }
+
+    func remove(_ query: String) { queries.removeAll { $0 == query }; save() }
+    func clear() { queries = []; save() }
+    private func save() { UserDefaults.standard.set(queries, forKey: Self.key) }
+}
+
 /// The window's one search field, a pill in the title bar's row. `⌘F` reaches it from
-/// anywhere; Escape leaves it.
+/// anywhere; Escape leaves it. Focused and empty, it drops down the recent searches.
 struct MacSearchBar: View {
     @Binding var query: String
     @FocusState private var searching: Bool
+    @State private var history = MacSearchHistory.shared
+
+    private var showsHistory: Bool { searching && query.isEmpty && !history.queries.isEmpty }
 
     var body: some View {
         HStack(spacing: 8) {
@@ -347,6 +372,7 @@ struct MacSearchBar: View {
                 .font(.system(size: 13))
                 .focused($searching)
                 .onExitCommand { searching = false }
+                .onSubmit { history.record(query) }
             if !query.isEmpty {
                 Button { query = "" } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -371,11 +397,85 @@ struct MacSearchBar: View {
         )
         .contentShape(Capsule())
         .onTapGesture { searching = true }
+        // Hangs under the pill, the same width, growing down from it.
+        .overlay(alignment: .top) {
+            if showsHistory {
+                MacSearchHistoryList(history: history) { picked in
+                    query = picked
+                    history.record(picked)
+                }
+                .frame(maxWidth: 440)
+                .offset(y: 42)
+                .transition(.asymmetric(
+                    insertion: .scale(scale: 0.96, anchor: .top).combined(with: .opacity),
+                    removal: .opacity))
+            }
+        }
         // A hidden button carries the shortcut, so it works whatever has focus.
         .background(Button("") { searching = true }.keyboardShortcut("f", modifiers: .command).opacity(0))
         .padding(.horizontal, 120)
         .animation(.easeOut(duration: 0.15), value: searching)
         .animation(.easeOut(duration: 0.15), value: query.isEmpty)
+        .animation(.spring(response: 0.28, dampingFraction: 0.9), value: showsHistory)
+    }
+}
+
+/// The dropdown's rows: a search to run again, each with its own cross, and Clear.
+private struct MacSearchHistoryList: View {
+    let history: MacSearchHistory
+    let pick: (String) -> Void
+    @State private var hovered: String?
+    @State private var shown = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Recently Searched").font(.system(size: 11, weight: .semibold)).lineLimit(1).foregroundStyle(.secondary)
+                Spacer()
+                Button("Clear") { withAnimation(.easeOut(duration: 0.2)) { history.clear() } }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.appAccent)
+            }
+            .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 4)
+
+            ForEach(Array(history.queries.enumerated()), id: \.element) { index, query in
+                HStack(spacing: 10) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                    Text(query).font(.system(size: 13)).lineLimit(1)
+                    Spacer(minLength: 8)
+                    Button {
+                        withAnimation(.easeOut(duration: 0.2)) { history.remove(query) }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(hovered == query ? 1 : 0.45)
+                }
+                .padding(.horizontal, 14)
+                .frame(height: 32)
+                .background(RoundedRectangle(cornerRadius: 7).fill(.primary.opacity(hovered == query ? 0.08 : 0)).padding(.horizontal, 6))
+                .contentShape(Rectangle())
+                .onHover { hovered = $0 ? query : (hovered == query ? nil : hovered) }
+                .onTapGesture { pick(query) }
+                // Rows fall in one after another as the list opens.
+                .opacity(shown ? 1 : 0)
+                .offset(y: shown ? 0 : -6)
+                .animation(.easeOut(duration: 0.22).delay(Double(index) * 0.03), value: shown)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .padding(.bottom, 6)
+        .background(RoundedRectangle(cornerRadius: 14).fill(.regularMaterial))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.primary.opacity(0.08)))
+        .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
+        .onAppear { shown = true }
     }
 }
 
@@ -394,36 +494,25 @@ struct MacSupportCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Enjoying Aura on the Mac?").auraDisplay(30)
+            Text("Enjoying Aura on the Mac?")
+                .font(.system(size: 20, weight: .bold))
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.trailing, 30)
             Text("Aura is free, with no ads and no subscription, and made by one person. A coffee on Ko-fi pays for the time it takes, and a star on GitHub helps other people find it.")
-                .font(.system(size: 14))
+                .font(.system(size: 13))
+                .lineSpacing(3)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(spacing: 10) {
-                Button { open(Self.kofi) } label: {
-                    Label("Buy a Coffee on Ko-fi", systemImage: "cup.and.saucer.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 16)
-                        .frame(height: 38)
-                        .background(Color.appAccent, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.defaultAction)
-                Button { open(Self.github) } label: {
-                    Label("Star on GitHub", systemImage: "star")
-                        .font(.system(size: 14, weight: .medium))
-                        .padding(.horizontal, 16)
-                        .frame(height: 38)
-                        .background(.primary.opacity(0.1), in: Capsule())
-                }
-                .buttonStyle(.plain)
+            // Side by side when both labels fit on one line, stacked full width when a
+            // language makes them longer, never a label broken over two lines.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { kofiButton(); githubButton() }
+                VStack(spacing: 8) { kofiButton(fill: true); githubButton(fill: true) }
             }
             .padding(.top, 6)
         }
         .padding(28)
-        .frame(width: 440, alignment: .leading)
+        .frame(width: 470, alignment: .leading)
         .background(MacBackground(grid: false))
         .overlay(alignment: .topTrailing) {
             Button { MacSupportPrompt.shared.isShown = false } label: {
@@ -442,6 +531,38 @@ struct MacSupportCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.primary.opacity(0.1)))
         .shadow(color: .black.opacity(0.5), radius: 40, y: 16)
+    }
+
+    private func kofiButton(fill: Bool = false) -> some View {
+        Button { open(Self.kofi) } label: {
+            Label("Buy a Coffee on Ko-fi", systemImage: "cup.and.saucer.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .lineLimit(1)
+                .fixedSize()
+                .foregroundStyle(.black)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: fill ? .infinity : nil)
+                .frame(height: 36)
+                .background(Color.appAccent, in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .keyboardShortcut(.defaultAction)
+    }
+
+    private func githubButton(fill: Bool = false) -> some View {
+        Button { open(Self.github) } label: {
+            Label("Star on GitHub", systemImage: "star")
+                .font(.system(size: 13, weight: .medium))
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, 16)
+                .frame(maxWidth: fill ? .infinity : nil)
+                .frame(height: 36)
+                .background(.primary.opacity(0.1), in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     private func open(_ url: URL) {
