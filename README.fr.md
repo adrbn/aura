@@ -7,7 +7,8 @@
 **Votre serveur de musique, sur votre iPhone, votre Apple Watch et votre Mac.** Un lecteur natif pour Navidrome et Subsonic :
 streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vous écoutez vraiment, et toute votre bibliothèque hors ligne.
 
-<a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>
+<a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/btn-appstore-fr.svg" alt="Télécharger dans l'App Store" height="56"></a>&nbsp;
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" alt="Offrir un café sur Ko-fi" height="56"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download-fr.svg" alt="Télécharger l'IPA" height="40"></a>&nbsp;
 <a href="https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.363"><img src="docs/assets/btn-mac-fr.svg" alt="Télécharger pour Mac" height="40"></a>
@@ -20,7 +21,6 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
   <img src="docs/assets/aura-hero.svg" alt="Aura sur deux iPhone et une Apple Watch, en captures de l'app : En cours de lecture et paroles synchronisées, Accueil, une radio et un album" width="600">
 </picture>
 <br><br>
-<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip-fr.svg" alt="Offrir un café sur Ko-fi" height="64"></a><br><br>
 
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20aper%C3%A7u-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)

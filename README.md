@@ -7,7 +7,8 @@
 **Your music server, on your iPhone, Apple Watch and Mac.** A native player for Navidrome and Subsonic:
 lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
 
-<a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="56"></a>
+<a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/btn-appstore.svg" alt="Download on the App Store" height="56"></a>&nbsp;
+<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip.svg" alt="Buy me a coffee on Ko-fi" height="56"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
 <a href="https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.363"><img src="docs/assets/btn-mac.svg" alt="Download for Mac" height="40"></a>
@@ -20,7 +21,6 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
   <img src="docs/assets/aura-hero.svg" alt="Aura on two iPhones and an Apple Watch, captured from the app: Now Playing and synced lyrics, Home, a radio and an album" width="600">
 </picture>
 <br><br>
-<a href="https://ko-fi.com/adrbn"><img src="docs/assets/btn-tip.svg" alt="Buy me a coffee on Ko-fi" height="64"></a><br><br>
 
 [![iOS 26+](https://img.shields.io/badge/iOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20preview-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
