@@ -57,6 +57,7 @@ struct MacAlbumDetailView: View {
     @State private var full: AlbumWithSongs?
     /// The artist's other albums, under the songs.
     @State private var others: [Album] = []
+    @State private var loaded = false
     #if !APPSTORE_BUILD
     @State private var edition: AlbumCompletion.Edition?
     #endif
@@ -84,11 +85,15 @@ struct MacAlbumDetailView: View {
                 .disabled(songs.isEmpty || songs.allSatisfy { DownloadManager.shared.isDownloaded($0.id) })
             }
             Divider()
-            MacSongTable(songs: songs,
-                         source: .album(id: album.id, name: album.name),
-                         showsAlbum: false, showsTrackNumber: true)
-                .frame(height: Self.headHeight + Self.rowHeight * CGFloat(max(songs.count, 1)) + 6)
-                .scrollDisabled(true)
+            if loaded {
+                MacSongTable(songs: songs,
+                             source: .album(id: album.id, name: album.name),
+                             showsAlbum: false, showsTrackNumber: true)
+                    .frame(height: Self.headHeight + Self.rowHeight * CGFloat(max(songs.count, 1)) + 6)
+                    .scrollDisabled(true)
+            } else {
+                MacLoadingState().frame(height: 240)
+            }
             #if !APPSTORE_BUILD
             if let full, let edition {
                 MacMissingSongs(album: full, edition: edition)
@@ -117,6 +122,7 @@ struct MacAlbumDetailView: View {
         guard let server = serverManager.currentServer else { return }
         full = try? await SubsonicClient.shared.getAlbum(server: server, id: album.id)
         songs = full?.song ?? []
+        loaded = true
         if let artistId = album.artistId,
            let artist = try? await SubsonicClient.shared.getArtist(server: server, id: artistId) {
             others = (artist.album ?? []).filter { $0.id != album.id }

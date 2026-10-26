@@ -42,6 +42,7 @@ struct MacArtistDetailView: View {
     @State private var albums: [Album] = []
     @State private var topSongs: [Song] = []
     @State private var preferences = MacPreferences.shared
+    @State private var loaded = false
 
     var body: some View {
         ScrollView {
@@ -57,6 +58,9 @@ struct MacArtistDetailView: View {
                         .disabled(topSongs.isEmpty)
                 }
 
+                if !loaded {
+                    MacLoadingState().frame(height: 240)
+                }
                 if !topSongs.isEmpty {
                     sectionTitle("Top Songs")
                     MacSongTable(songs: Array(topSongs.prefix(10)),
@@ -64,6 +68,7 @@ struct MacArtistDetailView: View {
                         .frame(height: 260)
                 }
 
+                if loaded {
                 sectionTitle("Albums")
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: preferences.coverSize.gridMinimum,
                                                    maximum: preferences.coverSize.gridMaximum), spacing: 20)],
@@ -79,6 +84,7 @@ struct MacArtistDetailView: View {
                 }
                 .padding(.horizontal, 28)
                 .padding(.bottom, 28)
+                }
             }
         }
         .navigationTitle(artist.name)
@@ -92,6 +98,7 @@ struct MacArtistDetailView: View {
     private func load() async {
         guard let server = serverManager.currentServer else { return }
         albums = (try? await SubsonicClient.shared.getArtist(server: server, id: artist.id))?.album ?? []
+        loaded = true
         topSongs = (try? await SubsonicClient.shared.getTopSongs(
             server: server, artistName: artist.name, count: 20)) ?? []
     }

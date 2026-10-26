@@ -43,6 +43,7 @@ struct MacPlaylistDetailView: View {
     @State private var serverManager = ServerManager.shared
     @State private var player = AudioPlayer.shared
     @State private var songs: [Song] = []
+    @State private var loaded = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -59,7 +60,11 @@ struct MacPlaylistDetailView: View {
                 MacPinButton(playlistId: playlist.id, asLabel: true)
             }
             Divider()
-            MacSongTable(songs: songs, source: .playlist(id: playlist.id, name: playlist.name))
+            if loaded {
+                MacSongTable(songs: songs, source: .playlist(id: playlist.id, name: playlist.name))
+            } else {
+                MacLoadingState()
+            }
         }
         .background { ZStack { ArtworkCanvas(coverArt: playlist.coverArt, height: 640); MacFadingGrid() } }
         .navigationTitle(playlist.name)
@@ -69,6 +74,7 @@ struct MacPlaylistDetailView: View {
     private func load() async {
         guard let server = serverManager.currentServer else { return }
         songs = (try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id))?.entry ?? []
+        loaded = true
     }
 
     private func play(shuffled: Bool) {
