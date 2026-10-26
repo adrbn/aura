@@ -56,7 +56,7 @@ actor SubsonicClient {
         guard let url = buildURL(server: server, endpoint: "ping") else {
             throw SubsonicClientError.invalidURL
         }
-        var request = URLRequest(url: url)
+        var request = ServerHeaders.request(url, server: server)
         if let timeout { request.timeoutInterval = timeout }
         let (data, _) = try await session.data(for: request)
         let response = try JSONDecoder().decode(SubsonicResponse<EmptyContent>.self, from: data)
@@ -488,7 +488,7 @@ actor SubsonicClient {
         let endpoint = url.path.components(separatedBy: "/rest/").last?.components(separatedBy: "?").first ?? url.path
         AppLogger.shared.log("🌐 API → \(endpoint)")
         do {
-            let (data, response) = try await session.data(from: url)
+            let (data, response) = try await session.data(for: ServerHeaders.request(url))
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode) else {
                 let code = (response as? HTTPURLResponse)?.statusCode ?? -1

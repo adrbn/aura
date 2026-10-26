@@ -57732,6 +57732,214 @@
           }
         }
       }
+    },
+    "Custom headers (optional)": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En-têtes personnalisés (facultatif)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intestazioni personalizzate (facoltative)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cabeceras personalizadas (opcional)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eigene Header (optional)"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capçaleres personalitzades (opcional)"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eigen headers (optioneel)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义请求头（可选）"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свои заголовки (необязательно)"
+          }
+        }
+      }
+    },
+    "Name: value, one per line": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom: valeur, un par ligne"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nome: valore, uno per riga"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre: valor, uno por línea"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name: Wert, einer pro Zeile"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom: valor, un per línia"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naam: waarde, één per regel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名称: 值，每行一个"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Имя: значение, по одному в строке"
+          }
+        }
+      }
+    },
+    "Custom Headers": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En-têtes personnalisés"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intestazioni personalizzate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cabeceras personalizadas"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eigene Header"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capçaleres personalitzades"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eigen headers"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义请求头"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свои заголовки"
+          }
+        }
+      }
+    },
+    "Optional. Sent with every request to this server, for a reverse proxy or a sign-in gateway in front of it.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facultatif. Envoyés avec chaque requête vers ce serveur, pour un reverse proxy ou une passerelle de connexion placée devant."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Facoltative. Inviate con ogni richiesta a questo server, per un reverse proxy o un gateway di accesso davanti a esso."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional. Se envían con cada petición a este servidor, para un proxy inverso o una pasarela de acceso delante de él."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional. Werden mit jeder Anfrage an diesen Server gesendet, für einen Reverse Proxy oder ein Anmelde-Gateway davor."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opcional. S'envien amb cada petició a aquest servidor, per a un proxy invers o una passarel·la d'accés al davant."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optioneel. Meegestuurd met elk verzoek aan deze server, voor een reverse proxy of een inloggateway ervoor."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选。随每个发往此服务器的请求一起发送，适用于其前面的反向代理或登录网关。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Необязательно. Отправляются с каждым запросом к этому серверу — для обратного прокси или шлюза входа перед ним."
+          }
+        }
+      }
     }
   },
   "version": "1.1"

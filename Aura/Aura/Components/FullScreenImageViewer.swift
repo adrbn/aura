@@ -135,7 +135,7 @@ struct FullScreenImageViewer: View {
 
     private func fetch(from url: URL) async -> UIImage? {
         do {
-            let (data, response) = try await ArtworkCache.shared.imageSession.data(from: url)
+            let (data, response) = try await ArtworkCache.shared.imageSession.data(for: ServerHeaders.request(url))
             if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
                 return nil
             }

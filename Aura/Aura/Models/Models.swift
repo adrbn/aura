@@ -26,6 +26,10 @@ struct ServerConfig: Codable, Identifiable, Hashable {
     /// A second address for the same server on the home network (LAN). While it answers,
     /// it is used instead of `url`; see `ServerAddress`.
     var localURL: String?
+    /// Headers sent with every request to this server, for a reverse proxy or a sign-in
+    /// gateway in front of it. Kept in the Keychain beside the password: they often carry
+    /// a token. See `ServerHeaders`.
+    var headers: [String: String] = [:]
 
     var baseURL: String {
         let chosen = localURL.flatMap { !$0.isEmpty && ServerAddress.isLocal(id) ? $0 : nil } ?? url
@@ -66,6 +70,8 @@ struct ServerConfig: Codable, Identifiable, Hashable {
         } else {
             password = ""
         }
+        headers = KeychainHelper.loadPassword(for: Self.headersKey(id))
+            .flatMap { try? JSONDecoder().decode([String: String].self, from: Data($0.utf8)) } ?? [:]
     }
 
     func encode(to encoder: Encoder) throws {
@@ -77,6 +83,76 @@ struct ServerConfig: Codable, Identifiable, Hashable {
         try c.encodeIfPresent(localURL, forKey: .localURL)
         // Don't encode password to JSON — it's in Keychain
         KeychainHelper.save(password: password, for: id.uuidString)
+        if let data = try? JSONEncoder().encode(headers), !headers.isEmpty {
+            KeychainHelper.save(password: String(decoding: data, as: UTF8.self), for: Self.headersKey(id))
+        } else {
+            KeychainHelper.delete(for: Self.headersKey(id))
+        }
+    }
+
+    static func headersKey(_ id: UUID) -> String { id.uuidString + ".headers" }
+}
+
+/// The custom headers of every saved server, by address, so a request reaching one of them
+/// carries them whichever part of the app made it: the API, streams, covers, downloads.
+/// Rebuilt whenever the servers are loaded or saved; read from any thread.
+enum ServerHeaders {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var byOrigin: [String: [String: String]] = [:]
+
+    static func update(_ servers: [ServerConfig]) {
+        var table: [String: [String: String]] = [:]
+        for server in servers where !server.headers.isEmpty {
+            for address in [server.url, server.localURL].compactMap({ $0 }) {
+                if let key = origin(of: address) { table[key] = server.headers }
+            }
+        }
+        lock.withLock { byOrigin = table }
+    }
+
+    /// `server`'s own headers when given (a server still being added isn't saved yet),
+    /// else those of whichever saved server `url` points at.
+    static func headers(for url: URL, server: ServerConfig? = nil) -> [String: String] {
+        if let server, !server.headers.isEmpty { return server.headers }
+        guard let key = origin(of: url.absoluteString) else { return [:] }
+        return lock.withLock { byOrigin[key] } ?? [:]
+    }
+
+    static func request(_ url: URL, server: ServerConfig? = nil) -> URLRequest {
+        var request = URLRequest(url: url)
+        for (name, value) in headers(for: url, server: server) {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
+        return request
+    }
+
+    /// AVPlayer takes headers as an asset option rather than on a request.
+    static func assetOptions(for url: URL) -> [String: Any]? {
+        let headers = headers(for: url)
+        return headers.isEmpty ? nil : ["AVURLAssetHTTPHeaderFieldsKey": headers]
+    }
+
+    /// "Name: value" lines as typed in a server's settings; lines without both are skipped.
+    static func parse(_ text: String) -> [String: String] {
+        var headers: [String: String] = [:]
+        for line in text.split(whereSeparator: \.isNewline) {
+            guard let colon = line.firstIndex(of: ":") else { continue }
+            let name = line[..<colon].trimmingCharacters(in: .whitespaces)
+            let value = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+            if !name.isEmpty, !value.isEmpty { headers[name] = value }
+        }
+        return headers
+    }
+
+    static func text(_ headers: [String: String]) -> String {
+        headers.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value)" }.joined(separator: "\n")
+    }
+
+    private static func origin(of address: String) -> String? {
+        guard let components = URLComponents(string: address), let host = components.host?.lowercased(),
+              !host.isEmpty else { return nil }
+        let scheme = components.scheme?.lowercased() ?? "http"
+        return "\(host):\(components.port ?? (scheme == "https" ? 443 : 80))"
     }
 }
 

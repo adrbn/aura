@@ -8,6 +8,7 @@ struct AddServerView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var friendlyName = ""
+    @State private var headers = ""
     @State private var isTesting = false
     @State private var error: String?
 
@@ -33,6 +34,18 @@ struct AddServerView: View {
                     SecureField("Password", text: $password)
                     TextField("Server Name (required)", text: $friendlyName)
                         .autocorrectionDisabled()
+                }
+
+                Section {
+                    TextField("Name: value, one per line", text: $headers, axis: .vertical)
+                        .lineLimit(1...6)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .font(.callout.monospaced())
+                } header: {
+                    Text("Custom Headers")
+                } footer: {
+                    Text("Optional. Sent with every request to this server, for a reverse proxy or a sign-in gateway in front of it.")
                 }
 
                 if isInsecureURL {
@@ -101,7 +114,8 @@ struct AddServerView: View {
             return
         }
         let name = friendlyName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let server = ServerConfig(url: serverURL, username: username, password: password, friendlyName: name)
+        var server = ServerConfig(url: serverURL, username: username, password: password, friendlyName: name)
+        server.headers = ServerHeaders.parse(headers)
 
         do {
             let ok = try await withThrowingTaskGroup(of: Bool.self) { group in

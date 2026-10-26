@@ -20,7 +20,7 @@ enum PlaylistCovers {
             return false
         }
         let boundary = UUID().uuidString
-        var request = authorized(URLRequest(url: url), token: token)
+        var request = authorized(ServerHeaders.request(url), token: token)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         var body = Data()
@@ -42,7 +42,7 @@ enum PlaylistCovers {
             AppLogger.shared.log("❌ Remove playlist cover: no token or invalid URL")
             return false
         }
-        var request = authorized(URLRequest(url: url), token: token)
+        var request = authorized(ServerHeaders.request(url), token: token)
         request.httpMethod = "DELETE"
         AppLogger.shared.log("🗑 Removing playlist cover: \(url.absoluteString)")
         return await send(request, what: "Remove playlist cover")
@@ -77,7 +77,7 @@ enum PlaylistCovers {
             AppLogger.shared.log("❌ Navidrome auth: invalid login URL")
             return nil
         }
-        var request = URLRequest(url: url)
+        var request = ServerHeaders.request(url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         guard let body = try? JSONSerialization.data(withJSONObject: ["username": server.username,

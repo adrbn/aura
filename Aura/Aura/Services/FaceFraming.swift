@@ -186,7 +186,7 @@ extension FaceFraming {
     }
 
     private static func data(from url: URL) async -> Data {
-        var request = URLRequest(url: url)
+        var request = ServerHeaders.request(url)
         request.timeoutInterval = 8
         return (try? await ArtworkCache.shared.imageSession.data(for: request).0) ?? Data()
     }

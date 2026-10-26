@@ -122,7 +122,7 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
         if isCached(songId: songId, bitRate: bitRate, transcoded: usesTranscoding) {
             AppLogger.shared.log("💾 Playing from cache: \(songId) | mode: \(usesTranscoding ? "mp3" : "source")")
             guard let cacheURL = cacheSchemedURL(songId: songId, bitRate: bitRate, transcoded: usesTranscoding, realURL: realURL) else {
-                return AVPlayerItem(url: realURL)
+                return Self.streamItem(realURL)
             }
             let asset = AVURLAsset(url: cacheURL)
             asset.resourceLoader.setDelegate(self, queue: delegateQueue)
@@ -143,7 +143,7 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
                 self?.backgroundCache(songId: songId, realURL: realURL, bitRate: bitRate, transcoded: usesTranscoding)
             }
         }
-        return AVPlayerItem(url: realURL)
+        return Self.streamItem(realURL)
     }
 
     /// Download audio in the background for caching (doesn't block playback)
@@ -162,8 +162,13 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
               let url = SubsonicClient.shared.streamURL(server: server, id: songId, maxBitRate: bitRate,
                                                         songSuffix: songSuffix, songContentType: songContentType)
         else { return nil }
-        guard offset > 0 else { return AVPlayerItem(url: url) }
-        return URL(string: url.absoluteString + "&timeOffset=\(offset)").map(AVPlayerItem.init(url:))
+        guard offset > 0 else { return Self.streamItem(url) }
+        return URL(string: url.absoluteString + "&timeOffset=\(offset)").map(Self.streamItem)
+    }
+
+    /// A stream from the server, with the server's custom headers when it has some.
+    static func streamItem(_ url: URL) -> AVPlayerItem {
+        AVPlayerItem(asset: AVURLAsset(url: url, options: ServerHeaders.assetOptions(for: url)))
     }
 
     private func backgroundCache(songId: String, realURL: URL, bitRate: Int?, transcoded: Bool) {
@@ -172,7 +177,7 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
         lock.unlock()
         if alreadyActive { return }
 
-        let task = URLSession.shared.dataTask(with: realURL) { [weak self] data, response, error in
+        let task = URLSession.shared.dataTask(with: ServerHeaders.request(realURL)) { [weak self] data, response, error in
             guard let self = self, let data = data, error == nil,
                   let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
                 self?.lock.lock()
@@ -224,7 +229,7 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
         if !FileManager.default.fileExists(atPath: file.path) {
             guard let url = SubsonicClient.shared.streamURL(server: server, id: song.id, maxBitRate: bitRate,
                                                             songSuffix: song.suffix, songContentType: song.contentType),
-                  let (data, response) = try? await URLSession.shared.data(from: url),
+                  let (data, response) = try? await URLSession.shared.data(for: ServerHeaders.request(url)),
                   let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
                   // Subsonic answers an error with 200 and a JSON or XML body.
                   data.count > 1024, data.first != 0x7B, data.first != 0x3C
@@ -266,7 +271,7 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
         guard let realURL = SubsonicClient.shared.streamURL(server: server, id: songId, maxBitRate: bitRate, songSuffix: songSuffix, songContentType: songContentType) else { return }
 
         AppLogger.shared.log("🔮 Prefetching: \(songId)")
-        let task = URLSession.shared.dataTask(with: realURL) { [weak self] data, response, error in
+        let task = URLSession.shared.dataTask(with: ServerHeaders.request(realURL)) { [weak self] data, response, error in
             guard let self = self, let data = data, error == nil else {
                 if let error = error, (error as NSError).code != NSURLErrorCancelled {
                     AppLogger.shared.log("❌ Prefetch failed: \(songId) — \(error.localizedDescription)")
@@ -496,7 +501,7 @@ final class AudioCacheManager: NSObject, AVAssetResourceLoaderDelegate, @uncheck
         }
 
         // Download, cache, then serve
-        let task = URLSession.shared.dataTask(with: realURL) { [weak self] data, response, error in
+        let task = URLSession.shared.dataTask(with: ServerHeaders.request(realURL)) { [weak self] data, response, error in
             guard let self = self else {
                 loadingRequest.finishLoading(with: URLError(.cancelled))
                 return

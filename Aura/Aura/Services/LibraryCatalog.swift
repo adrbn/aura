@@ -148,7 +148,7 @@ enum LibraryCatalog {
     }
 
     private nonisolated static func thumbnail(_ url: URL, side: CGFloat) async -> Data? {
-        guard let (data, _) = try? await URLSession.shared.data(from: url),
+        guard let (data, _) = try? await URLSession.shared.data(for: ServerHeaders.request(url)),
               let image = UIImage(data: data) else { return nil }
         // At one pixel a point, as the Now Playing cover is sent.
         let format = UIGraphicsImageRendererFormat()

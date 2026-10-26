@@ -74,7 +74,7 @@ enum LyricsOnServer {
         let token: String
 
         func request(_ path: String) -> URLRequest {
-            var request = URLRequest(url: URL(string: base.absoluteString + "/api/" + path) ?? base)
+            var request = ServerHeaders.request(URL(string: base.absoluteString + "/api/" + path) ?? base)
             request.setValue(token, forHTTPHeaderField: "X-Auth")
             request.timeoutInterval = 20
             return request
@@ -94,7 +94,7 @@ enum LyricsOnServer {
         guard !user.isEmpty, let password, !password.isEmpty,
               let base = URL(string: address.contains("://") ? address : "http://\(address)")
         else { throw Failure.notSignedIn }
-        var request = URLRequest(url: base.appendingPathComponent("api/login"))
+        var request = ServerHeaders.request(base.appendingPathComponent("api/login"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["username": user, "password": password,
@@ -141,7 +141,7 @@ enum LyricsOnServer {
         guard let server = ServerManager.shared.currentServer,
               let token = await PlaylistCovers.token(server: server),
               let url = URL(string: "\(server.baseURL)/api/song/\(song.id)") else { throw Failure.songUnknown }
-        var request = URLRequest(url: url)
+        var request = ServerHeaders.request(url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "X-ND-Authorization")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         guard let (data, _) = try? await URLSession.shared.data(for: request),

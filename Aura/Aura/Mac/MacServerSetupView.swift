@@ -58,7 +58,7 @@ enum SetupDiagnosis: Equatable {
 /// The Mac app is a separate application with its own defaults and its own keychain items,
 /// so the server has to be named here even when the phone already knows it.
 struct MacServerSetupView: View {
-    private enum Field: Hashable { case url, username, password }
+    private enum Field: Hashable { case url, username, password, headers }
 
     /// Set when presented as a sheet to add another server; `nil` on first run, where
     /// the root view swaps itself out instead.
@@ -68,6 +68,7 @@ struct MacServerSetupView: View {
     @State private var url = ""
     @State private var username = ""
     @State private var password = ""
+    @State private var headers = ""
     @State private var isTesting = false
     @State private var diagnosis: SetupDiagnosis?
     @FocusState private var focus: Field?
@@ -136,6 +137,9 @@ struct MacServerSetupView: View {
                     field("Username", $username, prompt: "", field: .username)
                     field("Password", $password, prompt: "", field: .password, secure: true)
                 }
+                // For a server behind a proxy or a sign-in gateway that wants its own headers.
+                field("Custom headers (optional)", $headers, prompt: String(localized: "Name: value, one per line"),
+                      field: .headers, multiline: true)
             }
 
             if let diagnosis {
@@ -164,7 +168,7 @@ struct MacServerSetupView: View {
     }
 
     private func field(_ label: LocalizedStringKey, _ text: Binding<String>, prompt: String,
-                       field: Field, secure: Bool = false) -> some View {
+                       field: Field, secure: Bool = false, multiline: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(label)
                 .font(.system(size: 10, weight: .medium))
@@ -173,6 +177,8 @@ struct MacServerSetupView: View {
             Group {
                 if secure {
                     SecureField("", text: text, prompt: Text(prompt))
+                } else if multiline {
+                    TextField("", text: text, prompt: Text(prompt), axis: .vertical).lineLimit(1...4)
                 } else {
                     TextField("", text: text, prompt: Text(prompt))
                 }
@@ -252,12 +258,13 @@ struct MacServerSetupView: View {
             return
         }
 
-        let candidate = ServerConfig(
+        var candidate = ServerConfig(
             url: normalisedURL,
             username: username,
             password: password,
             friendlyName: derivedName.isEmpty ? String(localized: "Server") : derivedName
         )
+        candidate.headers = ServerHeaders.parse(headers)
 
         // Probed BEFORE it is registered. Registering first flips the root view over to the
         // library, which tears this screen down — taking the typed fields and the error

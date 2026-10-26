@@ -153,7 +153,7 @@ final class WatchLink: NSObject {
               let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: Int(Self.artworkSize))
         else { return }
         Task {
-            guard let (data, _) = try? await URLSession.shared.data(from: url),
+            guard let (data, _) = try? await URLSession.shared.data(for: ServerHeaders.request(url)),
                   let image = UIImage(data: data) else { return }
             let side = Self.artworkSize
             // At one pixel a point: the renderer would otherwise draw at the phone's scale, three

@@ -6,8 +6,8 @@ import Network
 final class ServerManager {
     static let shared = ServerManager()
 
-    var servers: [ServerConfig] = []
-    var currentServer: ServerConfig?
+    var servers: [ServerConfig] = [] { didSet { refreshHeaders() } }
+    var currentServer: ServerConfig? { didSet { refreshHeaders() } }
     var isConnected = false {
         didSet { if isConnected, let url = currentServer?.url { UserDefaults.standard.set(Date(), forKey: "lastSeen." + url) } }
     }
@@ -84,6 +84,10 @@ final class ServerManager {
         #endif
     }
 
+    private func refreshHeaders() {
+        ServerHeaders.update(servers + [currentServer].compactMap { $0 })
+    }
+
     func saveServers() {
         if let data = try? JSONEncoder().encode(servers) {
             UserDefaults.standard.set(data, forKey: serversKey)
@@ -110,6 +114,7 @@ final class ServerManager {
     func removeServer(_ server: ServerConfig) {
         AppLogger.shared.log("🖥 removeServer: \(server.friendlyName)")
         KeychainHelper.delete(for: server.id.uuidString)
+        KeychainHelper.delete(for: ServerConfig.headersKey(server.id))
         // The server's generated mixes are only meaningful against it, so they go too —
         // otherwise they'd sit in defaults forever under an id nothing can reach again.
         MixCache().removeAll(for: server.id)

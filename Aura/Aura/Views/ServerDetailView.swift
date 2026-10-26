@@ -8,6 +8,7 @@ struct ServerDetailView: View {
     @State private var editedName: String = ""
     @State private var editedURL: String = ""
     @State private var editedLocalURL: String = ""
+    @State private var editedHeaders: String = ""
     private var accentColor: Color { Color.appAccent }
 
     var body: some View {
@@ -43,6 +44,18 @@ struct ServerDetailView: View {
                 Text("Optional. While this address answers, on your home network, Aura uses it instead of the main one.")
             }
 
+            Section {
+                TextField("Name: value, one per line", text: $editedHeaders, axis: .vertical)
+                    .lineLimit(1...6)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .font(.callout.monospaced())
+            } header: {
+                Text("Custom Headers")
+            } footer: {
+                Text("Optional. Sent with every request to this server, for a reverse proxy or a sign-in gateway in front of it.")
+            }
+
             Section("Connection") {
                 HStack {
                     Text("Status")
@@ -61,12 +74,15 @@ struct ServerDetailView: View {
                 Button("Save Changes") {
                     if let idx = serverManager.servers.firstIndex(where: { $0.id == server.id }) {
                         let local = Self.cleanLocalURL(editedLocalURL)
+                        let headers = ServerHeaders.parse(editedHeaders)
                         serverManager.servers[idx].friendlyName = editedName
                         serverManager.servers[idx].localURL = local
+                        serverManager.servers[idx].headers = headers
                         serverManager.saveServers()
                         if serverManager.currentServer?.id == server.id {
                             serverManager.currentServer?.friendlyName = editedName
                             serverManager.currentServer?.localURL = local
+                            serverManager.currentServer?.headers = headers
                             serverManager.saveCurrentServer()
                             Task { await serverManager.testConnection() }
                         }
@@ -83,6 +99,7 @@ struct ServerDetailView: View {
             editedName = server.friendlyName
             editedURL = server.url
             editedLocalURL = server.localURL ?? ""
+            editedHeaders = ServerHeaders.text(server.headers)
         }
     }
 

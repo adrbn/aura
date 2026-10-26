@@ -268,7 +268,7 @@ final class ArtworkCache: @unchecked Sendable {
         guard !hasOfflineArtwork(forCoverArt: coverArt) else { return }
         guard let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: ArtworkCache.fullSize) else { return }
         do {
-            let (data, _) = try await imageSession.data(from: url)
+            let (data, _) = try await imageSession.data(for: ServerHeaders.request(url))
             if var img = PlatformImage(data: data) {
                 // The server has no picture: keep the one found for it, or none at all.
                 if GenericArtwork.isGeneric(img) {
@@ -452,7 +452,7 @@ final class ArtworkCache: @unchecked Sendable {
             await self.downloadGate.acquire()
             defer { self.downloadGate.release() }
             do {
-                let (data, resp) = try await self.imageSession.data(from: url)
+                let (data, resp) = try await self.imageSession.data(for: ServerHeaders.request(url))
                 if let http = resp as? HTTPURLResponse, http.statusCode == 429 {
                     // Throttled, not missing. Nothing is cached, so the next appearance or
                     // an ArtworkRetry bump refetches instead of pinning a placeholder.
@@ -522,7 +522,7 @@ final class ArtworkCache: @unchecked Sendable {
         #if os(iOS)
         guard let server = ServerManager.shared.currentServer,
               let url = await CoverFinder.shared.coverURL(for: coverArt, server: server, pixels: requestSize),
-              let (data, _) = try? await imageSession.data(from: url),
+              let (data, _) = try? await imageSession.data(for: ServerHeaders.request(url)),
               let image = PlatformImage(data: data)
         else { return nil }
         if let key { store(image, for: key) }
@@ -599,7 +599,7 @@ final class ArtworkCache: @unchecked Sendable {
     private func prove(artworkOf coverArt: String, data: Data, server: ServerConfig) async -> Bool {
         let hash = Self.sha256Hex(data)
         guard let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: Self.proofSize),
-              let (proof, _) = try? await imageSession.data(from: url) else { return true }
+              let (proof, _) = try? await imageSession.data(for: ServerHeaders.request(url)) else { return true }
         let isArtwork = Self.sha256Hex(proof) != hash
         placeholderLock.lock(); defer { placeholderLock.unlock() }
         if isArtwork {
@@ -1002,7 +1002,7 @@ extension ArtworkCache {
               let url = SubsonicClient.shared.coverArtURL(server: server, id: coverArt, size: requestSize) else { return nil }
         await downloadGate.acquire()
         defer { downloadGate.release() }
-        guard let (data, resp) = try? await imageSession.data(from: url),
+        guard let (data, resp) = try? await imageSession.data(for: ServerHeaders.request(url)),
               (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               CGImageSourceGetCount(source) > 1 else {

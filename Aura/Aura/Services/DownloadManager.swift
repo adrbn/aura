@@ -355,7 +355,7 @@ final class DownloadManager: NSObject {
                     AppLogger.shared.log("⏯ Resuming \(song.title) from saved offset")
                     task = session.downloadTask(withResumeData: resumeData)
                 } else {
-                    task = session.downloadTask(with: url)
+                    task = session.downloadTask(with: ServerHeaders.request(url))
                 }
                 task.taskDescription = song.id
                 activeURLTasks[song.id] = task

@@ -1130,7 +1130,7 @@ struct SettingsView: View {
                 }
                 do {
                     guard let url = DownloadManager.shared.buildExportURL(server: server, id: song.id) else { continue }
-                    let (data, _) = try await URLSession.shared.data(from: url)
+                    let (data, _) = try await URLSession.shared.data(for: ServerHeaders.request(url))
                     let ext = song.suffix ?? "mp3"
                     let artist = song.artist ?? "Unknown Artist"
                     // Sanitize filename
