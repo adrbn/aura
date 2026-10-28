@@ -29,6 +29,8 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Aura connects to the music server on your local network that you configure, and to Aura on your Mac so this iPhone can control it.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Aura listens to a song on this iPhone, never to you, to place its lyrics where they are sung.</string>
 	<key>NSSiriUsageDescription</key>
 	<string>Aura uses Siri so you can ask for an artist, an album, a song or a playlist out loud.</string>
 	<key>INIntentsSupported</key>

@@ -57940,6 +57940,422 @@
           }
         }
       }
+    },
+    "%lld lines placed by ear. Play it through, then Save.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld lignes calées à l’oreille. Écoutez jusqu’au bout, puis Enregistrer."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld righe sincronizzate a orecchio. Ascolta fino in fondo, poi Salva."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld líneas colocadas de oído. Escúchala entera y luego Guardar."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Zeilen nach Gehör gesetzt. Hör den Song durch, dann Speichern."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld línies calades d’oïda. Escolta-la sencera i després Desar."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld regels op gehoor geplaatst. Luister hem uit en kies dan Opslaan."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已按听到的位置放置 %lld 行。完整听一遍，然后点“存储”。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Строк расставлено на слух: %lld. Прослушайте песню до конца, затем нажмите «Сохранить»."
+          }
+        }
+      }
+    },
+    "Aura can’t listen to songs in this language yet.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura ne sait pas encore écouter les morceaux dans cette langue."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura non sa ancora ascoltare i brani in questa lingua."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura aún no puede escuchar canciones en este idioma."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura kann Songs in dieser Sprache noch nicht anhören."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura encara no pot escoltar cançons en aquesta llengua."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura kan nummers in deze taal nog niet beluisteren."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura 暂时无法聆听这种语言的歌曲。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura пока не умеет слушать песни на этом языке."
+          }
+        }
+      }
+    },
+    "Couldn’t Sync Automatically": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation automatique impossible"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossibile sincronizzare automaticamente"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo sincronizar automáticamente"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatische Synchronisierung nicht möglich"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No s’ha pogut sincronitzar automàticament"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisch synchroniseren mislukt"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法自动同步"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось синхронизировать автоматически"
+          }
+        }
+      }
+    },
+    "Listening to the song…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écoute du morceau…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ascolto del brano…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuchando la canción…"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Song wird angehört…"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escoltant la cançó…"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nummer wordt beluisterd…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在聆听歌曲…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слушаю песню…"
+          }
+        }
+      }
+    },
+    "Listens to the song on this iPhone and places each line where it is sung": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écoute le morceau sur cet iPhone et place chaque ligne là où elle est chantée"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ascolta il brano su questo iPhone e mette ogni riga dove viene cantata"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escucha la canción en este iPhone y coloca cada línea donde se canta"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hört den Song auf diesem iPhone an und setzt jede Zeile dorthin, wo sie gesungen wird"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolta la cançó en aquest iPhone i col·loca cada línia on es canta"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beluistert het nummer op deze iPhone en zet elke regel waar die gezongen wordt"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在此 iPhone 上聆听歌曲，并把每一行放到演唱的位置"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слушает песню на этом iPhone и ставит каждую строку туда, где она поётся"
+          }
+        }
+      }
+    },
+    "Sync Automatically": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser automatiquement"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizza automaticamente"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar automáticamente"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisch synchronisieren"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronitza automàticament"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatisch synchroniseren"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动同步"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Синхронизировать автоматически"
+          }
+        }
+      }
+    },
+    "The song couldn’t be read from your server.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le morceau n’a pas pu être lu depuis votre serveur."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non è stato possibile leggere il brano dal tuo server."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer la canción desde tu servidor."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Song konnte nicht von deinem Server gelesen werden."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No s’ha pogut llegir la cançó des del teu servidor."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Het nummer kon niet van je server worden gelezen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法从你的服务器读取这首歌。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось прочитать песню с вашего сервера."
+          }
+        }
+      }
+    },
+    "Too little of the singing could be made out to place the lines. Time them by hand instead.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trop peu de chant a pu être compris pour placer les lignes. Calez-les plutôt à la main."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si è capito troppo poco del canto per sistemare le righe. Sincronizzale a mano."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se entendió demasiado poco del canto para colocar las líneas. Sincronízalas a mano."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zu wenig vom Gesang war zu verstehen, um die Zeilen zu setzen. Synchronisiere sie stattdessen von Hand."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "S’ha entès massa poc del cant per col·locar les línies. Cala-les a mà."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Er was te weinig van de zang te verstaan om de regels te plaatsen. Synchroniseer ze met de hand."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "能听清的演唱太少，无法放置歌词行。请改为手动对齐。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалось разобрать слишком мало пения, чтобы расставить строки. Расставьте их вручную."
+          }
+        }
+      }
     }
   },
   "version": "1.1"

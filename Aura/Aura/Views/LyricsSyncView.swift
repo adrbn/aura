@@ -1,4 +1,7 @@
 import SwiftUI
+import Speech
+import NaturalLanguage
+import AVFoundation
 
 /// Puts a song's lyrics in time by hand, over the same blurred cover as Now Playing. A dot
 /// marks the line the next tap places; tap Now as it starts. Lyrics already timed need only a
@@ -26,6 +29,11 @@ struct LyricsSyncView: View {
     /// Saved here, but the server's copy failed: closing follows the alert.
     @State private var savedLocally = false
     @State private var confirmRestore = false
+    /// The song being listened to, to place the lines by ear.
+    @State private var listening = false
+    /// What listening placed, said once it has.
+    @State private var placedCount: Int?
+    @State private var earFailure: String?
 
     private static let step: TimeInterval = 0.05
 
@@ -61,6 +69,12 @@ struct LyricsSyncView: View {
             Button("OK", role: .cancel) { if savedLocally { dismiss() } }
         } message: {
             Text(failure ?? "")
+        }
+        .alert("Couldn’t Sync Automatically",
+               isPresented: Binding(get: { earFailure != nil }, set: { if !$0 { earFailure = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(earFailure ?? "")
         }
         .confirmationDialog("Restore the original timing?", isPresented: $confirmRestore, titleVisibility: .visible) {
             Button("Restore Original Timing", role: .destructive) {
@@ -189,6 +203,7 @@ struct LyricsSyncView: View {
 
     private func controls(focus: Int, times: [TimeInterval?]) -> some View {
         VStack(spacing: 18) {
+            autoSyncRow
             if retiming.isTimed || !tapped.isEmpty {
                 nudger(focus: focus, times: times)
             }
@@ -293,7 +308,62 @@ struct LyricsSyncView: View {
         .accessibilityLabel(label)
     }
 
+    /// Listening for the lines, or what it placed, or the button that starts it.
+    @ViewBuilder
+    private var autoSyncRow: some View {
+        Group {
+            if listening {
+                HStack(spacing: 10) {
+                    ProgressView().tint(.white)
+                    Text("Listening to the song…")
+                }
+            } else if let placedCount {
+                Label(String(localized: "\(placedCount) lines placed by ear. Play it through, then Save."),
+                      systemImage: "checkmark.circle.fill")
+            } else {
+                Button(action: syncByEar) {
+                    Label("Sync Automatically", systemImage: "waveform")
+                        .padding(.horizontal, 16)
+                        .frame(height: 36)
+                        .glassEffect(.regular, in: Capsule())
+                }
+                .buttonStyle(PressScale())
+                .accessibilityHint("Listens to the song on this iPhone and places each line where it is sung")
+            }
+        }
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(.white.opacity(0.85))
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+        .transition(.opacity)
+        .animation(.easeOut(duration: 0.2), value: listening)
+    }
+
     // MARK: Actions
+
+    /// Places every line it can make out, as taps: Undo takes them back one by one, the steps
+    /// move them, and nothing is kept until Save.
+    private func syncByEar() {
+        listening = true
+        Task {
+            defer { listening = false }
+            do {
+                let heard = try await LyricsAutoSync.anchors(for: song, lines: lines)
+                guard player.currentSong?.id == song.id else { return }
+                let offset = AppSettings.shared.lyricsOffset
+                retiming.anchors = heard.mapValues { $0 + offset }
+                retiming.offset = 0
+                tapped = heard.keys.sorted()
+                armed = nil
+                placedCount = heard.count
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            } catch {
+                AppLogger.shared.log("🎵 Auto sync failed: \(error)")
+                earFailure = error.localizedDescription
+            }
+        }
+    }
+
 
     /// The line coming next in the song, or the first when the lyrics have no timing.
     private func armFirst() {
@@ -413,5 +483,180 @@ private struct PressScale: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Placing the lines by ear
+
+/// Times a song's lyrics from the song itself: the singing is transcribed on the device,
+/// each word with the moment it is heard, and the lines are found in what was heard. A line
+/// found becomes a tap, as if made by hand at that moment — every line between two moves
+/// with the one above it, so a version that drifts is followed, not just shifted.
+enum LyricsAutoSync {
+    enum Failure: LocalizedError {
+        case language, noAudio, tooFew
+
+        var errorDescription: String? {
+            switch self {
+            case .language: String(localized: "Aura can’t listen to songs in this language yet.")
+            case .noAudio: String(localized: "The song couldn’t be read from your server.")
+            case .tooFew: String(localized: "Too little of the singing could be made out to place the lines. Time them by hand instead.")
+            }
+        }
+    }
+
+    /// A word as heard, and when.
+    struct Heard { let word: String; let time: TimeInterval }
+
+    /// Where each line found starts in the audio, by its index in `lines`.
+    static func anchors(for song: Song, lines: [LyricsLine]) async throws -> [Int: TimeInterval] {
+        let words = lines.map { words(in: $0.text) }
+        guard let locale = await locale(of: lines) else { throw Failure.language }
+        guard let server = ServerManager.shared.currentServer,
+              let url = await AudioCacheManager.shared.localCopy(
+                  of: song, server: server, bitRate: AppSettings.shared.effectiveStreamingQuality.bitRate)
+        else { throw Failure.noAudio }
+        defer { if url.path.hasPrefix(FileManager.default.temporaryDirectory.path) { try? FileManager.default.removeItem(at: url) } }
+        let hints = Array(Set(words.flatMap { $0 }))
+        let heard: [Heard]
+        do {
+            heard = try await transcribe(url, locale: locale, hints: hints)
+        } catch where SFSpeechRecognizer.authorizationStatus() == .notDetermined {
+            // Asked only if the transcriber turns out to need it, then tried once more.
+            AppLogger.shared.log("🎵 Auto sync asks for speech recognition after: \(error)")
+            let granted = await withCheckedContinuation { done in
+                SFSpeechRecognizer.requestAuthorization { done.resume(returning: $0 == .authorized) }
+            }
+            guard granted else { throw error }
+            heard = try await transcribe(url, locale: locale, hints: hints)
+        }
+        AppLogger.shared.log("🎵 Auto sync heard \(heard.count) words of \(song.title)")
+        let found = place(words, found: lines.map(\.time), in: heard)
+        let worded = words.filter { $0.count >= 2 }.count
+        guard found.count >= 3, Double(found.count) >= Double(worded) * 0.15 else { throw Failure.tooFew }
+        return found
+    }
+
+    /// The lyrics' language, in the form the transcriber knows, or nil when it doesn't.
+    private static func locale(of lines: [LyricsLine]) async -> Locale? {
+        let recognizer = NLLanguageRecognizer()
+        recognizer.processString(lines.map(\.text).joined(separator: "\n"))
+        guard let language = recognizer.dominantLanguage, language != .undetermined else { return nil }
+        return await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: language.rawValue))
+    }
+
+    private static func transcribe(_ url: URL, locale: Locale, hints: [String]) async throws -> [Heard] {
+        let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [],
+                                            attributeOptions: [.audioTimeRange])
+        // The language's model, the first time: a download iOS keeps for every app.
+        if let install = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
+            try await install.downloadAndInstall()
+        }
+        let file = try AVAudioFile(forReading: url)
+        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        // The lyrics' own words, so a sung word is read as the one written.
+        let context = AnalysisContext()
+        context.contextualStrings[.general] = Array(hints.prefix(200))
+        try await analyzer.setContext(context)
+        async let collected: [Heard] = collect(transcriber)
+        if let end = try await analyzer.analyzeSequence(from: file) {
+            try await analyzer.finalizeAndFinish(through: end)
+        } else {
+            await analyzer.cancelAndFinishNow()
+        }
+        return try await collected
+    }
+
+    private static func collect(_ transcriber: SpeechTranscriber) async throws -> [Heard] {
+        var heard: [Heard] = []
+        for try await result in transcriber.results {
+            for run in result.text.runs {
+                guard let range = run[AttributeScopes.SpeechAttributes.TimeRangeAttribute.self] else { continue }
+                let spoken = words(in: String(result.text[run.range].characters))
+                // A run holding several words shares its time between them.
+                let step = spoken.isEmpty ? 0 : range.duration.seconds / Double(spoken.count)
+                for (index, word) in spoken.enumerated() {
+                    heard.append(Heard(word: word, time: range.start.seconds + step * Double(index)))
+                }
+            }
+        }
+        return heard.sorted { $0.time < $1.time }
+    }
+
+    /// Lowercased, without accents or punctuation: "I'll" and "ill" are the same word here.
+    static func words(in text: String) -> [String] {
+        text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            .components(separatedBy: .whitespacesAndNewlines)
+            .map { $0.filter { $0.isLetter || $0.isNumber } }
+            .filter { !$0.isEmpty }
+    }
+
+    /// One start per line at most, in the lyrics' order and the song's: of every place a line
+    /// could have been heard — a chorus, several — the set that agrees with itself the most.
+    static func place(_ lines: [[String]], found: [TimeInterval?], in heard: [Heard]) -> [Int: TimeInterval] {
+        struct Candidate { let line: Int; let time: TimeInterval; let score: Int }
+        var candidates: [Candidate] = []
+        for (line, words) in lines.enumerated() where words.count >= 2 {
+            let needed = min(3, words.count)
+            for first in 0..<min(3, words.count) {
+                for (start, word) in heard.enumerated() where same(word.word, words[first]) {
+                    let score = matched(Array(words[first..<min(words.count, first + 6)]), from: start, in: heard)
+                    guard score >= needed else { continue }
+                    candidates.append(Candidate(line: line, time: max(0, word.time - 0.3 * Double(first)), score: score))
+                }
+            }
+        }
+        candidates.sort { ($0.line, $0.time) < ($1.line, $1.time) }
+        // ponytail: quadratic over the candidates, a few hundred for a song.
+        var best = candidates.map(\.score)
+        var previous = [Int?](repeating: nil, count: candidates.count)
+        for b in candidates.indices {
+            for a in 0..<b {
+                let (x, y) = (candidates[a], candidates[b])
+                guard x.line < y.line, y.time - x.time >= 0.3, best[a] + y.score > best[b] else { continue }
+                // Timed lyrics drift, they don't jump: two lines found close by move alike.
+                if let was = found[x.line], let now = found[y.line], abs((y.time - now) - (x.time - was)) > 4 { continue }
+                best[b] = best[a] + y.score
+                previous[b] = a
+            }
+        }
+        guard var at = best.indices.max(by: { best[$0] < best[$1] }) else { return [:] }
+        var anchors: [Int: TimeInterval] = [:]
+        while true {
+            anchors[candidates[at].line] = candidates[at].time
+            guard let before = previous[at] else { break }
+            at = before
+        }
+        return anchors
+    }
+
+    /// How many of `words` are heard in order from `start`, a word or two in between allowed.
+    private static func matched(_ words: [String], from start: Int, in heard: [Heard]) -> Int {
+        var count = 0
+        var at = start
+        for word in words {
+            guard let next = (at..<min(heard.count, at + 3)).first(where: { same(heard[$0].word, word) }) else { continue }
+            count += 1
+            at = next + 1
+        }
+        return count
+    }
+
+    /// The same word, or one letter off for a longer one: a sung word is heard a little wrong.
+    private static func same(_ a: String, _ b: String) -> Bool {
+        if a == b { return true }
+        guard a.count >= 5, abs(a.count - b.count) <= 1 else { return false }
+        let (x, y) = (Array(a), Array(b))
+        var row = Array(0...y.count)
+        for i in 1...x.count {
+            var diagonal = row[0]
+            row[0] = i
+            for j in 1...y.count {
+                let above = row[j]
+                row[j] = min(row[j] + 1, row[j - 1] + 1, diagonal + (x[i - 1] == y[j - 1] ? 0 : 1))
+                diagonal = above
+            }
+        }
+        return row[y.count] <= 1
     }
 }
