@@ -10,6 +10,8 @@ import SwiftUI
 struct AuraMacApp: App {
     @State private var serverManager = ServerManager.shared
     @State private var player = AudioPlayer.shared
+    /// The song whose lyrics are being put in time, from Playback > Sync Lyrics….
+    @State private var syncing: Song?
 
     var body: some Scene {
         // One window: a WindowGroup opened a second one on relaunch, and macOS showed
@@ -19,6 +21,12 @@ struct AuraMacApp: App {
                 .environment(serverManager)
                 .environment(player)
                 .frame(minWidth: 900, minHeight: 560)
+                // The phone's sync screen, as a sheet over the window.
+                .sheet(item: $syncing) { song in
+                    LyricsSyncView(song: song, lines: player.lyrics)
+                        .environment(player)
+                        .frame(minWidth: 460, idealWidth: 520, minHeight: 560, idealHeight: 760)
+                }
                 // aura:// links, as on the phone: Shortcuts on this Mac can play and pause.
                 .onOpenURL { AuraURL.open($0) }
                 .task {
@@ -43,7 +51,7 @@ struct AuraMacApp: App {
         // inside it — they disappear with it and cannot be asked back. MacWindowChrome
         // instead makes an ordinary title bar transparent and lets the content run under it,
         // which looks identical and keeps the buttons.
-        .commands { MacCommands(player: player) }
+        .commands { MacCommands(player: player, syncing: $syncing) }
 
         // What's playing, from the menu bar, with the window closed or behind others.
         MenuBarExtra {

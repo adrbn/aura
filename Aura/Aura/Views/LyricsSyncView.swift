@@ -66,7 +66,7 @@ struct LyricsSyncView: View {
         .onChange(of: player.currentSong?.id) { _, id in
             if id != song.id { dismiss() }
         }
-        .alert(savedLocally ? "Saved on this iPhone only" : "Not saved",
+        .alert(savedLocally ? savedHereOnly : "Not saved",
                isPresented: Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })) {
             Button("OK", role: .cancel) { if savedLocally { dismiss() } }
         } message: {
@@ -88,6 +88,12 @@ struct LyricsSyncView: View {
         }
     }
 
+    #if os(iOS)
+    private let savedHereOnly: LocalizedStringKey = "Saved on this iPhone only"
+    #else
+    private let savedHereOnly: LocalizedStringKey = "Saved on this Mac only"
+    #endif
+
     // MARK: Header
 
     private var header: some View {
@@ -100,6 +106,9 @@ struct LyricsSyncView: View {
                     .glassEffect(.regular, in: Circle())
             }
             .buttonStyle(.plain)
+            #if os(macOS)
+            .keyboardShortcut(.cancelAction)
+            #endif
             .accessibilityLabel("Cancel")
             CoverArtImage(coverArt: song.coverArt, size: 44, cornerRadius: 6,
                           placeholderName: song.title, placeholderKind: .album)
@@ -238,6 +247,10 @@ struct LyricsSyncView: View {
                 }
                 .buttonStyle(PressScale())
                 .disabled(armed == nil)
+                #if os(macOS)
+                // Return, not Space: Space plays and pauses wherever the focus is (MacSpaceKey).
+                .keyboardShortcut(.defaultAction)
+                #endif
                 .sensoryFeedback(.impact(weight: .light), trigger: tapped.count)
                 .accessibilityHint("Places the marked line where the song is now")
             }
@@ -303,7 +316,9 @@ struct LyricsSyncView: View {
         Button {
             let focus = retiming.times.lastIndex { ($0 ?? .infinity) <= player.lyricsTime } ?? armed ?? 0
             retiming.nudge(by: step, at: focus)
+            #if os(iOS)
             UISelectionFeedbackGenerator().selectionChanged()
+            #endif
         } label: {
             Image(systemName: symbol)
                 .font(.system(size: 15, weight: .bold))
@@ -335,7 +350,11 @@ struct LyricsSyncView: View {
                         .glassEffect(.regular, in: Capsule())
                 }
                 .buttonStyle(PressScale())
+                #if os(iOS)
                 .accessibilityHint("Listens to the song on this iPhone and places each line where it is sung")
+                #else
+                .accessibilityHint("Listens to the song on this Mac and places each line where it is sung")
+                #endif
             }
         }
         .font(.system(size: 15, weight: .semibold))
@@ -363,7 +382,9 @@ struct LyricsSyncView: View {
                 tapped = placement.anchors.keys.sorted()
                 armed = nil
                 earResult = placement
+                #if os(iOS)
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
+                #endif
             } catch {
                 AppLogger.shared.log("🎵 Auto sync failed: \(error)")
                 earFailure = error.localizedDescription
@@ -397,7 +418,9 @@ struct LyricsSyncView: View {
     /// Marks the line for the next tap, and plays from a little before where it's expected.
     private func arm(_ index: Int) {
         armed = index
+        #if os(iOS)
         UISelectionFeedbackGenerator().selectionChanged()
+        #endif
         guard let time = retiming.times[index] else { return }
         player.seek(to: max(0, time - AppSettings.shared.lyricsOffset - 3))
         if !player.isPlaying { player.play() }
@@ -455,7 +478,9 @@ struct LyricsSyncView: View {
             failure = error.localizedDescription
             return
         }
+        #if os(iOS)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
         guard LyricsOnServer.isEnabled else { return dismiss() }
         isSaving = true
         Task {
@@ -504,9 +529,13 @@ struct LyricsSyncView: View {
                                                    key: "\(coverArt)_\(ArtworkCache.thumbSize)")
             : nil
         guard let image = cached ?? fetched else { return }
+        #if os(iOS)
         let found = await Task.detached(priority: .userInitiated) { NowPlayingView.analyseBackdrop(image) }.value
         backdrop = image
         tone = found
+        #else
+        backdrop = image
+        #endif
     }
 
     private func clock(_ seconds: TimeInterval) -> String {
@@ -514,6 +543,23 @@ struct LyricsSyncView: View {
         return String(format: "%d:%02d", total / 60, total % 60)
     }
 }
+
+#if os(macOS)
+/// The phone's Now Playing measures each cover; the Mac has no such screen, and keeps the
+/// veil every mid-toned cover gets.
+private struct BackdropTone {
+    static let plain = BackdropTone()
+    let veil = 0.22
+    let vibrant: Color? = nil
+    let saturation = 1.0
+}
+
+// ponytail: SkeletonView (the phone's shimmer) leans on UIKit's greys and isn't in the Mac
+// target, so the progress bar's loading pulse is a plain dimming here; drop this if it joins.
+extension View {
+    func shimmering() -> some View { opacity(0.6) }
+}
+#endif
 
 /// A press that answers at once: the button gives a little under the finger.
 private struct PressScale: ButtonStyle {

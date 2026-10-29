@@ -29,6 +29,8 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Aura connects to the music server on your local network that you configure, and lets Aura on your iPhone control this Mac.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Aura listens to a song on this Mac, never to you, to place its lyrics where they are sung.</string>
 	<!-- The fonts are copied into the bundle root by a build phase, as on iOS. -->
 	<key>ATSApplicationFontsPath</key>
 	<string>.</string>

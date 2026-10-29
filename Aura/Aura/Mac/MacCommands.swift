@@ -8,6 +8,7 @@ import SwiftUI
 /// menu is mostly how anyone discovers them.
 struct MacCommands: Commands {
     let player: AudioPlayer
+    @Binding var syncing: Song?
 
     var body: some Commands {
         // Replaces the New Window item: this app has one window and nothing to put in a
@@ -67,6 +68,8 @@ struct MacCommands: Commands {
             Button("Show Lyrics") { player.isShowingNowPlaying.toggle() }
                 .keyboardShortcut("l", modifiers: [.command, .shift])
                 .disabled(player.currentSong == nil)
+            Button("Sync Lyrics…") { syncing = player.currentSong }
+                .disabled(player.currentSong == nil || player.lyrics.isEmpty || syncing != nil)
             Button("Go to Album") { player.pendingAlbumId = player.currentSong?.albumId }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
                 .disabled(player.currentSong?.albumId == nil || player.currentSong?.isPreview == true)

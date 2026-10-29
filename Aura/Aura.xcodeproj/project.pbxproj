@@ -120,6 +120,8 @@
 		B5FD446B4105F41FB7E47BB2 /* GeminiLyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */; };
 		BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000070 /* Localizable.xcstrings */; };
 		BC53C870BB1A0B5438F7E37E /* LyricsOnServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B473B77C7F39B4A0C89FD065 /* LyricsOnServer.swift */; };
+		A0C5E1D20000000000000001 /* LyricsSyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFB810DD93B73BC5A1020C86 /* LyricsSyncView.swift */; };
+		A0C5E1D20000000000000002 /* BufferedProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D2 /* BufferedProgressBar.swift */; };
 		BD810962312AF0BE4C7E7884 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DC88F51AFE7480355DB58E /* WatchModel.swift */; };
 		BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E789F4384A074A1B5C0CC509 /* PinSync.swift */; };
 		C03D99F693D04E563B0F59C5 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F6 /* MarqueeText.swift */; };
@@ -1256,6 +1258,8 @@
 				0CF35D1498580545AAB8E5CF /* MacArtistLinks.swift in Sources */,
 				0DD7E850D3FA7DC35FC4AB8C /* LyricsOverrides.swift in Sources */,
 				BC53C870BB1A0B5438F7E37E /* LyricsOnServer.swift in Sources */,
+				A0C5E1D20000000000000001 /* LyricsSyncView.swift in Sources */,
+				A0C5E1D20000000000000002 /* BufferedProgressBar.swift in Sources */,
 				C1C5793381313E62BF02811A /* PlaylistCovers.swift in Sources */,
 				E6D21EF991F5EA4A588D4CFF /* LocalSearch.swift in Sources */,
 				60C8B2F4D550FADE0808953B /* LibraryIndex.swift in Sources */,
