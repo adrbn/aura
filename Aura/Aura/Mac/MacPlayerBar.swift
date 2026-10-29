@@ -8,6 +8,8 @@ import SwiftUI
 struct MacPlayerBar: View {
     @State private var player = AudioPlayer.shared
     @State private var showEqualizer = false
+    @State private var actions = MacSongActions.shared
+    @State private var newPlaylistName = ""
 
     /// Where the scrubber sits while it is being dragged.
     ///
@@ -39,6 +41,20 @@ struct MacPlayerBar: View {
             Rectangle().fill(.primary.opacity(0.07)).frame(height: 1)
         }
         .popover(isPresented: $showEqualizer, arrowEdge: .top) { MacEqualizerView() }
+        // Every song menu's sheets, presented here because the bar is always on screen.
+        .sheet(item: $actions.infoSong) { MacSongInfoSheet(song: $0) }
+        .alert("New Playlist", isPresented: Binding(
+            get: { actions.newPlaylistSongs != nil },
+            set: { if !$0 { actions.newPlaylistSongs = nil } }
+        ), presenting: actions.newPlaylistSongs) { songs in
+            TextField("Playlist Name", text: $newPlaylistName)
+            Button("Create") { actions.createPlaylist(named: newPlaylistName, with: songs) }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("Enter a name for the new playlist.")
+        }
+        .onChange(of: actions.newPlaylistSongs == nil) { newPlaylistName = "" }
+        .task(id: ServerManager.shared.currentServer?.id) { actions.refreshPlaylists() }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             // While this Mac plays on another device, or another plays on it, the band says so.
             if let band = RemoteLink.shared.bandText {
@@ -88,43 +104,17 @@ struct MacPlayerBar: View {
                 .foregroundStyle(song?.starred != nil ? Color.appAccent : .secondary)
                 .help("Favourite")
             }
+            // A sleep timer is running; the song's menu says how long is left and turns it off.
+            if player.sleepTimerActive {
+                Image(systemName: "moon.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.appAccent)
+                    .help("Sleep timer active")
+            }
             Spacer(minLength: 0)
         }
         .frame(width: flank, alignment: .leading)
-        .overlay { MacRightClick { song.map(menu(for:)) } }
-    }
-
-    /// The song's menu, built in AppKit so it can open upward: the bar sits at the foot of
-    /// the screen, where a SwiftUI menu slides up over the pointer instead.
-    private func menu(for song: Song) -> NSMenu {
-        let menu = NSMenu()
-        if let albumId = song.albumId {
-            menu.add(String(localized: "Go to Album")) { player.pendingAlbumId = albumId }
-        }
-        if let artistId = song.artistId {
-            menu.add(String(localized: "Go to Artist")) { player.pendingArtistId = artistId }
-        }
-        menu.add(String(localized: "Start Radio")) { player.startRadioFromSong(song) }
-        menu.addItem(.separator())
-        menu.add(song.starred != nil ? String(localized: "Unfavourite") : String(localized: "Favourite")) { player.toggleFavorite() }
-        let ratings = SongRatings.shared, current = ratings.rating(for: song)
-        let rating = NSMenu()
-        for stars in 0...5 {
-            let item = rating.add(stars == 0 ? String(localized: "No Rating") : String(repeating: "★", count: stars)) {
-                ratings.set(stars, for: song)
-            }
-            item.state = stars == current ? .on : .off
-        }
-        let ratingItem = NSMenuItem(title: String(localized: "Rating"), action: nil, keyEquivalent: "")
-        ratingItem.submenu = rating
-        menu.addItem(ratingItem)
-        let downloads = DownloadManager.shared
-        if downloads.isDownloaded(song.id) {
-            menu.add(String(localized: "Remove Download")) { downloads.deleteSong(song.id) }
-        } else {
-            menu.add(String(localized: "Download")) { Task { await downloads.downloadAlbum([song]) } }
-        }
-        return menu
+        .overlay { MacRightClick { song.map(MacCurrentSongMenu.make) } }
     }
 
     // MARK: Centre — transport and scrubber
@@ -320,6 +310,96 @@ extension NSMenu {
         item.representedObject = handler  // the item keeps its handler alive
         addItem(item)
         return item
+    }
+}
+
+/// The playing song's menu, for the player bar and the Now Playing screen. Built in AppKit
+/// so it can open upward: the bar sits at the foot of the screen, where a SwiftUI menu
+/// slides up over the pointer instead.
+enum MacCurrentSongMenu {
+    static func make(for song: Song) -> NSMenu {
+        let player = AudioPlayer.shared, actions = MacSongActions.shared
+        let menu = NSMenu()
+        if let albumId = song.albumId {
+            menu.add(String(localized: "Go to Album")) { player.pendingAlbumId = albumId }
+        }
+        if let artistId = song.artistId {
+            menu.add(String(localized: "Go to Artist")) { player.pendingArtistId = artistId }
+        }
+        menu.add(String(localized: "Start Radio")) { player.startRadioFromSong(song) }
+        menu.addItem(.separator())
+        menu.add(song.starred != nil ? String(localized: "Unfavourite") : String(localized: "Favourite")) { player.toggleFavorite() }
+        let ratings = SongRatings.shared, current = ratings.rating(for: song)
+        let rating = NSMenu()
+        for stars in 0...5 {
+            let item = rating.add(stars == 0 ? String(localized: "No Rating") : String(repeating: "★", count: stars)) {
+                ratings.set(stars, for: song)
+            }
+            item.state = stars == current ? .on : .off
+        }
+        menu.addSubmenu(String(localized: "Rating"), rating)
+        menu.addSubmenu(String(localized: "Add to Playlist"), playlists(for: song))
+        menu.addItem(.separator())
+        menu.add(String(localized: "Copy Song Link")) { actions.copyLink(song) }
+        menu.add(String(localized: "Song Info…")) { actions.infoSong = song }
+        menu.addSubmenu(String(localized: "Sleep Timer"), sleepTimer())
+        menu.addItem(.separator())
+        let downloads = DownloadManager.shared
+        if downloads.isDownloaded(song.id) {
+            // Kept once downloaded, as a statement, as on the phone.
+            menu.addItem(NSMenuItem(title: String(localized: "Downloaded"), action: nil, keyEquivalent: ""))
+            menu.add(String(localized: "Remove Download")) { downloads.deleteSong(song.id) }
+        } else {
+            menu.add(String(localized: "Download")) { Task { await downloads.downloadAlbum([song]) } }
+        }
+        return menu
+    }
+
+    private static func playlists(for song: Song) -> NSMenu {
+        let actions = MacSongActions.shared
+        // The list as last fetched; a fresh one is asked for so the next menu has it.
+        actions.refreshPlaylists()
+        let menu = NSMenu()
+        menu.add(String(localized: "New Playlist…")) { actions.newPlaylistSongs = [song] }
+        if !actions.playlists.isEmpty { menu.addItem(.separator()) }
+        let containing = PlaylistMembershipCache.shared.cache[song.id] ?? []
+        for playlist in actions.playlists {
+            if containing.contains(playlist.id) {
+                // Already there: said, and not added a second time.
+                let item = NSMenuItem(title: playlist.name, action: nil, keyEquivalent: "")
+                item.state = .on
+                menu.addItem(item)
+            } else {
+                menu.add(playlist.name) { actions.add([song], to: playlist) }
+            }
+        }
+        return menu
+    }
+
+    private static func sleepTimer() -> NSMenu {
+        let player = AudioPlayer.shared
+        let menu = NSMenu()
+        if player.sleepTimerActive {
+            let status = player.sleepTimerEndOfSong
+                ? String(localized: "End of current song")
+                : String(localized: "\(player.sleepTimerFormatted) remaining")
+            menu.addItem(NSMenuItem(title: status, action: nil, keyEquivalent: ""))
+            menu.add(String(localized: "Turn Off Sleep Timer")) { player.cancelSleepTimer() }
+            menu.addItem(.separator())
+        }
+        for minutes in [15, 30, 45, 60] {
+            menu.add(String(localized: "\(minutes) min")) { player.startSleepTimer(minutes: minutes) }
+        }
+        menu.add(String(localized: "End of Song")) { player.startSleepTimerEndOfSong() }
+        return menu
+    }
+}
+
+private extension NSMenu {
+    func addSubmenu(_ title: String, _ submenu: NSMenu) {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.submenu = submenu
+        addItem(item)
     }
 }
 

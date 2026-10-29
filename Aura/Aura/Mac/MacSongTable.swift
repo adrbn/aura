@@ -66,8 +66,7 @@ struct MacSongTable: View {
             Button("Play Next") { chosen(ids).reversed().forEach { player.playNext($0) } }
             Button("Add to Queue") { player.addToQueue(chosen(ids)) }
             Divider()
-            MacRatingMenu(songs: chosen(ids))
-            MacDownloadMenuItem(songs: chosen(ids))
+            MacSongMenuItems(songs: chosen(ids))
         } primaryAction: { ids in
             // Double-click, the only gesture anyone tries first on a Mac list.
             play(ids)

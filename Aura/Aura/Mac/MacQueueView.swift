@@ -217,16 +217,7 @@ struct MacQueueView: View {
             Button("Move to End", systemImage: "text.append") { move(key, to: last(of: part), part: part) }
         }
         Divider()
-        if let albumId = song.albumId {
-            Button("Go to Album", systemImage: "square.stack") { player.pendingAlbumId = albumId }
-        }
-        if let artistId = song.artistId {
-            Button("Go to Artist", systemImage: "music.mic") { player.pendingArtistId = artistId }
-        }
-        Button("Start Radio", systemImage: "dot.radiowaves.left.and.right") { player.startRadioFromSong(song) }
-        Divider()
-        MacRatingMenu(songs: [song])
-        MacDownloadMenuItem(songs: [song])
+        MacSongMenuItems(songs: [song])
         Divider()
         Button("Remove", systemImage: "minus.circle", role: .destructive) { remove(key, part: part) }
     }

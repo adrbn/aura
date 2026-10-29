@@ -66,6 +66,8 @@ struct MacNowPlayingView: View {
             Spacer()
             CoverArtImage(coverArt: player.currentSong?.coverArt, size: cover, cornerRadius: 16)
                 .shadow(color: .black.opacity(0.5), radius: 30, y: 14)
+                // The player bar's song menu, sleep timer included.
+                .overlay { MacRightClick { player.currentSong.map(MacCurrentSongMenu.make) } }
             VStack(spacing: 6) {
                 Text(player.currentSong?.title ?? String(localized: "Nothing playing"))
                     .auraDisplay(cover > 460 ? 38 : 30)
