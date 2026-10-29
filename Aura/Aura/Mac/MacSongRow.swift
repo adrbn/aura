@@ -97,6 +97,8 @@ final class MacSongActions {
     var infoSong: Song?
     /// The songs waiting for a name for the playlist they will start.
     var newPlaylistSongs: [Song]?
+    /// The song whose Share sheet is open, presented by the app's window.
+    var shareSong: Song?
     /// Favourites set from a menu. A list holds copies of its songs, so without this the
     /// menu would still offer "Favourite" for a song just favourited.
     private var starred: [String: Bool] = [:]
@@ -231,6 +233,7 @@ struct MacSongMenuItems: View {
             }
             Divider()
             Button("Copy Song Link", systemImage: "link") { actions.copyLink(song) }
+            Button("Share", systemImage: "square.and.arrow.up") { actions.shareSong = song }
             Button("Song Info…", systemImage: "info.circle") { actions.infoSong = song }
         }
         Divider()

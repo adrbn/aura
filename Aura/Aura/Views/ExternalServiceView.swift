@@ -27,7 +27,9 @@ struct ExternalServiceView: View {
             }
         }
         .navigationTitle("slskd")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
@@ -126,7 +128,9 @@ struct SlskdSearchView: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
                     TextField("Search Soulseek...", text: $searchQuery)
+                        #if os(iOS)
                         .textInputAutocapitalization(.never)
+                        #endif
                         .autocorrectionDisabled()
                         .onSubmit { startSearch() }
                     if isSearching {
@@ -338,7 +342,9 @@ struct SlskdSearchView: View {
                 .listRowBackground(Color.clear)
                 .frame(height: 80)
         }
+        #if os(iOS)
         .endsAboveBottomChrome()
+        #endif
         .scrollIndicators(.hidden)
         .task {
             guard !initialQuery.isEmpty, searchQuery.isEmpty else { return }
@@ -384,7 +390,11 @@ struct SlskdSearchView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
+        #if os(iOS)
         .background(isActive ? color.opacity(0.2) : Color(.systemGray5))
+        #else
+        .background(isActive ? color.opacity(0.2) : Color.secondary.opacity(0.15))
+        #endif
         .foregroundStyle(isActive ? color : .secondary)
         .clipShape(Capsule())
     }
@@ -474,7 +484,9 @@ struct SlskdSearchView: View {
     }
 
     private func downloadFile(_ file: SlskdFile, from username: String) {
+        #if os(iOS)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
         downloadingFiles.insert(file.filename)
         failedFiles.remove(file.filename)
 
@@ -723,7 +735,9 @@ struct SlskdDownloadsView: View {
                 .listRowBackground(Color.clear)
                 .frame(height: 80)
         }
+        #if os(iOS)
         .endsAboveBottomChrome()
+        #endif
         .scrollIndicators(.hidden)
         .refreshable { await loadDownloads() }
         .onChange(of: isVisible) { _, visible in
@@ -861,7 +875,9 @@ struct SlskdDownloadsView: View {
     }
 
     private func deleteTransfer(_ item: FlatTransfer) {
+        #if os(iOS)
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
         deletingIds.insert(item.id)
         Task {
             try? await SlskdClient.shared.deleteTransfer(username: item.transfer.username, id: item.id)

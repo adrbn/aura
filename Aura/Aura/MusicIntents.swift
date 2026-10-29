@@ -1,5 +1,7 @@
 import AppIntents
 
+// Live Activities are the phone's; the Mac gets the Shortcuts below.
+#if os(iOS)
 struct PlayPauseIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "Play or Pause"
     static var description: IntentDescription = "Toggles playback"
@@ -41,6 +43,7 @@ struct PreviousTrackIntent: LiveActivityIntent {
         return .result()
     }
 }
+#endif
 
 // MARK: - Siri App Shortcuts (app target only)
 //

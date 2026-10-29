@@ -140,11 +140,9 @@ struct RadarReleaseRow: View {
                     Label("Get It", systemImage: "arrow.down.circle")
                 }
                 #endif
-                #if os(iOS)
                 Button { showSoulseek = true } label: {
                     Label("Search by Hand", systemImage: "magnifyingglass")
                 }
-                #endif
             }
             if let artistId = release.artist.libraryId {
                 Button { player.pendingArtistId = artistId } label: {
@@ -295,6 +293,16 @@ struct RadarReleaseRow: View {
                     }
                 }
         }
+        #elseif !APPSTORE_BUILD
+        VStack(spacing: 0) {
+            SlskdSearchView(initialQuery: "\(release.artist.name) \(release.title)")
+            HStack {
+                Spacer()
+                Button("Done") { showSoulseek = false }.keyboardShortcut(.defaultAction)
+            }
+            .padding(16)
+        }
+        .frame(width: 620, height: 640)
         #endif
     }
 }

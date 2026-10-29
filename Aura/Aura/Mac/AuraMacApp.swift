@@ -12,6 +12,8 @@ struct AuraMacApp: App {
     @State private var player = AudioPlayer.shared
     /// The song whose lyrics are being put in time, from Playback > Sync Lyrics….
     @State private var syncing: Song?
+    @State private var songActions = MacSongActions.shared
+    @State private var sharePlay = SharePlay.shared
 
     var body: some Scene {
         // One window: a WindowGroup opened a second one on relaunch, and macOS showed
@@ -27,6 +29,15 @@ struct AuraMacApp: App {
                         .environment(player)
                         .frame(minWidth: 460, idealWidth: 520, minHeight: 560, idealHeight: 760)
                 }
+                // A song menu's Share: the phone's sheet, its links and the system share.
+                .sheet(item: $songActions.shareSong) { song in
+                    SongShareSheet(song: song).environment(player)
+                }
+                // Listen Together, as the phone takes it: every session for the app's life.
+                .task { await sharePlay.observeSessions() }
+                .alert(sharePlay.notice ?? "", isPresented: Binding(
+                    get: { sharePlay.notice != nil },
+                    set: { if !$0 { sharePlay.notice = nil } })) {}
                 // aura:// links, as on the phone: Shortcuts on this Mac can play and pause.
                 .onOpenURL { AuraURL.open($0) }
                 .task {
@@ -54,6 +65,15 @@ struct AuraMacApp: App {
         // instead makes an ordinary title bar transparent and lets the content run under it,
         // which looks identical and keeps the buttons.
         .commands { MacCommands(player: player, syncing: $syncing) }
+
+        #if !APPSTORE_BUILD
+        // The phone's Soulseek screen, search and slskd's transfers, in a window of its own.
+        Window("Soulseek", id: "soulseek") {
+            ExternalServiceView()
+                .frame(minWidth: 560, minHeight: 480)
+        }
+        .defaultSize(width: 680, height: 720)
+        #endif
 
         // What's playing, from the menu bar, with the window closed or behind others.
         MenuBarExtra {

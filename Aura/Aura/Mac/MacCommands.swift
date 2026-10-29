@@ -9,6 +9,7 @@ import SwiftUI
 struct MacCommands: Commands {
     let player: AudioPlayer
     @Binding var syncing: Song?
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
         // Replaces the New Window item: this app has one window and nothing to put in a
@@ -100,7 +101,28 @@ struct MacCommands: Commands {
             }
             .keyboardShortcut("0", modifiers: [.command, .option])
             .disabled(player.pitchSemitones == 0)
+
+            Divider()
+
+            // Listen Together over FaceTime or Messages, as from the phone's Now Playing.
+            if SharePlay.shared.isActive {
+                Button("Leave SharePlay") { SharePlay.shared.leave() }
+            } else {
+                ShareLink(item: ListenTogetherInvite(), preview: SharePreview("Listen Together on Aura")) {
+                    Text("SharePlay")
+                }
+            }
         }
+
+        #if !APPSTORE_BUILD
+        // Developer options only, as on the phone: Soulseek search and slskd's transfers.
+        CommandGroup(before: .windowList) {
+            if AppSettings.shared.betaFeaturesEnabled {
+                Button("Search Soulseek") { openWindow(id: "soulseek") }
+                Divider()
+            }
+        }
+        #endif
     }
 }
 

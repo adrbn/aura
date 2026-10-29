@@ -11,6 +11,11 @@
 		E1000001000000000000F0A2 /* OfflineLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000053 /* OfflineLibraryView.swift */; };
 		E1000001000000000000F0A3 /* MacOffline.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000F0A3 /* MacOffline.swift */; };
 		E1000001000000000000F0A4 /* MacServerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000F0A4 /* MacServerEditView.swift */; };
+		AC0000010000000000000001 /* SharePlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0534A06AB826D81FA115759 /* SharePlay.swift */; };
+		AC0000010000000000000002 /* MusicIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000060 /* MusicIntents.swift */; };
+		AC0000010000000000000003 /* MusicEntities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */; };
+		AC0000010000000000000004 /* ExternalServiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000052 /* ExternalServiceView.swift */; };
+		AC0000010000000000000005 /* SongShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D7 /* SongShareSheet.swift */; };
 		0031110FB412232B510DA63F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332E4899162985D5A2BE70F9 /* Foundation.framework */; };
 		00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7507C823E9A1C89305C77937 /* MacHomeView.swift */; };
 		016B640B9D48D7E4C4EED3A0 /* MissingSongsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B9C92CA58D03F28FB04AFA4 /* MissingSongsSection.swift */; };
@@ -1208,6 +1213,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC0000010000000000000001 /* SharePlay.swift in Sources */,
+				AC0000010000000000000002 /* MusicIntents.swift in Sources */,
+				AC0000010000000000000003 /* MusicEntities.swift in Sources */,
+				AC0000010000000000000004 /* ExternalServiceView.swift in Sources */,
+				AC0000010000000000000005 /* SongShareSheet.swift in Sources */,
 				E1000002000000000000A0D7 /* MacFetchNotices.swift in Sources */,
 				E1000001000000000000F0A1 /* OfflineLibrary.swift in Sources */,
 				E1000001000000000000F0A2 /* OfflineLibraryView.swift in Sources */,

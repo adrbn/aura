@@ -1,5 +1,7 @@
 import SwiftUI
+#if os(iOS)
 import UIKit
+#endif
 
 // MARK: - Song Share Sheet
 
@@ -19,78 +21,9 @@ struct SongShareSheet: View {
     @State private var contentHeight: CGFloat = 0
 
     var body: some View {
+        #if os(iOS)
         NavigationStack {
-            VStack(spacing: 8) {
-                if isLoading {
-                    VStack(spacing: 12) {
-                        ProgressView()
-                        Text("Finding links...")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 240)
-                } else if let links = songLinks {
-                    VStack(spacing: 10) {
-                        sharePlatformRow(
-                            name: "Spotify",
-                            icon: "play.circle.fill",
-                            iconColor: Color(red: 0.114, green: 0.725, blue: 0.329),
-                            link: links.spotify,
-                            platform: "spotify"
-                        )
-                        sharePlatformRow(
-                            name: "Apple Music",
-                            icon: "music.note",
-                            iconColor: .pink,
-                            link: links.appleMusic,
-                            platform: "appleMusic"
-                        )
-                        sharePlatformRow(
-                            name: "YouTube Music",
-                            icon: "play.rectangle.fill",
-                            iconColor: .red,
-                            link: links.youtubeMusic,
-                            platform: "youtubeMusic"
-                        )
-                        sharePlatformRow(
-                            name: "Deezer",
-                            icon: "waveform",
-                            iconColor: .purple,
-                            link: links.deezer,
-                            platform: "deezer"
-                        )
-                        sharePlatformRow(
-                            name: "Yandex Music",
-                            icon: "y.circle.fill",
-                            iconColor: .red,
-                            link: links.yandex,
-                            platform: "yandex"
-                        )
-
-                        Divider().padding(.horizontal, 4)
-
-                        sharePlatformRow(
-                            name: String(localized: "Universal Link"),
-                            icon: "link.circle.fill",
-                            iconColor: .blue,
-                            link: links.pageUrl.map { SongLinkService.PlatformLink(url: $0, isSearch: false) },
-                            platform: "universal"
-                        )
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 16)
-                } else {
-                    VStack(spacing: 12) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.title)
-                            .foregroundStyle(.secondary)
-                        Text("Song not found on streaming platforms")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 240)
-                }
-            }
+            links
             .onGeometryChange(for: CGFloat.self) { proxy in
                 proxy.size.height
             } action: { contentHeight = $0 }
@@ -117,17 +50,104 @@ struct SongShareSheet: View {
             .sheet(item: $shareURL) { url in
                 ShareSheet(activityItems: [url])
             }
-            .task {
-                let artist = song.artist ?? ""
-                songLinks = await SongLinkService.shared.fetchLinks(title: song.title, artist: artist)
-                isLoading = false
-            }
         }
         // Chrome around the measured content: inline nav bar, drag indicator, and
         // the home-indicator inset the sheet reserves at the bottom.
         .presentationDetents([.height(max(320, contentHeight + 94))])
         .presentationDragIndicator(.visible)
         .presentationBackground(.ultraThinMaterial)
+        #else
+        // The Mac's sheet: the same rows, with the title above and Done below.
+        VStack(spacing: 0) {
+            Text("Share").font(.headline).padding(.top, 16)
+            links
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+            }
+            .padding(16)
+        }
+        .frame(width: 440)
+        #endif
+    }
+
+    private var links: some View {
+        VStack(spacing: 8) {
+            if isLoading {
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("Finding links...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, minHeight: 240)
+            } else if let links = songLinks {
+                VStack(spacing: 10) {
+                    sharePlatformRow(
+                        name: "Spotify",
+                        icon: "play.circle.fill",
+                        iconColor: Color(red: 0.114, green: 0.725, blue: 0.329),
+                        link: links.spotify,
+                        platform: "spotify"
+                    )
+                    sharePlatformRow(
+                        name: "Apple Music",
+                        icon: "music.note",
+                        iconColor: .pink,
+                        link: links.appleMusic,
+                        platform: "appleMusic"
+                    )
+                    sharePlatformRow(
+                        name: "YouTube Music",
+                        icon: "play.rectangle.fill",
+                        iconColor: .red,
+                        link: links.youtubeMusic,
+                        platform: "youtubeMusic"
+                    )
+                    sharePlatformRow(
+                        name: "Deezer",
+                        icon: "waveform",
+                        iconColor: .purple,
+                        link: links.deezer,
+                        platform: "deezer"
+                    )
+                    sharePlatformRow(
+                        name: "Yandex Music",
+                        icon: "y.circle.fill",
+                        iconColor: .red,
+                        link: links.yandex,
+                        platform: "yandex"
+                    )
+
+                    Divider().padding(.horizontal, 4)
+
+                    sharePlatformRow(
+                        name: String(localized: "Universal Link"),
+                        icon: "link.circle.fill",
+                        iconColor: .blue,
+                        link: links.pageUrl.map { SongLinkService.PlatformLink(url: $0, isSearch: false) },
+                        platform: "universal"
+                    )
+                }
+                .padding(.horizontal)
+                .padding(.top, 16)
+            } else {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.title)
+                        .foregroundStyle(.secondary)
+                    Text("Song not found on streaming platforms")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, minHeight: 240)
+            }
+        }
+        .task {
+            let artist = song.artist ?? ""
+            songLinks = await SongLinkService.shared.fetchLinks(title: song.title, artist: artist)
+            isLoading = false
+        }
     }
 
     /// Open a destination, preferring the platform's own URI scheme when it has one.
@@ -190,7 +210,12 @@ struct SongShareSheet: View {
             if let link {
                 // Copy button
                 Button {
+                    #if os(iOS)
                     UIPasteboard.general.string = link.url
+                    #else
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(link.url, forType: .string)
+                    #endif
                     copiedPlatform = platform
                     ToastManager.shared.show(String(localized: "Copied \(name) link"), icon: "doc.on.doc")
                 } label: {
@@ -201,6 +226,7 @@ struct SongShareSheet: View {
                         .contentShape(Rectangle())
                 }
                 // Native iOS share button
+                #if os(iOS)
                 Button {
                     if let url = URL(string: link.url) {
                         shareURL = url
@@ -212,6 +238,18 @@ struct SongShareSheet: View {
                         .frame(width: 32, height: 32)
                         .contentShape(Rectangle())
                 }
+                #else
+                if let url = URL(string: link.url) {
+                    ShareLink(item: url) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.subheadline)
+                            .foregroundStyle(accentColor)
+                            .frame(width: 32, height: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                #endif
             } else {
                 Text("Not available")
                     .font(.caption)
@@ -220,12 +258,17 @@ struct SongShareSheet: View {
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 16)
+        #if os(iOS)
         .background(Color(.systemGray6).opacity(0.5))
+        #else
+        .background(.quinary)
+        #endif
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .opacity(link == nil ? 0.4 : 1.0)
     }
 }
 
+#if os(iOS)
 // UIKit share sheet wrapper
 struct ShareSheet: UIViewControllerRepresentable {
     let activityItems: [Any]
@@ -234,6 +277,7 @@ struct ShareSheet: UIViewControllerRepresentable {
     }
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
+#endif
 
 extension URL: @retroactive Identifiable {
     public var id: String { absoluteString }
