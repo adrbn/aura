@@ -73,6 +73,7 @@ struct MacPlaylistsView: View {
     @State private var serverManager = ServerManager.shared
     @State private var allPlaylists: [Playlist] = []
     @State private var edits = MacPlaylistEdits.shared
+    @State private var player = AudioPlayer.shared
     @State private var isLoading = false
     @State private var settings = AppSettings.shared
     /// The phone's key, so the sort is chosen the same way on both.
@@ -85,13 +86,37 @@ struct MacPlaylistsView: View {
     @State private var newName = ""
     @State private var deleting: [Playlist] = []
     @State private var isFindingDuplicates = false
+    @State private var filter: PlaylistFilter = .all
+    @State private var downloadedIds: Set<String> = []
+    /// The full path ("Mixes/") of the folder being renamed, or deleted.
+    @State private var renamingFolder: String?
+    @State private var folderNewName = ""
+    @State private var deletingFolder: String?
 
     private var playlists: [Playlist] { allPlaylists.filter { !edits.hidden.contains($0.id) } }
 
+    /// The phone's filters, read the phone's way.
+    private var filterContext: PlaylistFilterContext {
+        PlaylistFilterContext(username: serverManager.currentServer?.username,
+                              pinned: settings.pinnedPlaylistIds, downloaded: downloadedIds)
+    }
+
+    /// Moves when a song lands on this Mac or the offline snapshots change: what Downloaded reads.
+    private var downloadSignature: Int {
+        DownloadManager.shared.downloadedSongs.count
+            &+ OfflinePlaylistsStore.shared.playlists.reduce(0) { $0 &+ $1.songs.count }
+    }
+
+    private var filtered: [Playlist] {
+        guard filter != .all else { return playlists }
+        let context = filterContext
+        return playlists.filter { context.matches($0, filter) }
+    }
+
     /// Pinned playlists lead at the top level, then this level's folders, then its playlists.
     private var entries: [MacPlaylistEntry] {
-        let pinned = folder.isEmpty ? MacPlaylistOrder.pinnedFirst(playlists).filter { settings.isPinned($0.id) } : []
-        let level = MacPlaylistOrder.level(playlists.filter { !settings.isPinned($0.id) }, in: folder)
+        let pinned = folder.isEmpty ? MacPlaylistOrder.pinnedFirst(filtered).filter { settings.isPinned($0.id) } : []
+        let level = MacPlaylistOrder.level(filtered.filter { !settings.isPinned($0.id) }, in: folder)
         return pinned.map { .playlist($0) }
             + level.folders.map { .folder(path: folder + $0.name + "/", name: $0.name, count: $0.count) }
             + MacPlaylistOrder.sorted(level.loose, by: sortOrder).map { .playlist($0) }
@@ -100,28 +125,26 @@ struct MacPlaylistsView: View {
     private var folderName: String { String(folder.dropLast().split(separator: "/").last ?? "") }
 
     var body: some View {
-        Group {
+        // MacGrid's title row is drawn here the same way, so the filters can sit under it
+        // and the empty state can have its button.
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(folder.isEmpty ? "Playlists" : "\(folderName)").auraDisplay(52)
+                Spacer()
+                headerActions
+            }
+            .padding(.horizontal, 28)
+            .padding(.top, 26)
+            .padding(.bottom, 4)
+            filterChips
             if !isLoading && playlists.isEmpty {
-                // MacGrid's own empty state has no room for a button, so its title row is
-                // drawn here the same way, over one that has.
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("Playlists").auraDisplay(52)
-                        Spacer()
-                        headerActions
-                    }
-                    .padding(.horizontal, 28)
-                    .padding(.top, 26)
-                    .padding(.bottom, 4)
-                    ContentUnavailableView {
-                        Label("No playlists", systemImage: "music.note.list")
-                    } actions: {
-                        Button("New Playlist") { startCreating() }
-                    }
+                ContentUnavailableView {
+                    Label("No playlists", systemImage: "music.note.list")
+                } actions: {
+                    Button("New Playlist") { startCreating() }
                 }
             } else {
-                MacGrid(title: folder.isEmpty ? "Playlists" : "\(folderName)", trailing: AnyView(headerActions),
-                        items: entries, isLoading: isLoading, emptyMessage: "No playlists") { entry in
+                MacGrid(items: entries, isLoading: isLoading, emptyMessage: "No playlists") { entry in
                     switch entry {
                     case .folder(let path, let name, let count): folderTile(path: path, name: name, count: count)
                     case .playlist(let playlist): playlistTile(playlist)
@@ -131,6 +154,29 @@ struct MacPlaylistsView: View {
         }
         .navigationTitle("Playlists")
         .task { await load() }
+        .onChange(of: downloadSignature, initial: true) {
+            downloadedIds = PlaylistFilterContext.downloadedPlaylistIds()
+        }
+        .alert(deletingFolder.map { String(localized: "Delete the folder “\(String($0.dropLast().split(separator: "/").last ?? ""))”?") } ?? "",
+               isPresented: Binding(get: { deletingFolder != nil }, set: { if !$0 { deletingFolder = nil } }),
+               presenting: deletingFolder) { path in
+            Button("Keep the Playlists") { Task { await ungroupFolder(path) } }
+            Button("Delete the Playlists Too", role: .destructive) {
+                MacPlaylistEdits.shared.delete(playlists.filter { $0.name.hasPrefix(path) })
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("Keeping them moves them out of the folder.")
+        }
+        .alert("Rename Folder", isPresented: Binding(get: { renamingFolder != nil },
+                                                     set: { if !$0 { renamingFolder = nil } })) {
+            TextField("Folder Name", text: $folderNewName)
+            Button("OK") {
+                guard let path = renamingFolder else { return }
+                Task { await renameFolder(path, to: folderNewName) }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
         .alert(isCreating ? Text("New Playlist") : Text("Rename…"),
                isPresented: Binding(get: { isCreating || renaming != nil },
                                     set: { if !$0 { isCreating = false; renaming = nil } })) {
@@ -171,6 +217,24 @@ struct MacPlaylistsView: View {
         .controlSize(.large)
     }
 
+    /// The phone's filter chips: only those that leave some playlists out, clicked again to clear.
+    @ViewBuilder private var filterChips: some View {
+        let chips = filterContext.offered(for: playlists, keeping: filter).filter { $0 != .all }
+        if !chips.isEmpty {
+            HStack(spacing: 6) {
+                ForEach(chips) { chip in
+                    let isOn = chip == filter
+                    QuietChip(title: chip.rawValue, isOn: isOn, showsClear: true) {
+                        withAnimation(.easeInOut(duration: 0.2)) { filter = isOn ? .all : chip }
+                    }
+                    .fixedSize()
+                }
+            }
+            .padding(.horizontal, 28)
+            .padding(.top, 8)
+        }
+    }
+
     private func folderTile(path: String, name: String, count: Int) -> some View {
         Button {
             withAnimation(.smooth(duration: 0.25)) { folder = path }
@@ -190,6 +254,56 @@ struct MacPlaylistsView: View {
             }
         }
         .buttonStyle(MacPressStyle())
+        .contextMenu { folderMenu(path: path, name: name) }
+    }
+
+    /// The phone's folder menu, but Select: the Mac grid has no multiple selection.
+    @ViewBuilder
+    private func folderMenu(path: String, name: String) -> some View {
+        let inside = playlists.filter { $0.name.hasPrefix(path) }
+        if inside.contains(where: { !settings.isPinned($0.id) }) {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    for playlist in inside where !settings.isPinned(playlist.id) {
+                        settings.togglePin(playlistId: playlist.id)
+                    }
+                }
+            } label: { Label("Pin All", systemImage: "pin") }
+        }
+        Button {
+            folderNewName = name
+            renamingFolder = path
+        } label: { Label("Rename Folder", systemImage: "pencil") }
+        Button(role: .destructive) { deletingFolder = path } label: {
+            Label("Delete Folder", systemImage: "trash")
+        }
+    }
+
+    private func parentPath(of path: String) -> String {
+        String(path.dropLast().split(separator: "/").dropLast().map { $0 + "/" }.joined())
+    }
+
+    /// The folder's playlists move up one level, the folder itself gone.
+    private func ungroupFolder(_ path: String) async {
+        guard let server = serverManager.currentServer else { return }
+        for playlist in playlists where playlist.name.hasPrefix(path) {
+            let renamed = parentPath(of: path) + playlist.name.dropFirst(path.count)
+            try? await SubsonicClient.shared.updatePlaylist(server: server, id: playlist.id, name: renamed)
+        }
+        await load()
+    }
+
+    /// Renames every playlist under the folder, which is what renaming a folder means here.
+    private func renameFolder(_ oldPath: String, to newName: String) async {
+        let name = newName.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "/", with: "-")
+        guard !name.isEmpty, let server = serverManager.currentServer else { return }
+        let newPath = parentPath(of: oldPath) + name + "/"
+        guard newPath != oldPath else { return }
+        for playlist in playlists where playlist.name.hasPrefix(oldPath) {
+            let renamed = newPath + playlist.name.dropFirst(oldPath.count)
+            try? await SubsonicClient.shared.updatePlaylist(server: server, id: playlist.id, name: renamed)
+        }
+        await load()
     }
 
     private func playlistTile(_ playlist: Playlist) -> some View {
@@ -211,6 +325,18 @@ struct MacPlaylistsView: View {
         }
         .buttonStyle(MacPressStyle())
         .contextMenu {
+            let source = PlaybackSource.playlist(id: playlist.id, name: playlist.name)
+            Button { withSongs(of: playlist) { player.playSong($0[0], fromQueue: $0, startIndex: 0, source: source) } } label: {
+                Label("Play", systemImage: "play.fill")
+            }
+            Button { withSongs(of: playlist) { player.playShuffled($0, source: source) } } label: {
+                Label("Shuffle", systemImage: "shuffle")
+            }
+            // Shuffled, as the phone adds a playlist to the queue.
+            Button { withSongs(of: playlist) { player.addToQueue($0.shuffled()) } } label: {
+                Label("Add to Queue", systemImage: "text.append")
+            }
+            Divider()
             MacPinButton(playlistId: playlist.id, asLabel: true)
             Button {
                 newName = playlist.name
@@ -220,6 +346,16 @@ struct MacPlaylistsView: View {
             Button(role: .destructive) { deleting = [playlist] } label: {
                 Label("Delete Playlist", systemImage: "trash")
             }
+        }
+    }
+
+    /// The playlist's songs, fetched for the tile's menu; nothing happens for an empty one.
+    private func withSongs(of playlist: Playlist, _ act: @escaping ([Song]) -> Void) {
+        Task {
+            guard let server = serverManager.currentServer,
+                  let songs = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id).entry,
+                  !songs.isEmpty else { return }
+            act(songs)
         }
     }
 
@@ -280,8 +416,14 @@ struct MacPlaylistDetailView: View {
     @State private var downloads = DownloadManager.shared
     @State private var songs: [Song] = []
     @State private var name: String?
+    @State private var comment: String?
+    @State private var coverArt: String?
+    /// Changed after a new cover, so the header draws it rather than the cached one.
+    @State private var coverId = UUID()
     @State private var loaded = false
-    @State private var newName: String?
+    @State private var isEditing = false
+    @State private var showAddSongs = false
+    @State private var suggestions: [Song] = []
     @State private var deleting: [Playlist] = []
     @State private var edits = MacPlaylistEdits.shared
     @Environment(\.dismiss) private var dismiss
@@ -289,25 +431,45 @@ struct MacPlaylistDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             MacDetailHeader(
-                coverArt: playlist.coverArt,
+                coverArt: coverArt ?? playlist.coverArt,
                 title: name ?? playlist.name,
-                // From the songs once they're here, so a removal shows in the count.
-                subtitle: [(loaded ? songs.count : playlist.songCount).map { String(localized: "\($0) songs") },
-                           MacFormat.duration(loaded ? songs.compactMap(\.duration).reduce(0, +) : playlist.duration)]
-                    .compactMap { $0 }.joined(separator: " · "),
+                // The description, as on the phone, over the songs' count and length — from
+                // the songs once they're here, so a removal shows in the count.
+                subtitle: [comment.flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 },
+                           [(loaded ? songs.count : playlist.songCount).map { String(localized: "\($0) songs") },
+                            MacFormat.duration(loaded ? songs.compactMap(\.duration).reduce(0, +) : playlist.duration)]
+                               .compactMap { $0 }.joined(separator: " · ")]
+                    .compactMap { $0 }.joined(separator: "\n"),
                 placeholderName: playlist.name
             ) {
                 Button { play(shuffled: false) } label: { Label("Play", systemImage: "play.fill") }
                 Button { play(shuffled: true) } label: { Label("Shuffle", systemImage: "shuffle") }
                 MacPinButton(playlistId: playlist.id, asLabel: true)
                 Menu {
+                    // Shuffled, as the phone adds a playlist to the queue.
+                    Button { player.addToQueue(songs.shuffled()) } label: {
+                        Label("Add to Queue", systemImage: "text.append")
+                    }
+                    .disabled(songs.isEmpty)
                     downloadItem
                     Toggle(isOn: Binding(get: { downloads.keptPlaylistIds.contains(playlist.id) },
                                          set: { downloads.setKeepDownloaded(playlist.id, $0) })) {
                         Label("Keep Downloaded", systemImage: "arrow.down.circle.dotted")
                     }
                     Divider()
-                    Button { newName = name ?? playlist.name } label: { Label("Rename…", systemImage: "pencil") }
+                    Button { showAddSongs = true } label: { Label("Add Songs", systemImage: "plus") }
+                    Button { isEditing = true } label: { Label("Modify", systemImage: "pencil") }
+                    Divider()
+                    Button { Task { await changeCover() } } label: {
+                        Label("Change Cover Art", systemImage: "photo")
+                    }
+                    Button { saveCover() } label: {
+                        Label("Save Cover Art", systemImage: "square.and.arrow.down")
+                    }
+                    Button(role: .destructive) { Task { await removeCover() } } label: {
+                        Label("Remove Cover Art", systemImage: "trash")
+                    }
+                    Divider()
                     Button(role: .destructive) { deleting = [playlist] } label: {
                         Label("Delete Playlist", systemImage: "trash")
                     }
@@ -316,10 +478,16 @@ struct MacPlaylistDetailView: View {
                 }
                 .menuIndicator(.hidden)
             }
+            .id(coverId)
             Divider()
             if loaded {
-                MacPlaylistSongTable(songs: $songs, source: .playlist(id: playlist.id, name: name ?? playlist.name),
-                                     onEdit: save)
+                if songs.isEmpty {
+                    emptyPrompt
+                } else {
+                    MacPlaylistSongTable(songs: $songs, source: .playlist(id: playlist.id, name: name ?? playlist.name),
+                                         onEdit: save)
+                }
+                if !suggestions.isEmpty { suggestionsSection }
             } else {
                 MacLoadingState()
             }
@@ -327,14 +495,15 @@ struct MacPlaylistDetailView: View {
         .background { ZStack { ArtworkCanvas(coverArt: playlist.coverArt, height: 640); MacFadingGrid() } }
         .navigationTitle(playlist.name)
         .task { await load() }
-        .alert("Rename…", isPresented: Binding(get: { newName != nil }, set: { if !$0 { newName = nil } })) {
-            TextField("Name", text: Binding(get: { newName ?? "" }, set: { newName = $0 }))
-            Button("Save") {
-                let typed = (newName ?? "").trimmingCharacters(in: .whitespaces)
-                guard !typed.isEmpty, typed != (name ?? playlist.name) else { return }
-                Task { if await MacPlaylistEdits.rename(playlist, to: typed) { name = typed } }
+        .sheet(isPresented: $showAddSongs) {
+            MacAddSongsSheet(playlistSongs: songs) { await add($0) }
+        }
+        .sheet(isPresented: $isEditing) {
+            MacPlaylistEditSheet(playlistId: playlist.id, currentName: name ?? playlist.name,
+                                 currentComment: comment ?? "") { newName, newComment in
+                name = newName
+                comment = newComment
             }
-            Button("Cancel", role: .cancel) {}
         }
         .macPlaylistDeleteAlert($deleting)
         // Deleted from here: back to where it was opened from.
@@ -365,7 +534,109 @@ struct MacPlaylistDetailView: View {
         let detail = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id)
         songs = detail?.entry ?? []
         name = detail?.name
+        comment = detail?.comment
+        coverArt = detail?.coverArt
         loaded = true
+        if suggestions.isEmpty { await refreshSuggestions() }
+    }
+
+    /// An empty playlist says so and offers the way to fill it.
+    private var emptyPrompt: some View {
+        ContentUnavailableView {
+            Label("This playlist is empty", systemImage: "music.note.list")
+        } description: {
+            Text("Add songs here, or from any song's menu with Add to Playlist.")
+        } actions: {
+            Button { showAddSongs = true } label: { Label("Add Songs", systemImage: "plus") }
+        }
+    }
+
+    private var suggestionsSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Suggestions").font(.title3.bold())
+                Spacer()
+                Button { Task { await refreshSuggestions() } } label: { Image(systemName: "arrow.clockwise") }
+                    .buttonStyle(.borderless)
+                    .help("Refresh Suggestions")
+                    .accessibilityLabel("Refresh Suggestions")
+            }
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(suggestions) { song in
+                        HStack(spacing: 4) {
+                            MacSongRow(song: song)
+                            Button { Task { await add(song) } } label: {
+                                Image(systemName: "plus.circle")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.appAccent)
+                                    .frame(width: 36, height: 36)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Add to Playlist")
+                        }
+                    }
+                }
+            }
+            .frame(height: 220)
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 12)
+    }
+
+    /// Like a few of its songs, or what played lately when it is empty, as on the phone.
+    private func refreshSuggestions() async {
+        guard let server = serverManager.currentServer else { return }
+        let picked = await PlaylistSuggester.suggest(server: server, for: songs)
+        withAnimation { suggestions = picked }
+    }
+
+    private func add(_ song: Song) async {
+        guard let server = serverManager.currentServer else { return }
+        do {
+            try await SubsonicClient.shared.addSongToPlaylist(server: server, playlistId: playlist.id, songId: song.id)
+            withAnimation { suggestions.removeAll { $0.id == song.id } }
+            await load()
+        } catch {
+            ToastManager.shared.show(String(localized: "Couldn't add the song"), icon: "exclamationmark.triangle")
+        }
+    }
+
+    /// Through the same Navidrome call as the phone; the cached picture is dropped after.
+    private func changeCover() async {
+        guard let jpeg = MacCoverFile.pickJPEG(), let server = serverManager.currentServer,
+              await PlaylistCovers.upload(jpeg, playlistId: playlist.id, server: server) else { return }
+        await coverChanged()
+    }
+
+    private func removeCover() async {
+        guard let server = serverManager.currentServer,
+              await PlaylistCovers.remove(playlistId: playlist.id, server: server) else {
+            ToastManager.shared.show(String(localized: "Couldn’t remove cover art"), icon: "exclamationmark.triangle.fill")
+            return
+        }
+        await coverChanged()
+        ToastManager.shared.show(String(localized: "Cover art removed"), icon: "checkmark")
+    }
+
+    private func coverChanged() async {
+        if let cover = coverArt ?? playlist.coverArt { ArtworkCache.shared.removeImages(forCoverArt: cover) }
+        await load()
+        coverId = UUID()
+    }
+
+    /// A Wrapped playlist's drawn cover, else the server's picture.
+    private func saveCover() {
+        let title = name ?? playlist.name
+        if let period = WrappedCovers.period(for: playlist.id) {
+            let renderer = ImageRenderer(content: GeneratedCoverView(nature: .retrospective(period.coverLabel),
+                                                                     size: 400, cornerRadius: 0))
+            renderer.scale = 3
+            if let image = renderer.nsImage { MacCoverFile.save(image, name: title) }
+        } else {
+            MacCoverFile.save(coverArt: coverArt ?? playlist.coverArt, name: title)
+        }
     }
 
     /// Subsonic has no "move" and only removes by position, so an edit sends the whole list

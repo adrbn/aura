@@ -602,27 +602,6 @@ struct PlaylistEditView: View {
     }
 }
 
-/// Songs to offer under a playlist: like a few of its songs, or like what played lately when
-/// it is empty, and random ones when the server knows no similar songs.
-enum PlaylistSuggester {
-    static func suggest(server: ServerConfig, for songs: [Song], count: Int = 10) async -> [Song] {
-        let inside = Set(songs.map(\.id))
-        let seeds = songs.isEmpty
-            ? Array(PlayHistory.shared.recentSongIds(limit: 20).shuffled().prefix(3))
-            : Array(songs.shuffled().prefix(3).map(\.id))
-        var picked: [Song] = []
-        for seed in seeds {
-            let similar = (try? await SubsonicClient.shared.getSimilarSongs2(server: server, id: seed, count: 10)) ?? []
-            picked += similar
-        }
-        if picked.isEmpty {
-            picked = (try? await SubsonicClient.shared.getRandomSongs(server: server, size: count * 2)) ?? []
-        }
-        var seen = inside
-        return Array(picked.shuffled().filter { seen.insert($0.id).inserted }.prefix(count))
-    }
-}
-
 /// Search the server and add songs one tap at a time, the sheet staying open. Before a
 /// search it offers suggestions, so it never opens on a blank page.
 struct AddSongsSheet: View {

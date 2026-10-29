@@ -118,6 +118,27 @@ struct PlaylistFilterBar: View {
     }
 }
 
+/// Songs to offer under a playlist: like a few of its songs, or like what played lately when
+/// it is empty, and random ones when the server knows no similar songs.
+enum PlaylistSuggester {
+    static func suggest(server: ServerConfig, for songs: [Song], count: Int = 10) async -> [Song] {
+        let inside = Set(songs.map(\.id))
+        let seeds = songs.isEmpty
+            ? Array(PlayHistory.shared.recentSongIds(limit: 20).shuffled().prefix(3))
+            : Array(songs.shuffled().prefix(3).map(\.id))
+        var picked: [Song] = []
+        for seed in seeds {
+            let similar = (try? await SubsonicClient.shared.getSimilarSongs2(server: server, id: seed, count: 10)) ?? []
+            picked += similar
+        }
+        if picked.isEmpty {
+            picked = (try? await SubsonicClient.shared.getRandomSongs(server: server, size: count * 2)) ?? []
+        }
+        var seen = inside
+        return Array(picked.shuffled().filter { seen.insert($0.id).inserted }.prefix(count))
+    }
+}
+
 /// One line of views that spans the width it's given: each keeps its natural width and
 /// takes an equal share of what's left, so a longer label still makes a longer chip and
 /// every chip gains the same room around its label. A lone chip keeps its own width at the
@@ -253,6 +274,8 @@ struct PlaylistRowView: View {
     }
 }
 
+// The phone's sheet: the Mac edits a playlist in its own (MacPlaylistSheets.swift).
+#if os(iOS)
 /// A playlist's name, description and folder, to create one or to edit it. A folder is only
 /// a name prefix on the server ("Mixes/Summer/Name"), so moving one is renaming it.
 struct PlaylistFormSheet: View {
@@ -430,3 +453,4 @@ struct PlaylistFormSheet: View {
         }
     }
 }
+#endif
