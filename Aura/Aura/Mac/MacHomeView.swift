@@ -29,14 +29,10 @@ struct MacHomeView: View {
                 wrappedCard
                 quickPicks
                 mixesShelf
-                upNextShelf
-                albumShelf("Recently Played", recent)
-                albumShelf("Recently Added", newest)
-                songShelf("Favorite Songs", starred.song ?? [], source: .favorites)
+                // The phone's section order, the same setting; the playlists shelf is the
+                // Mac's own and follows them.
+                ForEach(settings.homeSectionOrder) { section($0) }
                 playlistShelf
-                albumShelf("On Repeat", frequent)
-                artistShelf
-                albumShelf("Random Albums", random)
                 if isLoading && recent.isEmpty && newest.isEmpty {
                     MacLoadingState().frame(height: 240)
                 }
@@ -53,13 +49,23 @@ struct MacHomeView: View {
 
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(salutation).auraDisplay(58)
+            // The phone's title setting: a custom title replaces the greeting, None drops it,
+            // and only Server names the server beneath.
+            switch settings.homeTitleStyle {
+            case .none: EmptyView()
+            case .custom:
+                let text = settings.homeCustomTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                Text(text.isEmpty ? salutation : text).auraDisplay(58)
+            default: Text(salutation).auraDisplay(58)
+            }
             HStack(spacing: 6) {
-                Text(serverManager.currentServer?.friendlyName ?? "")
+                if settings.homeTitleStyle == .server {
+                    Text(serverManager.currentServer?.friendlyName ?? "")
+                }
                 // The phone's stats line, as quiet: only the counts the server reported.
                 if settings.showStatsOnHome {
-                    ForEach(Array(stats.enumerated()), id: \.offset) { _, part in
-                        Text(verbatim: "·")
+                    ForEach(Array(stats.enumerated()), id: \.offset) { index, part in
+                        if index > 0 || settings.homeTitleStyle == .server { Text(verbatim: "·") }
                         part
                     }
                 }
@@ -159,6 +165,19 @@ struct MacHomeView: View {
     }
 
     // MARK: Shelves
+
+    @ViewBuilder
+    private func section(_ section: HomeSection) -> some View {
+        switch section {
+        case .upNext: upNextShelf
+        case .recentlyPlayed: albumShelf("Recently Played", recent)
+        case .recentlyAdded: albumShelf("Recently Added", newest)
+        case .frequentlyPlayed: albumShelf("On Repeat", frequent)
+        case .randomAlbums: albumShelf("Random Albums", random)
+        case .favoriteSongs: songShelf("Favorite Songs", starred.song ?? [], source: .favorites)
+        case .favoriteArtists: artistShelf
+        }
+    }
 
     private var mixesShelf: some View {
         MacShelf(title: "Made For You",

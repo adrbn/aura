@@ -12,7 +12,7 @@ import SwiftUI
 struct MacSettingsView: View {
     @Environment(\.colorScheme) private var scheme
     enum Pane: String, CaseIterable, Identifiable {
-        case playback, lyrics, library, downloads, madeForYou, lastfm, radar, appearance, translation, developer, about
+        case playback, lyrics, library, home, downloads, madeForYou, lastfm, radar, appearance, translation, developer, about
         var id: String { rawValue }
         /// Developer is the sideload build's: Get It, Soulseek and the logs.
         static var shown: [Pane] {
@@ -27,6 +27,7 @@ struct MacSettingsView: View {
             case .playback: "Playback"
             case .lyrics: "Lyrics"
             case .library: "Library"
+            case .home: "Home"
             case .downloads: "Downloads"
             case .madeForYou: "Made For You"
             case .lastfm: "Last.fm"
@@ -42,6 +43,7 @@ struct MacSettingsView: View {
             case .playback: "play.fill"
             case .lyrics: "quote.bubble.fill"
             case .library: "music.note.house.fill"
+            case .home: "house.fill"
             case .downloads: "arrow.down.circle.fill"
             case .madeForYou: "sparkles"
             case .lastfm: "waveform"
@@ -158,6 +160,7 @@ struct MacSettingsView: View {
                     case .playback: MacPlaybackSettings()
                     case .lyrics: MacLyricsSettings()
                     case .library: MacLibrarySettings()
+                    case .home: MacHomeSettings()
                     case .downloads: MacDownloadsSettings()
                     case .madeForYou: MacMadeForYouSettings()
                     case .lastfm: MacLastfmSettings()
@@ -183,7 +186,9 @@ struct MacSettingsView: View {
          settings.appAccentColor.rawValue, settings.appearanceMode.rawValue, String(settings.betaFeaturesEnabled),
          settings.externalServiceURL, String(settings.externalServicePort), settings.slskdUsername,
          settings.slskdPassword, settings.downloadQuality.rawValue, String(settings.cacheEnabled),
-         String(settings.cacheMaxSize), String(settings.radarEnabled)].joined(separator: "|")
+         String(settings.cacheMaxSize), String(settings.radarEnabled), settings.homeTitleStyle.rawValue,
+         settings.homeCustomTitle, String(settings.showStatsOnHome),
+         settings.homeSectionOrder.map(\.rawValue).joined(separator: ",")].joined(separator: "|")
     }
 }
 
@@ -409,6 +414,58 @@ private struct MacLibrarySettings: View {
             LibraryIndex.shared.refreshIfNeeded()
         } catch {
             AppLogger.shared.log("❌ Scan failed: \(error.localizedDescription)")
+        }
+    }
+}
+
+/// The phone's Home Screen settings, the same fields, so Home reads alike on both.
+private struct MacHomeSettings: View {
+    @State private var settings = AppSettings.shared
+
+    var body: some View {
+        SettingsCard(title: "Home Screen") {
+            SettingsRow(title: "Title") {
+                Chips(options: HomeTitleStyle.allCases, selection: $settings.homeTitleStyle) {
+                    String(localized: String.LocalizationValue($0.rawValue))
+                }
+            }
+            if settings.homeTitleStyle == .custom {
+                SettingsRow(title: "Your title") {
+                    TextField("Your title", text: $settings.homeCustomTitle)
+                        .textFieldStyle(.roundedBorder).frame(width: 220)
+                }
+            }
+            SettingsRow(title: "Library Stats", last: true) {
+                Toggle("", isOn: $settings.showStatsOnHome).toggleStyle(.switch).labelsHidden()
+            }
+        }
+        SettingsCard(title: "Section Order", footer: "Drag to reorder home sections") {
+            List {
+                ForEach(settings.homeSectionOrder) { section in
+                    HStack(spacing: 10) {
+                        Image(systemName: section.icon).foregroundStyle(Color.appAccent).frame(width: 20)
+                        Text(LocalizedStringKey(section.rawValue)).font(.system(size: 13, weight: .medium))
+                        Spacer(minLength: 0)
+                        Image(systemName: "line.3.horizontal").foregroundStyle(.tertiary)
+                    }
+                    .padding(.vertical, 4)
+                    .listRowBackground(Color.clear)
+                }
+                .onMove { settings.homeSectionOrder.move(fromOffsets: $0, toOffset: $1) }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .scrollDisabled(true)
+            .frame(height: CGFloat(settings.homeSectionOrder.count) * 32 + 8)
+            .padding(.horizontal, 4)
+            Rectangle().fill(.primary.opacity(0.06)).frame(height: 1)
+            Button("Reset to Default") { settings.homeSectionOrder = HomeSection.defaultOrder }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.appAccent)
+                .font(.system(size: 13, weight: .medium))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
         }
     }
 }
