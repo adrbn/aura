@@ -5,7 +5,7 @@ import SwiftUI
 /// has room to show a section and its detail at once, so several of the phone's screens
 /// become columns here rather than destinations of their own.
 enum MacSection: String, Hashable, CaseIterable, Identifiable {
-    case home, mixes, radar, wrapped, songs, favorites, recentlyPlayed, genres, playlists, albums, artists, downloads
+    case home, mixes, radar, wrapped, songs, favorites, recentlyPlayed, frequentlyPlayed, random, genres, playlists, albums, artists, albumArtists, downloads
 
     var id: String { rawValue }
 
@@ -21,6 +21,9 @@ enum MacSection: String, Hashable, CaseIterable, Identifiable {
         case .songs: return String(localized: "Songs")
         case .favorites: return String(localized: "Favorites")
         case .recentlyPlayed: return String(localized: "Recently Played")
+        case .frequentlyPlayed: return String(localized: "Frequently Played")
+        case .random: return String(localized: "Random")
+        case .albumArtists: return String(localized: "Album Artists")
         case .genres: return String(localized: "Genres")
         case .playlists: return String(localized: "Playlists")
         }
@@ -38,6 +41,9 @@ enum MacSection: String, Hashable, CaseIterable, Identifiable {
         case .songs: return "music.note"
         case .favorites: return "heart"
         case .recentlyPlayed: return "clock"
+        case .frequentlyPlayed: return "star"
+        case .random: return "shuffle"
+        case .albumArtists: return "person.2"
         case .genres: return "guitars"
         case .playlists: return "music.note.list"
         }
@@ -185,7 +191,21 @@ struct MacRootView: View {
             // In the title bar's row, centred over the page, as a fixture of the window
             // rather than of the sidebar: it stays put while sections change beneath it.
             .overlay(alignment: .top) {
-                MacSearchBar(query: $query)
+                MacSearchBar(query: $query) { entry in
+                    // A recent search reopened: armed again, as when it was first found.
+                    SearchHistory.shared.arm(entry)
+                    switch entry {
+                    case .artist(let artist): path.append(artist)
+                    case .album(let album): path.append(album)
+                    case .playlist(let playlist): path.append(playlist)
+                    case .mix(let mix):
+                        // Today's mix of that id when there is one; the saved copy once it's gone.
+                        let current = MixGenerator.shared.mixes.first { $0.id == mix.id } ?? mix
+                        SearchHistory.shared.arm(.mix(current))
+                        path.append(current)
+                    case .song: break
+                    }
+                }
                     .padding(.top, 16)
                     .ignoresSafeArea(.container, edges: .top)
             }
@@ -248,6 +268,14 @@ struct MacRootView: View {
         // Changing section starts a fresh trail. Keeping the old one would leave you on an
         // album you reached from Search after clicking Artists.
         .onChange(of: section) { _, _ in path = NavigationPath() }
+        // Recently Searched holds what was played, not looked at: a page opened from search
+        // is kept once something plays from it, and forgotten on the way back empty-handed.
+        .onChange(of: player.playbackSource) { _, source in
+            if !path.isEmpty { SearchHistory.shared.commitIfPlaying(source: source) }
+        }
+        .onChange(of: path.count) { _, depth in
+            if depth == 0 { SearchHistory.shared.disarm() }
+        }
         .task {
             MacSpaceKey.install()
             swipe.canGoBack = { !path.isEmpty }
@@ -323,6 +351,9 @@ struct MacRootView: View {
         case .songs: MacSongsView()
         case .favorites: MacSongsView(kind: .favorites)
         case .recentlyPlayed: MacSongsView(kind: .recentlyPlayed)
+        case .frequentlyPlayed: MacSongsView(kind: .frequentlyPlayed)
+        case .random: MacSongsView(kind: .random)
+        case .albumArtists: MacAlbumArtistsView()
         case .genres: MacGenresView()
         case .playlists: MacPlaylistsView()
         }
@@ -344,36 +375,19 @@ enum MacFormat {
     }
 }
 
-/// Searches that settled on results, newest first, for the search field's dropdown.
-@MainActor @Observable final class MacSearchHistory {
-    static let shared = MacSearchHistory()
-    private static let key = "mac_search_queries_v1"
-    private(set) var queries: [String] = UserDefaults.standard.stringArray(forKey: key) ?? []
-
-    /// A longer search replaces the one it grew out of, so "easy" then "easy lover" keeps one.
-    func record(_ raw: String) {
-        let query = raw.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return }
-        let lower = query.lowercased()
-        queries.removeAll { lower.hasPrefix($0.lowercased()) || $0.lowercased() == lower }
-        queries.insert(query, at: 0)
-        queries = Array(queries.prefix(8))
-        save()
-    }
-
-    func remove(_ query: String) { queries.removeAll { $0 == query }; save() }
-    func clear() { queries = []; save() }
-    private func save() { UserDefaults.standard.set(queries, forKey: Self.key) }
-}
-
 /// The window's one search field, a pill in the title bar's row. `⌘F` reaches it from
-/// anywhere; Escape leaves it. Focused and empty, it drops down the recent searches.
+/// anywhere; Escape leaves it. Focused and empty, it drops down the operators and what was
+/// played from search, as the phone's empty search shows them.
 struct MacSearchBar: View {
     @Binding var query: String
+    /// A recent artist, album, playlist or mix, to open.
+    var open: (RecentSearchEntry) -> Void = { _ in }
     @FocusState private var searching: Bool
-    @State private var history = MacSearchHistory.shared
+    @State private var history = SearchHistory.shared
 
-    private var showsHistory: Bool { searching && query.isEmpty && !history.queries.isEmpty }
+    private var showsHistory: Bool {
+        searching && query.isEmpty && (!history.entries.isEmpty || !LibraryIndex.shared.chips(for: "").isEmpty)
+    }
 
     var body: some View {
         HStack(spacing: 8) {
@@ -385,7 +399,6 @@ struct MacSearchBar: View {
                 .font(.system(size: 13))
                 .focused($searching)
                 .onExitCommand { searching = false }
-                .onSubmit { history.record(query) }
             if !query.isEmpty {
                 Button { query = "" } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -413,9 +426,14 @@ struct MacSearchBar: View {
         // Hangs under the pill, the same width, growing down from it.
         .overlay(alignment: .top) {
             if showsHistory {
-                MacSearchHistoryList(history: history) { picked in
-                    query = picked
-                    history.record(picked)
+                MacSearchHistoryList(history: history, query: $query) { entry in
+                    if let song = entry.playableSong {
+                        // Left where it is: moved to the top under the pointer, it looked deleted.
+                        AudioPlayer.shared.playSong(song, source: .search(query: ""))
+                    } else {
+                        searching = false
+                        open(entry)
+                    }
                 }
                 .frame(maxWidth: 440)
                 .offset(y: 42)
@@ -433,34 +451,45 @@ struct MacSearchBar: View {
     }
 }
 
-/// The dropdown's rows: a search to run again, each with its own cross, and Clear.
+/// The dropdown: the operators, then what was played from search with its artwork, each
+/// with its own cross, and Clear.
 private struct MacSearchHistoryList: View {
-    let history: MacSearchHistory
-    let pick: (String) -> Void
+    let history: SearchHistory
+    @Binding var query: String
+    let pick: (RecentSearchEntry) -> Void
     @State private var hovered: String?
     @State private var shown = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("Recently Searched").font(.system(size: 11, weight: .semibold)).lineLimit(1).foregroundStyle(.secondary)
-                Spacer()
-                Button("Clear") { withAnimation(.easeOut(duration: 0.2)) { history.clear() } }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.appAccent)
+            MacSearchChips(query: $query, inset: 14)
+                .padding(.top, 10)
+            if !history.entries.isEmpty {
+                HStack {
+                    Text("Recently Searched").font(.system(size: 11, weight: .semibold)).lineLimit(1).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Clear") { withAnimation(.easeOut(duration: 0.2)) { history.clear() } }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.appAccent)
+                }
+                .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 4)
             }
-            .padding(.horizontal, 14).padding(.top, 10).padding(.bottom, 4)
 
-            ForEach(Array(history.queries.enumerated()), id: \.element) { index, query in
+            ForEach(Array(history.entries.prefix(8).enumerated()), id: \.element.id) { index, entry in
                 HStack(spacing: 10) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                    Text(query).font(.system(size: 13)).lineLimit(1)
+                    thumbnail(entry)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(entry.title).font(.system(size: 13)).lineLimit(1)
+                            .foregroundStyle(entry.playableSong.map { $0.id == AudioPlayer.shared.currentSong?.id } == true
+                                             ? Color.appAccent : .primary)
+                        if let subtitle = entry.subtitle {
+                            Text(subtitle).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                    }
                     Spacer(minLength: 8)
                     Button {
-                        withAnimation(.easeOut(duration: 0.2)) { history.remove(query) }
+                        withAnimation(.easeOut(duration: 0.2)) { history.remove(entry) }
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 10, weight: .semibold))
@@ -469,14 +498,14 @@ private struct MacSearchHistoryList: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .opacity(hovered == query ? 1 : 0.45)
+                    .opacity(hovered == entry.id ? 1 : 0.45)
                 }
                 .padding(.horizontal, 14)
-                .frame(height: 32)
-                .background(RoundedRectangle(cornerRadius: 7).fill(.primary.opacity(hovered == query ? 0.08 : 0)).padding(.horizontal, 6))
+                .frame(height: 44)
+                .background(RoundedRectangle(cornerRadius: 7).fill(.primary.opacity(hovered == entry.id ? 0.08 : 0)).padding(.horizontal, 6))
                 .contentShape(Rectangle())
-                .onHover { hovered = $0 ? query : (hovered == query ? nil : hovered) }
-                .onTapGesture { pick(query) }
+                .onHover { hovered = $0 ? entry.id : (hovered == entry.id ? nil : hovered) }
+                .onTapGesture { pick(entry) }
                 // Rows fall in one after another as the list opens.
                 .opacity(shown ? 1 : 0)
                 .offset(y: shown ? 0 : -6)
@@ -489,6 +518,16 @@ private struct MacSearchHistoryList: View {
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.primary.opacity(0.08)))
         .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
         .onAppear { shown = true }
+    }
+
+    @ViewBuilder
+    private func thumbnail(_ entry: RecentSearchEntry) -> some View {
+        if case .mix(let mix) = entry {
+            EditorialMixCover(mix: mix, size: 32, cornerRadius: 4)
+        } else {
+            CoverArtImage(coverArt: entry.coverArt, size: 32, cornerRadius: entry.isCircular ? 16 : 4,
+                          placeholderName: entry.title)
+        }
     }
 }
 

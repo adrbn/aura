@@ -10,18 +10,26 @@ struct MacSearchView: View {
     /// What Deezer has for the query that the library doesn't.
     @State private var finds = MacDeezerFinds()
     @Environment(\.macOpenRelease) private var openRelease
+    @State private var history = SearchHistory.shared
 
     private var trimmed: String { query.trimmingCharacters(in: .whitespaces) }
     private var findsShown: Bool { finds.query == trimmed && !finds.isEmpty }
 
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            MacSearchChips(query: $query)
+                .padding(.top, 12)
             if isSearching {
                 // Replaces the results rather than sitting above them: a query in flight
                 // should not leave the previous query's hits on screen looking like answers.
                 MacLoadingState()
-            } else if results.isEmpty && !findsShown {
-                ContentUnavailableView.search(text: query)
+            } else if results.isEmpty && matchingMixes.isEmpty && !findsShown {
+                // Only an operator typed so far: its chips are the answer.
+                if LocalSearch.parse(trimmed).isEmpty {
+                    Spacer()
+                } else {
+                    ContentUnavailableView.search(text: query)
+                }
             } else {
                 found
             }
@@ -47,6 +55,20 @@ struct MacSearchView: View {
                     .padding(.top, 16)
                 }
 
+                // The generated mixes the query names, as on the phone.
+                if !matchingMixes.isEmpty {
+                    header("Made For You")
+                    row(matchingMixes) { mix in
+                        NavigationLink(value: mix) {
+                            MacPlayableCard(coverArt: nil, title: mix.title, subtitle: mix.subtitle,
+                                            artwork: AnyView(EditorialMixCover(mix: mix, size: preferences.coverSize.shelfWidth,
+                                                                               cornerRadius: 8)))
+                        }
+                        .buttonStyle(MacPressStyle())
+                        .simultaneousGesture(TapGesture().onEnded { history.arm(.mix(mix)) })
+                    }
+                }
+
                 if !results.artists.isEmpty {
                     header("Artists")
                     row(results.artists) { artist in
@@ -56,6 +78,8 @@ struct MacSearchView: View {
                                 .frame(width: preferences.coverSize.shelfWidth)
                         }
                         .buttonStyle(MacPressStyle())
+                        // Armed, not recorded: opening an artist is not listening to one.
+                        .simultaneousGesture(TapGesture().onEnded { history.arm(.artist(artist)) })
                     }
                 }
 
@@ -68,6 +92,7 @@ struct MacSearchView: View {
                                 .frame(width: preferences.coverSize.shelfWidth)
                         }
                         .buttonStyle(MacPressStyle())
+                        .simultaneousGesture(TapGesture().onEnded { history.arm(.album(album)) })
                     }
                 }
 
@@ -81,6 +106,7 @@ struct MacSearchView: View {
                                 .frame(width: preferences.coverSize.shelfWidth)
                         }
                         .buttonStyle(MacPressStyle())
+                        .simultaneousGesture(TapGesture().onEnded { history.arm(.playlist(playlist)) })
                     }
                 }
 
@@ -94,6 +120,7 @@ struct MacSearchView: View {
                             // One song and the music around it, as on the phone: the other
                             // hits share a word with it, not a sound.
                             MacSongRow(song: song, source: .search(query: query))
+                                .simultaneousGesture(TapGesture().onEnded { history.record(.song(song)) })
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -175,11 +202,27 @@ struct MacSearchView: View {
         guard !Task.isCancelled else { return }
         results = found
         isSearching = false
-        // Kept once it has rested on results for a moment, not at every keystroke.
-        guard !found.isEmpty else { return }
-        try? await Task.sleep(for: .seconds(1.5))
-        guard !Task.isCancelled else { return }
-        MacSearchHistory.shared.record(q)
+    }
+
+    /// The generated mixes a query names — a word of the title starting with it. The radar
+    /// answers to what it is as well as to its name. The phone's, word for word.
+    private var matchingMixes: [Mix] {
+        let typed = SongQuery.fold(trimmed)
+        guard typed.count >= 2 else { return [] }
+        var mixes = MixGenerator.shared.mixes
+        if AppSettings.shared.radarEnabled {
+            mixes.insert(RadarService.shared.current?.mix ?? Radar.emptyMix, at: 0)
+        }
+        return CoverArtists.distinctLeads(mixes).filter { mix in
+            var names = [mix.title]
+            if mix.kind == .radar {
+                names += [String(localized: "New releases"), "release radar", "nouveautés", "sorties"]
+            }
+            return names.contains { name in
+                let folded = SongQuery.fold(name)
+                return folded.hasPrefix(typed) || folded.split(separator: " ").contains { $0.hasPrefix(typed) }
+            }
+        }
     }
 
     /// Asks Deezer too, as the phone does — with the radar on, since it's Deezer's catalogue —
@@ -201,6 +244,37 @@ struct MacSearchView: View {
         let made = MacDeezerFinds(query: q, songs: found.songs, albums: found.albums, library: results)
         RadarService.shared.remember(made.releases + made.songs.map(\.release))
         finds = made
+    }
+}
+
+/// The search operators one click away, and the library's names while one is typed — the
+/// phone's chips, over the same index.
+struct MacSearchChips: View {
+    @Binding var query: String
+    var inset: CGFloat = 28
+
+    var body: some View {
+        let chips = LibraryIndex.shared.chips(for: query)
+        if !chips.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(chips, id: \.self) { chip in
+                        Button { query = chip.query } label: {
+                            Text(chip.label)
+                                .font(.system(size: 12, weight: .medium))
+                                .lineLimit(1)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 5)
+                                .background(.primary.opacity(0.1), in: Capsule())
+                                .contentShape(Capsule())
+                        }
+                        .buttonStyle(MacPressStyle())
+                    }
+                }
+                .padding(.horizontal, inset)
+            }
+            .scrollClipDisabled()
+        }
     }
 }
 
