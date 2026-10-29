@@ -119,6 +119,7 @@ enum OfflineSongList: Hashable {
     }
 }
 
+#if os(iOS)
 /// Every page an offline tab can push, by id — the pages look their content up in
 /// `OfflineLibrary`, so they follow a download added or removed while they're open.
 enum OfflineRoute: Hashable {
@@ -176,6 +177,8 @@ private struct OfflineRouteView: View {
                                description: Text("Its songs were removed from this iPhone."))
     }
 }
+
+#endif
 
 // MARK: - Offline, said quietly
 

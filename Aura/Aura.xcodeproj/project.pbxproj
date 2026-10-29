@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E1000001000000000000F0A1 /* OfflineLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3B5FB4CB9ED329D9240207 /* OfflineLibrary.swift */; };
+		E1000001000000000000F0A2 /* OfflineLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000053 /* OfflineLibraryView.swift */; };
+		E1000001000000000000F0A3 /* MacOffline.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000F0A3 /* MacOffline.swift */; };
+		E1000001000000000000F0A4 /* MacServerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000F0A4 /* MacServerEditView.swift */; };
 		0031110FB412232B510DA63F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 332E4899162985D5A2BE70F9 /* Foundation.framework */; };
 		00D0934D79E5BC36903CED9D /* MacHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7507C823E9A1C89305C77937 /* MacHomeView.swift */; };
 		016B640B9D48D7E4C4EED3A0 /* MissingSongsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B9C92CA58D03F28FB04AFA4 /* MissingSongsSection.swift */; };
@@ -330,6 +334,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		E1000002000000000000F0A3 /* MacOffline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacOffline.swift; sourceTree = "<group>"; };
+		E1000002000000000000F0A4 /* MacServerEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacServerEditView.swift; sourceTree = "<group>"; };
 		06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacPreferences.swift; sourceTree = "<group>"; };
 		126D52F5E3B9BA144C1DCFB0 /* MadeForYouSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MadeForYouSettingsView.swift; sourceTree = "<group>"; };
 		12F316BCC5018DF788F0B8F8 /* LyricsTranslationSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsTranslationSettingsView.swift; sourceTree = "<group>"; };
@@ -683,6 +689,8 @@
 				F3ED660F64818D6B1834B987 /* MacSettingsView.swift */,
 				BD0BA949F9603C6E217BAA2D /* MacRadarView.swift */,
 				D433233E999F9BDF5E9082FE /* MacDownloads.swift */,
+				E1000002000000000000F0A3 /* MacOffline.swift */,
+				E1000002000000000000F0A4 /* MacServerEditView.swift */,
 				7A1E5E0C2B3D4F5A6B7C8D91 /* MacReleaseView.swift */,
 				6E1BA89C79F48F159635B01E /* MacMenuBarPlayer.swift */,
 			);
@@ -1197,6 +1205,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1000002000000000000A0D7 /* MacFetchNotices.swift in Sources */,
+				E1000001000000000000F0A1 /* OfflineLibrary.swift in Sources */,
+				E1000001000000000000F0A2 /* OfflineLibraryView.swift in Sources */,
+				E1000001000000000000F0A3 /* MacOffline.swift in Sources */,
+				E1000001000000000000F0A4 /* MacServerEditView.swift in Sources */,
 				A0C0FFEE0000000000000D04 /* MacMotion.swift in Sources */,
 				A0C0FFEE0000000000000D03 /* FetchProgressBanner.swift in Sources */,
 				A0C0FFEE0000000000000D02 /* WorkshopGrid.swift in Sources */,

@@ -32,7 +32,7 @@ struct MacDownloadsView: View {
 
     var body: some View {
         Group {
-            if songs.isEmpty {
+            if songs.isEmpty && downloads.queueItems.isEmpty {
                 ContentUnavailableView {
                     Label("No downloads yet", systemImage: "arrow.down.circle")
                 } description: {
@@ -51,7 +51,10 @@ struct MacDownloadsView: View {
                         Button(role: .destructive) { downloads.deleteAll() } label: {
                             Label("Delete All Downloads", systemImage: "trash")
                         }
+                        .disabled(songs.isEmpty)
+                        queueMenu
                     }
+                    MacDownloadQueue()
                     Divider()
                     MacSongTable(songs: songs, source: .songs)
                 }
@@ -77,6 +80,32 @@ struct MacDownloadsView: View {
         .disabled(libraryProgress != nil)
     }
 
+    /// The phone's queue menu: pause, resume or stop everything, and clear what finished.
+    @ViewBuilder
+    private var queueMenu: some View {
+        let finished = downloads.queueItems.contains { $0.state == .completed || $0.state == .cancelled || $0.state == .failed }
+        if downloads.isDownloading || downloads.hasPaused || finished {
+            Menu {
+                if downloads.isDownloading {
+                    Button { downloads.pauseAllDownloads() } label: { Label("Pause All", systemImage: "pause.circle") }
+                }
+                if downloads.hasPaused {
+                    Button { downloads.resumeAllDownloads() } label: { Label("Resume All", systemImage: "play.circle") }
+                }
+                if downloads.isDownloading || downloads.hasPaused {
+                    Button(role: .destructive) { downloads.cancelAllDownloads() } label: { Label("Stop All", systemImage: "stop.circle") }
+                }
+                if finished {
+                    Button("Clear Queue History") { downloads.clearFinishedFromQueue() }
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .menuIndicator(.hidden)
+            .fixedSize()
+        }
+    }
+
     /// The phone's export, into a folder picked here.
     private func export() {
         guard let server = ServerManager.shared.currentServer else { return }
@@ -86,6 +115,70 @@ struct MacDownloadsView: View {
         panel.canCreateDirectories = true
         guard panel.runModal() == .OK, let folder = panel.url else { return }
         Task { await downloads.exportEntireLibrary(server: server, to: folder) { libraryProgress = $0 } }
+    }
+}
+
+/// The songs still coming, paused or failed, as the phone lists them above its downloads:
+/// each with its own pause, resume, cancel or retry.
+private struct MacDownloadQueue: View {
+    @State private var downloads = DownloadManager.shared
+
+    private var items: [DownloadQueueItem] {
+        downloads.queueItems.filter { $0.state != .completed && $0.state != .cancelled }
+    }
+
+    var body: some View {
+        if !items.isEmpty {
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(items) { row($0) }
+                }
+                .padding(.horizontal, 28)
+            }
+            .frame(maxHeight: min(CGFloat(items.count) * 46, 184))
+            .padding(.bottom, 8)
+        }
+    }
+
+    private func row(_ item: DownloadQueueItem) -> some View {
+        HStack(spacing: 12) {
+            CoverArtImage(coverArt: item.song.coverArt, size: 34, cornerRadius: 5)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.song.title).font(.system(size: 13, weight: .medium)).lineLimit(1)
+                switch item.state {
+                case .downloading:
+                    ProgressView(value: item.progress, total: 1.0).tint(Color.appAccent).frame(maxWidth: 240)
+                case .paused:
+                    Text("Paused").font(.caption).foregroundStyle(.orange)
+                case .failed:
+                    Text(item.error ?? String(localized: "Failed")).font(.caption).foregroundStyle(.red).lineLimit(1)
+                default:
+                    Text(item.song.artist ?? String(localized: "Unknown")).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
+            }
+            Spacer(minLength: 8)
+            switch item.state {
+            case .downloading, .waiting:
+                button("pause.circle.fill", "Pause", .orange) { downloads.pauseDownload(item.id) }
+                button("xmark.circle.fill", "Cancel", .secondary) { downloads.cancelDownload(item.id) }
+            case .paused:
+                button("play.circle.fill", "Resume", Color.appAccent) { downloads.resumeDownload(item.id) }
+                button("xmark.circle.fill", "Cancel", .secondary) { downloads.cancelDownload(item.id) }
+            default:
+                button("arrow.clockwise.circle.fill", "Retry", Color.appAccent) { downloads.retryDownload(item.song) }
+            }
+        }
+        .frame(height: 46)
+    }
+
+    private func button(_ symbol: String, _ help: LocalizedStringKey, _ tint: Color,
+                        action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 17)).foregroundStyle(tint)
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .accessibilityLabel(help)
     }
 }
 

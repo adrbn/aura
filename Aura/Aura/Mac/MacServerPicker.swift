@@ -6,6 +6,8 @@ struct MacServerPicker: View {
     @State private var serverManager = ServerManager.shared
     @State private var isRenaming = false
     @State private var isAdding = false
+    @State private var editing: ServerConfig?
+    @State private var settings = AppSettings.shared
     @State private var draftName = ""
 
     var body: some View {
@@ -26,7 +28,15 @@ struct MacServerPicker: View {
                 draftName = serverManager.currentServer?.friendlyName ?? ""
                 isRenaming = true
             }
+            Button("Edit…") { editing = serverManager.currentServer }
+                .disabled(serverManager.currentServer == nil)
             Button("Add Server…") { isAdding = true }
+            Divider()
+            if settings.offlineMode {
+                Button("Go Online") { serverManager.goBackOnline() }
+            } else {
+                Button("Go Offline") { serverManager.goOfflineManually() }
+            }
             if serverManager.servers.count > 1, let current = serverManager.currentServer {
                 Divider()
                 Button("Remove \(current.friendlyName)", role: .destructive) {
@@ -36,7 +46,7 @@ struct MacServerPicker: View {
         } label: {
             HStack(spacing: 7) {
                 Circle()
-                    .fill(serverManager.isConnected ? Color.green : .orange)
+                    .fill(settings.offlineMode ? Color.secondary : serverManager.isConnected ? Color.green : .orange)
                     .frame(width: 7, height: 7)
                 Text(serverManager.currentServer?.friendlyName ?? String(localized: "No server"))
                     .font(.system(size: 12, weight: .medium))
@@ -62,6 +72,10 @@ struct MacServerPicker: View {
         .sheet(isPresented: $isAdding) {
             MacServerSetupView { isAdding = false }
                 .frame(width: 820, height: 520)
+        }
+        .sheet(item: $editing) { server in
+            MacServerEditView(server: server) { editing = nil }
+                .frame(width: 480, height: 560)
         }
     }
 

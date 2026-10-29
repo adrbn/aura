@@ -669,6 +669,12 @@ private struct MacDownloadsSettings: View {
                 }
                 .labelsHidden().fixedSize()
             }
+            SettingsRow(title: "Offline Mode") {
+                Toggle("", isOn: Binding(
+                    get: { settings.offlineMode },
+                    set: { $0 ? ServerManager.shared.goOfflineManually() : ServerManager.shared.goBackOnline() }
+                )).toggleStyle(.switch).labelsHidden()
+            }
             SettingsRow(title: "Downloaded Songs") {
                 Text("\(downloads.downloadedSongs.count)").foregroundStyle(.secondary)
             }

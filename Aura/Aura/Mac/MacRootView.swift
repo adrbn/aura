@@ -281,7 +281,10 @@ struct MacRootView: View {
             swipe.canGoBack = { !path.isEmpty }
             swipe.goBack = { if !path.isEmpty { path.removeLast() } }
             swipe.install()
-            if !serverManager.isConnected { await serverManager.testConnection() }
+            // As the phone opens: online if the server answers, offline (with downloads) if
+            // not, then the periodic check that switches between them.
+            await serverManager.settleModeOnOpen()
+            serverManager.startMonitoring()
         }
     }
 
@@ -340,6 +343,9 @@ struct MacRootView: View {
 
     @ViewBuilder
     private var detail: some View {
+        if AppSettings.shared.offlineMode && section != .downloads {
+            MacOfflineView(section: section ?? .home)
+        } else {
         switch section ?? .home {
         case .home: MacHomeView()
         case .mixes: MacMixesView()
@@ -356,6 +362,7 @@ struct MacRootView: View {
         case .albumArtists: MacAlbumArtistsView()
         case .genres: MacGenresView()
         case .playlists: MacPlaylistsView()
+        }
         }
     }
 }

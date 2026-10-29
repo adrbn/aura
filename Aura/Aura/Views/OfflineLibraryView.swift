@@ -66,6 +66,7 @@ struct OfflineArtist: Identifiable {
     }
 }
 
+#if os(iOS)
 // MARK: - Library, offline
 
 /// The Library tab as online — the big title, the reader's own categories as a list —
@@ -637,3 +638,4 @@ struct OfflineArtistDetailView: View {
         .offlinePage(title: artist.name, coverArt: artist.coverArt)
     }
 }
+#endif
