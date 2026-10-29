@@ -357,6 +357,13 @@ private struct MacLibrarySettings: View {
                     }
                 }
             }
+            SettingsCard(title: "Wrapped", footer: settings.lastfmConfigured
+                         ? "Your year & month in music, from your Last.fm scrobbles. When shown on Home, it appears around the end of each period."
+                         : "Your year & month in music. Connect Last.fm above for full history, or it uses this device's play log. When shown on Home, it appears around the end of each period.") {
+                SettingsRow(title: "Show on Home", last: true) {
+                    Toggle("", isOn: $settings.wrappedShowOnHome).toggleStyle(.switch).labelsHidden()
+                }
+            }
             SettingsCard(title: "Library Scan") {
                 SettingsRow(title: scanning ? "Scanning…" : "Library Scan",
                             detail: scanned.map { "\($0) items scanned" }, last: true) {
