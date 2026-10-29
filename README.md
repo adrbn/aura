@@ -164,7 +164,7 @@ the signature expires after 7 days and the sideloading tool has to refresh it; t
 
 1. Download [`Aura-mac-1.4.0-build.447.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.447/Aura-mac-1.4.0-build.447.zip) from the [Mac release](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.447), which lists its SHA-256 checksum, and open it.
 2. Drag **Aura.app** into **Applications**.
-3. Open Aura. The app is signed with a Developer ID but not notarized yet, so macOS blocks the first launch: go to **System Settings → Privacy & Security**, click **Open Anyway** next to Aura, and confirm.
+3. Open Aura. The app is signed with a Developer ID and notarized by Apple, so it opens like any other app.
 4. Enter your server's address, username and password.
 
 The Mac app is a preview: the iPhone app is the one tested every day.

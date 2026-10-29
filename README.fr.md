@@ -167,7 +167,7 @@ limite d'iOS, pas d'Aura.
 
 1. Téléchargez [`Aura-mac-1.4.0-build.447.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.447/Aura-mac-1.4.0-build.447.zip) depuis la [version Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.447), qui indique sa somme SHA-256, et ouvrez-le.
 2. Glissez **Aura.app** dans **Applications**.
-3. Ouvrez Aura. L'app est signée avec un Developer ID mais pas encore notariée, donc macOS bloque le premier lancement : allez dans **Réglages Système → Confidentialité et sécurité**, cliquez sur **Ouvrir quand même** à côté d'Aura, puis confirmez.
+3. Ouvrez Aura. L'app est signée avec un Developer ID et notariée par Apple : elle s'ouvre comme n'importe quelle app.
 4. Saisissez l'adresse de votre serveur, votre nom d'utilisateur et votre mot de passe.
 
 L'app Mac est un aperçu : c'est l'app iPhone qui est testée tous les jours.
