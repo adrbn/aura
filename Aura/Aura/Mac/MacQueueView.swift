@@ -24,12 +24,23 @@ struct MacQueueView: View {
     private enum Part { case added, upcoming }
     private static func key(added index: Int) -> Int { -1 - index }
 
+    /// The queue before a shuffle, while it can still be undone.
+    @State private var undoQueue: [Song]?
+    @State private var undoTask: Task<Void, Never>?
+
     private var upcoming: [(offset: Int, song: Song)] {
         guard player.queueIndex + 1 < player.queue.count else { return [] }
         return Array(player.queue.enumerated())
             .filter { $0.offset > player.queueIndex }
             .map { (offset: $0.offset, song: $0.element) }
     }
+
+    /// Where autoplay's songs begin, after what's left of the album, playlist or artist.
+    private var autoplayStart: Int {
+        max(player.queueIndex + 1, player.autoplayFromIndex ?? player.queue.count)
+    }
+    private var fromSource: [(offset: Int, song: Song)] { upcoming.filter { $0.offset < autoplayStart } }
+    private var autoplay: [(offset: Int, song: Song)] { upcoming.filter { $0.offset >= autoplayStart } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -53,9 +64,20 @@ struct MacQueueView: View {
             .padding(.bottom, 10)
 
             if upcoming.isEmpty && player.userQueue.isEmpty {
-                Text("Nothing queued")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // The tail is fetched after playback starts and can take a while: say so,
+                // rather than claim nothing is coming.
+                Group {
+                    if player.isBuildingQueue {
+                        HStack(spacing: 10) {
+                            ProgressView().controlSize(.small)
+                            Text("Finding songs to play next…")
+                        }
+                    } else {
+                        Text("Nothing queued")
+                    }
+                }
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 2) {
@@ -67,13 +89,18 @@ struct MacQueueView: View {
                                 row(song, key: Self.key(added: index), part: .added)
                             }
                         }
-                        if !upcoming.isEmpty {
-                            sectionHeader(LocalizedStringKey(player.playbackSource.displayName)) {
-                                headerButton("shuffle", help: "Shuffle") { _ = player.shuffleUpNext() }
-                                headerButton("xmark.circle", help: "Clear") { player.clearUpNext() }
+                        if !fromSource.isEmpty {
+                            sectionHeader(sourceTitle) { upcomingButtons }
+                                .padding(.top, player.userQueue.isEmpty ? 0 : 10)
+                            ForEach(fromSource, id: \.offset) { item in
+                                row(item.song, key: item.offset, part: .upcoming)
                             }
-                            .padding(.top, player.userQueue.isEmpty ? 0 : 10)
-                            ForEach(upcoming, id: \.offset) { item in
+                        }
+                        if !autoplay.isEmpty {
+                            // The shuffle and clear sit on the first heading of what's coming.
+                            sectionHeader(autoplayTitle) { if fromSource.isEmpty { upcomingButtons } }
+                                .padding(.top, player.userQueue.isEmpty && fromSource.isEmpty ? 0 : 10)
+                            ForEach(autoplay, id: \.offset) { item in
                                 row(item.song, key: item.offset, part: .upcoming)
                             }
                         }
@@ -83,6 +110,26 @@ struct MacQueueView: View {
                 }
             }
         }
+        .overlay(alignment: .bottom) {
+            if let saved = undoQueue {
+                Button {
+                    player.restoreQueue(saved)
+                    undoTask?.cancel()
+                    undoQueue = nil
+                } label: {
+                    Label("Undo shuffle", systemImage: "arrow.uturn.backward")
+                        .font(.system(size: 12, weight: .medium))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(.regularMaterial, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 14)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.3), value: undoQueue != nil)
+        .onDisappear { undoTask?.cancel() }
         .frame(width: 320)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(scheme == .dark ? Color.black.opacity(0.22) : Color.white.opacity(0.35))
@@ -93,6 +140,17 @@ struct MacQueueView: View {
     }
 
     // MARK: Editing
+
+    /// Shuffles what's coming, and offers it back for a few seconds, as on the phone.
+    private func shuffle() {
+        guard let old = player.shuffleUpNext() else { return }
+        undoQueue = old
+        undoTask?.cancel()
+        undoTask = Task {
+            try? await Task.sleep(for: .seconds(3))
+            if !Task.isCancelled { undoQueue = nil }
+        }
+    }
 
     private func play(_ key: Int, part: Part) {
         switch part {
@@ -133,9 +191,40 @@ struct MacQueueView: View {
 
     // MARK: Pieces
 
+    @ViewBuilder
+    private var upcomingButtons: some View {
+        headerButton("shuffle", help: "Shuffle") { shuffle() }
+        headerButton("xmark.circle", help: "Clear") { player.clearUpNext() }
+    }
+
+    /// Where the music is playing from, leading there as on the phone.
+    private var sourceTitle: some View {
+        let source = player.playbackSource
+        return Button { source.open() } label: {
+            HStack(spacing: 4) {
+                Text(source.displayName)
+                if source.opensOnMac { Image(systemName: "chevron.right").font(.system(size: 9, weight: .semibold)) }
+            }
+            .macHoverTint(.secondary)
+        }
+        .buttonStyle(.plain)
+        .disabled(!source.opensOnMac)
+    }
+
+    private var autoplayTitle: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "infinity").font(.system(size: 10, weight: .bold))
+            Text("Autoplay")
+        }
+    }
+
     private func sectionHeader(_ title: LocalizedStringKey, @ViewBuilder buttons: () -> some View) -> some View {
+        sectionHeader(Text(title), buttons: buttons)
+    }
+
+    private func sectionHeader(_ title: some View, @ViewBuilder buttons: () -> some View) -> some View {
         HStack(spacing: 4) {
-            Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1)
+            title.font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1)
             Spacer()
             buttons()
         }

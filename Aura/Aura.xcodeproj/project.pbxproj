@@ -78,6 +78,8 @@
 		B7A1C0DE0000000000000001 /* PlaylistsBrowsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A013 /* PlaylistsBrowsing.swift */; };
 		B7A1C0DE0000000000000003 /* MacPlaylistSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A1C0DE0000000000000002 /* MacPlaylistSheets.swift */; };
 		7A1E5E0C2B3D4F5A6B7C8D90 /* MacReleaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E5E0C2B3D4F5A6B7C8D91 /* MacReleaseView.swift */; };
+		7B2C3D4E5F6A7B8C9D0E1F20 /* MacRadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2C3D4E5F6A7B8C9D0E1F21 /* MacRadioView.swift */; };
+		7B2C3D4E5F6A7B8C9D0E1F22 /* RadioPlaylistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000092 /* RadioPlaylistView.swift */; };
 		6A3F8337A060E884D7824E5D /* MacDownloads.swift in Sources */ = {isa = PBXBuildFile; fileRef = D433233E999F9BDF5E9082FE /* MacDownloads.swift */; };
 		6F5440002B59F82648E55409 /* GeneratedCoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000099 /* GeneratedCoverView.swift */; };
 		7076A0E916BEEBA79DBB0125 /* SongQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C304CD3F933D1DD758E9BB6 /* SongQueryTests.swift */; };
@@ -423,6 +425,7 @@
 		C29B621CC4AF2D3304AEB48D /* MacAlbumsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacAlbumsView.swift; sourceTree = "<group>"; };
 		CCAA00020000000000000001 /* MusicBrainzService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicBrainzService.swift; sourceTree = "<group>"; };
 		7A1E5E0C2B3D4F5A6B7C8D91 /* MacReleaseView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacReleaseView.swift; sourceTree = "<group>"; };
+		7B2C3D4E5F6A7B8C9D0E1F21 /* MacRadioView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRadioView.swift; sourceTree = "<group>"; };
 		D433233E999F9BDF5E9082FE /* MacDownloads.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacDownloads.swift; sourceTree = "<group>"; };
 		D53C72F337D1037C1F5737FC /* AccentColourPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccentColourPicker.swift; sourceTree = "<group>"; };
 		D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacOptionsMenu.swift; sourceTree = "<group>"; };
@@ -701,6 +704,7 @@
 				E1000002000000000000F0A3 /* MacOffline.swift */,
 				E1000002000000000000F0A4 /* MacServerEditView.swift */,
 				7A1E5E0C2B3D4F5A6B7C8D91 /* MacReleaseView.swift */,
+				7B2C3D4E5F6A7B8C9D0E1F21 /* MacRadioView.swift */,
 				6E1BA89C79F48F159635B01E /* MacMenuBarPlayer.swift */,
 			);
 			name = Mac;
@@ -1314,6 +1318,8 @@
 				04DEC0DD19686DB542D3B2CF /* WrappedView.swift in Sources */,
 				6A3F8337A060E884D7824E5D /* MacDownloads.swift in Sources */,
 				7A1E5E0C2B3D4F5A6B7C8D90 /* MacReleaseView.swift in Sources */,
+				7B2C3D4E5F6A7B8C9D0E1F20 /* MacRadioView.swift in Sources */,
+				7B2C3D4E5F6A7B8C9D0E1F22 /* RadioPlaylistView.swift in Sources */,
 				A4D012EEB740D4855E6344B8 /* CoverKit.swift in Sources */,
 				34DACD5605C097D0442A0DF2 /* CoverPortrait.swift in Sources */,
 				C6138429A31FE4D8546FB9F1 /* CoverTemplates.swift in Sources */,

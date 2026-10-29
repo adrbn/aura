@@ -1,5 +1,6 @@
 import SwiftUI
 
+#if os(iOS)
 struct RadioPlaylistView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
@@ -167,6 +168,7 @@ struct RadioPlaylistView: View {
         await PlaylistCovers.upload(cover, playlistId: playlistId, server: server)
     }
 }
+#endif
 
 /// Save as Playlist, saying what it is doing: it breathes while the playlist is written, then
 /// stays as Saved until there is a new version to save.

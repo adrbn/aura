@@ -10,6 +10,7 @@ struct MacPlayerBar: View {
     @State private var showEqualizer = false
     @State private var actions = MacSongActions.shared
     @State private var newPlaylistName = ""
+    @State private var radio = MacRadioStarter.shared
 
     /// Where the scrubber sits while it is being dragged.
     ///
@@ -54,6 +55,20 @@ struct MacPlayerBar: View {
             Text("Enter a name for the new playlist.")
         }
         .onChange(of: actions.newPlaylistSongs == nil) { newPlaylistName = "" }
+        .confirmationDialog("A radio already exists", isPresented: Binding(
+            get: { radio.existing != nil },
+            set: { if !$0 { radio.existing = nil } }
+        ), presenting: radio.existing) { existing in
+            if let savedId = existing.playlistId {
+                Button("View Saved Playlist") { player.pendingPlaylistId = savedId }
+            } else {
+                Button("View Existing Radio") { player.pendingRadioOpen = true }
+            }
+            Button("Generate New Radio") { player.startRadioFromSong(existing.song) }
+            Button("Cancel", role: .cancel) {}
+        } message: { existing in
+            Text("\"\(existing.name)\" already exists. View it or generate a new one?")
+        }
         .task(id: ServerManager.shared.currentServer?.id) { actions.refreshPlaylists() }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             // While this Mac plays on another device, or another plays on it, the band says so.
@@ -93,7 +108,21 @@ struct MacPlayerBar: View {
                 MacArtistLinks(song: song)
             }
 
-            if song != nil {
+            if let song, song.isPreview {
+                // A release not on the server yet: heard, or, in the sideload build, got.
+                #if !APPSTORE_BUILD
+                if ReleaseFetcher.shared.isAvailable { getButton(song) }
+                #endif
+                Text(badgeText(song))
+                    .font(.system(size: 10, weight: .semibold))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(.primary.opacity(0.1), in: Capsule())
+                    .contentTransition(.numericText())
+                    .help(badgeText(song) == String(localized: "Preview") ? String(localized: "Thirty-second preview") : badgeText(song))
+            } else if song != nil {
                 Button { player.toggleFavorite() } label: {
                     Image(systemName: song?.starred != nil ? "heart.fill" : "heart")
                         .font(.system(size: 12))
@@ -261,6 +290,46 @@ struct MacPlayerBar: View {
         }
     }
 
+    #if !APPSTORE_BUILD
+    /// Liking a preview gets the song, as on the phone: found, downloaded, added to the
+    /// server, and starred once it's there.
+    private func getButton(_ song: Song) -> some View {
+        let fetch = ReleaseFetcher.shared.fetch(covering: song)
+        let isOn = fetch != nil && fetch?.stage != .failed
+        return Button {
+            guard !isOn else { return }
+            ReleaseFetcher.shared.get(preview: song)
+        } label: {
+            Image(systemName: isOn ? "heart.fill" : "heart")
+                .font(.system(size: 12))
+                .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.pulse, options: .repeating, isActive: fetch?.isActive == true)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(isOn ? Color.appAccent : .secondary)
+        .help(isOn ? "Getting this song" : "Like, and get this song")
+    }
+    #endif
+
+    /// Where getting the preview's song has got to, or that it is one.
+    private func badgeText(_ song: Song) -> String {
+        #if !APPSTORE_BUILD
+        if let fetch = ReleaseFetcher.shared.fetch(covering: song) {
+            switch fetch.stage {
+            case .searching: return String(localized: "Searching…")
+            case .downloading:
+                return fetch.progress > 0
+                    ? fetch.progress.formatted(.percent.precision(.fractionLength(0)))
+                    : String(localized: "Queued…")
+            case .importing: return String(localized: "Adding…")
+            case .ready: return String(localized: "In your library")
+            case .failed: break
+            }
+        }
+        #endif
+        return String(localized: "Preview")
+    }
+
     private func iconButton(_ symbol: String, size: CGFloat = 16, active: Bool = false,
                             help: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -326,7 +395,7 @@ enum MacCurrentSongMenu {
         if let artistId = song.artistId {
             menu.add(String(localized: "Go to Artist")) { player.pendingArtistId = artistId }
         }
-        menu.add(String(localized: "Start Radio")) { player.startRadioFromSong(song) }
+        menu.add(String(localized: "Start Radio")) { MainActor.assumeIsolated { MacRadioStarter.shared.start(song) } }
         menu.addItem(.separator())
         menu.add(song.starred != nil ? String(localized: "Unfavourite") : String(localized: "Favourite")) { player.toggleFavorite() }
         let ratings = SongRatings.shared, current = ratings.rating(for: song)

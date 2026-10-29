@@ -183,8 +183,10 @@ struct MacRootView: View {
                     .navigationDestination(for: MacGenre.self) { pushed(MacSongsView(kind: .genre($0.name))) }
                     .navigationDestination(for: WrappedPeriod.self) { pushed(WrappedView(initialPeriod: $0)) }
                     .navigationDestination(for: RadarRelease.self) { pushed(MacReleaseView(release: $0)) }
+                    .navigationDestination(for: MacRadioRoute.self) { _ in pushed(MacRadioView()) }
                     .animation(.smooth(duration: 0.28), value: section)
                     .macPendingNavigation(path: $path)
+                    .macSourceNavigation(path: $path, section: $section)
                 }
                 .environment(\.macOpenRelease, MacReleaseOpener { path.append($0) })
             }
