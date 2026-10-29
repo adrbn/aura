@@ -14663,7 +14663,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Воспроизвести"
+            "value": "Слушать"
           }
         }
       }
@@ -18964,7 +18964,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zufallswiedergabe"
+            "value": "Zufällig"
           }
         },
         "es": {
@@ -18976,7 +18976,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lecture aléatoire"
+            "value": "Aléatoire"
           }
         },
         "it": {
@@ -19062,13 +19062,13 @@
         "ca": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reproduir-ho tot aleatòriament"
+            "value": "Tot aleatori"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alle zufällig abspielen"
+            "value": "Alle zufällig"
           }
         },
         "es": {
@@ -19086,7 +19086,7 @@
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Riproduci tutto casualmente"
+            "value": "Tutto casuale"
           }
         },
         "nl": {
@@ -26865,58 +26865,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "File Browser"
-          }
-        }
-      }
-    },
-    "File Browser didn't accept the sign-in.": {
-      "localizations": {
-        "ca": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "File Browser ha rebutjat l'identificador."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "File Browser hat die Anmeldung abgelehnt."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "File Browser no aceptó el inicio de sesión."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "File Browser a refusé l’identifiant."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "File Browser ha rifiutato l'accesso."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "File Browser heeft de inlog niet geaccepteerd."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "File Browser 未接受登录信息。"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "File Browser не принял данные входа."
           }
         }
       }
@@ -57941,58 +57889,6 @@
         }
       }
     },
-    "%lld lines placed by ear. Play it through, then Save.": {
-      "localizations": {
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld lignes calées à l’oreille. Écoutez jusqu’au bout, puis Enregistrer."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld righe sincronizzate a orecchio. Ascolta fino in fondo, poi Salva."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld líneas colocadas de oído. Escúchala entera y luego Guardar."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld Zeilen nach Gehör gesetzt. Hör den Song durch, dann Speichern."
-          }
-        },
-        "ca": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld línies calades d’oïda. Escolta-la sencera i després Desar."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld regels op gehoor geplaatst. Luister hem uit en kies dan Opslaan."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已按听到的位置放置 %lld 行。完整听一遍，然后点“存储”。"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Строк расставлено на слух: %lld. Прослушайте песню до конца, затем нажмите «Сохранить»."
-          }
-        }
-      }
-    },
     "Aura can’t listen to songs in this language yet.": {
       "localizations": {
         "fr": {
@@ -58353,6 +58249,474 @@
           "stringUnit": {
             "state": "translated",
             "value": "Удалось разобрать слишком мало пения, чтобы расставить строки. Расставьте их вручную."
+          }
+        }
+      }
+    },
+    "Saving…": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement…"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird gespeichert …"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guardando…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvataggio…"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desant…"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opslaan…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在存储…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранение…"
+          }
+        }
+      }
+    },
+    "File Browser didn't accept the sign-in as “%@”. Type File Browser's own username and password in Settings, under Save Synced Lyrics to the Server.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser a refusé la connexion en tant que « %@ ». Saisissez le nom d’utilisateur et le mot de passe de File Browser dans Réglages, sous Enregistrer les paroles synchronisées sur le serveur."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser hat die Anmeldung als „%@“ abgelehnt. Gib den Benutzernamen und das Passwort von File Browser in den Einstellungen unter „Synchronisierte Songtexte auf dem Server sichern“ ein."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser no aceptó el inicio de sesión como «%@». Escribe el usuario y la contraseña de File Browser en Ajustes, en Guardar letras sincronizadas en el servidor."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser non ha accettato l’accesso come «%@». Inserisci nome utente e password di File Browser in Impostazioni, sotto Salva i testi sincronizzati sul server."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser no ha acceptat l’inici de sessió com a «%@». Escriu l’usuari i la contrasenya de File Browser a Configuració, a Desa les lletres sincronitzades al servidor."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser weigerde de aanmelding als ‘%@’. Vul de gebruikersnaam en het wachtwoord van File Browser in bij Instellingen, onder Gesynchroniseerde songteksten op de server bewaren."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser 未接受以“%@”登录。请在“设置”的“将同步歌词存储到服务器”下输入 File Browser 自己的用户名和密码。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser не принял вход как «%@». Введите имя пользователя и пароль File Browser в Настройках, в разделе «Сохранять синхронизированные тексты на сервере»."
+          }
+        }
+      }
+    },
+    "File Browser didn't answer at %@.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser n’a pas répondu à %@."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser hat unter %@ nicht geantwortet."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser no respondió en %@."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser non ha risposto a %@."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser no ha respost a %@."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser reageerde niet op %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser 在 %@ 没有响应。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser не ответил по адресу %@."
+          }
+        }
+      }
+    },
+    "Test Sign-In": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tester la connexion"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anmeldung testen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probar inicio de sesión"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prova accesso"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prova l’inici de sessió"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aanmelding testen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测试登录"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверить вход"
+          }
+        }
+      }
+    },
+    "File Browser accepted the sign-in.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser a accepté la connexion."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser hat die Anmeldung akzeptiert."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser aceptó el inicio de sesión."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser ha accettato l’accesso."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser ha acceptat l’inici de sessió."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser accepteerde de aanmelding."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser 已接受登录。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Browser принял вход."
+          }
+        }
+      }
+    },
+    "Placed %lld of %lld lines by ear, word by word. Play it through, then Save.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld lignes sur %2$lld placées à l’oreille, mot à mot. Écoutez jusqu’au bout, puis Enregistrer."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld Zeilen nach Gehör gesetzt, Wort für Wort. Hör es durch, dann Sichern."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld líneas colocadas de oído, palabra por palabra. Escúchala entera y luego Guardar."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld righe su %2$lld posizionate a orecchio, parola per parola. Ascoltala tutta, poi Salva."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld línies col·locades d’oïda, paraula per paraula. Escolta-la sencera i després Desa."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld van %2$lld regels op gehoor geplaatst, woord voor woord. Luister hem uit en tik dan op Bewaar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已凭听觉逐字放置 %2$lld 行中的 %1$lld 行。完整听一遍，然后存储。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Расставлено на слух %1$lld из %2$lld строк, по словам. Дослушайте и нажмите «Сохранить»."
+          }
+        }
+      }
+    },
+    "Heard %lld of %lld lines: they were already in time. Their words are timed now.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld lignes sur %2$lld entendues : elles étaient déjà en rythme. Leurs mots sont maintenant calés."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld Zeilen gehört: Sie waren schon im Takt. Ihre Wörter sind jetzt getimt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld líneas oídas: ya iban a tiempo. Ahora sus palabras también."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld righe su %2$lld sentite: erano già a tempo. Ora lo sono anche le parole."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld línies sentides: ja anaven a temps. Ara les paraules també."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld van %2$lld regels gehoord: ze liepen al gelijk. Nu de woorden ook."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已听到 %2$lld 行中的 %1$lld 行：它们本来就同步。现在每个字也已对齐。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Услышано %1$lld из %2$lld строк: они уже совпадали. Теперь совпадают и слова."
+          }
+        }
+      }
+    },
+    "Heard %lld of %lld lines. They now come %@ s earlier, word by word.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld lignes sur %2$lld entendues. Elles arrivent maintenant %3$@ s plus tôt, mot à mot."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld Zeilen gehört. Sie kommen jetzt %3$@ s früher, Wort für Wort."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld líneas oídas. Ahora llegan %3$@ s antes, palabra por palabra."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld righe su %2$lld sentite. Ora arrivano %3$@ s prima, parola per parola."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld línies sentides. Ara arriben %3$@ s abans, paraula per paraula."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld van %2$lld regels gehoord. Ze komen nu %3$@ s eerder, woord voor woord."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已听到 %2$lld 行中的 %1$lld 行。现在提前 %3$@ 秒，逐字对齐。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Услышано %1$lld из %2$lld строк. Теперь они идут на %3$@ с раньше, по словам."
+          }
+        }
+      }
+    },
+    "Heard %lld of %lld lines. They now come %@ s later, word by word.": {
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld lignes sur %2$lld entendues. Elles arrivent maintenant %3$@ s plus tard, mot à mot."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld von %2$lld Zeilen gehört. Sie kommen jetzt %3$@ s später, Wort für Wort."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld líneas oídas. Ahora llegan %3$@ s después, palabra por palabra."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld righe su %2$lld sentite. Ora arrivano %3$@ s dopo, parola per parola."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld de %2$lld línies sentides. Ara arriben %3$@ s després, paraula per paraula."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld van %2$lld regels gehoord. Ze komen nu %3$@ s later, woord voor woord."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已听到 %2$lld 行中的 %1$lld 行。现在推后 %3$@ 秒，逐字对齐。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Услышано %1$lld из %2$lld строк. Теперь они идут на %3$@ с позже, по словам."
           }
         }
       }

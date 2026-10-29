@@ -359,6 +359,7 @@ struct OfflinePlayButtons: View {
                 player.playSong(first, fromQueue: songs, startIndex: 0, source: source)
             } label: {
                 Label("Play", systemImage: "play.fill")
+                    .lineLimit(1).minimumScaleFactor(0.8)
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .frame(height: 40)

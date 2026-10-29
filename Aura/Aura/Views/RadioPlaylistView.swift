@@ -46,6 +46,7 @@ struct RadioPlaylistView: View {
                             player.playRadioPlaylistFromIndex(0)
                         } label: {
                             Label("Play", systemImage: "play.fill")
+                                .lineLimit(1).minimumScaleFactor(0.8)
                                 .font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity).padding(.vertical, 11)
                                 .background(accentColor).foregroundStyle(.white)
@@ -59,6 +60,7 @@ struct RadioPlaylistView: View {
                             player.isRadioMode = true
                         } label: {
                             Label("Shuffle", systemImage: "shuffle")
+                                .lineLimit(1).minimumScaleFactor(0.8)
                                 .font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity).padding(.vertical, 11)
                                 .background(Color.primary.opacity(0.08)).foregroundStyle(.primary)
@@ -68,21 +70,12 @@ struct RadioPlaylistView: View {
                         .disabled(player.radioPlaylistSongs.isEmpty)
                     }
 
-                    if !isSaved {
-                        Button {
-                            guard !player.radioPlaylistSongs.isEmpty else { return }
-                            Task { await save() }
-                        } label: {
-                            Label("Save as Playlist", systemImage: "plus.circle")
-                                .font(.subheadline.weight(.medium))
-                                .frame(maxWidth: .infinity).padding(.vertical, 11)
-                                .background(Color.primary.opacity(0.06)).foregroundStyle(accentColor)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                        .buttonStyle(.borderless)
-                        // Would save a one-song playlist out of a radio still being built.
-                        .disabled(player.radioPlaylistSongs.isEmpty || isAwaitingSongs || isSaving)
+                    SaveAsPlaylistButton(isSaving: isSaving, isSaved: isSaved, accent: accentColor) {
+                        guard !player.radioPlaylistSongs.isEmpty else { return }
+                        Task { await save() }
                     }
+                    // Would save a one-song playlist out of a radio still being built.
+                    .disabled(player.radioPlaylistSongs.isEmpty || isAwaitingSongs)
                 }
             }
             .padding(.top, 12)
@@ -172,5 +165,47 @@ struct RadioPlaylistView: View {
                                   fallbackName: player.radioPlaylistName.replacingOccurrences(of: "Radio: ", with: ""))
         guard let cover = await spec.jpeg(), let server = ServerManager.shared.currentServer else { return }
         await PlaylistCovers.upload(cover, playlistId: playlistId, server: server)
+    }
+}
+
+/// Save as Playlist, saying what it is doing: it breathes while the playlist is written, then
+/// stays as Saved until there is a new version to save.
+struct SaveAsPlaylistButton: View {
+    let isSaving: Bool
+    let isSaved: Bool
+    let accent: Color
+    let action: () -> Void
+    @State private var breathing = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if isSaved {
+                    Image(systemName: "checkmark.circle.fill")
+                    Text("Saved")
+                } else if isSaving {
+                    ProgressView().controlSize(.small).tint(accent)
+                    Text("Saving…")
+                } else {
+                    Image(systemName: "plus.circle")
+                    Text("Save as Playlist")
+                }
+            }
+            .lineLimit(1)
+            .font(.subheadline.weight(.medium))
+            .frame(maxWidth: .infinity).padding(.vertical, 11)
+            .background(accent.opacity(isSaving && !isSaved ? (breathing ? 0.24 : 0.08) : isSaved ? 0.14 : 0))
+            .background(Color.primary.opacity(0.06)).foregroundStyle(accent)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .contentTransition(.opacity)
+            .animation(.easeInOut(duration: 0.25), value: isSaved)
+            .animation(.easeInOut(duration: 0.25), value: isSaving)
+        }
+        .buttonStyle(.borderless)
+        .disabled(isSaving || isSaved)
+        .onChange(of: isSaving, initial: true) { _, saving in
+            guard saving else { breathing = false; return }
+            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { breathing = true }
+        }
     }
 }

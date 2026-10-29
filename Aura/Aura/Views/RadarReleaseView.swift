@@ -135,6 +135,7 @@ struct RadarReleaseView: View {
             HStack(spacing: 12) {
                 Button { play(nil) } label: {
                     Label("Play", systemImage: "play.fill")
+                        .lineLimit(1).minimumScaleFactor(0.8)
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity).padding(.vertical, 11)
                         .background(accentColor).foregroundStyle(.white)
@@ -148,6 +149,7 @@ struct RadarReleaseView: View {
                 } else {
                     Button { player.playShuffled(songs, source: source) } label: {
                         Label("Shuffle", systemImage: "shuffle")
+                            .lineLimit(1).minimumScaleFactor(0.8)
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity).padding(.vertical, 11)
                             .background(Color.primary.opacity(0.08)).foregroundStyle(.primary)

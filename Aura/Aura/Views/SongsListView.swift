@@ -335,6 +335,7 @@ struct SongsListView: View {
                                     player.playSong(sortedSongs[0], fromQueue: sortedSongs, startIndex: 0, source: .favorites)
                                 } label: {
                                     Label("Play", systemImage: "play.fill")
+                                        .lineLimit(1).minimumScaleFactor(0.8)
                                         .font(.subheadline.weight(.semibold))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 10)
@@ -348,6 +349,7 @@ struct SongsListView: View {
                                     player.playShuffled(sortedSongs, source: .favorites)
                                 } label: {
                                     Label("Shuffle", systemImage: "shuffle")
+                                        .lineLimit(1).minimumScaleFactor(0.8)
                                         .font(.subheadline.weight(.semibold))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 10)

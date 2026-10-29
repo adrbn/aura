@@ -87,6 +87,7 @@ struct AlbumDetailView: View {
                                 }
                             } label: {
                                 Label("Play", systemImage: "play.fill")
+                                    .lineLimit(1).minimumScaleFactor(0.8)
                                     .font(.headline)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 40)

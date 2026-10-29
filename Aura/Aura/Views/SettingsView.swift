@@ -1291,6 +1291,9 @@ private struct LyricsOnServerRows: View {
     @State private var password = KeychainHelper.loadPassword(for: LyricsOnServer.passwordAccount) ?? ""
 
     @State private var showsSignIn = false
+    /// The last Test Sign-In: nil while untested or under way, then whether it worked.
+    @State private var testResult: Result<Void, Error>?
+    @State private var isTesting = false
 
     var body: some View {
         Toggle("Save Synced Lyrics to the Server", isOn: $isOn)
@@ -1327,6 +1330,34 @@ private struct LyricsOnServerRows: View {
                     KeychainHelper.save(password: value, for: LyricsOnServer.passwordAccount)
                 }
             }
+        Button {
+            isTesting = true
+            testResult = nil
+            Task {
+                do { try await LyricsOnServer.testSignIn(); testResult = .success(()) }
+                catch { testResult = .failure(error) }
+                isTesting = false
+            }
+        } label: {
+            HStack {
+                Text("Test Sign-In")
+                Spacer()
+                if isTesting { ProgressView() }
+            }
+        }
+        .disabled(isTesting)
+        switch testResult {
+        case .success:
+            Label("File Browser accepted the sign-in.", systemImage: "checkmark.circle.fill")
+                .font(.caption)
+                .foregroundStyle(.green)
+        case .failure(let error):
+            Label(error.localizedDescription, systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        case nil:
+            EmptyView()
+        }
     }
 }
 #endif

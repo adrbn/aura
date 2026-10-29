@@ -13,7 +13,7 @@ enum LyricsOnServer {
     private static let rootKey = "filebrowser_library_root"
 
     enum Failure: LocalizedError {
-        case notSignedIn, refusedSignIn, songUnknown, songNotFound, refused(Int)
+        case notSignedIn, refusedSignIn(user: String), unreachable(String), songUnknown, songNotFound, refused(Int)
 
         // Never shown in the App Store build, which doesn't write to the server: kept out of it.
         var errorDescription: String? {
@@ -22,7 +22,8 @@ enum LyricsOnServer {
             #else
             return switch self {
             case .notSignedIn: String(localized: "Add the File Browser sign-in in Settings.")
-            case .refusedSignIn: String(localized: "File Browser didn't accept the sign-in.")
+            case .refusedSignIn(let user): String(localized: "File Browser didn't accept the sign-in as “\(user)”. Type File Browser's own username and password in Settings, under Save Synced Lyrics to the Server.")
+            case .unreachable(let address): String(localized: "File Browser didn't answer at \(address).")
             case .songUnknown: String(localized: "The server didn't say where the song is.")
             case .songNotFound: String(localized: "The song's file wasn't found through File Browser.")
             case .refused(let status): String(localized: "File Browser refused the lyrics (HTTP \(status)).")
@@ -55,6 +56,11 @@ enum LyricsOnServer {
         let status = await send(request)
         guard (200...299).contains(status) else { throw Failure.refused(status) }
         AppLogger.shared.log("🎵 Lyrics timing written to the server: \(path)")
+    }
+
+    /// Signs in and nothing more, for Settings to say whether the sign-in works.
+    static func testSignIn() async throws {
+        _ = try await signIn()
     }
 
     static func remove(for song: Song) async throws {
@@ -100,10 +106,12 @@ enum LyricsOnServer {
         request.httpBody = try JSONSerialization.data(withJSONObject: ["username": user, "password": password,
                                                                        "recaptcha": ""])
         request.timeoutInterval = 15
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
-              (response as? HTTPURLResponse)?.statusCode == 200,
+        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+            throw Failure.unreachable(base.absoluteString)
+        }
+        guard (response as? HTTPURLResponse)?.statusCode == 200,
               let token = String(data: data, encoding: .utf8), !token.isEmpty
-        else { throw Failure.refusedSignIn }
+        else { throw Failure.refusedSignIn(user: user) }
         let trimmed = base.absoluteString.hasSuffix("/") ? String(base.absoluteString.dropLast()) : base.absoluteString
         return Session(base: URL(string: trimmed) ?? base, token: token)
     }

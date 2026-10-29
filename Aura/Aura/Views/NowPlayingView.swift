@@ -13,6 +13,8 @@ struct NowPlayingView: View {
     /// With `showLyrics`, the queue takes the lyrics' place under the small artwork header,
     /// rather than opening in a sheet over the player.
     @State private var queueInline = UserDefaults.standard.bool(forKey: "queueInline")
+    /// The lyrics were showing when the queue opened over them.
+    @State private var queueCoveredLyrics = false
     /// On a Duo's wide screen, the queue in place of the lyrics beside the player.
     /// `-duoQueue YES` opens on it, for checking the layout.
     @State private var besideQueue = UserDefaults.standard.bool(forKey: "duoQueue")
@@ -743,8 +745,10 @@ struct NowPlayingView: View {
             withAnimation(.smooth(duration: 0.3)) { besideQueue.toggle() }
         } else {
             let open = !(showLyrics && queueInline)
+            // Closing goes back to what the queue covered: the lyrics if they were up.
+            if open { queueCoveredLyrics = showLyrics }
             withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
-                showLyrics = open
+                showLyrics = open || queueCoveredLyrics
                 queueInline = open
             }
         }
@@ -2056,7 +2060,13 @@ struct SongActionsRow: View {
                         Label("SharePlay", systemImage: "shareplay")
                     }
                 }
-                if !DownloadManager.shared.isDownloaded(song.id) {
+                // Kept once downloaded, as a statement rather than an action.
+                if DownloadManager.shared.isDownloaded(song.id) {
+                    Button {} label: {
+                        Label("Downloaded", systemImage: "checkmark.circle.fill")
+                    }
+                    .tint(accentColor)
+                } else {
                     Button {
                         Task { await DownloadManager.shared.downloadSong(song) }
                     } label: {

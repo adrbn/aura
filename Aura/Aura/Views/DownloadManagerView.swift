@@ -57,6 +57,7 @@ struct DownloadManagerView: View {
                         player.playSong(songs[0], fromQueue: songs, startIndex: 0, source: .songs)
                     } label: {
                         Label("Play", systemImage: "play.fill")
+                            .lineLimit(1).minimumScaleFactor(0.8)
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
@@ -71,6 +72,7 @@ struct DownloadManagerView: View {
                         player.playShuffled(songs, source: .songs)
                     } label: {
                         Label("Shuffle", systemImage: "shuffle")
+                            .lineLimit(1).minimumScaleFactor(0.8)
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)

@@ -39,6 +39,7 @@ struct MixDetailView: View {
                             Task { await play(shuffled: false) }
                         } label: {
                             Label("Play", systemImage: "play.fill")
+                                .lineLimit(1).minimumScaleFactor(0.8)
                                 .font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity).padding(.vertical, 11)
                                 .background(accentColor).foregroundStyle(.white)
@@ -50,6 +51,7 @@ struct MixDetailView: View {
                             Task { await play(shuffled: true) }
                         } label: {
                             Label("Shuffle", systemImage: "shuffle")
+                                .lineLimit(1).minimumScaleFactor(0.8)
                                 .font(.subheadline.weight(.semibold))
                                 .frame(maxWidth: .infinity).padding(.vertical, 11)
                                 .background(Color.primary.opacity(0.08)).foregroundStyle(.primary)
@@ -59,22 +61,14 @@ struct MixDetailView: View {
                         .disabled(!canPlay)
                     }
 
-                    // Hidden once this exact version of the mix has been saved; reappears
+                    // Saved once this exact version of the mix has been saved; offered again
                     // automatically when the mix is regenerated with different songs. Not on
                     // the radar: it changes by the day and half of it is previews, so a saved
                     // copy would be a few songs of each downloaded release, frozen.
-                    if !isSaved && !shown.songs.isEmpty && mix.kind != .radar {
-                        Button {
+                    if !shown.songs.isEmpty && mix.kind != .radar {
+                        SaveAsPlaylistButton(isSaving: isSaving, isSaved: isSaved, accent: accentColor) {
                             Task { await save() }
-                        } label: {
-                            Label("Save as Playlist", systemImage: "plus.circle")
-                                .font(.subheadline.weight(.medium))
-                                .frame(maxWidth: .infinity).padding(.vertical, 11)
-                                .background(Color.primary.opacity(0.06)).foregroundStyle(accentColor)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        .buttonStyle(.borderless)
-                        .disabled(isSaving)
                     }
                 }
             }

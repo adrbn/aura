@@ -31,8 +31,10 @@ struct LyricsSyncView: View {
     @State private var confirmRestore = false
     /// The song being listened to, to place the lines by ear.
     @State private var listening = false
-    /// What listening placed, said once it has.
-    @State private var placedCount: Int?
+    /// What listening found, said once it has.
+    @State private var earResult: LyricsAutoSync.Placement?
+    /// Each line's words as listening heard them, seconds after the line starts.
+    @State private var heardWords: [Int: [TimeInterval?]] = [:]
     @State private var earFailure: String?
 
     private static let step: TimeInterval = 0.05
@@ -151,7 +153,8 @@ struct LyricsSyncView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 18) {
                     ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
-                        row(line, index: index, isSung: index == sung)
+                        row(line, index: index, isSung: index == sung,
+                            words: index == sung ? retiming.times[index].flatMap { words(of: index, at: $0) } : nil)
                             .id(index)
                     }
                 }
@@ -174,10 +177,15 @@ struct LyricsSyncView: View {
 
     /// The line sung now in white, the rest dimmed. In the margin, a dot in the accent for
     /// the line the next tap places, a small one for each line tapped.
-    private func row(_ line: LyricsLine, index: Int, isSung: Bool) -> some View {
+    /// The line sung now lights word by word when its words are timed.
+    private func row(_ line: LyricsLine, index: Int, isSung: Bool, words: [LyricWord]?) -> some View {
         let isArmed = index == armed
         let isTapped = retiming.anchors[index] != nil
-        return Text(line.text)
+        let now = player.lyricsTime
+        let text = words.map { words in
+            words.reduce(Text("")) { Text("\($0)\(Text($1.text).foregroundStyle(.white.opacity($1.start <= now ? 1 : 0.45)))") }
+        } ?? Text(line.text)
+        return text
             .font(.system(size: 26, weight: .bold))
             .foregroundStyle(.white.opacity(isSung ? 1 : 0.35))
             .fixedSize(horizontal: false, vertical: true)
@@ -317,9 +325,8 @@ struct LyricsSyncView: View {
                     ProgressView().tint(.white)
                     Text("Listening to the song…")
                 }
-            } else if let placedCount {
-                Label(String(localized: "\(placedCount) lines placed by ear. Play it through, then Save."),
-                      systemImage: "checkmark.circle.fill")
+            } else if let earResult {
+                Label(summary(of: earResult), systemImage: "checkmark.circle.fill")
             } else {
                 Button(action: syncByEar) {
                     Label("Sync Automatically", systemImage: "waveform")
@@ -348,14 +355,14 @@ struct LyricsSyncView: View {
         Task {
             defer { listening = false }
             do {
-                let heard = try await LyricsAutoSync.anchors(for: song, lines: lines)
+                let placement = try await LyricsAutoSync.placement(for: song, lines: lines)
                 guard player.currentSong?.id == song.id else { return }
-                let offset = AppSettings.shared.lyricsOffset
-                retiming.anchors = heard.mapValues { $0 + offset }
+                retiming.anchors = placement.anchors
                 retiming.offset = 0
-                tapped = heard.keys.sorted()
+                heardWords = placement.words
+                tapped = placement.anchors.keys.sorted()
                 armed = nil
-                placedCount = heard.count
+                earResult = placement
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             } catch {
                 AppLogger.shared.log("🎵 Auto sync failed: \(error)")
@@ -364,6 +371,21 @@ struct LyricsSyncView: View {
         }
     }
 
+
+    /// What listening changed, in a sentence: a shift, or nothing to shift.
+    private func summary(of placement: LyricsAutoSync.Placement) -> String {
+        let (heard, total) = (placement.heard, lines.count)
+        guard let shift = placement.shift else {
+            return String(localized: "Placed \(heard) of \(total) lines by ear, word by word. Play it through, then Save.")
+        }
+        if abs(shift) < 0.15 && placement.anchors.count == 1 {
+            return String(localized: "Heard \(heard) of \(total) lines: they were already in time. Their words are timed now.")
+        }
+        let seconds = abs(shift).formatted(.number.precision(.fractionLength(1)))
+        return shift < 0
+            ? String(localized: "Heard \(heard) of \(total) lines. They now come \(seconds) s earlier, word by word.")
+            : String(localized: "Heard \(heard) of \(total) lines. They now come \(seconds) s later, word by word.")
+    }
 
     /// The line coming next in the song, or the first when the lyrics have no timing.
     private func armFirst() {
@@ -397,15 +419,31 @@ struct LyricsSyncView: View {
         if !player.isPlaying { player.play() }
     }
 
-    /// Every line where it now starts, its words moved along with it.
+    /// Every line where it now starts, its words along with it.
     private var timedLines: [LyricsOverrides.Line] {
-        zip(lines, retiming.times).compactMap { line, time in
+        zip(lines.indices, retiming.times).compactMap { index, time in
             guard let time else { return nil }
-            let moved = time - (line.time ?? time)
-            let words = line.time == nil ? nil
-                : line.words?.map { LyricWord(id: $0.id, text: $0.text, start: $0.start + moved) }
-            return LyricsOverrides.Line(time: time, text: line.text, words: words)
+            return LyricsOverrides.Line(time: time, text: lines[index].text, words: words(of: index, at: time))
         }
+    }
+
+    /// A line's words where they now fall: as heard, or as the lyrics had them, moved with it.
+    /// A word not made out lights with the one before it.
+    private func words(of index: Int, at time: TimeInterval) -> [LyricWord]? {
+        let line = lines[index]
+        if let heard = heardWords[index] {
+            let pieces = line.text.split(separator: " ", omittingEmptySubsequences: false)
+            var (word, last): (Int, TimeInterval) = (0, 0)
+            return pieces.enumerated().map { id, piece in
+                if !LyricsAutoSync.words(in: String(piece)).isEmpty {
+                    if word < heard.count, let start = heard[word] { last = max(last, start) }
+                    word += 1
+                }
+                return LyricWord(id: id, text: id == pieces.count - 1 ? String(piece) : piece + " ", start: time + last)
+            }
+        }
+        guard let was = line.time, let words = line.words else { return nil }
+        return words.map { LyricWord(id: $0.id, text: $0.text, start: $0.start + time - was) }
     }
 
     private func save() {
@@ -508,8 +546,20 @@ enum LyricsAutoSync {
     /// A word as heard, and when.
     struct Heard { let word: String; let time: TimeInterval }
 
-    /// Where each line found starts in the audio, by its index in `lines`.
-    static func anchors(for song: Song, lines: [LyricsLine]) async throws -> [Int: TimeInterval] {
+    /// What listening made of the lyrics.
+    struct Placement {
+        /// Taps, by line, in the audio's time.
+        let anchors: [Int: TimeInterval]
+        /// Each line heard's words, in seconds after the line starts; nil for a word not made out.
+        let words: [Int: [TimeInterval?]]
+        /// How many lines were heard.
+        let heard: Int
+        /// How far timed lyrics were off: the shift most lines agree on.
+        let shift: TimeInterval?
+    }
+
+    /// Where the lines start in the audio, and their words.
+    static func placement(for song: Song, lines: [LyricsLine]) async throws -> Placement {
         let words = lines.map { words(in: $0.text) }
         guard let locale = await locale(of: lines) else { throw Failure.language }
         guard let server = ServerManager.shared.currentServer,
@@ -531,10 +581,45 @@ enum LyricsAutoSync {
             heard = try await transcribe(url, locale: locale, hints: hints)
         }
         AppLogger.shared.log("🎵 Auto sync heard \(heard.count) words of \(song.title)")
-        let found = place(words, found: lines.map(\.time), in: heard)
+        // Everything in the song's own time, the lyrics offset taken out and put back after.
+        let offset = AppSettings.shared.lyricsOffset
+        let times = lines.map { $0.time.map { $0 - offset } }
+        let found = place(words, found: times, in: heard)
         let worded = words.filter { $0.count >= 2 }.count
         guard found.count >= 3, Double(found.count) >= Double(worded) * 0.15 else { throw Failure.tooFew }
-        return found
+        let starts = found.mapValues(\.time)
+        let wordTimes = found.mapValues(\.words)
+        guard times.allSatisfy({ $0 != nil }) else {
+            return Placement(anchors: starts.mapValues { $0 + offset }, words: wordTimes, heard: found.count, shift: nil)
+        }
+        let settled = settle(starts, found: times)
+        return Placement(anchors: settled.anchors.mapValues { $0 + offset }, words: wordTimes,
+                         heard: found.count, shift: settled.shift)
+    }
+
+    /// Timed lyrics are mostly right, or off by one shift: the transcriber's own wobble, a few
+    /// tenths either way, isn't worth moving a line for. One tap at the top carries the shift
+    /// most lines agree on; another only where three lines in a row agree they moved again,
+    /// by more than a second.
+    static func settle(_ placed: [Int: TimeInterval], found: [TimeInterval?])
+        -> (anchors: [Int: TimeInterval], shift: TimeInterval) {
+        let heard = placed.keys.sorted().compactMap { line in
+            found[line].map { (line: line, shift: placed[line]! - $0) }
+        }
+        guard !heard.isEmpty, let top = found.first ?? nil else { return ([:], 0) }
+        let shift = heard.map(\.shift).sorted()[heard.count / 2]
+        var anchors = [0: max(0, top + shift)]
+        var current = shift
+        for index in heard.indices.dropLast(2) {
+            let run = heard[index...(index + 2)].map(\.shift)
+            let middle = run.sorted()[1]
+            guard abs(middle - current) > 1, run.max()! - run.min()! < 0.8,
+                  let was = found[heard[index].line] else { continue }
+            current = middle
+            anchors[heard[index].line] = max(0, was + current)
+        }
+        // What the top was moved by, which a run there may have corrected.
+        return (anchors, anchors[0]! - top)
     }
 
     /// The lyrics' language, in the form the transcriber knows, or nil when it doesn't.
@@ -593,8 +678,9 @@ enum LyricsAutoSync {
 
     /// One start per line at most, in the lyrics' order and the song's: of every place a line
     /// could have been heard — a chorus, several — the set that agrees with itself the most.
-    static func place(_ lines: [[String]], found: [TimeInterval?], in heard: [Heard]) -> [Int: TimeInterval] {
-        struct Candidate { let line: Int; let time: TimeInterval; let score: Int }
+    static func place(_ lines: [[String]], found: [TimeInterval?], in heard: [Heard])
+        -> [Int: (time: TimeInterval, words: [TimeInterval?])] {
+        struct Candidate { let line: Int; let time: TimeInterval; let score: Int; let first: Int; let start: Int }
         var candidates: [Candidate] = []
         for (line, words) in lines.enumerated() where words.count >= 2 {
             let needed = min(3, words.count)
@@ -602,9 +688,21 @@ enum LyricsAutoSync {
                 for (start, word) in heard.enumerated() where same(word.word, words[first]) {
                     let score = matched(Array(words[first..<min(words.count, first + 6)]), from: start, in: heard)
                     guard score >= needed else { continue }
-                    candidates.append(Candidate(line: line, time: max(0, word.time - 0.3 * Double(first)), score: score))
+                    candidates.append(Candidate(line: line, time: max(0, word.time - 0.3 * Double(first)), score: score,
+                                                first: first, start: start))
                 }
             }
+        }
+        // Timed lyrics are off by one shift, give or take: the one most of the song agrees
+        // on. A line heard far from it is a chorus heard at another of its repeats.
+        let shifts = candidates.compactMap { c in found[c.line].map { (c.time - $0, c.score) } }
+        if shifts.count >= 3 {
+            // ponytail: quadratic over the candidates, a few hundred for a song.
+            let agreed = shifts.max { a, b in
+                shifts.reduce(0) { abs($1.0 - a.0) <= 1 ? $0 + $1.1 : $0 }
+                    < shifts.reduce(0) { abs($1.0 - b.0) <= 1 ? $0 + $1.1 : $0 }
+            }!.0
+            candidates.removeAll { c in found[c.line].map { abs(c.time - $0 - agreed) > 2 } ?? false }
         }
         candidates.sort { ($0.line, $0.time) < ($1.line, $1.time) }
         // ponytail: quadratic over the candidates, a few hundred for a song.
@@ -615,19 +713,34 @@ enum LyricsAutoSync {
                 let (x, y) = (candidates[a], candidates[b])
                 guard x.line < y.line, y.time - x.time >= 0.3, best[a] + y.score > best[b] else { continue }
                 // Timed lyrics drift, they don't jump: two lines found close by move alike.
-                if let was = found[x.line], let now = found[y.line], abs((y.time - now) - (x.time - was)) > 4 { continue }
+                if let was = found[x.line], let now = found[y.line], abs((y.time - now) - (x.time - was)) > 1.5 { continue }
                 best[b] = best[a] + y.score
                 previous[b] = a
             }
         }
         guard var at = best.indices.max(by: { best[$0] < best[$1] }) else { return [:] }
-        var anchors: [Int: TimeInterval] = [:]
+        var placed: [Int: (time: TimeInterval, words: [TimeInterval?])] = [:]
         while true {
-            anchors[candidates[at].line] = candidates[at].time
+            let c = candidates[at]
+            placed[c.line] = (c.time, wordTimes(lines[c.line], first: c.first, start: c.start, in: heard, from: c.time))
             guard let before = previous[at] else { break }
             at = before
         }
-        return anchors
+        return placed
+    }
+
+    /// When each of a line's words is heard, after `lineStart`, the way `matched` finds them.
+    private static func wordTimes(_ words: [String], first: Int, start: Int, in heard: [Heard],
+                                  from lineStart: TimeInterval) -> [TimeInterval?] {
+        var times = [TimeInterval?](repeating: nil, count: words.count)
+        var at = start
+        for index in first..<words.count {
+            guard let next = (at..<min(heard.count, at + 3)).first(where: { same(heard[$0].word, words[index]) })
+            else { continue }
+            times[index] = max(0, heard[next].time - lineStart)
+            at = next + 1
+        }
+        return times
     }
 
     /// How many of `words` are heard in order from `start`, a word or two in between allowed.
