@@ -78,6 +78,7 @@ struct MacNowPlayingView: View {
                     .foregroundStyle(.white.opacity(0.7))
             }
             .frame(width: cover)
+            .overlay { MacRightClick { player.currentSong.map(MacCurrentSongMenu.make) } }
             Spacer()
         }
         .frame(width: cover + 120)

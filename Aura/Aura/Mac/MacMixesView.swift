@@ -46,6 +46,7 @@ struct MacMixesView: View {
                       spacing: 22) {
                 ForEach(generator.mixes) { mix in
                     NavigationLink(value: mix) { tile(mix) }.buttonStyle(MacPressStyle())
+                        .contextMenu { MacMixMenuItems(mix: mix) }
                 }
             }
             .padding(.horizontal, 28)

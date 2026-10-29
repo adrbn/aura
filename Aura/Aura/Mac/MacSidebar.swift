@@ -42,6 +42,7 @@ struct MacSidebar: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .contextMenu { MacPlaylistMenuItems(playlist: playlist) }
                     }
                 }
             }

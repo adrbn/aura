@@ -26,6 +26,7 @@ struct MacAlbumsView: View {
                              subtitle: album.artist ?? String(localized: "Unknown Artist"), placeholderName: album.name)
             }
             .buttonStyle(MacPressStyle())
+            .contextMenu { MacAlbumMenuItems(album: album) }
         }
         .task(id: order) { await load() }
     }
@@ -125,6 +126,7 @@ struct MacAlbumDetailView: View {
                                         play: { Task { await play(other) } })
                     }
                     .buttonStyle(.plain)
+                    .contextMenu { MacAlbumMenuItems(album: other) }
                 }
                 .padding(.top, 30)
             }
@@ -277,6 +279,12 @@ private struct MacMissingSongs: View {
                         .opacity(0.5)
                         .contentShape(Rectangle())
                         .onTapGesture { preview(track) }
+                        .contextMenu {
+                            Button { preview(track) } label: { Label("Play Preview", systemImage: "play.circle") }
+                            Button { ReleaseFetcher.shared.get(release, track: SoulseekPick.Track(track)) } label: {
+                                Label("Get This Song", systemImage: "arrow.down.circle")
+                            }
+                        }
                         getOne(track)
                             .frame(width: 32, height: 30)
                     }

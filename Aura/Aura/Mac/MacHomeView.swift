@@ -139,6 +139,7 @@ struct MacHomeView: View {
                     ForEach(picks) { album in
                         NavigationLink(value: album) { quickTile(album) }.buttonStyle(MacPressStyle())
                             .macHoverLift(scale: 1.015)
+                            .contextMenu { MacAlbumMenuItems(album: album) }
                     }
                 }
                 .padding(.horizontal, 28)
@@ -193,6 +194,7 @@ struct MacHomeView: View {
                 )
             }
             .buttonStyle(MacPressStyle())
+            .contextMenu { MacMixMenuItems(mix: mix) }
         }
     }
 
@@ -214,6 +216,7 @@ struct MacHomeView: View {
                 )
             }
             .buttonStyle(MacPressStyle())
+            .contextMenu { MacAlbumMenuItems(album: album) }
         }
     }
 
@@ -228,6 +231,7 @@ struct MacHomeView: View {
                     }
                 } label: { songCard(song) }
                 .buttonStyle(MacPressStyle())
+                .contextMenu { MacSongCardMenuItems(song: song) }
             }
         }
     }
@@ -238,6 +242,7 @@ struct MacHomeView: View {
                 player.playSong(song, fromQueue: songs, startIndex: songs.firstIndex { $0.id == song.id } ?? 0, source: source)
             } label: { songCard(song) }
             .buttonStyle(MacPressStyle())
+            .contextMenu { MacSongCardMenuItems(song: song) }
         }
     }
 
@@ -253,6 +258,7 @@ struct MacHomeView: View {
                                 placeholderName: artist.name, circular: true)
             }
             .buttonStyle(MacPressStyle())
+            .contextMenu { MacArtistMenuItems(artist: artist) }
         }
     }
 
@@ -268,6 +274,7 @@ struct MacHomeView: View {
                 )
             }
             .buttonStyle(MacPressStyle())
+            .contextMenu { MacPlaylistMenuItems(playlist: playlist) }
         }
     }
 

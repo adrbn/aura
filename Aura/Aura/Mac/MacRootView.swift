@@ -515,6 +515,17 @@ private struct MacSearchHistoryList: View {
                 .contentShape(Rectangle())
                 .onHover { hovered = $0 ? entry.id : (hovered == entry.id ? nil : hovered) }
                 .onTapGesture { pick(entry) }
+                .contextMenu {
+                    switch entry {
+                    case .album(let album): MacAlbumMenuItems(album: album)
+                    case .artist(let artist): MacArtistMenuItems(artist: artist)
+                    case .playlist(let playlist): MacPlaylistMenuItems(playlist: playlist)
+                    case .mix(let mix): MacMixMenuItems(mix: mix)
+                    case .song(let song): MacSongCardMenuItems(song: song)
+                    }
+                    Divider()
+                    Button("Remove", systemImage: "xmark") { withAnimation(.easeOut(duration: 0.2)) { history.remove(entry) } }
+                }
                 // Rows fall in one after another as the list opens.
                 .opacity(shown ? 1 : 0)
                 .offset(y: shown ? 0 : -6)

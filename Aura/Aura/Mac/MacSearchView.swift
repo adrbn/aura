@@ -66,6 +66,7 @@ struct MacSearchView: View {
                         }
                         .buttonStyle(MacPressStyle())
                         .simultaneousGesture(TapGesture().onEnded { history.arm(.mix(mix)) })
+                        .contextMenu { MacMixMenuItems(mix: mix) }
                     }
                 }
 
@@ -80,6 +81,7 @@ struct MacSearchView: View {
                         .buttonStyle(MacPressStyle())
                         // Armed, not recorded: opening an artist is not listening to one.
                         .simultaneousGesture(TapGesture().onEnded { history.arm(.artist(artist)) })
+                        .contextMenu { MacArtistMenuItems(artist: artist) }
                     }
                 }
 
@@ -93,6 +95,7 @@ struct MacSearchView: View {
                         }
                         .buttonStyle(MacPressStyle())
                         .simultaneousGesture(TapGesture().onEnded { history.arm(.album(album)) })
+                        .contextMenu { MacAlbumMenuItems(album: album) }
                     }
                 }
 
@@ -107,6 +110,7 @@ struct MacSearchView: View {
                         }
                         .buttonStyle(MacPressStyle())
                         .simultaneousGesture(TapGesture().onEnded { history.arm(.playlist(playlist)) })
+                        .contextMenu { MacPlaylistMenuItems(playlist: playlist) }
                     }
                 }
 

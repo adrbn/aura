@@ -73,7 +73,6 @@ struct MacPlaylistsView: View {
     @State private var serverManager = ServerManager.shared
     @State private var allPlaylists: [Playlist] = []
     @State private var edits = MacPlaylistEdits.shared
-    @State private var player = AudioPlayer.shared
     @State private var isLoading = false
     @State private var settings = AppSettings.shared
     /// The phone's key, so the sort is chosen the same way on both.
@@ -325,19 +324,7 @@ struct MacPlaylistsView: View {
         }
         .buttonStyle(MacPressStyle())
         .contextMenu {
-            let source = PlaybackSource.playlist(id: playlist.id, name: playlist.name)
-            Button { withSongs(of: playlist) { player.playSong($0[0], fromQueue: $0, startIndex: 0, source: source) } } label: {
-                Label("Play", systemImage: "play.fill")
-            }
-            Button { withSongs(of: playlist) { player.playShuffled($0, source: source) } } label: {
-                Label("Shuffle", systemImage: "shuffle")
-            }
-            // Shuffled, as the phone adds a playlist to the queue.
-            Button { withSongs(of: playlist) { player.addToQueue($0.shuffled()) } } label: {
-                Label("Add to Queue", systemImage: "text.append")
-            }
-            Divider()
-            MacPinButton(playlistId: playlist.id, asLabel: true)
+            MacPlaylistMenuItems(playlist: playlist)
             Button {
                 newName = playlist.name
                 renaming = playlist
@@ -346,16 +333,6 @@ struct MacPlaylistsView: View {
             Button(role: .destructive) { deleting = [playlist] } label: {
                 Label("Delete Playlist", systemImage: "trash")
             }
-        }
-    }
-
-    /// The playlist's songs, fetched for the tile's menu; nothing happens for an empty one.
-    private func withSongs(of playlist: Playlist, _ act: @escaping ([Song]) -> Void) {
-        Task {
-            guard let server = serverManager.currentServer,
-                  let songs = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id).entry,
-                  !songs.isEmpty else { return }
-            act(songs)
         }
     }
 

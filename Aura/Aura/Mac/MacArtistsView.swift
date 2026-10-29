@@ -29,6 +29,7 @@ struct MacArtistsView: View {
                              placeholderName: artist.name, circular: true)
             }
             .buttonStyle(MacPressStyle())
+            .contextMenu { MacArtistMenuItems(artist: artist) }
         }
         .navigationTitle("Artists")
         // A plain filter over an already-loaded list, not a server search: the artist list
@@ -171,6 +172,7 @@ struct MacArtistDetailView: View {
                                      placeholderName: album.name)
                     }
                     .buttonStyle(MacPressStyle())
+                    .contextMenu { MacAlbumMenuItems(album: album) }
                 }
             }
             .padding(.horizontal, 28)

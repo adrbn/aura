@@ -288,6 +288,7 @@
 		FAA2AC0B54E14A7885B4F735 /* MacMenuBarPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1BA89C79F48F159635B01E /* MacMenuBarPlayer.swift */; };
 		FAA4E169C5417E5CAF16E1CD /* GeminiLyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */; };
 		FAD4BC08256BB71A4DAA1318 /* PreviewAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B001 /* PreviewAligner.swift */; };
+		A1C0DE0000000000000000A2 /* MacContextMenus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE0000000000000000A1 /* MacContextMenus.swift */; };
 		FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC935E192C9737FFC79738ED /* MacSongRow.swift */; };
 		FB688442D8147551C7C26966 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C2DD223260297B0A1DE6EA /* Backdrop.swift */; };
 		FEB0460934E9B8474CCE5CEA /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
@@ -419,6 +420,7 @@
 		AAEB2AEB2052627E49050B2F /* UpNextPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpNextPage.swift; sourceTree = "<group>"; };
 		AC64675BCED89523D6B47E4D /* MacNowPlayingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacNowPlayingView.swift; sourceTree = "<group>"; };
 		B473B77C7F39B4A0C89FD065 /* LyricsOnServer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LyricsOnServer.swift; sourceTree = "<group>"; };
+		A1C0DE0000000000000000A1 /* MacContextMenus.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacContextMenus.swift; sourceTree = "<group>"; };
 		BC935E192C9737FFC79738ED /* MacSongRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongRow.swift; sourceTree = "<group>"; };
 		BD0BA949F9603C6E217BAA2D /* MacRadarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRadarView.swift; sourceTree = "<group>"; };
 		BEB587064D721AA775E21C53 /* SlskdClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlskdClient.swift; sourceTree = "<group>"; };
@@ -694,6 +696,7 @@
 				06A6EB2A74E2D5BE93ED1A52 /* MacPreferences.swift */,
 				8BF55BE55F578254EC9F3FB0 /* AuraMac.entitlements */,
 				D65E4B0AE611B8916A5E60B7 /* MacOptionsMenu.swift */,
+				A1C0DE0000000000000000A1 /* MacContextMenus.swift */,
 				BC935E192C9737FFC79738ED /* MacSongRow.swift */,
 				4C3471C931324BE40DB281A3 /* MacPendingNavigation.swift */,
 				1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */,
@@ -1290,6 +1293,7 @@
 				2654DD345C3C590F7D60DA5B /* MacPreferences.swift in Sources */,
 				BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */,
 				DE538F275F2FE804D1678772 /* MacOptionsMenu.swift in Sources */,
+				A1C0DE0000000000000000A2 /* MacContextMenus.swift in Sources */,
 				FB5B33111566C31A4BA8BB42 /* MacSongRow.swift in Sources */,
 				08952FFCB03ED037982885B5 /* MacPendingNavigation.swift in Sources */,
 				B225BE723A71BD7C8986CD35 /* MacWindowChrome.swift in Sources */,

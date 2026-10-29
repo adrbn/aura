@@ -90,6 +90,7 @@ private struct MacOfflineGroups: View {
                 MacGrid(items: groups, emptyMessage: "Nothing here") { group in
                     Button { openId = group.id } label: { tile(group) }
                         .buttonStyle(MacPressStyle())
+                        .contextMenu { MacPlayMenuItems(source: group.source) { group.songs } }
                 }
             }
         }

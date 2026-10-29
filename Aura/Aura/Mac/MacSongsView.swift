@@ -262,6 +262,7 @@ struct MacAlbumArtistsView: View {
                              placeholderName: artist.name, circular: true)
             }
             .buttonStyle(MacPressStyle())
+            .contextMenu { MacArtistMenuItems(artist: artist) }
         }
         .navigationTitle("Album Artists")
         .task { await load() }
@@ -301,6 +302,7 @@ struct MacGenresView: View {
                             NavigationLink(value: MacGenre(name: genre.value)) { tile(genre) }
                                 .buttonStyle(MacPressStyle())
                                 .macHoverLift(scale: 1.015)
+                                .contextMenu { MacGenreMenuItems(name: genre.value) }
                         }
                     }
                     .padding(.horizontal, 28)

@@ -169,6 +169,18 @@ private struct MacDownloadQueue: View {
             }
         }
         .frame(height: 46)
+        .contextMenu {
+            switch item.state {
+            case .downloading, .waiting:
+                Button("Pause", systemImage: "pause.circle") { downloads.pauseDownload(item.id) }
+                Button("Cancel", systemImage: "xmark.circle") { downloads.cancelDownload(item.id) }
+            case .paused:
+                Button("Resume", systemImage: "play.circle") { downloads.resumeDownload(item.id) }
+                Button("Cancel", systemImage: "xmark.circle") { downloads.cancelDownload(item.id) }
+            default:
+                Button("Retry", systemImage: "arrow.clockwise.circle") { downloads.retryDownload(item.song) }
+            }
+        }
     }
 
     private func button(_ symbol: String, _ help: LocalizedStringKey, _ tint: Color,
