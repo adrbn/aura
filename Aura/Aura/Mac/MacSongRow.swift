@@ -224,7 +224,7 @@ struct MacSongMenuItems: View {
         .onAppear { actions.refreshPlaylists() }
         if let song {
             Divider()
-            Button("Start Radio", systemImage: "dot.radiowaves.left.and.right") { player.startRadioFromSong(song) }
+            Button("Start Radio", systemImage: "dot.radiowaves.left.and.right") { MacRadioStarter.shared.start(song) }
             if let albumId = song.albumId {
                 Button("Go to Album", systemImage: "square.stack") { player.pendingAlbumId = albumId }
             }

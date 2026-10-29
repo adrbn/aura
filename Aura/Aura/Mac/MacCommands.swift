@@ -102,16 +102,6 @@ struct MacCommands: Commands {
             .keyboardShortcut("0", modifiers: [.command, .option])
             .disabled(player.pitchSemitones == 0)
 
-            Divider()
-
-            // Listen Together over FaceTime or Messages, as from the phone's Now Playing.
-            if SharePlay.shared.isActive {
-                Button("Leave SharePlay") { SharePlay.shared.leave() }
-            } else {
-                ShareLink(item: ListenTogetherInvite(), preview: SharePreview("Listen Together on Aura")) {
-                    Text("SharePlay")
-                }
-            }
         }
 
         #if !APPSTORE_BUILD

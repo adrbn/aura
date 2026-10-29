@@ -7,8 +7,5 @@
 	     entire point: the phone and the Mac have to read and write the same one. -->
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)$(AURA_BUNDLE_BASE)</string>
-	<!-- Listening together over FaceTime or Messages (SharePlay.swift), as on the phone. -->
-	<key>com.apple.developer.group-session</key>
-	<true/>
 </dict>
 </plist>
