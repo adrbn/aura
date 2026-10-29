@@ -111,14 +111,20 @@ struct MacCommands: Commands {
 enum MacSpaceKey {
     private static var monitor: Any?
     private static var clicks: Any?
+    /// Set while the lyrics sync sheet is open: Space taps Now there instead.
+    static var tapNow: (() -> Void)?
 
     static func install() {
         guard monitor == nil else { return }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             let typing = (event.window?.firstResponder as? NSText).map { !$0.string.isEmpty } ?? false
             guard event.keyCode == 49, !typing,
-                  event.modifierFlags.intersection([.command, .option, .control, .shift]).isEmpty,
-                  AudioPlayer.shared.currentSong != nil else { return event }
+                  event.modifierFlags.intersection([.command, .option, .control, .shift]).isEmpty else { return event }
+            if let tapNow {
+                tapNow()
+                return nil
+            }
+            guard AudioPlayer.shared.currentSong != nil else { return event }
             AudioPlayer.shared.togglePlayPause()
             return nil
         }

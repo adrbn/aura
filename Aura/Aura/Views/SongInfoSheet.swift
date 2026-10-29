@@ -2,6 +2,7 @@ import SwiftUI
 
 // MARK: - Song Info Sheet
 
+#if os(iOS)
 struct SongInfoSheet: View {
     let song: Song
     @Environment(\.dismiss) private var dismiss
@@ -48,6 +49,7 @@ struct SongInfoSheet: View {
         }
     }
 }
+#endif
 
 /// How the song is playing and the file behind it — shared by File Info and the Now
 /// Playing sheet, which shows it under the credits.

@@ -16,9 +16,63 @@ private enum MacPlaylistEntry: Identifiable {
 /// Set by Undo, read by the delete waiting out its window.
 private final class MacUndoFlag { var undone = false }
 
+/// Renaming and deleting playlists, from the grid or a playlist's own page. Deleted ones go
+/// at once, and from the server once Undo has had its five seconds.
+@Observable
+private final class MacPlaylistEdits {
+    static let shared = MacPlaylistEdits()
+    /// Kept out of the grid from the moment they're deleted: a reload in the five seconds
+    /// would otherwise bring them back.
+    private(set) var hidden: Set<String> = []
+
+    func delete(_ doomed: [Playlist]) {
+        let ids = Set(doomed.map(\.id))
+        let flag = MacUndoFlag()
+        withAnimation { hidden.formUnion(ids) }
+        ToastManager.shared.show(String(localized: "\(doomed.count) playlist(s) deleted"), icon: "trash.fill", duration: 5,
+                                 action: (String(localized: "Undo"), {
+                                     flag.undone = true
+                                     withAnimation { self.hidden.subtract(ids) }
+                                 }))
+        Task {
+            try? await Task.sleep(for: .seconds(5))
+            guard !flag.undone, let server = ServerManager.shared.currentServer else { return }
+            for id in ids { try? await SubsonicClient.shared.deletePlaylist(server: server, id: id) }
+        }
+    }
+
+    /// False, said in a toast, when the server refused it.
+    static func rename(_ playlist: Playlist, to name: String) async -> Bool {
+        guard let server = ServerManager.shared.currentServer else { return false }
+        do {
+            try await SubsonicClient.shared.updatePlaylist(server: server, id: playlist.id, name: name)
+            return true
+        } catch {
+            ToastManager.shared.show(String(localized: "Couldn't save the playlist"), icon: "exclamationmark.triangle.fill")
+            return false
+        }
+    }
+}
+
+private extension View {
+    /// The delete confirmation, for one playlist or several.
+    func macPlaylistDeleteAlert(_ deleting: Binding<[Playlist]>) -> some View {
+        alert(deleting.wrappedValue.count == 1 ? String(localized: "Delete “\(deleting.wrappedValue[0].name)”?")
+                                               : String(localized: "Delete \(deleting.wrappedValue.count) Playlist(s)?"),
+              isPresented: Binding(get: { !deleting.wrappedValue.isEmpty }, set: { if !$0 { deleting.wrappedValue = [] } }),
+              presenting: deleting.wrappedValue) { doomed in
+            Button("Delete", role: .destructive) { MacPlaylistEdits.shared.delete(doomed) }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("This will permanently delete the selected playlists from the server. You can undo this briefly after deletion.")
+        }
+    }
+}
+
 struct MacPlaylistsView: View {
     @State private var serverManager = ServerManager.shared
-    @State private var playlists: [Playlist] = []
+    @State private var allPlaylists: [Playlist] = []
+    @State private var edits = MacPlaylistEdits.shared
     @State private var isLoading = false
     @State private var settings = AppSettings.shared
     /// The phone's key, so the sort is chosen the same way on both.
@@ -31,6 +85,8 @@ struct MacPlaylistsView: View {
     @State private var newName = ""
     @State private var deleting: [Playlist] = []
     @State private var isFindingDuplicates = false
+
+    private var playlists: [Playlist] { allPlaylists.filter { !edits.hidden.contains($0.id) } }
 
     /// Pinned playlists lead at the top level, then this level's folders, then its playlists.
     private var entries: [MacPlaylistEntry] {
@@ -82,15 +138,7 @@ struct MacPlaylistsView: View {
             Button { Task { await commitName() } } label: { isCreating ? Text("Create") : Text("Save") }
             Button("Cancel", role: .cancel) {}
         }
-        .alert(deleting.count == 1 ? String(localized: "Delete “\(deleting[0].name)”?")
-                                   : String(localized: "Delete \(deleting.count) Playlist(s)?"),
-               isPresented: Binding(get: { !deleting.isEmpty }, set: { if !$0 { deleting = [] } }),
-               presenting: deleting) { doomed in
-            Button("Delete", role: .destructive) { delete(doomed) }
-            Button("Cancel", role: .cancel) {}
-        } message: { _ in
-            Text("This will permanently delete the selected playlists from the server. You can undo this briefly after deletion.")
-        }
+        .macPlaylistDeleteAlert($deleting)
     }
 
     private var headerActions: some View {
@@ -179,9 +227,9 @@ struct MacPlaylistsView: View {
         guard let server = serverManager.currentServer else { return }
         isLoading = true
         defer { isLoading = false }
-        playlists = (try? await SubsonicClient.shared.getPlaylists(server: server)) ?? []
+        allPlaylists = (try? await SubsonicClient.shared.getPlaylists(server: server)) ?? []
         // As on the phone: snapshot them for offline, and bring kept playlists' new songs down.
-        OfflinePlaylistsStore.shared.refresh(from: playlists)
+        OfflinePlaylistsStore.shared.refresh(from: allPlaylists)
         Task { await DownloadManager.shared.syncKeptPlaylists() }
     }
 
@@ -199,8 +247,7 @@ struct MacPlaylistsView: View {
         do {
             if let target {
                 guard name != target.name else { return }
-                try await SubsonicClient.shared.updatePlaylist(server: server, id: target.id, name: name)
-                await load()
+                if await MacPlaylistEdits.rename(target, to: name) { await load() }
             } else {
                 let created = try await SubsonicClient.shared.createPlaylist(server: server, name: name, songIds: [])
                 await load()
@@ -210,23 +257,6 @@ struct MacPlaylistsView: View {
             ToastManager.shared.show(target == nil ? String(localized: "Couldn't create the playlist")
                                                    : String(localized: "Couldn't save the playlist"),
                                      icon: "exclamationmark.triangle.fill")
-        }
-    }
-
-    /// Gone from the grid at once, gone from the server once Undo has had its five seconds.
-    private func delete(_ doomed: [Playlist]) {
-        let ids = Set(doomed.map(\.id))
-        let flag = MacUndoFlag()
-        withAnimation { playlists.removeAll { ids.contains($0.id) } }
-        ToastManager.shared.show(String(localized: "\(doomed.count) playlist(s) deleted"), icon: "trash.fill", duration: 5,
-                                 action: (String(localized: "Undo"), {
-                                     flag.undone = true
-                                     withAnimation { playlists += doomed }
-                                 }))
-        Task {
-            try? await Task.sleep(for: .seconds(5))
-            guard !flag.undone, let server = serverManager.currentServer else { return }
-            for id in ids { try? await SubsonicClient.shared.deletePlaylist(server: server, id: id) }
         }
     }
 
@@ -251,6 +281,10 @@ struct MacPlaylistDetailView: View {
     @State private var songs: [Song] = []
     @State private var name: String?
     @State private var loaded = false
+    @State private var newName: String?
+    @State private var deleting: [Playlist] = []
+    @State private var edits = MacPlaylistEdits.shared
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 0) {
@@ -272,6 +306,11 @@ struct MacPlaylistDetailView: View {
                                          set: { downloads.setKeepDownloaded(playlist.id, $0) })) {
                         Label("Keep Downloaded", systemImage: "arrow.down.circle.dotted")
                     }
+                    Divider()
+                    Button { newName = name ?? playlist.name } label: { Label("Rename…", systemImage: "pencil") }
+                    Button(role: .destructive) { deleting = [playlist] } label: {
+                        Label("Delete Playlist", systemImage: "trash")
+                    }
                 } label: {
                     Image(systemName: "ellipsis")
                 }
@@ -288,6 +327,20 @@ struct MacPlaylistDetailView: View {
         .background { ZStack { ArtworkCanvas(coverArt: playlist.coverArt, height: 640); MacFadingGrid() } }
         .navigationTitle(playlist.name)
         .task { await load() }
+        .alert("Rename…", isPresented: Binding(get: { newName != nil }, set: { if !$0 { newName = nil } })) {
+            TextField("Name", text: Binding(get: { newName ?? "" }, set: { newName = $0 }))
+            Button("Save") {
+                let typed = (newName ?? "").trimmingCharacters(in: .whitespaces)
+                guard !typed.isEmpty, typed != (name ?? playlist.name) else { return }
+                Task { if await MacPlaylistEdits.rename(playlist, to: typed) { name = typed } }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .macPlaylistDeleteAlert($deleting)
+        // Deleted from here: back to where it was opened from.
+        .onChange(of: edits.hidden.contains(playlist.id)) { _, gone in
+            if gone { dismiss() }
+        }
     }
 
     /// The phone's three states: cancel while it runs, done once it's all here, else start.
@@ -403,8 +456,7 @@ private struct MacPlaylistSongTable: View {
             Button("Play Next") { chosen(ids).reversed().forEach { player.playNext($0) } }
             Button("Add to Queue") { player.addToQueue(chosen(ids)) }
             Divider()
-            MacRatingMenu(songs: chosen(ids))
-            MacDownloadMenuItem(songs: chosen(ids))
+            MacSongMenuItems(songs: chosen(ids))
             Divider()
             Button("Remove from Playlist", role: .destructive) { remove(ids) }
         } primaryAction: { ids in

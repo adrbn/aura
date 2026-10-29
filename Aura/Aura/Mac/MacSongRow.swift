@@ -271,13 +271,9 @@ struct MacSongInfoSheet: View {
                     row("Duration", song.durationFormatted)
                     row("Play Count", song.playCount.map(String.init))
                 }
-                Section("Original File") {
-                    row("Format", song.suffix?.uppercased())
-                    row("Content Type", song.contentType)
-                    row("Bitrate", song.bitRate.map { "\($0) kbps" })
-                    row("File Size", song.fileSizeFormatted)
-                    row("Path", song.path)
-                }
+                SongRatingSection(song: song)
+                // The phone's: how it plays, the file, and its IDs.
+                SongFileSections(song: song)
                 // MusicBrainz's credits, when it knows the song; nothing at all when it doesn't.
                 if loadingCredits {
                     Section("Credits") {

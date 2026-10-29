@@ -44,6 +44,8 @@ struct AuraMacApp: App {
                 }
                 .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
                     player.resumeQueueFromServer()
+                    // As the phone does on coming back: kept playlists' new songs brought down.
+                    Task { await DownloadManager.shared.syncKeptPlaylists() }
                 }
         }
         .defaultSize(width: 1180, height: 760)

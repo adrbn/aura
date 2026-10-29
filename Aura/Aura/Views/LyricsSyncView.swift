@@ -61,6 +61,11 @@ struct LyricsSyncView: View {
         .background { background }
         .preferredColorScheme(.dark)
         .onAppear(perform: armFirst)
+        #if os(macOS)
+        // Space taps Now here, not play and pause.
+        .onAppear { MacSpaceKey.tapNow = tap }
+        .onDisappear { MacSpaceKey.tapNow = nil }
+        #endif
         .task(id: song.coverArt) { await loadBackdrop() }
         // Another song's lyrics would be timed against this one's.
         .onChange(of: player.currentSong?.id) { _, id in
@@ -236,6 +241,9 @@ struct LyricsSyncView: View {
                 .buttonStyle(PressScale())
                 .disabled(tapped.isEmpty)
                 .opacity(tapped.isEmpty ? 0.35 : 1)
+                #if os(macOS)
+                .keyboardShortcut("z", modifiers: .command)
+                #endif
                 .accessibilityLabel("Undo")
 
                 Button(action: tap) {
@@ -248,7 +256,7 @@ struct LyricsSyncView: View {
                 .buttonStyle(PressScale())
                 .disabled(armed == nil)
                 #if os(macOS)
-                // Return, not Space: Space plays and pauses wherever the focus is (MacSpaceKey).
+                // Return as well as Space (MacSpaceKey.tapNow).
                 .keyboardShortcut(.defaultAction)
                 #endif
                 .sensoryFeedback(.impact(weight: .light), trigger: tapped.count)
