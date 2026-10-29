@@ -133,6 +133,10 @@ struct MacReleaseView: View {
             Button { play(track) } label: {
                 Label(song == nil ? "Play Preview" : "Play", systemImage: "play.circle")
             }
+            if let song {
+                Divider()
+                MacSongMenuItems(songs: [song])
+            }
             #if !APPSTORE_BUILD
             if canFetch && song == nil {
                 Button { ReleaseFetcher.shared.get(release, track: SoulseekPick.Track(track)) } label: {
