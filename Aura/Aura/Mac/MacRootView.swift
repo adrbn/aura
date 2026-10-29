@@ -176,9 +176,11 @@ struct MacRootView: View {
                     .navigationDestination(for: Mix.self) { pushed(MacMixDetailView(mix: $0)) }
                     .navigationDestination(for: MacGenre.self) { pushed(MacSongsView(kind: .genre($0.name))) }
                     .navigationDestination(for: WrappedPeriod.self) { pushed(WrappedView(initialPeriod: $0)) }
+                    .navigationDestination(for: RadarRelease.self) { pushed(MacReleaseView(release: $0)) }
                     .animation(.smooth(duration: 0.28), value: section)
                     .macPendingNavigation(path: $path)
                 }
+                .environment(\.macOpenRelease, MacReleaseOpener { path.append($0) })
             }
             // In the title bar's row, centred over the page, as a fixture of the window
             // rather than of the sidebar: it stays put while sections change beneath it.

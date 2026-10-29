@@ -9,6 +9,7 @@ struct MacSearchView: View {
     @State private var preferences = MacPreferences.shared
     /// What Deezer has for the query that the library doesn't.
     @State private var finds = MacDeezerFinds()
+    @Environment(\.macOpenRelease) private var openRelease
 
     private var trimmed: String { query.trimmingCharacters(in: .whitespaces) }
     private var findsShown: Bool { finds.query == trimmed && !finds.isEmpty }
@@ -101,7 +102,7 @@ struct MacSearchView: View {
                 }
 
                 // Under the library's own, as on the phone: Deezer's songs play their
-                // previews and, in the sideload build, can be had; its releases play theirs.
+                // previews and, in the sideload build, can be had; its releases open their page.
                 if findsShown {
                     if !finds.songs.isEmpty {
                         header("Songs on Deezer")
@@ -115,7 +116,7 @@ struct MacSearchView: View {
                         header("Albums on Deezer")
                         songColumns {
                             ForEach(finds.releases) { release in
-                                RadarReleaseRow(release: release) { Task { await playPreviews(of: release) } }
+                                RadarReleaseRow(release: release) { openRelease(release) }
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
                             }
@@ -143,20 +144,6 @@ struct MacSearchView: View {
             return
         }
         AudioPlayer.shared.playSong(song, fromQueue: queue, startIndex: index, source: .search(query: finds.query))
-    }
-
-    /// A release's previews, whole, as the radar plays one: the Mac has no release page.
-    private func playPreviews(of release: RadarRelease) async {
-        guard let tracks = await RadarService.shared.tracks(of: release) else {
-            ToastManager.shared.show(String(localized: "Deezer couldn't be reached"), icon: "wifi.exclamationmark")
-            return
-        }
-        let songs = tracks.compactMap { $0.previewSong(of: release) }
-        guard let first = songs.first else {
-            ToastManager.shared.show(String(localized: "No previews for this release"), icon: "speaker.slash")
-            return
-        }
-        AudioPlayer.shared.playSong(first, fromQueue: songs, startIndex: 0, source: .search(query: finds.query))
     }
 
     private func header(_ text: LocalizedStringKey) -> some View {

@@ -24,21 +24,30 @@ struct MacDownloadMenuItem: View {
 struct MacDownloadsView: View {
     @State private var downloads = DownloadManager.shared
     @State private var player = AudioPlayer.shared
+    @State private var showDownloadAllConfirmation = false
+    /// The line of a whole-library download or export while it runs.
+    @State private var libraryProgress: String?
 
     private var songs: [Song] { downloads.downloadedSongs.map(\.song) }
 
     var body: some View {
         Group {
             if songs.isEmpty {
-                ContentUnavailableView("No downloads yet", systemImage: "arrow.down.circle",
-                                       description: Text("Download songs or albums to listen offline."))
+                ContentUnavailableView {
+                    Label("No downloads yet", systemImage: "arrow.down.circle")
+                } description: {
+                    Text(libraryProgress ?? String(localized: "Download songs or albums to listen offline."))
+                } actions: {
+                    downloadAllButton
+                }
             } else {
                 VStack(spacing: 0) {
                     MacDetailHeader(coverArt: songs.first?.coverArt, title: String(localized: "Downloads"),
-                                    subtitle: String(localized: "\(songs.count) songs")) {
+                                    subtitle: libraryProgress ?? String(localized: "\(songs.count) songs")) {
                         Button { player.playShuffled(songs, source: .songs) } label: {
                             Label("Shuffle Downloaded", systemImage: "shuffle")
                         }
+                        downloadAllButton
                         Button(role: .destructive) { downloads.deleteAll() } label: {
                             Label("Delete All Downloads", systemImage: "trash")
                         }
@@ -49,6 +58,34 @@ struct MacDownloadsView: View {
             }
         }
         .navigationTitle("Downloads")
+        .confirmationDialog("Download Entire Library?", isPresented: $showDownloadAllConfirmation, titleVisibility: .visible) {
+            Button("Download to App Storage") {
+                guard let server = ServerManager.shared.currentServer else { return }
+                Task { await downloads.downloadEntireLibrary(server: server) { libraryProgress = $0 } }
+            }
+            Button("Export to External Location...") { export() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Download every song from your server. Choose \"Export to External Location\" to save to an external drive or custom folder.")
+        }
+    }
+
+    private var downloadAllButton: some View {
+        Button { showDownloadAllConfirmation = true } label: {
+            Label("Download Entire Library", systemImage: "arrow.down.to.line")
+        }
+        .disabled(libraryProgress != nil)
+    }
+
+    /// The phone's export, into a folder picked here.
+    private func export() {
+        guard let server = ServerManager.shared.currentServer else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        Task { await downloads.exportEntireLibrary(server: server, to: folder) { libraryProgress = $0 } }
     }
 }
 

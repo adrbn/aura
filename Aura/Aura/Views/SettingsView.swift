@@ -1032,56 +1032,7 @@ struct SettingsView: View {
 
     private func downloadEntireLibrary() async {
         guard let server = serverManager.currentServer else { return }
-        await MainActor.run {
-            isDownloadingLibrary = true
-            libraryDownloadProgress = String(localized: "Scanning library...")
-        }
-        do {
-            // Fetch all songs in batches
-            var allSongs: [Song] = []
-            var offset = 0
-            let batchSize = 500
-            while true {
-                let batch = try await SubsonicClient.shared.search3(server: server, query: "", songCount: batchSize, songOffset: offset)
-                let songs = batch.song ?? []
-                if songs.isEmpty { break }
-                allSongs.append(contentsOf: songs)
-                offset += songs.count
-                await MainActor.run {
-                    libraryDownloadProgress = String(localized: "Found \(allSongs.count) songs...")
-                }
-                if songs.count < batchSize { break }
-            }
-            // Filter out already-downloaded songs
-            let downloaded = downloadManager.downloadedSongs
-            let downloadedIds = Set(downloaded.map { $0.id })
-            let toDownload = allSongs.filter { !downloadedIds.contains($0.id) }
-            AppLogger.shared.log("Download All: \(toDownload.count) songs to download (\(allSongs.count) total, \(downloadedIds.count) already downloaded)")
-            if toDownload.isEmpty {
-                await MainActor.run {
-                    isDownloadingLibrary = false
-                    libraryDownloadProgress = nil
-                    ToastManager.shared.show(String(localized: "All songs already downloaded!"), icon: "checkmark.circle.fill")
-                }
-                return
-            }
-            await MainActor.run {
-                libraryDownloadProgress = String(localized: "Downloading \(toDownload.count) songs...")
-            }
-            await downloadManager.downloadAlbum(toDownload, groupId: "library-all")
-            await MainActor.run {
-                isDownloadingLibrary = false
-                libraryDownloadProgress = nil
-                ToastManager.shared.show(String(localized: "Download complete!"), icon: "checkmark.circle.fill")
-            }
-        } catch {
-            AppLogger.shared.log("Download All failed: \(error.localizedDescription)")
-            await MainActor.run {
-                isDownloadingLibrary = false
-                libraryDownloadProgress = nil
-                ToastManager.shared.show(String(localized: "Download failed"), icon: "xmark.circle")
-            }
-        }
+        await downloadManager.downloadEntireLibrary(server: server, progress: showLibraryProgress)
     }
 
     private func exportEntireLibrary(to folderURL: URL) async {
@@ -1091,77 +1042,12 @@ struct SettingsView: View {
             return
         }
         defer { folderURL.stopAccessingSecurityScopedResource() }
+        await downloadManager.exportEntireLibrary(server: server, to: folderURL, progress: showLibraryProgress)
+    }
 
-        await MainActor.run {
-            isDownloadingLibrary = true
-            libraryDownloadProgress = String(localized: "Scanning library...")
-        }
-        do {
-            // Fetch all songs in batches
-            var allSongs: [Song] = []
-            var offset = 0
-            let batchSize = 500
-            while true {
-                let batch = try await SubsonicClient.shared.search3(server: server, query: "", songCount: batchSize, songOffset: offset)
-                let songs = batch.song ?? []
-                if songs.isEmpty { break }
-                allSongs.append(contentsOf: songs)
-                offset += songs.count
-                await MainActor.run {
-                    libraryDownloadProgress = String(localized: "Found \(allSongs.count) songs...")
-                }
-                if songs.count < batchSize { break }
-            }
-
-            if allSongs.isEmpty {
-                await MainActor.run {
-                    isDownloadingLibrary = false
-                    libraryDownloadProgress = nil
-                    ToastManager.shared.show(String(localized: "No songs found"), icon: "xmark.circle")
-                }
-                return
-            }
-
-            var exported = 0
-            var failed = 0
-            for song in allSongs {
-                await MainActor.run {
-                    libraryDownloadProgress = String(localized: "Exporting \(exported + 1)/\(allSongs.count): \(song.title)")
-                }
-                do {
-                    guard let url = DownloadManager.shared.buildExportURL(server: server, id: song.id) else { continue }
-                    let (data, _) = try await URLSession.shared.data(for: ServerHeaders.request(url))
-                    let ext = song.suffix ?? "mp3"
-                    let artist = song.artist ?? "Unknown Artist"
-                    // Sanitize filename
-                    let safeName = "\(artist) - \(song.title)".replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
-                    let fileName = "\(safeName).\(ext)"
-                    let destURL = folderURL.appendingPathComponent(fileName)
-                    try data.write(to: destURL)
-                    exported += 1
-                } catch {
-                    failed += 1
-                    AppLogger.shared.log("❌ Export failed for \(song.title): \(error.localizedDescription)")
-                }
-            }
-
-            await MainActor.run {
-                isDownloadingLibrary = false
-                libraryDownloadProgress = nil
-                if failed == 0 {
-                    ToastManager.shared.show(String(localized: "Exported \(exported) songs!"), icon: "checkmark.circle.fill")
-                } else {
-                    ToastManager.shared.show(String(localized: "Exported \(exported), \(failed) failed"), icon: "exclamationmark.triangle")
-                }
-            }
-        } catch {
-            AppLogger.shared.log("Export All failed: \(error.localizedDescription)")
-            await MainActor.run {
-                isDownloadingLibrary = false
-                libraryDownloadProgress = nil
-                ToastManager.shared.show(String(localized: "Export failed"), icon: "xmark.circle")
-            }
-        }
+    private func showLibraryProgress(_ progress: String?) {
+        isDownloadingLibrary = progress != nil
+        libraryDownloadProgress = progress
     }
 
     private func quickScan() async {
