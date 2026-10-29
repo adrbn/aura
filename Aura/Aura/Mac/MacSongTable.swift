@@ -9,6 +9,8 @@ struct MacSongTable: View {
     /// Album and playlist detail already say what album you are in.
     var showsAlbum = true
     var showsTrackNumber = false
+    /// What plays behind a pick, when the table is one part of it (a disc of an album).
+    var queue: [Song]? = nil
 
     @State private var selection = Set<Song.ID>()
     @State private var player = AudioPlayer.shared
@@ -97,8 +99,9 @@ struct MacSongTable: View {
     /// Plays the first of the selection, with the *whole* list behind it — picking a track
     /// out of an album should still queue the album, not strand you on one song.
     private func play(_ ids: Set<Song.ID>) {
-        guard let first = ids.first, let index = songs.firstIndex(where: { $0.id == first }) else { return }
-        player.playSong(songs[index], fromQueue: songs, startIndex: index, source: source)
+        let all = queue ?? songs
+        guard let first = ids.first, let index = all.firstIndex(where: { $0.id == first }) else { return }
+        player.playSong(all[index], fromQueue: all, startIndex: index, source: source)
     }
 }
 
@@ -111,6 +114,9 @@ struct MacDetailHeader<Actions: View>: View {
     var placeholderName: String?
     /// A mix's own cover, drawn instead of the server's artwork.
     var mix: Mix?
+    /// Plays the cover when it moves, as the phone's album page does.
+    var animatesCover = false
+    var onCoverTap: (() -> Void)?
     @ViewBuilder var actions: Actions
     @Environment(\.macTopRoom) private var topRoom
     @State private var width: CGFloat = 900
@@ -147,6 +153,12 @@ private extension MacDetailHeader {
         } else {
             CoverArtImage(coverArt: coverArt, size: coverSide, cornerRadius: 12,
                           placeholderName: placeholderName)
+                .overlay {
+                    if animatesCover {
+                        AnimatedCoverOverlay(coverArt: coverArt).clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+                .onTapGesture { onCoverTap?() }
         }
     }
 

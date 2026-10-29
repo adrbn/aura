@@ -255,6 +255,7 @@
 		E1000001000000000000B001 /* PreviewAligner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B001 /* PreviewAligner.swift */; };
 		E1000001000000000000B002 /* LyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B002 /* LyricsTranslator.swift */; };
 		E1000001000000000000B003 /* CoverFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B003 /* CoverFinder.swift */; };
+		E1000001000000000000B103 /* CoverFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000B003 /* CoverFinder.swift */; };
 		E1000002000000000000A0D7 /* MacFetchNotices.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A0D6 /* MacFetchNotices.swift */; };
 		E384C913F8C88AB732ED752D /* MusicEntities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D8ECD62D445D4E0C2A3BE9F /* MusicEntities.swift */; };
 		E5E285F07AE8AC12F1E7E5A0 /* LibraryCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48463C5BC4D5C5785245C8BE /* LibraryCatalog.swift */; };
@@ -1205,6 +1206,7 @@
 				1DE6DF3B70B4F115C8E5194A /* ServerManager.swift in Sources */,
 				7E8BB5A780EBB03A7F6F7786 /* AudioPlayer.swift in Sources */,
 				3FB7BC62602380A759C75218 /* ImageLoader.swift in Sources */,
+				E1000001000000000000B103 /* CoverFinder.swift in Sources */,
 				B308A21EB72F34D0B1A95848 /* AppTypography.swift in Sources */,
 				125F7988574B0686E951FB7C /* LyricWordTiming.swift in Sources */,
 				EBEB7A689B00639BFDCF12E6 /* DownloadManager.swift in Sources */,

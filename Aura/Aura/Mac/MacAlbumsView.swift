@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Every album, as a grid of covers. The one place the Mac's extra width pays off most
 /// obviously: where the phone shows two columns, a window shows eight.
@@ -58,6 +59,7 @@ struct MacAlbumDetailView: View {
     /// The artist's other albums, under the songs.
     @State private var others: [Album] = []
     @State private var loaded = false
+    @State private var isStarred = false
     #if !APPSTORE_BUILD
     @State private var edition: AlbumCompletion.Edition?
     #endif
@@ -75,22 +77,38 @@ struct MacAlbumDetailView: View {
                 subtitle: [album.artist, album.year.map(String.init),
                            songs.isEmpty ? nil : String(localized: "\(songs.count) songs")]
                     .compactMap { $0 }.joined(separator: " · "),
-                placeholderName: album.name
+                placeholderName: album.name,
+                animatesCover: true
             ) {
                 Button { play(shuffled: false) } label: { Label("Play", systemImage: "play.fill") }
                 Button { play(shuffled: true) } label: { Label("Shuffle", systemImage: "shuffle") }
-                Button { Task { await DownloadManager.shared.downloadAlbum(songs, groupId: album.id) } } label: {
-                    Label("Download Album", systemImage: "arrow.down.circle")
+                Button { toggleStar() } label: { Image(systemName: isStarred ? "heart.fill" : "heart") }
+                    .help(isStarred ? "Unfavourite" : "Favourite")
+                Button { player.startAlbumRadio(songs: songs) } label: {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
                 }
-                .disabled(songs.isEmpty || songs.allSatisfy { DownloadManager.shared.isDownloaded($0.id) })
+                .help("Start Radio")
+                .disabled(songs.isEmpty)
+                downloadButton
+                Button { saveCover() } label: { Image(systemName: "square.and.arrow.down") }
+                    .help("Save Cover Art")
             }
             Divider()
             if loaded {
-                MacSongTable(songs: songs,
-                             source: .album(id: album.id, name: album.name),
-                             showsAlbum: false, showsTrackNumber: true)
-                    .frame(height: Self.headHeight + Self.rowHeight * CGFloat(max(songs.count, 1)) + 6)
-                    .scrollDisabled(true)
+                // Each disc of a multi-disc release under its own heading, the whole album
+                // still queued behind a pick.
+                let discs = Dictionary(grouping: songs) { $0.discNumber ?? 1 }
+                if discs.count > 1 {
+                    ForEach(discs.keys.sorted(), id: \.self) { disc in
+                        Text("Disc \(disc)")
+                            .font(.headline).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 28).padding(.top, 14)
+                        songTable(discs[disc] ?? [])
+                    }
+                } else {
+                    songTable(songs)
+                }
             } else {
                 MacLoadingState().frame(height: 240)
             }
@@ -118,11 +136,82 @@ struct MacAlbumDetailView: View {
         .task { await load() }
     }
 
+    private func songTable(_ part: [Song]) -> some View {
+        MacSongTable(songs: part,
+                     source: .album(id: album.id, name: album.name),
+                     showsAlbum: false, showsTrackNumber: true, queue: songs)
+            .frame(height: Self.headHeight + Self.rowHeight * CGFloat(max(part.count, 1)) + 6)
+            .scrollDisabled(true)
+    }
+
+    /// The phone's three states: a ring that cancels while it runs, filled once it's all here.
+    @ViewBuilder private var downloadButton: some View {
+        let downloads = DownloadManager.shared
+        if downloads.isGroupDownloading(album.id) {
+            Button { downloads.cancelGroupDownload(album.id) } label: {
+                ProgressView(value: downloads.groupProgress(for: album.id))
+                    .progressViewStyle(.circular).controlSize(.small)
+            }
+            .help("Cancel Download")
+        } else if !songs.isEmpty, downloads.allDownloaded(songs.map(\.id)) {
+            Button {} label: { Label("Downloaded", systemImage: "arrow.down.circle.fill") }
+                .disabled(true)
+        } else {
+            Button { Task { await downloads.downloadAlbum(songs, groupId: album.id) } } label: {
+                Label("Download Album", systemImage: "arrow.down.circle")
+            }
+            .disabled(songs.isEmpty)
+        }
+    }
+
+    private func toggleStar() {
+        guard let server = serverManager.currentServer else { return }
+        let wasStarred = isStarred
+        isStarred.toggle()
+        Task {
+            do {
+                if wasStarred {
+                    try await SubsonicClient.shared.unstar(server: server, id: album.id, type: .album)
+                } else {
+                    try await SubsonicClient.shared.star(server: server, id: album.id, type: .album)
+                }
+            } catch {
+                isStarred = wasStarred
+            }
+        }
+    }
+
+    /// The server's picture at full size, to a file the reader picks.
+    private func saveCover() {
+        guard let coverArt = album.coverArt else { return }
+        Task {
+            let size = ArtworkCache.fullSize
+            guard let image = await ArtworkCache.shared.fetchImage(coverArt: coverArt, requestSize: size,
+                                                                   key: "\(coverArt)_\(size)"),
+                  let tiff = image.tiffRepresentation,
+                  let jpeg = NSBitmapImageRep(data: tiff)?.representation(using: .jpeg, properties: [:]) else {
+                ToastManager.shared.show(String(localized: "Couldn’t load the cover"), icon: "exclamationmark.triangle.fill")
+                return
+            }
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [.jpeg]
+            panel.nameFieldStringValue = "\(album.name).jpg"
+            guard panel.runModal() == .OK, let url = panel.url else { return }
+            do {
+                try jpeg.write(to: url)
+            } catch {
+                ToastManager.shared.show(String(localized: "Couldn’t save the cover"), icon: "exclamationmark.triangle.fill")
+            }
+        }
+    }
+
     private func load() async {
         guard let server = serverManager.currentServer else { return }
         full = try? await SubsonicClient.shared.getAlbum(server: server, id: album.id)
         songs = full?.song ?? []
         loaded = true
+        isStarred = (try? await SubsonicClient.shared.getStarred2(server: server))?.album?
+            .contains { $0.id == album.id } ?? false
         if let artistId = album.artistId,
            let artist = try? await SubsonicClient.shared.getArtist(server: server, id: artistId) {
             others = (artist.album ?? []).filter { $0.id != album.id }

@@ -523,7 +523,6 @@ final class ArtworkCache: @unchecked Sendable {
     /// or nil, and Aura draws its own. Looked for outside the download gate: it asks
     /// someone else, and must not hold up the server's covers while it waits.
     private func standIn(for coverArt: String, requestSize: Int, key: String? = nil) async -> PlatformImage? {
-        #if os(iOS)
         guard let server = ServerManager.shared.currentServer,
               let url = await CoverFinder.shared.coverURL(for: coverArt, server: server, pixels: requestSize),
               let (data, _) = try? await imageSession.data(for: ServerHeaders.request(url)),
@@ -531,9 +530,6 @@ final class ArtworkCache: @unchecked Sendable {
         else { return nil }
         if let key { store(image, for: key) }
         return image
-        #else
-        return nil
-        #endif
     }
 
     private func markMissing(_ coverArt: String, data: Data) {
@@ -1027,9 +1023,7 @@ struct AnimatedCoverOverlay: View {
 
     var body: some View {
         ZStack {
-            #if canImport(UIKit)
             if let data { AnimatedImagePlayer(data: data) }
-            #endif
         }
         .allowsHitTesting(false)
         .task(id: coverArt) {
@@ -1067,6 +1061,34 @@ private struct AnimatedImagePlayer: UIViewRepresentable {
     func updateUIView(_ view: UIImageView, context: Context) {}
 
     static func dismantleUIView(_ view: UIImageView, coordinator: Coordinator) {
+        coordinator.stop = true
+    }
+}
+#else
+/// The Mac's: each frame set as the layer's contents, filled to the frame as the phone's is.
+private struct AnimatedImagePlayer: NSViewRepresentable {
+    let data: Data
+
+    final class Coordinator { var stop = false }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.contentsGravity = .resizeAspectFill
+        view.layer?.masksToBounds = true
+        let coordinator = context.coordinator
+        CGAnimateImageDataWithBlock(data as CFData, nil) { [weak view] _, frame, stop in
+            guard let view, !coordinator.stop else { stop.pointee = true; return }
+            view.layer?.contents = frame
+        }
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {}
+
+    static func dismantleNSView(_ view: NSView, coordinator: Coordinator) {
         coordinator.stop = true
     }
 }
