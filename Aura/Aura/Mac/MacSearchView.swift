@@ -7,6 +7,11 @@ struct MacSearchView: View {
     @State private var results = SearchResults()
     @State private var isSearching = false
     @State private var preferences = MacPreferences.shared
+    /// What Deezer has for the query that the library doesn't.
+    @State private var finds = MacDeezerFinds()
+
+    private var trimmed: String { query.trimmingCharacters(in: .whitespaces) }
+    private var findsShown: Bool { finds.query == trimmed && !finds.isEmpty }
 
     var body: some View {
         Group {
@@ -14,7 +19,7 @@ struct MacSearchView: View {
                 // Replaces the results rather than sitting above them: a query in flight
                 // should not leave the previous query's hits on screen looking like answers.
                 MacLoadingState()
-            } else if results.isEmpty {
+            } else if results.isEmpty && !findsShown {
                 ContentUnavailableView.search(text: query)
             } else {
                 found
@@ -22,6 +27,7 @@ struct MacSearchView: View {
         }
         .navigationTitle("Search")
         .task(id: query) { await run() }
+        .task(id: query) { await runDeezer() }
     }
 
     private var found: some View {
@@ -93,8 +99,64 @@ struct MacSearchView: View {
                     .padding(.horizontal, 28)
                     .padding(.bottom, 28)
                 }
+
+                // Under the library's own, as on the phone: Deezer's songs play their
+                // previews and, in the sideload build, can be had; its releases play theirs.
+                if findsShown {
+                    if !finds.songs.isEmpty {
+                        header("Songs on Deezer")
+                        songColumns {
+                            ForEach(finds.songs) { find in
+                                MacDeezerSongRow(find: find) { playPreview(find) }
+                            }
+                        }
+                    }
+                    if !finds.releases.isEmpty {
+                        header("Albums on Deezer")
+                        songColumns {
+                            ForEach(finds.releases) { release in
+                                RadarReleaseRow(release: release) { Task { await playPreviews(of: release) } }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+
+    /// The songs' set-width columns, for Deezer's rows as for the library's.
+    private func songColumns<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 440, maximum: 500), spacing: 32, alignment: .leading)],
+                  alignment: .leading, spacing: 2, content: content)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 28)
+            .padding(.bottom, 28)
+    }
+
+    /// A song found on Deezer, on into the others found.
+    private func playPreview(_ find: MacDeezerFind) {
+        let queue = finds.songs.compactMap(\.preview)
+        guard let song = find.preview, let index = queue.firstIndex(where: { $0.id == song.id }) else {
+            ToastManager.shared.show(String(localized: "No preview for this song"), icon: "speaker.slash")
+            return
+        }
+        AudioPlayer.shared.playSong(song, fromQueue: queue, startIndex: index, source: .search(query: finds.query))
+    }
+
+    /// A release's previews, whole, as the radar plays one: the Mac has no release page.
+    private func playPreviews(of release: RadarRelease) async {
+        guard let tracks = await RadarService.shared.tracks(of: release) else {
+            ToastManager.shared.show(String(localized: "Deezer couldn't be reached"), icon: "wifi.exclamationmark")
+            return
+        }
+        let songs = tracks.compactMap { $0.previewSong(of: release) }
+        guard let first = songs.first else {
+            ToastManager.shared.show(String(localized: "No previews for this release"), icon: "speaker.slash")
+            return
+        }
+        AudioPlayer.shared.playSong(first, fromQueue: songs, startIndex: 0, source: .search(query: finds.query))
     }
 
     private func header(_ text: LocalizedStringKey) -> some View {
@@ -131,5 +193,179 @@ struct MacSearchView: View {
         try? await Task.sleep(for: .seconds(1.5))
         guard !Task.isCancelled else { return }
         MacSearchHistory.shared.record(q)
+    }
+
+    /// Asks Deezer too, as the phone does — with the radar on, since it's Deezer's catalogue —
+    /// and leaves out what the library's own answer already holds, so it waits for that.
+    private func runDeezer() async {
+        let q = trimmed
+        guard AppSettings.shared.radarEnabled, q.count >= 2, !LocalSearch.parse(q).isEmpty else {
+            finds = MacDeezerFinds(); return
+        }
+        if finds.query == q { return }
+        try? await Task.sleep(for: .milliseconds(500))
+        let deezerQuery = LocalSearch.deezerQuery(q)
+        guard !Task.isCancelled, !deezerQuery.isEmpty,
+              let found = await RadarCatalog.search(deezerQuery), !Task.isCancelled else { return }
+        for _ in 0..<100 where isSearching {
+            try? await Task.sleep(for: .milliseconds(100))
+            if Task.isCancelled { return }
+        }
+        let made = MacDeezerFinds(query: q, songs: found.songs, albums: found.albums, library: results)
+        RadarService.shared.remember(made.releases + made.songs.map(\.release))
+        finds = made
+    }
+}
+
+/// A song Deezer's search turned up, with the release it's from as the radar would hold it.
+struct MacDeezerFind: Identifiable {
+    let hit: DeezerHit
+    let release: RadarRelease
+
+    var id: Int { hit.id }
+    var preview: Song? { hit.track.previewSong(of: release) }
+}
+
+/// What Deezer has for a search that the library's results don't — the phone's `DeezerFinds`,
+/// which lives in a file the Mac doesn't build, beside the phone's rows.
+struct MacDeezerFinds {
+    var query = ""
+    var songs: [MacDeezerFind] = []
+    var releases: [RadarRelease] = []
+
+    var isEmpty: Bool { songs.isEmpty && releases.isEmpty }
+
+    init() {}
+
+    /// Deezer's answer, less what the library's results already hold. An artist the library
+    /// knows keeps their id, so their page is a click away.
+    init(query: String, songs: [DeezerHit], albums: [DeezerAlbumHit], library: SearchResults) {
+        func artist(_ credit: DeezerHit.Artist) -> ArtistRef {
+            let folded = SongQuery.fold(credit.name)
+            let known = library.artists.first { SongQuery.fold($0.name) == folded }
+            return ArtistRef(id: known?.id ?? "", name: credit.name)
+        }
+        var seen = Set<Int>()
+        self.query = query
+        self.songs = songs
+            .filter { hit in
+                seen.insert(hit.id).inserted && !library.songs.contains {
+                    RadarRules.sameTitle($0.title, hit.title) && RadarRules.credits($0.artist, hit.artist.name)
+                }
+            }
+            .map { hit in
+                MacDeezerFind(hit: hit, release: RadarRelease(
+                    id: String(hit.album.id), title: hit.album.title, artist: artist(hit.artist),
+                    released: "", type: "album", cover: hit.album.cover_medium, link: nil))
+            }
+        self.releases = albums
+            .filter { hit in
+                !library.albums.contains {
+                    RadarRules.sameTitle($0.name, hit.title) && RadarRules.credits($0.artist, hit.artist.name)
+                }
+            }
+            .map { hit in
+                RadarRelease(id: String(hit.id), title: hit.title, artist: artist(hit.artist), released: "",
+                             type: hit.record_type ?? "album", cover: hit.cover_medium, link: hit.link)
+            }
+    }
+}
+
+/// A song on Deezer, drawn as the library's song rows are: its preview on a click, and in the
+/// sideload build, its own Get.
+private struct MacDeezerSongRow: View {
+    let find: MacDeezerFind
+    let play: () -> Void
+
+    @State private var player = AudioPlayer.shared
+    @State private var hovering = false
+    @Environment(\.appAccentColor) private var accentColor
+
+    private var isCurrent: Bool { player.currentSong?.id == "deezer-\(find.hit.id)" }
+
+    private var canFetch: Bool {
+        #if APPSTORE_BUILD
+        return false
+        #else
+        return ReleaseFetcher.shared.isAvailable
+        #endif
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            CoverArtImage(coverArt: find.release.cover, size: 52, cornerRadius: 6, placeholderName: find.hit.title)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(find.hit.title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(isCurrent ? Color.appAccent : .primary)
+                    .lineLimit(1)
+                Text("\(find.hit.artist.name) · \(find.release.title)")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 16)
+            trailing.frame(width: 32)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(RoundedRectangle(cornerRadius: 7).fill(.white.opacity(hovering ? 0.07 : 0)))
+        .contentShape(Rectangle())
+        .opacity(find.preview == nil ? 0.5 : 1)
+        .onHover { hovering = $0 }
+        .onTapGesture(perform: play)
+        .contextMenu {
+            Button(action: play) { Label("Play Preview", systemImage: "play.circle") }
+            #if !APPSTORE_BUILD
+            if canFetch {
+                Button { ReleaseFetcher.shared.get(find.release, track: SoulseekPick.Track(find.hit.track)) } label: {
+                    Label("Get This Song", systemImage: "arrow.down.circle")
+                }
+            }
+            #endif
+        }
+    }
+
+    /// The phone's Get control: a ring while it comes in, a check once it's in.
+    @ViewBuilder
+    private var trailing: some View {
+        #if !APPSTORE_BUILD
+        if canFetch {
+            let fetcher = ReleaseFetcher.shared
+            let track = SoulseekPick.Track(find.hit.track)
+            let own = fetcher.fetch(for: ReleaseFetch.id(find.release.id, track: track.id))
+            let whole = fetcher.fetch(for: find.release.id)
+            let shown = whole.flatMap { $0.stage != .failed ? $0 : nil } ?? own
+            switch shown?.stage {
+            case .searching?, .downloading?, .importing?:
+                FetchRing(fetch: shown!)
+            case .ready?:
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 15))
+                    .foregroundStyle(accentColor)
+                    .help("In your library")
+            default:
+                Button { fetcher.get(find.release, track: track) } label: {
+                    Image(systemName: own?.stage == .failed ? "arrow.clockwise.circle" : "arrow.down.circle")
+                        .font(.system(size: 15))
+                        .foregroundStyle(own?.stage == .failed ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
+                        .frame(width: 32, height: 30)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Get This Song")
+            }
+        } else {
+            previewGlyph
+        }
+        #else
+        previewGlyph
+        #endif
+    }
+
+    private var previewGlyph: some View {
+        Image(systemName: "play.circle")
+            .font(.system(size: 15))
+            .foregroundStyle(.tertiary)
     }
 }

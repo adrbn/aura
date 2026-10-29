@@ -15,18 +15,28 @@ struct MacHomeView: View {
     @State private var newest: [Album] = []
     @State private var frequent: [Album] = []
     @State private var playlists: [Playlist] = []
+    @State private var random: [Album] = []
+    @State private var starred = Starred2(artist: nil, album: nil, song: nil)
+    @State private var songCount = 0
+    @State private var albumCount = 0
+    @State private var settings = AppSettings.shared
     @State private var isLoading = true
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
                 greeting
+                wrappedCard
                 quickPicks
                 mixesShelf
+                upNextShelf
                 albumShelf("Recently Played", recent)
                 albumShelf("Recently Added", newest)
+                songShelf("Favorite Songs", starred.song ?? [], source: .favorites)
                 playlistShelf
                 albumShelf("On Repeat", frequent)
+                artistShelf
+                albumShelf("Random Albums", random)
                 if isLoading && recent.isEmpty && newest.isEmpty {
                     MacLoadingState().frame(height: 240)
                 }
@@ -44,9 +54,18 @@ struct MacHomeView: View {
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(salutation).auraDisplay(58)
-            Text(serverManager.currentServer?.friendlyName ?? "")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                Text(serverManager.currentServer?.friendlyName ?? "")
+                // The phone's stats line, as quiet: only the counts the server reported.
+                if settings.showStatsOnHome {
+                    ForEach(Array(stats.enumerated()), id: \.offset) { _, part in
+                        Text(verbatim: "·")
+                        part
+                    }
+                }
+            }
+            .font(.system(size: 12))
+            .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 22)
@@ -58,6 +77,42 @@ struct MacHomeView: View {
         case 5..<12: return String(localized: "Good morning")
         case 12..<18: return String(localized: "Good afternoon")
         default: return String(localized: "Good evening")
+        }
+    }
+
+    private var stats: [Text] {
+        var parts: [Text] = []
+        if songCount > 0 { parts.append(Text("\(songCount) songs")) }
+        if albumCount > 0 { parts.append(Text("\(albumCount) albums")) }
+        if !playlists.isEmpty { parts.append(Text("\(playlists.count) playlists")) }
+        return parts
+    }
+
+    // MARK: Wrapped
+
+    /// The phone's retrospective card, on the same terms: only when Home is set to show it,
+    /// and only while a period is being offered.
+    @ViewBuilder
+    private var wrappedCard: some View {
+        if settings.wrappedShowOnHome, let period = WrappedAvailability.offeredPeriods().first {
+            NavigationLink(value: period) {
+                HStack(spacing: 14) {
+                    GeneratedCoverView(nature: .retrospective(period.coverLabel), size: 58, cornerRadius: 0)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Your \(period.title) Wrapped").font(.system(size: 14, weight: .semibold))
+                        Text("Your top songs, artists & genres").font(.system(size: 12)).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+                }
+                .padding(.trailing, 16)
+                .background(.primary.opacity(0.07))
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+            }
+            .buttonStyle(MacPressStyle())
+            .macHoverLift(scale: 1.01)
+            .padding(.horizontal, 28)
+            .padding(.bottom, 22)
         }
     }
 
@@ -143,6 +198,45 @@ struct MacHomeView: View {
         }
     }
 
+    /// What plays next, as the phone shows it: a card plays the queue from there.
+    @ViewBuilder
+    private var upNextShelf: some View {
+        if settings.showUpNext {
+            MacShelf(title: "Up Next", items: Array(player.upNextSongs.prefix(15))) { song in
+                Button {
+                    if let index = player.queue.firstIndex(where: { $0.id == song.id }) {
+                        player.playSong(song, fromQueue: player.queue, startIndex: index, source: .queue)
+                    }
+                } label: { songCard(song) }
+                .buttonStyle(MacPressStyle())
+            }
+        }
+    }
+
+    private func songShelf(_ title: LocalizedStringKey, _ songs: [Song], source: PlaybackSource) -> some View {
+        MacShelf(title: title, items: Array(songs.prefix(30))) { song in
+            Button {
+                player.playSong(song, fromQueue: songs, startIndex: songs.firstIndex { $0.id == song.id } ?? 0, source: source)
+            } label: { songCard(song) }
+            .buttonStyle(MacPressStyle())
+        }
+    }
+
+    private func songCard(_ song: Song) -> some View {
+        MacPlayableCard(coverArt: song.coverArt, title: song.title, subtitle: song.artist,
+                        placeholderName: song.album ?? song.title)
+    }
+
+    private var artistShelf: some View {
+        MacShelf(title: "Favorite Artists", items: starred.artist ?? []) { artist in
+            NavigationLink(value: artist) {
+                MacPlayableCard(coverArt: artist.coverArt, title: artist.name,
+                                placeholderName: artist.name, circular: true)
+            }
+            .buttonStyle(MacPressStyle())
+        }
+    }
+
     private var playlistShelf: some View {
         MacShelf(title: "Your Playlists", items: MacPlaylistOrder.pinnedFirst(playlists)) { playlist in
             NavigationLink(value: playlist) {
@@ -163,8 +257,8 @@ struct MacHomeView: View {
     private func load() async {
         guard let server = serverManager.currentServer else { return }
         defer { isLoading = false }
-        // Four independent calls; issued together rather than in sequence, so the page fills
-        // in one round trip's worth of time instead of four.
+        // Independent calls, issued together rather than in sequence, so the page fills
+        // in one round trip's worth of time instead of eight.
         //
         // Each one says what happened. A shelf whose call fails renders as nothing at all —
         // `MacShelf` draws no heading for an empty list — so a `try?` here turns any server
@@ -174,10 +268,18 @@ struct MacHomeView: View {
         async let newestCall   = Self.shelf("newest")   { try await SubsonicClient.shared.getAlbumList2(server: server, type: "newest", size: 24) }
         async let frequentCall = Self.shelf("frequent") { try await SubsonicClient.shared.getAlbumList2(server: server, type: "frequent", size: 24) }
         async let playlistCall = Self.shelf("playlists") { try await SubsonicClient.shared.getPlaylists(server: server) }
+        async let randomCall   = Self.shelf("random")   { try await SubsonicClient.shared.getAlbumList2(server: server, type: "random", size: 24) }
+        async let starredCall  = try? SubsonicClient.shared.getStarred2(server: server)
+        async let scanCall     = try? SubsonicClient.shared.getScanStatus(server: server)
+        async let albumsCall   = try? SubsonicClient.shared.getAlbumCount(server: server)
         recent = await recentCall
         newest = await newestCall
         frequent = await frequentCall
         playlists = await playlistCall
+        random = await randomCall
+        if let found = await starredCall { starred = found }
+        songCount = await scanCall?.count ?? 0
+        albumCount = await albumsCall ?? 0
         await generator.generateIfNeeded()
     }
 

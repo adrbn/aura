@@ -5,7 +5,7 @@ import SwiftUI
 /// has room to show a section and its detail at once, so several of the phone's screens
 /// become columns here rather than destinations of their own.
 enum MacSection: String, Hashable, CaseIterable, Identifiable {
-    case home, mixes, radar, wrapped, songs, playlists, albums, artists, downloads
+    case home, mixes, radar, wrapped, songs, favorites, recentlyPlayed, genres, playlists, albums, artists, downloads
 
     var id: String { rawValue }
 
@@ -19,6 +19,9 @@ enum MacSection: String, Hashable, CaseIterable, Identifiable {
         case .albums: return String(localized: "Albums")
         case .artists: return String(localized: "Artists")
         case .songs: return String(localized: "Songs")
+        case .favorites: return String(localized: "Favorites")
+        case .recentlyPlayed: return String(localized: "Recently Played")
+        case .genres: return String(localized: "Genres")
         case .playlists: return String(localized: "Playlists")
         }
     }
@@ -33,6 +36,9 @@ enum MacSection: String, Hashable, CaseIterable, Identifiable {
         case .albums: return "square.stack"
         case .artists: return "music.mic"
         case .songs: return "music.note"
+        case .favorites: return "heart"
+        case .recentlyPlayed: return "clock"
+        case .genres: return "guitars"
         case .playlists: return "music.note.list"
         }
     }
@@ -168,6 +174,8 @@ struct MacRootView: View {
                     .navigationDestination(for: Artist.self) { pushed(MacArtistDetailView(artist: $0)) }
                     .navigationDestination(for: Playlist.self) { pushed(MacPlaylistDetailView(playlist: $0)) }
                     .navigationDestination(for: Mix.self) { pushed(MacMixDetailView(mix: $0)) }
+                    .navigationDestination(for: MacGenre.self) { pushed(MacSongsView(kind: .genre($0.name))) }
+                    .navigationDestination(for: WrappedPeriod.self) { pushed(WrappedView(initialPeriod: $0)) }
                     .animation(.smooth(duration: 0.28), value: section)
                     .macPendingNavigation(path: $path)
                 }
@@ -311,6 +319,9 @@ struct MacRootView: View {
         case .albums: MacAlbumsView()
         case .artists: MacArtistsView()
         case .songs: MacSongsView()
+        case .favorites: MacSongsView(kind: .favorites)
+        case .recentlyPlayed: MacSongsView(kind: .recentlyPlayed)
+        case .genres: MacGenresView()
         case .playlists: MacPlaylistsView()
         }
     }

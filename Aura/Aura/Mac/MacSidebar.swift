@@ -22,7 +22,7 @@ struct MacSidebar: View {
                 row(item)
             }
             Section("Library") {
-                ForEach([MacSection.songs, .playlists, .albums, .artists, .downloads]) { item in
+                ForEach([MacSection.songs, .favorites, .recentlyPlayed, .playlists, .albums, .artists, .genres, .downloads]) { item in
                     row(item)
                 }
             }
