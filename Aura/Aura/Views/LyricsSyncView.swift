@@ -752,7 +752,13 @@ enum LyricsAutoSync {
                     if first > 0, start > 0, same(heard[start - 1].word, words[first - 1]) { continue }
                     let score = matched(Array(words[first..<min(words.count, first + 6)]), from: start, in: heard)
                     guard score >= needed else { continue }
-                    candidates.append(Candidate(line: line, time: max(0, word.time - 0.3 * Double(first)), score: score,
+                    // A first word heard well before the second is a stray one: the line starts with the second.
+                    var time = word.time - 0.3 * Double(first)
+                    if first == 0, let next = nextHeard(words[1], from: start + 1, start: start, in: heard),
+                       heard[next].time - word.time > maxLead {
+                        time = heard[next].time - 0.3
+                    }
+                    candidates.append(Candidate(line: line, time: max(0, time), score: score,
                                                 first: first, start: start))
                 }
             }
@@ -864,6 +870,7 @@ enum LyricsAutoSync {
     }
 
     private static let maxWordGap: TimeInterval = 4
+    private static let maxLead: TimeInterval = 1
 
     /// The same word, or one letter off for a longer one: a sung word is heard a little wrong.
     private static func same(_ a: String, _ b: String) -> Bool {
