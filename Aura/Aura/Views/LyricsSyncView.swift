@@ -663,6 +663,11 @@ enum LyricsAutoSync {
         guard !heard.isEmpty, let top = found.first ?? nil else { return ([:], 0) }
         let shift = heard.map(\.shift).sorted()[heard.count / 2]
         var anchors = [0: max(0, top + shift)]
+        // The first line off on its own: moved alone, the next one puts the rest back.
+        if let first = placed[0], abs(first - (top + shift)) > 1.5 {
+            anchors[0] = first
+            if found.count > 1, let next = found[1] { anchors[1] = max(0, next + shift) }
+        }
         var current = shift
         for index in heard.indices.dropLast(2) {
             let run = heard[index...(index + 2)].map(\.shift)
@@ -758,7 +763,8 @@ enum LyricsAutoSync {
                 shifts.reduce(0) { abs($1.0 - a.0) <= 1 ? $0 + $1.1 : $0 }
                     < shifts.reduce(0) { abs($1.0 - b.0) <= 1 ? $0 + $1.1 : $0 }
             }!.0
-            candidates.removeAll { c in found[c.line].map { abs(c.time - $0 - agreed) > 2 } ?? false }
+            // Not the first line: nothing comes before it to confuse it with, and it can be off alone.
+            candidates.removeAll { c in c.line > 0 && (found[c.line].map { abs(c.time - $0 - agreed) > 2 } ?? false) }
         }
         candidates.sort { ($0.line, $0.time) < ($1.line, $1.time) }
         // ponytail: quadratic over the candidates, a few hundred for a song.
@@ -769,7 +775,7 @@ enum LyricsAutoSync {
                 let (x, y) = (candidates[a], candidates[b])
                 guard x.line < y.line, y.time - x.time >= 0.3, best[a] + y.score > best[b] else { continue }
                 // Timed lyrics drift, they don't jump: two lines found close by move alike.
-                if let was = found[x.line], let now = found[y.line], abs((y.time - now) - (x.time - was)) > 1.5 { continue }
+                if x.line > 0, let was = found[x.line], let now = found[y.line], abs((y.time - now) - (x.time - was)) > 1.5 { continue }
                 best[b] = best[a] + y.score
                 previous[b] = a
             }
