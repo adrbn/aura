@@ -1369,6 +1369,19 @@ struct NowPlayingView: View {
                 guard !isUserScrolling else { return }
                 withAnimation(.easeInOut(duration: 0.4)) { scrollToSungLine(proxy) }
             }
+            // A new song's words: the list keeps its offset, which is the end of the song before.
+            .onChange(of: player.lyrics.first?.id) { _, _ in
+                Task { @MainActor in
+                    await Task.yield()  // the new lines have to be laid out to be scrolled to
+                    guard !isUserScrolling else { return }
+                    updateLyricIndices()
+                    if currentLyricId == nil {
+                        proxy.scrollTo("lyrics-top-spacer", anchor: .top)
+                    } else {
+                        scrollToSungLine(proxy)
+                    }
+                }
+            }
             // Translations shown, hidden or arriving change every line's height, and the
             // list keeps its offset: the line being sung drifted off the centre, then was
             // brought back in a second movement.
@@ -1396,6 +1409,9 @@ struct NowPlayingView: View {
             proxy.scrollTo("lyrics-top-spacer", anchor: .top)
         } else if let id = currentLyricId {
             proxy.scrollTo(id, anchor: .center)
+        } else if areLyricsSynced {
+            // Before the first line: from the top, not where the song before left the list.
+            proxy.scrollTo("lyrics-top-spacer", anchor: .top)
         }
     }
 

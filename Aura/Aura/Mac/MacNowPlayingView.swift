@@ -239,6 +239,13 @@ struct MacLyricsSheet: View {
             }
             .onChange(of: player.currentTime) { _, _ in track(proxy: proxy) }
             .onChange(of: player.currentSong?.id) { _, _ in currentIndex = nil }
+            // A new song's words: the list keeps its offset, which is the end of the song before.
+            .onChange(of: player.lyrics.first?.id) { _, _ in
+                DispatchQueue.main.async {
+                    guard currentIndex == nil, !browsing else { return }
+                    proxy.scrollTo(0, anchor: .top)
+                }
+            }
             // Translations make every line taller, so the sung line slid down the pane until
             // the next line change scrolled again. Re-centre as soon as they show, hide or land.
             .onChange(of: settings.translateLyrics) { _, _ in recenter(proxy: proxy) }
