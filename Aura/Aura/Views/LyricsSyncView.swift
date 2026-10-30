@@ -740,6 +740,8 @@ enum LyricsAutoSync {
             let needed = min(3, words.count)
             for first in 0..<min(3, words.count) {
                 for (start, word) in heard.enumerated() where same(word.word, words[first]) {
+                    // The line's own start was heard just before: that's where it's timed from.
+                    if first > 0, start > 0, same(heard[start - 1].word, words[first - 1]) { continue }
                     let score = matched(Array(words[first..<min(words.count, first + 6)]), from: start, in: heard)
                     guard score >= needed else { continue }
                     candidates.append(Candidate(line: line, time: max(0, word.time - 0.3 * Double(first)), score: score,
@@ -789,8 +791,7 @@ enum LyricsAutoSync {
         var times = [TimeInterval?](repeating: nil, count: words.count)
         var at = start
         for index in first..<words.count {
-            guard let next = (at..<min(heard.count, at + 3)).first(where: { same(heard[$0].word, words[index]) })
-            else { continue }
+            guard let next = nextHeard(words[index], from: at, start: start, in: heard) else { continue }
             times[index] = max(0, heard[next].time - lineStart)
             at = next + 1
         }
@@ -802,12 +803,23 @@ enum LyricsAutoSync {
         var count = 0
         var at = start
         for word in words {
-            guard let next = (at..<min(heard.count, at + 3)).first(where: { same(heard[$0].word, word) }) else { continue }
+            guard let next = nextHeard(word, from: at, start: start, in: heard) else { continue }
             count += 1
             at = next + 1
         }
         return count
     }
+
+    /// The word among the next few heard, if it comes soon enough after the one before: words
+    /// picked up seconds apart are two passages of the song, not one line.
+    private static func nextHeard(_ word: String, from at: Int, start: Int, in heard: [Heard]) -> Int? {
+        let previous = heard[max(start, at - 1)].time
+        return (at..<min(heard.count, at + 3)).first {
+            heard[$0].time - previous <= maxWordGap && same(heard[$0].word, word)
+        }
+    }
+
+    private static let maxWordGap: TimeInterval = 4
 
     /// The same word, or one letter off for a longer one: a sung word is heard a little wrong.
     private static func same(_ a: String, _ b: String) -> Bool {
