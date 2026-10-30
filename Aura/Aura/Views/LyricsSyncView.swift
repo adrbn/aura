@@ -459,15 +459,18 @@ struct LyricsSyncView: View {
     }
 
     /// A line's words where they now fall: as heard, or as the lyrics had them, moved with it.
-    /// A word not made out lights with the one before it.
+    /// A word not made out takes its share of the time between the ones heard around it.
     private func words(of index: Int, at time: TimeInterval) -> [LyricWord]? {
         let line = lines[index]
         if let heard = heardWords[index] {
             let pieces = line.text.split(separator: " ", omittingEmptySubsequences: false)
+            let next = retiming.times.dropFirst(index + 1).lazy.compactMap { $0 }.first
+            let times = LyricsAutoSync.filled(heard, lengths: LyricsAutoSync.words(in: line.text).map(\.count),
+                                              until: next.map { $0 - time })
             var (word, last): (Int, TimeInterval) = (0, 0)
             return pieces.enumerated().map { id, piece in
                 if !LyricsAutoSync.words(in: String(piece)).isEmpty {
-                    if word < heard.count, let start = heard[word] { last = max(last, start) }
+                    if word < times.count { last = times[word] }
                     word += 1
                 }
                 return LyricWord(id: id, text: id == pieces.count - 1 ? String(piece) : piece + " ", start: time + last)
@@ -789,6 +792,41 @@ enum LyricsAutoSync {
             at = before
         }
         return placed
+    }
+
+    /// Every word of a line a time: between two heard, the words in between share the gap by
+    /// length; after the last heard, they run on at a sung pace, stopping short of the next line.
+    static func filled(_ heard: [TimeInterval?], lengths: [Int], until end: TimeInterval?) -> [TimeInterval] {
+        guard heard.count == lengths.count, !heard.isEmpty else { return heard.compactMap { $0 } }
+        var known: [Int] = [0]
+        var times = heard.map { $0 ?? 0 }
+        times[0] = heard[0] ?? 0
+        for index in heard.indices.dropFirst() {
+            if let time = heard[index], time > times[known.last!] {
+                let from = known.last!
+                spread(&times, from: from, to: index, over: time - times[from], lengths: lengths)
+                times[index] = time
+                known.append(index)
+            }
+        }
+        let from = known.last!
+        if from < heard.count - 1 {
+            let weight = lengths[from...heard.count - 2].reduce(0) { $0 + Double($1 + 1) }
+            var span = weight * LyricWordTiming.defaultPace
+            if let end, end > times[from] { span = min(span, (end - times[from]) * 0.9) }
+            spread(&times, from: from, to: heard.count, over: span, lengths: lengths)
+        }
+        return times
+    }
+
+    /// Times the words after `from` and before `to`, each after the one before by its length.
+    private static func spread(_ times: inout [TimeInterval], from: Int, to: Int, over span: TimeInterval, lengths: [Int]) {
+        let total = lengths[from..<to].reduce(0) { $0 + Double($1 + 1) }
+        var at = times[from]
+        for index in from..<(to - 1) {
+            at += span * Double(lengths[index] + 1) / total
+            times[index + 1] = at
+        }
     }
 
     /// When each of a line's words is heard, after `lineStart`, the way `matched` finds them.
