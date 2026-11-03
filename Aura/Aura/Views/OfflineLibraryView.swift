@@ -602,6 +602,7 @@ struct OfflineArtistDetailView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
     @State private var layoutWidth: CGFloat = 0
+    @State private var heroScroll = ArtistHeroScroll()
 
     private var albums: [OfflineAlbum] { OfflineAlbum.group(artist.songs) }
 
@@ -623,14 +624,48 @@ struct OfflineArtistDetailView: View {
 
     var body: some View {
         List {
-            OfflinePageHeader(title: artist.name,
-                              detail: OfflineLibraryView.count(albums.count, "album") + " · "
-                                  + OfflineLibraryView.count(artist.songs.count, "song"),
-                              songs: artist.songs, source: .artist(id: artist.id, name: artist.name)) {
-                CoverArtImage(coverArt: artist.coverArt, size: 180, cornerRadius: 90,
-                              placeholderName: artist.name, placeholderKind: .artist)
+            // The online page's head: the portrait across the screen, the actions under it.
+            VStack(spacing: 6) {
+                ArtistHero(coverArt: artist.coverArt, artistImageURL: nil, name: artist.name,
+                           plays: artist.songs.compactMap(\.playCount).reduce(0, +),
+                           isLoading: false, stretch: heroScroll.stretch)
+                HStack(spacing: 10) {
+                    Button {
+                        guard let first = topSongs.first else { return }
+                        player.playSong(first, fromQueue: topSongs, startIndex: 0,
+                                        source: .artist(id: artist.id, name: artist.name))
+                    } label: {
+                        Label("Play", systemImage: "play.fill")
+                            .lineLimit(1).minimumScaleFactor(0.8)
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(accentColor)
+                            .foregroundStyle(.white)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.borderless)
+                    Button {
+                        player.playShuffled(topSongs, source: .artist(id: artist.id, name: artist.name))
+                    } label: {
+                        Label("Shuffle", systemImage: "shuffle")
+                            .lineLimit(1).minimumScaleFactor(0.8)
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color.primary.opacity(0.08))
+                            .foregroundStyle(accentColor)
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.borderless)
+                }
+                .lineLimit(1)
+                .padding(.horizontal, 16)
             }
-            .clearRow()
+            .frame(maxWidth: .infinity)
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
             // The online page's songs: the same rows, swipes and menu, and the rest one tap away.
             Text("Top Songs")
                 .font(.title2.bold())
@@ -662,10 +697,10 @@ struct OfflineArtistDetailView: View {
                 .listRowBackground(Color.clear)
             }
             Text("Albums")
-                .font(.title3.weight(.semibold))
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .clearRow()
+                .font(.title2.bold())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 4, trailing: 16))
             // Fixed columns rather than adaptive ones: each card is laid out at the width
             // it's given, so the covers can't overhang their cells.
             LazyVGrid(columns: [GridItem(.fixed(cardSize), spacing: 16), GridItem(.fixed(cardSize))],
@@ -677,7 +712,7 @@ struct OfflineArtistDetailView: View {
             ListEndSpacer().clearRow()
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { layoutWidth = $0 }
-        .offlinePage(title: artist.name, coverArt: artist.coverArt)
+        .artistHeroPage($heroScroll, title: artist.name)
     }
 }
 #endif

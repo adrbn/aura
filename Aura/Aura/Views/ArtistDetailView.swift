@@ -23,19 +23,7 @@ struct ArtistDetailView: View {
     /// What the hero needs from scrolling, and nothing more: the value only changes while
     /// the list is pulled past its top or when the title crosses its threshold, so an
     /// ordinary scroll does not re-render the whole page on every frame.
-    @State private var heroScroll = HeroScroll()
-
-    private struct HeroScroll: Equatable {
-        var stretch: CGFloat = 0
-        var showsTitle = false
-        /// How far the top fade has come in, 0 to 1: zero while the portrait is under the bar.
-        var veil: CGFloat = 0
-    }
-
-    /// Scroll offset at which the foot of the portrait reaches the foot of the top fade.
-    private static var veilStart: CGFloat {
-        ArtistHero.height - TabChrome.windowSafeTop - TopEdgeVeil.barDepth
-    }
+    @State private var heroScroll = ArtistHeroScroll()
 
     private var allAlbumsDownloaded: Bool {
         guard !albums.isEmpty else { return false }
@@ -228,32 +216,7 @@ struct ArtistDetailView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .scrollIndicators(.hidden)
-        // The hero runs up under the status bar and the floating buttons, so the list opts
-        // out of the top safe area and starts at the very top of the screen — the move the
-        // tab roots already make, with no margin put back because the photograph is meant
-        // to be there.
-        .ignoresSafeArea(.container, edges: .top)
-        .contentMargins(.top, 0, for: .scrollContent)
-        .onScrollGeometryChange(for: HeroScroll.self) { geo in
-            let y = geo.contentOffset.y + geo.contentInsets.top
-            return HeroScroll(stretch: max(0, -y), showsTitle: y > ArtistHero.height - 90,
-                              veil: min(max((y - Self.veilStart) / 16, 0), 1))
-        } action: { _, new in
-            heroScroll = new
-        }
-        // Our own fade where the songs meet the bar, not the system's edge effect: that one
-        // switched itself off part-way down the page, when the bar took the artist's name.
-        .scrollEdgeEffectHidden(true, for: .top)
-        .overlay(alignment: .top) {
-            TopEdgeVeil(scrollY: heroScroll.veil * 16, depth: TopEdgeVeil.barDepth)
-        }
-        .background(Color.themeBg)
-        // Once the portrait has scrolled away, the bar says whose page this is.
-        .navigationTitle(heroScroll.showsTitle ? displayName : "")
-        .navigationBarTitleDisplayMode(.inline)
+        .artistHeroPage($heroScroll, title: displayName)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 // Download all albums
@@ -451,6 +414,53 @@ struct ArtistAllSongsView: View {
 }
 
 // MARK: - Artist hero
+
+/// Where the artist page's list is, as far as its hero cares: changes only when the list
+/// is pulled past its top or when the title crosses its threshold, so an ordinary scroll
+/// does not re-render the whole page on every frame.
+struct ArtistHeroScroll: Equatable {
+    var stretch: CGFloat = 0
+    var showsTitle = false
+    /// How far the top fade has come in, 0 to 1: zero while the portrait is under the bar.
+    var veil: CGFloat = 0
+
+    /// Scroll offset at which the foot of the portrait reaches the foot of the top fade.
+    static var veilStart: CGFloat {
+        ArtistHero.height - TabChrome.windowSafeTop - TopEdgeVeil.barDepth
+    }
+}
+
+extension View {
+    /// An artist page's list under its hero, online or offline alike.
+    func artistHeroPage(_ scroll: Binding<ArtistHeroScroll>, title: String) -> some View {
+        listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .scrollIndicators(.hidden)
+            // The hero runs up under the status bar and the floating buttons, so the list opts
+            // out of the top safe area and starts at the very top of the screen — the move the
+            // tab roots already make, with no margin put back because the photograph is meant
+            // to be there.
+            .ignoresSafeArea(.container, edges: .top)
+            .contentMargins(.top, 0, for: .scrollContent)
+            .onScrollGeometryChange(for: ArtistHeroScroll.self) { geo in
+                let y = geo.contentOffset.y + geo.contentInsets.top
+                return ArtistHeroScroll(stretch: max(0, -y), showsTitle: y > ArtistHero.height - 90,
+                                        veil: min(max((y - ArtistHeroScroll.veilStart) / 16, 0), 1))
+            } action: { _, new in
+                scroll.wrappedValue = new
+            }
+            // Our own fade where the songs meet the bar, not the system's edge effect: that one
+            // switched itself off part-way down the page, when the bar took the artist's name.
+            .scrollEdgeEffectHidden(true, for: .top)
+            .overlay(alignment: .top) {
+                TopEdgeVeil(scrollY: scroll.wrappedValue.veil * 16, depth: TopEdgeVeil.barDepth)
+            }
+            .background(Color.themeBg)
+            // Once the portrait has scrolled away, the bar says whose page this is.
+            .navigationTitle(scroll.wrappedValue.showsTitle ? title : "")
+            .navigationBarTitleDisplayMode(.inline)
+    }
+}
 
 /// The artist's portrait as the top of the page, the way Apple Music opens an artist.
 ///
@@ -751,6 +761,12 @@ struct ArtistImageView: View {
         if image != nil, imageKey == key { return }
         if let cached = ArtworkCache.shared.image(for: key) {
             await MainActor.run { show(cached, for: key) }
+            return
+        }
+        // Another size of it already here: offline, the only picture there will be.
+        if let coverArt, !coverArt.isEmpty, !ServerManager.shared.isConnected,
+           let cached = ArtworkCache.shared.cachedImage(forCoverArt: coverArt, atLeast: 0) {
+            await MainActor.run { show(cached.image, for: key) }
             return
         }
 
