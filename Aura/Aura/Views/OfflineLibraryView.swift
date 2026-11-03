@@ -619,6 +619,12 @@ struct OfflineArtistDetailView: View {
                               placeholderName: artist.name, placeholderKind: .artist)
             }
             .clearRow()
+            Text("Songs")
+                .font(.title3.weight(.semibold))
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .clearRow()
+            OfflineSongRows(songs: artist.songs, source: .artist(id: artist.id, name: artist.name))
             Text("Albums")
                 .font(.title3.weight(.semibold))
                 .padding(.horizontal, 16)

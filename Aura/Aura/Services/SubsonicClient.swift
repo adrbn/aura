@@ -184,7 +184,13 @@ actor SubsonicClient {
         guard let url = buildURL(server: server, endpoint: "star", params: params) else {
             throw SubsonicClientError.invalidURL
         }
-        _ = try await fetchData(from: url)
+        do {
+            _ = try await fetchData(from: url)
+            if type == .song { StarQueue.shared.sent(id) }
+        } catch where type == .song {
+            // The server can't be reached: the song is a favourite here, and there once it's back.
+            StarQueue.shared.enqueue(id, starred: true)
+        }
     }
 
     func unstar(server: ServerConfig, id: String, type: StarType = .song) async throws {
@@ -197,7 +203,13 @@ actor SubsonicClient {
         guard let url = buildURL(server: server, endpoint: "unstar", params: params) else {
             throw SubsonicClientError.invalidURL
         }
-        _ = try await fetchData(from: url)
+        do {
+            _ = try await fetchData(from: url)
+            if type == .song { StarQueue.shared.sent(id) }
+        } catch where type == .song {
+            // The server can't be reached: the song is a favourite here, and there once it's back.
+            StarQueue.shared.enqueue(id, starred: false)
+        }
     }
 
     /// Saves the queue on the server, so another client can pick it up where Aura left it.

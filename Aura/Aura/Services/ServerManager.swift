@@ -192,6 +192,7 @@ final class ServerManager {
                         AppLogger.shared.log("🟢 Server back online — auto-resumed online mode")
                     }
                     ScrobbleQueue.shared.flush()
+                    StarQueue.shared.flush()
                     SongRatings.shared.flush()
                     // Server reachable again — restart downloads that were parked
                     // for lack of network (never user-paused ones).
@@ -399,6 +400,7 @@ final class ServerManager {
         ArtworkRetry.shared.requestRetry()
         AppLogger.shared.log("🟢 Back online")
         ScrobbleQueue.shared.flush()
+        StarQueue.shared.flush()
         SongRatings.shared.flush()
     }
 
@@ -500,6 +502,68 @@ final class ScrobbleQueue {
 
     private func save(_ queue: [String]) {
         UserDefaults.standard.set(queue, forKey: key)
+    }
+}
+
+// MARK: - Offline Favourites
+
+/// Songs favourited or unfavourited while the server couldn't be reached, sent once it's back.
+/// The latest choice for a song wins.
+final class StarQueue {
+    static let shared = StarQueue()
+    private let key = "aura_pending_stars"
+    private let lock = NSLock()
+    private var isFlushing = false
+
+    func enqueue(_ id: String, starred: Bool) {
+        lock.withLock {
+            var pending = load()
+            pending[id] = starred
+            save(pending)
+        }
+        AppLogger.shared.log("📝 Favourite kept for later: \(id) \(starred)")
+    }
+
+    /// The server took a choice for this song: an older one waiting must not undo it.
+    func sent(_ id: String) {
+        lock.withLock {
+            var pending = load()
+            guard pending.removeValue(forKey: id) != nil else { return }
+            save(pending)
+        }
+    }
+
+    func flush() {
+        let pending: [String: Bool]? = lock.withLock {
+            guard !isFlushing else { return nil }
+            isFlushing = true
+            return load()
+        }
+        guard let pending else { return }
+        guard !pending.isEmpty, let server = ServerManager.shared.currentServer else {
+            lock.withLock { isFlushing = false }
+            return
+        }
+        Task {
+            defer { lock.withLock { isFlushing = false } }
+            for (id, starred) in pending {
+                // Each call takes its song off the list when the server has it, or puts it back.
+                if starred {
+                    try? await SubsonicClient.shared.star(server: server, id: id)
+                } else {
+                    try? await SubsonicClient.shared.unstar(server: server, id: id)
+                }
+                if lock.withLock({ load()[id] }) != nil { break }
+            }
+        }
+    }
+
+    private func load() -> [String: Bool] {
+        UserDefaults.standard.dictionary(forKey: key) as? [String: Bool] ?? [:]
+    }
+
+    private func save(_ pending: [String: Bool]) {
+        UserDefaults.standard.set(pending, forKey: key)
     }
 }
 
