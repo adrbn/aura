@@ -599,9 +599,21 @@ struct OfflinePlaylistDetailView: View {
 
 struct OfflineArtistDetailView: View {
     let artist: OfflineArtist
+    @Environment(AudioPlayer.self) private var player
+    @Environment(\.appAccentColor) private var accentColor
     @State private var layoutWidth: CGFloat = 0
 
     private var albums: [OfflineAlbum] { OfflineAlbum.group(artist.songs) }
+
+    /// Most played first, as online.
+    private var topSongs: [Song] {
+        artist.songs.enumerated()
+            .sorted { a, b in
+                let pa = a.element.playCount ?? 0, pb = b.element.playCount ?? 0
+                return pa == pb ? a.offset < b.offset : pa > pb
+            }
+            .map(\.element)
+    }
 
     /// Two covers across, as the artist pages online.
     private var cardSize: CGFloat {
@@ -619,12 +631,36 @@ struct OfflineArtistDetailView: View {
                               placeholderName: artist.name, placeholderKind: .artist)
             }
             .clearRow()
-            Text("Songs")
-                .font(.title3.weight(.semibold))
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .clearRow()
-            OfflineSongRows(songs: artist.songs, source: .artist(id: artist.id, name: artist.name))
+            // The online page's songs: the same rows, swipes and menu, and the rest one tap away.
+            Text("Top Songs")
+                .font(.title2.bold())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
+            ForEach(Array(topSongs.prefix(5).enumerated()), id: \.element.id) { index, song in
+                SongRowView(song: song, showArtist: false) {
+                    player.playSong(song, fromQueue: topSongs, startIndex: index,
+                                    source: .artist(id: artist.id, name: artist.name))
+                }
+                .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding,
+                                          leading: 16,
+                                          bottom: AppSettings.shared.listDensity.verticalPadding,
+                                          trailing: 16))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
+            if topSongs.count > 5 {
+                NavigationLink {
+                    ArtistAllSongsView(artistName: artist.name, songs: topSongs)
+                } label: {
+                    Text("See All Songs")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(accentColor)
+                }
+                .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
             Text("Albums")
                 .font(.title3.weight(.semibold))
                 .padding(.horizontal, 16)
