@@ -908,6 +908,25 @@ struct Album: Identifiable, Codable, Hashable {
     let playCount: Int?
     /// OpenSubsonic: the release's MusicBrainz types ("album", "single", "ep"…), when tagged.
     var releaseTypes: [String]? = nil
+    /// OpenSubsonic: when it was last played.
+    var played: String? = nil
+
+    /// Played in the last `days` days. False when the server doesn't say.
+    func playedWithin(days: Double) -> Bool {
+        guard let played else { return false }
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = withFraction.date(from: played) ?? ISO8601DateFormatter().date(from: played) else { return false }
+        return Date().timeIntervalSince(date) < days * 24 * 3600
+    }
+
+    /// The most played albums among those played this past month, in the server's order: its
+    /// all-time counts alone kept the same few at the top for months. The all-time ones
+    /// when too few were played lately.
+    static func frequentLately(_ frequent: [Album], count: Int) -> [Album] {
+        let lately = frequent.filter { $0.playedWithin(days: 30) }
+        return Array((lately.count >= 6 ? lately : frequent).prefix(count))
+    }
 
     var isStarred: Bool { starred != nil }
 

@@ -292,7 +292,7 @@ struct MacHomeView: View {
         // that has no recent albums from a request that never came back.
         async let recentCall   = Self.shelf("recent")   { try await SubsonicClient.shared.getAlbumList2(server: server, type: "recent", size: 24) }
         async let newestCall   = Self.shelf("newest")   { try await SubsonicClient.shared.getAlbumList2(server: server, type: "newest", size: 24) }
-        async let frequentCall = Self.shelf("frequent") { try await SubsonicClient.shared.getAlbumList2(server: server, type: "frequent", size: 24) }
+        async let frequentCall = Self.shelf("frequent") { try await SubsonicClient.shared.getAlbumList2(server: server, type: "frequent", size: 200) }
         async let playlistCall = Self.shelf("playlists") { try await SubsonicClient.shared.getPlaylists(server: server) }
         async let randomCall   = Self.shelf("random")   { try await SubsonicClient.shared.getAlbumList2(server: server, type: "random", size: 24) }
         async let starredCall  = try? SubsonicClient.shared.getStarred2(server: server)
@@ -300,7 +300,7 @@ struct MacHomeView: View {
         async let albumsCall   = try? SubsonicClient.shared.getAlbumCount(server: server)
         recent = await recentCall
         newest = await newestCall
-        frequent = await frequentCall
+        frequent = Album.frequentLately(await frequentCall, count: 24)
         playlists = await playlistCall
         random = await randomCall
         if let found = await starredCall { starred = found }

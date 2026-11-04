@@ -801,7 +801,7 @@ struct HomeView: View {
         if !force, let last = lastLoadedAt, Date().timeIntervalSince(last) < 60 { return }
         isLoading = true
         loadError = nil
-        async let frequent = SubsonicClient.shared.getAlbumList2(server: server, type: "frequent", size: 25)
+        async let frequent = SubsonicClient.shared.getAlbumList2(server: server, type: "frequent", size: 200)
         async let newest = SubsonicClient.shared.getAlbumList2(server: server, type: "newest", size: 25)
         async let random = SubsonicClient.shared.getAlbumList2(server: server, type: "random", size: 25)
         async let starred = SubsonicClient.shared.getStarred2(server: server)
@@ -812,7 +812,7 @@ struct HomeView: View {
             let (f, n, rand, s, pl, scan, totalAlbums) = try await (frequent, newest, random, starred, playlists, scanStatus, albumTotal)
             await MainActor.run {
                 let update = {
-                    frequentAlbums = f; newestAlbums = n
+                    frequentAlbums = Album.frequentLately(f, count: 25); newestAlbums = n
                     randomAlbums = rand; starredSongs = s.song ?? []; starredArtists = s.artist ?? []
                     songCount = scan.count ?? 0
                     albumCount = totalAlbums
@@ -844,7 +844,7 @@ struct HomeView: View {
 
             // Persist to cache
             let cache = HomeDataCache(
-                recentSongs: fetchedRecent, frequentAlbums: f, newestAlbums: n,
+                recentSongs: fetchedRecent, frequentAlbums: Album.frequentLately(f, count: 25), newestAlbums: n,
                 randomAlbums: rand, starredSongs: s.song ?? [],
                 starredArtists: s.artist ?? [],
                 songCount: scan.count ?? 0, albumCount: totalAlbums,
