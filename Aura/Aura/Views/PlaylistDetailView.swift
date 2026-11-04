@@ -291,6 +291,9 @@ struct PlaylistDetailView: View {
     }
 
     private func removeSong(song: Song, at index: Int) {
+        // A removal still in its undo window goes to the server now: the new one's task
+        // replaces its task, and it used to be dropped, coming back on the next load.
+        let earlier = pendingRemoval?.index
         // Optimistically remove from local list
         pendingRemoval = (song: song, index: index)
         playlist?.entry?.remove(at: index)
@@ -300,6 +303,10 @@ struct PlaylistDetailView: View {
 
         undoTask?.cancel()
         undoTask = Task {
+            // ponytail: removals faster than the server answers can still race; a queue if that shows up.
+            if let earlier, let server = serverManager.currentServer {
+                try? await SubsonicClient.shared.removeSongFromPlaylist(server: server, playlistId: playlistId, songIndex: earlier)
+            }
             try? await Task.sleep(for: .seconds(4))
             guard !Task.isCancelled else { return }
             // Commit removal to server
@@ -402,7 +409,7 @@ struct PlaylistDetailView: View {
     @ViewBuilder
     private var suggestionsSection: some View {
         HStack {
-            Text("Suggestions").font(.title3.bold())
+            Text("Suggestions").font(.title3.bold()).scrollEnter()
             Spacer()
             Button {
                 Task {
@@ -646,6 +653,7 @@ struct AddSongsSheet: View {
                 } else if !suggestions.isEmpty {
                     Text("Suggestions")
                         .font(.title3.bold())
+                        .scrollEnter()
                         .padding(.top, 8)
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
