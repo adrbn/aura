@@ -107,3 +107,52 @@ enum PlatformScreen {
         #endif
     }
 }
+
+// MARK: - Scroll entrance
+
+extension View {
+    /// What comes in from the edge while scrolling rises twelve points as it fades in, and
+    /// fades out the same way as it leaves.
+    func scrollEnter() -> some View { modifier(ScrollEnter()) }
+}
+
+private struct ScrollEnterApplied: EnvironmentKey { static let defaultValue = false }
+
+private extension EnvironmentValues {
+    var scrollEnterApplied: Bool {
+        get { self[ScrollEnterApplied.self] }
+        set { self[ScrollEnterApplied.self] = newValue }
+    }
+}
+
+/// One per branch: nested, the offsets add up and the opacity squares, so the outermost wins.
+///
+/// Measured against the screen rather than with `scrollTransition`, which only knows a
+/// `ScrollView`: inside a `List` it never reports a row as settled and left it invisible.
+private struct ScrollEnter: ViewModifier {
+    @Environment(\.scrollEnterApplied) private var applied
+    /// How much of the view is on screen, in twentieths, from either edge: 1 once it's in.
+    @State private var shown: CGFloat = 1
+
+    // No `if`: a conditional here hides the row's `listRowBackground` from its `List`,
+    // which then paints the row its own black.
+    func body(content: Content) -> some View {
+        #if canImport(UIKit)
+        content
+            .opacity(applied ? 1 : shown)
+            .offset(y: applied ? 0 : (1 - shown) * 12)
+            .environment(\.scrollEnterApplied, true)
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                let frame = proxy.frame(in: .global)
+                let screen = UIScreen.main.bounds.height
+                guard frame.height > 0 else { return 1 }
+                let fromTop = frame.maxY / frame.height
+                let fromBottom = (screen - frame.minY) / frame.height
+                // Quantised, so a row deep in the screen never re-renders as it scrolls.
+                return (min(max(min(fromTop, fromBottom), 0), 1) * 20).rounded() / 20
+            } action: { if !applied { shown = $0 } }
+        #else
+        content
+        #endif
+    }
+}

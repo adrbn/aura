@@ -66,8 +66,6 @@ struct HomeView: View {
     @State private var lastLoadedAt: Date?
     @State private var recentSongsShowGrid = false
     @State private var loadError: String?
-    /// Live vertical scroll offset — drives the top glass fade's opacity (off at rest).
-    @State private var scrollY: CGFloat = 0
     /// Measured content width (replaces UIScreen.main.bounds for layout math).
     @State private var layoutWidth: CGFloat = 0
 
@@ -123,10 +121,6 @@ struct HomeView: View {
                         // resting below them at the top.
                         .ignoresSafeArea(.container, edges: .top)
                         .contentMargins(.top, TabChrome.contentTop, for: .scrollContent)
-                        .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
-                        .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
-                            scrollY = y
-                        }
                         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width in
                             layoutWidth = width
                         }
@@ -329,6 +323,7 @@ struct HomeView: View {
                     .animation(.easeInOut(duration: 0.3), value: songCount)
                 }
             }
+            .scrollEnter()
             .padding(.bottom, Self.statsGap - 24)
 
             if isLoading && !hasHomeContent {
@@ -342,15 +337,18 @@ struct HomeView: View {
                 if appSettings.wrappedShowOnHome,
                    let period = WrappedAvailability.offeredPeriods().first {
                     retrospectiveCard(period: period)
+                        .scrollEnter()
                 }
 
                 // Made For You — auto-generated mixes
                 if !shelf.isEmpty {
                     madeForYouSection
+                        .scrollEnter()
                 }
 
                 ForEach(appSettings.homeSectionOrder) { section in
                     homeSection(for: section)
+                        .scrollEnter()
                 }
             }
             ListEndSpacer()

@@ -161,6 +161,7 @@ struct RadarReleaseRow: View {
                                   : isOneSong ? "Plays its preview" : "Opens its songs")
         .accessibilityAddTraits(.isButton)
         .sheet(isPresented: $showSoulseek) { soulseekSheet }
+        .scrollEnter()
     }
 
     /// A single of one song has no page worth opening.

@@ -24,11 +24,6 @@ struct SearchView: View {
                 // Results scroll UNDER the status bar; reserve room for title + search field.
                 .ignoresSafeArea(.container, edges: .top)
                 .contentMargins(.top, TabChrome.contentTop + titleHeight + 8 + searchBarHeight, for: .scrollContent)
-                // Down past the pinned field, so the rows going under it fade out.
-                .overlay(alignment: .top) {
-                    TopEdgeVeil(scrollY: scrollY - titleHeight,
-                                depth: TabChrome.bannerInset + searchBarHeight + 24)
-                }
                 // Big-left title above the search field, both scrolling away with the rows.
                 .overlay(alignment: .top) {
                     VStack(spacing: 8) {
@@ -580,6 +575,7 @@ struct SearchSectionHeader: View {
             }
         }
         .foregroundStyle(Color.primary)
+        .scrollEnter()
         .listRowSeparator(.hidden)
         .listRowBackground(Color.clear)
         .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))

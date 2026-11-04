@@ -5,7 +5,7 @@ import UIKit
 
 /// Chrome for a tab root whose big title is placed as the FIRST scrolling row (via
 /// `TabTitleRow`). Hides the native nav bar (no large-title gap), lets content scroll under
-/// the status bar, and fades in a `TopEdgeVeil` at the very top on scroll — like Home.
+/// the status bar — like Home.
 /// Because the title is part of the scroll content, content can never overlap it and any
 /// trailing control (e.g. a `Menu`) lives in the real hierarchy, so it works normally.
 /// Shared top-inset metrics for tab roots.
@@ -95,6 +95,7 @@ struct DetailHeader<Cover: View, Titles: View, Controls: View>: View {
             .frame(maxWidth: wide ? .infinity : nil, alignment: .leading)
         }
         .padding(.horizontal, wide ? 16 : 0)
+        .scrollEnter()
     }
 }
 
@@ -129,6 +130,7 @@ struct ListSummaryRow: View {
             .foregroundStyle(.secondary)
             .padding(.top, DetailListLayout.gap)
             .frame(maxWidth: .infinity, minHeight: Self.listRowMinimum, alignment: .topLeading)
+            .scrollEnter()
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
@@ -166,113 +168,6 @@ func refreshTabContent(_ reload: () async -> Void) async {
     ArtworkRetry.shared.requestRetry()
     await reload()
     UIImpactFeedbackGenerator(style: .soft).impactOccurred()
-}
-
-/// Where scrolled content meets the top of the screen, on every tab root.
-///
-/// A fade of the page's own colour rather than a band of Liquid Glass. The glass read as a
-/// frosted slab laid across the top of the screen — an object with an edge — when all that
-/// is wanted is for content to thin out before it reaches the clock. A gradient of the page
-/// colour does exactly that: no material, no edge, and in light mode it fades to white
-/// instead of tinting the top of the screen grey.
-///
-/// Dense at the very top, where the clock sits over whatever happens to be scrolling past,
-/// and gone by the bottom. Invisible at rest, when nothing is under the status bar, and
-/// faded in over the first few points of scroll.
-///
-/// One view for every tab root: Home and Search each used to carry their own copy of the
-/// glass band.
-struct TopEdgeVeil: View {
-    let scrollY: CGFloat
-    /// How far below the status bar it reaches: the clock's height on a tab root, the
-    /// navigation bar's on a pushed page.
-    var depth: CGFloat = 34
-
-    /// Down past the back button and the bar's title on a pushed page.
-    static let barDepth: CGFloat = 70
-
-    var body: some View {
-        LinearGradient(
-            stops: [
-                .init(color: Color.themeBg.opacity(0.92), location: 0),
-                .init(color: Color.themeBg.opacity(0.6), location: 0.5),
-                .init(color: Color.themeBg.opacity(0), location: 1),
-            ],
-            startPoint: .top, endPoint: .bottom
-        )
-        .frame(height: TabChrome.windowSafeTop + depth)
-        .opacity(min(max(scrollY / 16, 0), 1))
-        .allowsHitTesting(false)
-        .ignoresSafeArea(.container, edges: .top)
-    }
-}
-
-/// The page's own colour, rising behind the tab bar and the mini player.
-///
-/// Both are Liquid Glass, but only the mini player is ours: the tab bar is the system's,
-/// which reads the content under it lighter and takes no tint — iOS 26 ignores both the
-/// appearance proxy and `toolbarBackground` on it. So the two bars looked like different
-/// materials over a bright cover. Darkening what the tab bar sees is the one lever left,
-/// and it makes the pair read as one: dense under the bars, gone above the mini player.
-///
-/// Eased, not linear: a straight ramp starts on a visible line, which over a white cover
-/// reads as a grey band laid above the mini player. This one leaves the page at zero slope
-/// well above the highest bar, climbs mostly behind its glass, and levels off at the foot
-/// of that bar — no edge anywhere a cover can show it.
-///
-/// The Get It card counts as a bar while it shows: it rises on top of the mini player, and
-/// the fade rises with it, so its glass reads the same dark page as the mini player's.
-struct BottomEdgeVeil: View {
-    /// Whether the mini player sits above the tab bar, and needs covering too.
-    let coversMiniPlayer: Bool
-
-    private static let density = 0.85
-    /// The tab bar's top, above the home indicator.
-    private static let tabBarHeight: CGFloat = 48
-    /// The mini player's top, above the home indicator.
-    private static let miniPlayerTop: CGFloat = 124
-    /// How far above the highest bar the fade begins.
-    private static let lead: CGFloat = 72
-    private static let stopCount = 16
-
-    var body: some View {
-        let bottom = TabChrome.windowSafeBottom
-        let card = BottomChrome.shared.cardInset
-        // With the tab bar in a side column, the mini player sits 8pt off the foot instead
-        // of on top of the bar, and without it the foot mirrors the top veil's short fade.
-        let beside = TabChrome.tabBarBeside
-        let tabBar = beside ? 0 : Self.tabBarHeight
-        let miniTop = beside ? Self.miniPlayerTop - 67 : Self.miniPlayerTop
-        let lead = beside && !coversMiniPlayer && card == 0 ? 34 : Self.lead
-        let barsTop = (coversMiniPlayer ? miniTop : tabBar) + card
-        // The highest bar alone: the ramp has run its course by its foot, whatever sits below.
-        let highestBar = card > 0 ? card : (coversMiniPlayer ? miniTop - tabBar : 0)
-        let height = bottom + barsTop + lead
-        // Measured from the foot of the screen. Inside a tab the safe area ends at the top of
-        // the tab bar, and a fixed-height view only aligns to that; filling the whole screen
-        // first is what puts the fade where the bars actually are.
-        Color.clear
-            .overlay(alignment: .bottom) {
-                LinearGradient(stops: Self.stops(height: height, rampEnd: lead + highestBar),
-                               startPoint: .top, endPoint: .bottom)
-                    .frame(height: height)
-            }
-            .allowsHitTesting(false)
-            // Keyboard included: it stays down behind the keyboard rather than riding up on it.
-            .ignoresSafeArea()
-            .animation(.easeInOut(duration: 0.25), value: coversMiniPlayer)
-            .animation(.easeInOut(duration: 0.3), value: card)
-    }
-
-    /// Smoothstep, squared so the start is gentler still, from the top to `rampEnd`; flat below.
-    private static func stops(height: CGFloat, rampEnd: CGFloat) -> [Gradient.Stop] {
-        (0...stopCount).map { index in
-            let location = CGFloat(index) / CGFloat(stopCount)
-            let t = min(location * height / rampEnd, 1)
-            let eased = t * t * (3 - 2 * t)
-            return .init(color: Color.themeBg.opacity(density * eased * eased), location: location)
-        }
-    }
 }
 
 // MARK: - Tab-root glow
@@ -372,7 +267,6 @@ struct TabRootGlass: ViewModifier {
         content
             .ignoresSafeArea(.container, edges: .top)
             .contentMargins(.top, TabChrome.contentTop, for: .scrollContent)
-            .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
             .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
                 scrollY = y
             }
@@ -425,6 +319,7 @@ struct TabTitleRow<Trailing: View>: View {
         .padding(.horizontal, 16)
         .padding(.top, 4)
         .padding(.bottom, 8)
+        .scrollEnter()
     }
 }
 

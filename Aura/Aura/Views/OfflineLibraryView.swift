@@ -396,6 +396,7 @@ struct OfflineRow<Cover: View>: View {
             Spacer(minLength: 8)
         }
         .contentShape(Rectangle())
+        .scrollEnter()
     }
 }
 
@@ -443,6 +444,7 @@ struct OfflineAlbumCard: View {
                 Label("Add to Queue", systemImage: "text.append")
             }
         }
+        .scrollEnter()
     }
 }
 
@@ -465,6 +467,7 @@ private struct OfflinePageHeader<Cover: View>: View {
                 .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
             Text(title)
                 .font(.title2.bold())
+                .scrollEnter()
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
                 .padding(.horizontal, 24)
@@ -669,6 +672,7 @@ struct OfflineArtistDetailView: View {
             // The online page's songs: the same rows, swipes and menu, and the rest one tap away.
             Text("Top Songs")
                 .font(.title2.bold())
+                .scrollEnter()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
@@ -698,6 +702,7 @@ struct OfflineArtistDetailView: View {
             }
             Text("Albums")
                 .font(.title2.bold())
+                .scrollEnter()
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 4, trailing: 16))

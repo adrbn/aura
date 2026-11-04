@@ -11,7 +11,6 @@ struct OfflineHomeView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var library = OfflineLibrary.shared
     @State private var appSettings = AppSettings.shared
-    @State private var scrollY: CGFloat = 0
     @State private var layoutWidth: CGFloat = 0
     @State private var navPath: [OfflineRoute] = []
 
@@ -67,10 +66,6 @@ struct OfflineHomeView: View {
             .scrollIndicators(.hidden)
             .ignoresSafeArea(.container, edges: .top)
             .contentMargins(.top, TabChrome.contentTop, for: .scrollContent)
-            .overlay(alignment: .top) { TopEdgeVeil(scrollY: scrollY) }
-            .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y } action: { _, y in
-                scrollY = y
-            }
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { layoutWidth = $0 }
             .tabRootCanvas(grid: true)
             .toolbar(.hidden, for: .navigationBar)

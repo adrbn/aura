@@ -43,6 +43,7 @@ struct LibraryView: View {
                             Image(systemName: category.icon).foregroundStyle(accentColor)
                         }
                     }
+                    .scrollEnter()
                     .listRowBackground(Color.clear)
                 }
             }
@@ -344,6 +345,7 @@ struct GenresListView: View {
                             }
                         }
                     }
+                    .scrollEnter()
                     .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)
@@ -553,6 +555,7 @@ struct ArtistsFullListView: View {
                             }
                         }
                     }
+                    .scrollEnter()
                     .listRowBackground(Color.clear)
                 }
                 .listStyle(.plain)

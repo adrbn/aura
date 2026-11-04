@@ -661,6 +661,7 @@ struct PlaylistsView: View {
                                 })
             }
             .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
+            .scrollEnter()
         }
     }
 
@@ -949,6 +950,7 @@ struct PlaylistCardView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .scrollEnter()
     }
 }
 

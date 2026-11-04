@@ -77,6 +77,7 @@ struct AlbumCardView: View {
                 Label("Download Album", systemImage: "arrow.down.circle")
             }
         }
+        .scrollEnter()
     }
 }
 
@@ -94,6 +95,7 @@ struct SongCardView: View {
         .frame(width: size)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(song.title), \(song.artist ?? String(localized: "Unknown Artist"))")
+        .scrollEnter()
     }
 }
 
@@ -147,5 +149,6 @@ struct ArtistCardView: View {
                       systemImage: artist.isStarred ? "heart.slash" : "heart")
             }
         }
+        .scrollEnter()
     }
 }

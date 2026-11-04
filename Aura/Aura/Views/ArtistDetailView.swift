@@ -115,6 +115,7 @@ struct ArtistDetailView: View {
                 // Skeleton placeholder rows
                 Text("Top Songs")
                     .font(.title2.bold())
+                    .scrollEnter()
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
@@ -146,6 +147,7 @@ struct ArtistDetailView: View {
             } else if !topSongs.isEmpty {
                 Text("Top Songs")
                     .font(.title2.bold())
+                    .scrollEnter()
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
@@ -179,6 +181,7 @@ struct ArtistDetailView: View {
                 // Skeleton album grid
                 Text("Albums")
                     .font(.title2.bold())
+                    .scrollEnter()
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 4, trailing: 16))
@@ -246,6 +249,7 @@ struct ArtistDetailView: View {
     private func albumGrid(_ title: LocalizedStringKey, _ albums: [Album]) -> some View {
         Text(title)
             .font(.title2.bold())
+            .scrollEnter()
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 4, trailing: 16))
@@ -421,13 +425,6 @@ struct ArtistAllSongsView: View {
 struct ArtistHeroScroll: Equatable {
     var stretch: CGFloat = 0
     var showsTitle = false
-    /// How far the top fade has come in, 0 to 1: zero while the portrait is under the bar.
-    var veil: CGFloat = 0
-
-    /// Scroll offset at which the foot of the portrait reaches the foot of the top fade.
-    static var veilStart: CGFloat {
-        ArtistHero.height - TabChrome.windowSafeTop - TopEdgeVeil.barDepth
-    }
 }
 
 extension View {
@@ -444,17 +441,13 @@ extension View {
             .contentMargins(.top, 0, for: .scrollContent)
             .onScrollGeometryChange(for: ArtistHeroScroll.self) { geo in
                 let y = geo.contentOffset.y + geo.contentInsets.top
-                return ArtistHeroScroll(stretch: max(0, -y), showsTitle: y > ArtistHero.height - 90,
-                                        veil: min(max((y - ArtistHeroScroll.veilStart) / 16, 0), 1))
+                return ArtistHeroScroll(stretch: max(0, -y), showsTitle: y > ArtistHero.height - 90)
             } action: { _, new in
                 scroll.wrappedValue = new
             }
             // Our own fade where the songs meet the bar, not the system's edge effect: that one
             // switched itself off part-way down the page, when the bar took the artist's name.
             .scrollEdgeEffectHidden(true, for: .top)
-            .overlay(alignment: .top) {
-                TopEdgeVeil(scrollY: scroll.wrappedValue.veil * 16, depth: TopEdgeVeil.barDepth)
-            }
             .background(Color.themeBg)
             // Once the portrait has scrolled away, the bar says whose page this is.
             .navigationTitle(scroll.wrappedValue.showsTitle ? title : "")
