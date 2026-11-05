@@ -114,10 +114,25 @@ struct LyricsRetiming {
         }
     }
 
-    var isComplete: Bool { !anchors.isEmpty && !times.contains { $0 == nil } }
+    /// Whether there's anything to save: lyrics with no timing need one line placed, and
+    /// `savedTimes` places the rest.
+    var hasChanges: Bool { isTimed ? !anchors.isEmpty || offset != 0 : !anchors.isEmpty }
 
-    /// Whether there's anything to save.
-    var hasChanges: Bool { isTimed ? !anchors.isEmpty || offset != 0 : isComplete }
+    /// Every line's start, for saving. Lines no tap reached, above the first or below the
+    /// last, carry on at the pace of the placed ones, so a sync by ear that made out 21
+    /// lines of 34 still saves all 34.
+    var savedTimes: [TimeInterval] {
+        let times = self.times
+        let placed = times.indices.filter { times[$0] != nil }
+        guard let first = placed.first, let last = placed.last,
+              let start = times[first], let end = times[last] else { return [] }
+        // A typical line's length, in seconds, kept to what a sung line can be.
+        let pace = min(max(last > first ? (end - start) / Double(last - first) : 3, 1.5), 6)
+        return times.indices.map { index in
+            if let time = times[index] { return time }
+            return index < first ? max(0, start - pace * Double(first - index)) : end + pace * Double(index - last)
+        }
+    }
 
     /// The tap a line moves with: the last one at or above it, or the first below.
     func section(of index: Int) -> Int? {

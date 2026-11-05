@@ -58,6 +58,40 @@ enum LyricsOnServer {
         AppLogger.shared.log("🎵 Lyrics timing written to the server: \(path)")
     }
 
+    private static let pendingKey = "lyrics_on_server_pending"
+
+    /// For a timing saved while the server is away: it stays on this device, and goes to
+    /// the server with `flushPending` once it's back.
+    static func saveLater(_ song: Song) {
+        var waiting = pending
+        waiting[song.id] = song
+        UserDefaults.standard.set(try? JSONEncoder().encode(waiting), forKey: pendingKey)
+        AppLogger.shared.log("🎵 Lyrics timing kept for the server: \(song.title)")
+    }
+
+    static func flushPending() {
+        let waiting = pending
+        guard isEnabled, !waiting.isEmpty else { return }
+        Task {
+            for (id, song) in waiting {
+                do {
+                    // Restored to the original since: nothing left to write.
+                    if let lrc = LyricsOverrides.lrc(for: id) { try await save(lrc, for: song) }
+                    var left = pending
+                    left[id] = nil
+                    UserDefaults.standard.set(try? JSONEncoder().encode(left), forKey: pendingKey)
+                } catch {
+                    AppLogger.shared.log("🎵 Kept lyrics timing still not written: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private static var pending: [String: Song] {
+        UserDefaults.standard.data(forKey: pendingKey)
+            .flatMap { try? JSONDecoder().decode([String: Song].self, from: $0) } ?? [:]
+    }
+
     /// Signs in and nothing more, for Settings to say whether the sign-in works.
     static func testSignIn() async throws {
         _ = try await signIn()

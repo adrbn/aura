@@ -144,13 +144,15 @@ struct LyricsSyncView: View {
                         ProgressView().tint(.white)
                     } else {
                         Text("Save")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(retiming.hasChanges ? accent : .white.opacity(0.3))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white.opacity(retiming.hasChanges ? 1 : 0.3))
                     }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 18)
                 .frame(height: 36)
-                .glassEffect(.regular, in: Capsule())
+                // Lit in the accent once there's something to keep, so the way out is plain.
+                .glassEffect(retiming.hasChanges ? .regular.tint(accent) : .regular, in: Capsule())
+                .animation(.easeOut(duration: 0.25), value: retiming.hasChanges)
             }
             .buttonStyle(.plain)
             .disabled(!retiming.hasChanges || isSaving)
@@ -247,11 +249,12 @@ struct LyricsSyncView: View {
                 .accessibilityLabel("Undo")
 
                 Button(action: tap) {
-                    Text("Now")
+                    Label("Now", systemImage: "hand.tap.fill")
                         .font(.system(size: 19, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, minHeight: 64)
                         .background(accent.opacity(armed == nil ? 0.35 : 1), in: Capsule())
+                        .shadow(color: accent.opacity(armed == nil ? 0 : 0.5), radius: 16, y: 4)
                 }
                 .buttonStyle(PressScale())
                 .disabled(armed == nil)
@@ -309,15 +312,17 @@ struct LyricsSyncView: View {
         } else {
             retiming.offset
         }
-        return HStack(spacing: 24) {
-            stepButton("minus", by: -Self.step, label: "Earlier")
+        return HStack(spacing: 0) {
+            stepButton("chevron.left", by: -Self.step, label: "Earlier")
             Text(String(format: "%+.2f s", (moved * 100).rounded() / 100))
-                .font(.system(size: 17, weight: .semibold).monospacedDigit())
-                .foregroundStyle(.white.opacity(0.8))
-                .frame(minWidth: 88)
+                .font(.system(size: 17, weight: .bold).monospacedDigit())
+                .foregroundStyle(moved == 0 ? .white.opacity(0.6) : .white)
+                .frame(minWidth: 84)
                 .contentTransition(.numericText())
-            stepButton("plus", by: Self.step, label: "Later")
+            stepButton("chevron.right", by: Self.step, label: "Later")
         }
+        .frame(height: 48)
+        .glassEffect(.regular, in: Capsule())
     }
 
     private func stepButton(_ symbol: String, by step: TimeInterval, label: LocalizedStringKey) -> some View {
@@ -328,11 +333,17 @@ struct LyricsSyncView: View {
             UISelectionFeedbackGenerator().selectionChanged()
             #endif
         } label: {
-            Image(systemName: symbol)
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(.white.opacity(0.85))
-                .frame(width: 40, height: 40)
-                .glassEffect(.regular, in: Circle())
+            HStack(spacing: 6) {
+                if step > 0 { Text(label) }
+                Image(systemName: symbol).font(.system(size: 13, weight: .heavy))
+                if step < 0 { Text(label) }
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(.white.opacity(0.85))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
         }
         .buttonStyle(PressScale())
         .buttonRepeatBehavior(.enabled)
@@ -344,18 +355,30 @@ struct LyricsSyncView: View {
     private var autoSyncRow: some View {
         Group {
             if listening {
-                HStack(spacing: 10) {
-                    ProgressView().tint(.white)
+                Label {
                     Text("Listening to the song…")
+                } icon: {
+                    Image(systemName: "waveform")
+                        .symbolEffect(.variableColor.iterative, options: .repeating)
                 }
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .glassEffect(.regular.tint(accent.opacity(0.5)), in: Capsule())
             } else if let earResult {
-                Label(summary(of: earResult), systemImage: "checkmark.circle.fill")
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(accent)
+                    Text(summary(of: earResult)).frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .multilineTextAlignment(.leading)
+                .padding(14)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
             } else {
+                // The feature that does the work for you, so the first thing on offer.
                 Button(action: syncByEar) {
                     Label("Sync Automatically", systemImage: "waveform")
-                        .padding(.horizontal, 16)
-                        .frame(height: 36)
-                        .glassEffect(.regular, in: Capsule())
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                        .glassEffect(.regular.tint(accent.opacity(0.7)).interactive(), in: Capsule())
                 }
                 .buttonStyle(PressScale())
                 #if os(iOS)
@@ -452,9 +475,8 @@ struct LyricsSyncView: View {
 
     /// Every line where it now starts, its words along with it.
     private var timedLines: [LyricsOverrides.Line] {
-        zip(lines.indices, retiming.times).compactMap { index, time in
-            guard let time else { return nil }
-            return LyricsOverrides.Line(time: time, text: lines[index].text, words: words(of: index, at: time))
+        zip(lines.indices, retiming.savedTimes).map { index, time in
+            LyricsOverrides.Line(time: time, text: lines[index].text, words: words(of: index, at: time))
         }
     }
 
@@ -493,10 +515,19 @@ struct LyricsSyncView: View {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
         guard LyricsOnServer.isEnabled else { return dismiss() }
+        // No server to write to: kept here, and written when it's back.
+        guard ServerManager.shared.isConnected, !AppSettings.shared.offlineMode else {
+            LyricsOnServer.saveLater(song)
+            return dismiss()
+        }
         isSaving = true
         Task {
             do {
                 try await LyricsOnServer.save(LyricsOverrides.lrc(timed), for: song)
+                dismiss()
+            } catch LyricsOnServer.Failure.unreachable {
+                // The server went away while saving: the same as saving offline.
+                LyricsOnServer.saveLater(song)
                 dismiss()
             } catch {
                 AppLogger.shared.log("🎵 Server lyrics timing not written: \(error.localizedDescription)")

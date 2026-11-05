@@ -193,6 +193,7 @@ final class ServerManager {
                     }
                     ScrobbleQueue.shared.flush()
                     StarQueue.shared.flush()
+                    LyricsOnServer.flushPending()
                     SongRatings.shared.flush()
                     // Server reachable again — restart downloads that were parked
                     // for lack of network (never user-paused ones).
@@ -401,6 +402,7 @@ final class ServerManager {
         AppLogger.shared.log("🟢 Back online")
         ScrobbleQueue.shared.flush()
         StarQueue.shared.flush()
+        LyricsOnServer.flushPending()
         SongRatings.shared.flush()
     }
 
