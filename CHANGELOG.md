@@ -4,9 +4,19 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.0] — 2026-11-05 (sent to App Review)
 
-For 1.4:
+- Sync Automatically listens to the song on the iPhone and times each line and word of the lyrics. Lyrics with no timing offer it in Now Playing's menu; a sync that placed only some lines saves, the rest following their pace; a sync saved offline reaches the server once it is back.
+- Remove Duplicates in a playlist's menu keeps the first copy of each song and removes the rest in one request.
+- Offline, an artist's page opens on the same portrait as online with its top songs, and downloaded songs get the online swipes.
+- A favourite added while the server is down is kept and sent once it is back.
+- Rows, cards and section titles fade in as they come on screen; the dark fades at the top and bottom of the screen are gone.
+- Frequently Played on Home shows the most played albums of the past month.
+- Fixed: a new song's lyrics open at the top; removing two songs from a playlist within four seconds keeps both removed.
+- Mac: right-click menus everywhere, the phone's radio, release and artist pages, playlist filters and folders, lyrics sync, and settings for home, downloads, mixes, Last.fm and the radar.
+
+## [1.4.0] — 2026-10-26
+
 
 - Pitch from Now Playing's menu, a semitone at a time up to six either way, the speed going with it as on a turntable. It goes back to 0 when the next song starts.
 - Playlists named `Folder/Name` sit in a folder on the Playlists tab once two of them share it. A folder slides in and out, a swipe right goes back up, and a long press offers pin all, rename folder and select playlists.
