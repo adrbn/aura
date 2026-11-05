@@ -1889,6 +1889,7 @@ struct SongActionsRow: View {
     @Environment(AudioPlayer.self) private var player
     @State private var heartPop = false
     @State private var showSync = false
+    @State private var syncByEar = false
 
     private var isStarred: Bool { player.currentSong?.isStarred ?? false }
 
@@ -2033,7 +2034,19 @@ struct SongActionsRow: View {
                 }
                 .controlGroupStyle(.compactMenu)
                 if showLyrics {
-                    Button { showSync = true } label: {
+                    // Lyrics with no timing at all: the phone can time them by listening.
+                    if !player.lyrics.isEmpty, player.lyrics.allSatisfy({ $0.time == nil }) {
+                        Button {
+                            syncByEar = true
+                            showSync = true
+                        } label: {
+                            Label("Sync Automatically", systemImage: "waveform")
+                        }
+                    }
+                    Button {
+                        syncByEar = false
+                        showSync = true
+                    } label: {
                         Label("Sync Lyrics", systemImage: "timer")
                     }
                     .disabled(player.lyrics.isEmpty)
@@ -2098,7 +2111,7 @@ struct SongActionsRow: View {
             }
         }
         .fullScreenCover(isPresented: $showSync) {
-            LyricsSyncView(song: song, lines: player.lyrics)
+            LyricsSyncView(song: song, lines: player.lyrics, listensOnOpen: syncByEar)
         }
     }
 }

@@ -16,6 +16,7 @@ struct PlaylistDetailView: View {
     @State private var undoTask: Task<Void, Never>?
     @State private var isStarred = false
     @State private var showDownloadConfirm = false
+    @State private var showDuplicatesConfirm = false
     @State private var coverArtRefreshId = UUID()
     @State private var showAddSongs = false
     @State private var suggestions: [Song] = []
@@ -218,6 +219,11 @@ struct PlaylistDetailView: View {
                     Button { showEditSheet = true } label: {
                         Label("Modify", systemImage: "pencil")
                     }
+                    if !duplicateIndexes.isEmpty {
+                        Button(role: .destructive) { showDuplicatesConfirm = true } label: {
+                            Label("Remove Duplicates", systemImage: "square.on.square.dashed")
+                        }
+                    }
                 } label: {
                     Image(systemName: "ellipsis")
                         .rotationEffect(.degrees(90))
@@ -235,6 +241,12 @@ struct PlaylistDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Download all \(playlist?.entry?.count ?? 0) songs in this playlist?")
+        }
+        .confirmationDialog("Remove Duplicates?", isPresented: $showDuplicatesConfirm, titleVisibility: .visible) {
+            Button("Remove Duplicates", role: .destructive) { removeDuplicates() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The first copy of each song stays. Copies to remove: \(duplicateIndexes.count)")
         }
         .task {
             isStarred = AppSettings.shared.isPinned(playlistId)
@@ -311,6 +323,35 @@ struct PlaylistDetailView: View {
             guard !Task.isCancelled else { return }
             // Commit removal to server
             await commitRemoval(songIndex: index)
+        }
+    }
+
+    /// Every copy after a song's first, by position.
+    private var duplicateIndexes: [Int] {
+        let songs = playlist?.entry ?? []
+        var seen = Set<String>()
+        return songs.indices.filter { !seen.insert(songs[$0].id).inserted }
+    }
+
+    private func removeDuplicates() {
+        Task {
+            // A removal still in its undo window goes first, so the server's positions match ours.
+            if let removal = pendingRemoval {
+                undoTask?.cancel()
+                await commitRemoval(songIndex: removal.index)
+            }
+            let copies = duplicateIndexes
+            guard !copies.isEmpty, let songs = playlist?.entry, let server = serverManager.currentServer else { return }
+            do {
+                try await SubsonicClient.shared.removeSongsFromPlaylist(server: server, playlistId: playlistId, songIndexes: copies)
+                let removed = Set(copies)
+                playlist?.entry = songs.indices.filter { !removed.contains($0) }.map { songs[$0] }
+                if let count = playlist?.songCount { playlist?.songCount = count - copies.count }
+                ToastManager.shared.show(String(localized: "Copies removed: \(copies.count)"), icon: "checkmark")
+            } catch {
+                ToastManager.shared.show(String(localized: "Couldn't remove the duplicates"), icon: "exclamationmark.triangle")
+                await loadPlaylist()
+            }
         }
     }
 

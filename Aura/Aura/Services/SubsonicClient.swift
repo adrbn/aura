@@ -476,12 +476,17 @@ actor SubsonicClient {
     }
 
     func removeSongFromPlaylist(server: ServerConfig, playlistId: String, songIndex: Int) async throws {
+        try await removeSongsFromPlaylist(server: server, playlistId: playlistId, songIndexes: [songIndex])
+    }
+
+    /// Indexes are positions in the playlist before any of them goes, all in one request.
+    func removeSongsFromPlaylist(server: ServerConfig, playlistId: String, songIndexes: [Int]) async throws {
         guard var components = buildURL(server: server, endpoint: "updatePlaylist", params: ["playlistId": playlistId])
             .flatMap({ URLComponents(url: $0, resolvingAgainstBaseURL: false) }) else {
             throw SubsonicClientError.invalidURL
         }
         var items = components.queryItems ?? []
-        items.append(URLQueryItem(name: "songIndexToRemove", value: String(songIndex)))
+        items += songIndexes.map { URLQueryItem(name: "songIndexToRemove", value: String($0)) }
         components.queryItems = items
         guard let url = components.url else { throw SubsonicClientError.invalidURL }
         _ = try await fetchData(from: url)

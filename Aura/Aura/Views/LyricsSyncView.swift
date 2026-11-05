@@ -39,8 +39,12 @@ struct LyricsSyncView: View {
 
     private static let step: TimeInterval = 0.05
 
-    init(song: Song, lines: [LyricsLine]) {
+    /// Starts listening as it opens, for Now Playing's Sync Automatically.
+    private let listensOnOpen: Bool
+
+    init(song: Song, lines: [LyricsLine], listensOnOpen: Bool = false) {
         self.song = song
+        self.listensOnOpen = listensOnOpen
         let kept = lines.filter { !$0.text.trimmingCharacters(in: .whitespaces).isEmpty }
         self.lines = kept
         var retiming = LyricsRetiming(found: kept.map(\.time))
@@ -60,7 +64,10 @@ struct LyricsSyncView: View {
         }
         .background { background }
         .preferredColorScheme(.dark)
-        .onAppear(perform: armFirst)
+        .onAppear {
+            armFirst()
+            if listensOnOpen { syncByEar() }
+        }
         #if os(macOS)
         // Space taps Now here, not play and pause.
         .onAppear { MacSpaceKey.tapNow = tap }
