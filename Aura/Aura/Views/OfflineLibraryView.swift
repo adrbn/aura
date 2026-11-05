@@ -498,20 +498,18 @@ private struct OfflinePageHeader<Cover: View>: View {
     }
 }
 
-/// A page's songs, as rows the way the online pages list them, with the swipes the
-/// online lists have: queue it, or remove the download.
+/// A page's songs, as rows the way the online pages list them, with the same swipes and
+/// menu: a favourite made offline waits in `StarQueue` until the server is back.
 private struct OfflineSongRows: View {
     let songs: [Song]
     var showArt = true
     var showTrackNumber = false
     var source: PlaybackSource = .unknown
     @Environment(AudioPlayer.self) private var player
-    @State private var downloadManager = DownloadManager.shared
 
     var body: some View {
         ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
-            SongRowView(song: song, showArt: showArt, showTrackNumber: showTrackNumber,
-                        disableSwipeActions: true) {
+            SongRowView(song: song, showArt: showArt, showTrackNumber: showTrackNumber) {
                 player.playSong(song, fromQueue: songs, startIndex: index, source: source)
             }
             .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding,
@@ -520,21 +518,6 @@ private struct OfflineSongRows: View {
                                       trailing: 16))
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
-            .swipeActions(edge: .trailing) {
-                Button { player.addToQueue([song]) } label: {
-                    Image(systemName: "text.append")
-                }
-                .tint(.blue)
-                .accessibilityLabel("Add to Queue")
-                if downloadManager.isDownloaded(song.id) {
-                    Button(role: .destructive) {
-                        downloadManager.deleteSong(song.id)
-                    } label: {
-                        Image(systemName: "trash")
-                    }
-                    .accessibilityLabel("Delete download")
-                }
-            }
         }
     }
 }
