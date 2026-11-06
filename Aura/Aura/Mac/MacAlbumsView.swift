@@ -11,6 +11,7 @@ struct MacAlbumsView: View {
 
     private let orders: [(String, String)] = [
         ("alphabeticalByName", "Name"),
+        ("alphabeticalByArtist", "Artist"),
         ("newest", "Recently Added"),
         ("frequent", "Most Played"),
         ("recent", "Recently Played"),

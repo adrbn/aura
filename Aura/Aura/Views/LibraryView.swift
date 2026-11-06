@@ -253,6 +253,17 @@ struct AlbumsGridView: View {
     @State private var loadFailed = false
     @AppStorage("albums_sort") private var sortType = "alphabeticalByName"
 
+    /// The server's own album list orders, so a sort is one request per page and covers
+    /// the whole library, not just what's loaded.
+    private let orders: [(type: String, label: LocalizedStringKey)] = [
+        ("alphabeticalByName", "Name"),
+        ("alphabeticalByArtist", "Artist"),
+        ("newest", "Recently Added"),
+        ("frequent", "Most Played"),
+        ("recent", "Recently Played"),
+        ("random", "Random"),
+    ]
+
     let columns = [
         GridItem(.adaptive(minimum: 160), spacing: 16)
     ]
@@ -283,15 +294,33 @@ struct AlbumsGridView: View {
         .scrollIndicators(.hidden)
         .navigationTitle("albums")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await loadAlbums() }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Picker("Sort By", selection: $sortType) {
+                        ForEach(orders, id: \.type) { Text($0.label).tag($0.type) }
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                }
+            }
+        }
+        .task(id: sortType) { await loadAlbums() }
     }
 
     private func loadAlbums() async {
         guard let server = serverManager.currentServer else { return }
         do {
-            let result = try await SubsonicClient.shared.getAlbumList2(
-                server: server, type: sortType, size: 500
-            )
+            // Page by 500, the most a server sends at once, so a large library isn't cut
+            // off at its first 500 albums. Random is one page: more of it is just more random.
+            var result: [Album] = []
+            while true {
+                let page = try await SubsonicClient.shared.getAlbumList2(
+                    server: server, type: sortType, size: 500, offset: result.count
+                )
+                result += page
+                if page.count < 500 || sortType == "random" { break }
+            }
             await MainActor.run {
                 albums = result
                 isLoading = false
