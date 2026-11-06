@@ -11,7 +11,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="Support me on Ko-fi" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download-fr.svg" alt="Télécharger l'IPA" height="40"></a>&nbsp;
-<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.447"><img src="docs/assets/btn-mac-fr.svg" alt="Télécharger pour Mac" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.5.0-build.484"><img src="docs/assets/btn-mac-fr.svg" alt="Télécharger pour Mac" height="40"></a>
 <br>
 <a href="#ce-que-fait-aura"><img src="docs/assets/btn-features-fr.svg" alt="Fonctions" height="40"></a>&nbsp;
 <a href="#compiler-depuis-les-sources"><img src="docs/assets/btn-source-fr.svg" alt="Compiler" height="40"></a>
@@ -62,38 +62,38 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
   </tr>
 </table>
 
-<sub>Marqué <b>1.4</b> : nouveau dans la 1.4, sur l'App Store maintenant.</sub>
+<sub>Marqué <b>1.5</b> : nouveau dans la 1.5, sur l'App Store maintenant.</sub>
 
 **L'écoute**
 
 - **Une file d'attente qui montre la suite**, à la place de la pochette : lire ensuite, ajouter à la fin, glisser pour réordonner. Quand un album ou une playlist se termine, la lecture automatique enchaîne des morceaux proches.
 - **Lecture sans blanc**, aléatoire, répétition d'un morceau ou de tout, et un minuteur de veille qui coupe après un temps donné ou à la fin du morceau.
 - **Tous les formats de votre serveur** : WMA, APE, WavPack, DSD et les autres sont convertis en MP3 par votre serveur. Une qualité à part pour le réseau cellulaire, et un cache de streaming jusqu'à la taille que vous fixez.
-- **Pour vous, à votre goût** <sup>1.4</sup> : chaque mix activé ou non, les genres des mix par genre, et 25, 50 ou 100 morceaux par mix.
-- **La tonalité** <sup>1.4</sup>, un demi-ton à la fois, comme sur une platine. **SharePlay** <sup>1.4</sup> sur FaceTime, chacun écoutant depuis le même serveur.
+- **Pour vous, à votre goût** : chaque mix activé ou non, les genres des mix par genre, et 25, 50 ou 100 morceaux par mix.
+- **La tonalité**, un demi-ton à la fois, comme sur une platine. **SharePlay** sur FaceTime, chacun écoutant depuis le même serveur.
 
 **Les paroles**
 
 - **Prêtes à temps** : les paroles du morceau suivant sont cherchées avant qu'il commence. Pour un duo, un remix ou une autre version, Aura vérifie qu'elles correspondent à la version qui joue.
-- **À corriger vous-même** : décalez le minutage si votre casque Bluetooth est en retard, ou calez vous-même les paroles d'un morceau, un geste par ligne.
+- **À corriger vous-même** : décalez le minutage si votre casque Bluetooth est en retard, calez vous-même les paroles d'un morceau, un geste par ligne, ou laissez Aura les caler à l'oreille <sup>1.5</sup> : il écoute le morceau sur l'iPhone et place chaque ligne et chaque mot, même pour des paroles sans minutage.
 - **La traduction**, en option, sous chaque ligne, par Gemini de Google avec votre propre clé d'API gratuite. Seul le morceau que vous traduisez est envoyé : ses lignes, son titre et son artiste.
 
 **Votre bibliothèque**
 
-- **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe, faite sur l'iPhone dans toute votre bibliothèque <sup>1.4</sup>, avec `artist:`, `album:`, `genre:` et `year:` à portée de doigt <sup>1.4</sup>.
-- **Des playlists à votre façon** : en grille ou en liste, des filtres, des pochettes tirées de vos photos, des dossiers nommés `Dossier/Nom` <sup>1.4</sup>, une section Suggestions et Ajouter des morceaux <sup>1.4</sup>, et Annuler <sup>1.4</sup>. Enregistrez n'importe quelle radio comme playlist ; les changements partent sur votre serveur.
-- **Les notes et le scrobbling** partent sur votre serveur, et attendent sur l'iPhone quand vous êtes hors ligne. Une playlist gardée téléchargée <sup>1.4</sup> télécharge ses nouveaux morceaux toute seule.
-- **Plusieurs serveurs**, chacun avec une adresse de la maison et des en-têtes personnalisés <sup>1.4</sup> en option, et plusieurs dossiers de musique à la fois <sup>1.4</sup>.
-- **Des pages aux couleurs de leur pochette**, des pochettes animées <sup>1.4</sup>, les albums à plusieurs disques <sup>1.4</sup>, les tags de tri, et des tris qui restent <sup>1.4</sup>.
+- **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe, faite sur l'iPhone dans toute votre bibliothèque, avec `artist:`, `album:`, `genre:` et `year:` à portée de doigt.
+- **Des playlists à votre façon** : en grille ou en liste, des filtres, des pochettes tirées de vos photos, des dossiers nommés `Dossier/Nom`, une section Suggestions et Ajouter des morceaux, Annuler, et Retirer les doublons <sup>1.5</sup>, qui garde la première copie de chaque morceau. Enregistrez n'importe quelle radio comme playlist ; les changements partent sur votre serveur.
+- **Les notes et le scrobbling** partent sur votre serveur, et attendent sur l'iPhone quand vous êtes hors ligne, les favoris aussi <sup>1.5</sup>. Une playlist gardée téléchargée télécharge ses nouveaux morceaux toute seule.
+- **Plusieurs serveurs**, chacun avec une adresse de la maison et des en-têtes personnalisés en option, et plusieurs dossiers de musique à la fois.
+- **Des pages aux couleurs de leur pochette**, des pochettes animées, les albums à plusieurs disques, les tags de tri, et des tris qui restent.
 
 **Autour de l'iPhone**
 
 - **Écran verrouillé, Centre de contrôle, Dynamic Island et AirPlay**, et un widget En cours de lecture pour l'écran d'accueil.
-- **Siri et Raccourcis** : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, mettre en file, aimer, passer. Des **liens `aura://`** <sup>1.4</sup> pour Raccourcis.
-- **Votre iPhone et votre Mac** <sup>1.4</sup> se pilotent l'un l'autre sur le même Wi-Fi : lancez la lecture sur le Mac depuis En cours de lecture, et voyez ce que joue l'autre dans un second mini lecteur.
+- **Siri et Raccourcis** : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, mettre en file, aimer, passer. Des **liens `aura://`** pour Raccourcis.
+- **Votre iPhone et votre Mac** se pilotent l'un l'autre sur le même Wi-Fi : lancez la lecture sur le Mac depuis En cours de lecture, et voyez ce que joue l'autre dans un second mini lecteur.
 - **Des liens de partage** qui ouvrent un morceau sur d'autres services.
 - **À votre goût** : clair ou sombre, la couleur d'accent de votre choix, onglets et sections de l'accueil dans votre ordre, une horloge en paysage, et des mises en page pour l'iPhone Duo.
-- **Neuf langues** : français, anglais, italien, espagnol, allemand, catalan, néerlandais, plus le chinois et le russe <sup>1.4</sup>.
+- **Neuf langues** : français, anglais, italien, espagnol, allemand, catalan, néerlandais, plus le chinois et le russe.
 
 ## Sur chaque appareil
 
@@ -141,7 +141,7 @@ Tout est gratuit, sans compte et sans achats intégrés.
 | CarPlay | Oui | Non : re-signer fait perdre l'autorisation CarPlay d'Apple | – |
 | Get It (Soulseek via votre propre [slskd](https://github.com/slskd/slskd)) | Non | À activer, Réglages → Developer Options | À activer, Réglages → Developer |
 | Vérification NetEase du minutage des paroles | Non | Oui | Oui |
-| Télécharger | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Dernier IPA](https://github.com/adrbn/aura/releases/latest) | [Zip Mac](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.447/Aura-mac-1.4.0-build.447.zip) |
+| Télécharger | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Dernier IPA](https://github.com/adrbn/aura/releases/latest) | [Zip Mac](https://github.com/adrbn/aura/releases/download/mac-v1.5.0-build.484/Aura-mac-1.5.0-build.484.zip) |
 
 Chaque version demande un serveur [Navidrome](https://www.navidrome.org), ou n'importe quel serveur qui parle l'API
 Subsonic 1.16.1 (les extensions OpenSubsonic sont utilisées quand il les propose). Pas encore de serveur ? Essayez la
@@ -165,7 +165,7 @@ limite d'iOS, pas d'Aura.
 <details>
 <summary><b>Installer l'app Mac</b></summary>
 
-1. Téléchargez [`Aura-mac-1.4.0-build.447.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.447/Aura-mac-1.4.0-build.447.zip) depuis la [version Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.447), qui indique sa somme SHA-256, et ouvrez-le.
+1. Téléchargez [`Aura-mac-1.5.0-build.484.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.5.0-build.484/Aura-mac-1.5.0-build.484.zip) depuis la [version Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.5.0-build.484), qui indique sa somme SHA-256, et ouvrez-le.
 2. Glissez **Aura.app** dans **Applications**.
 3. Ouvrez Aura. L'app est signée avec un Developer ID et notariée par Apple : elle s'ouvre comme n'importe quelle app.
 4. Saisissez l'adresse de votre serveur, votre nom d'utilisateur et votre mot de passe.

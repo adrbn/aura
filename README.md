@@ -11,7 +11,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="Support me on Ko-fi" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
-<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.447"><img src="docs/assets/btn-mac.svg" alt="Download for Mac" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.5.0-build.484"><img src="docs/assets/btn-mac.svg" alt="Download for Mac" height="40"></a>
 <br>
 <a href="#what-it-does"><img src="docs/assets/btn-features.svg" alt="Features" height="40"></a>&nbsp;
 <a href="#build-from-source"><img src="docs/assets/btn-source.svg" alt="Build from source" height="40"></a>
@@ -61,38 +61,38 @@ download still there with no signal.
   </tr>
 </table>
 
-<sub>Marked <b>1.4</b>: new in 1.4, on the App Store now.</sub>
+<sub>Marked <b>1.5</b>: new in 1.5, on the App Store now.</sub>
 
 **Listening**
 
 - **A queue you can see ahead in**, in place of the artwork: play next, add to the end, drag to reorder. When an album or playlist ends, autoplay carries on with similar songs.
 - **Gapless playback**, shuffle, repeat one or all, and a sleep timer that stops after a set time or at the end of the song.
 - **Any format your server holds**: WMA, APE, WavPack, DSD and others are turned into MP3 by your server. A separate quality for cellular, and a stream cache up to the size you set.
-- **Made For You, your way** <sup>1.4</sup>: each mix on or off, the genres its genre mixes use, and 25, 50 or 100 songs per mix.
-- **Pitch** <sup>1.4</sup>, a semitone at a time, as on a turntable. **SharePlay** <sup>1.4</sup> over FaceTime, everyone streaming from the same server.
+- **Made For You, your way**: each mix on or off, the genres its genre mixes use, and 25, 50 or 100 songs per mix.
+- **Pitch**, a semitone at a time, as on a turntable. **SharePlay** over FaceTime, everyone streaming from the same server.
 
 **Lyrics**
 
 - **Ready on time**: the next song's lyrics are fetched before it starts. For a duet, a remix or another version, Aura checks they match the version playing.
-- **Yours to fix**: shift the timing if your Bluetooth headphones lag, or time a song's lyrics yourself with one tap per line.
+- **Yours to fix**: shift the timing if your Bluetooth headphones lag, time a song's lyrics yourself with one tap per line, or let Aura time them by ear <sup>1.5</sup>: it listens to the song on the iPhone and places each line and word, even for lyrics that had no timing.
 - **Translation**, optional, under each line, by Google's Gemini with a free API key of your own. Only the song you tap translate on is sent: its lines, title and artist.
 
 **Your library**
 
-- **One search** across songs, albums, artists and playlists that forgives typos, run on the iPhone over your whole library <sup>1.4</sup>, with `artist:`, `album:`, `genre:` and `year:` one tap away <sup>1.4</sup>.
-- **Playlists your way**: a grid or a list, filters, covers from your photos, folders named `Folder/Name` <sup>1.4</sup>, a Suggestions section and Add Songs <sup>1.4</sup>, and Undo <sup>1.4</sup>. Save any radio as a playlist; changes go to your server.
-- **Ratings and scrobbling** go to your server, and wait on the iPhone while you're offline. Keep a playlist downloaded <sup>1.4</sup>: its new songs download on their own.
-- **Several servers**, each with an optional home-network address and custom headers <sup>1.4</sup>, and several music folders at once <sup>1.4</sup>.
-- **Pages in the colour of their artwork**, animated covers <sup>1.4</sup>, multi-disc albums <sup>1.4</sup>, sort tags, and sorts that stay put <sup>1.4</sup>.
+- **One search** across songs, albums, artists and playlists that forgives typos, run on the iPhone over your whole library, with `artist:`, `album:`, `genre:` and `year:` one tap away.
+- **Playlists your way**: a grid or a list, filters, covers from your photos, folders named `Folder/Name`, a Suggestions section and Add Songs, Undo, and Remove Duplicates <sup>1.5</sup>, which keeps the first copy of each song. Save any radio as a playlist; changes go to your server.
+- **Ratings and scrobbling** go to your server, and wait on the iPhone while you're offline, favourites too <sup>1.5</sup>. Keep a playlist downloaded: its new songs download on their own.
+- **Several servers**, each with an optional home-network address and custom headers, and several music folders at once.
+- **Pages in the colour of their artwork**, animated covers, multi-disc albums, sort tags, and sorts that stay put.
 
 **Around the iPhone**
 
 - **Lock Screen, Control Center, Dynamic Island and AirPlay**, and a Now Playing widget for the Home Screen.
-- **Siri and Shortcuts**: play an artist, album, song, playlist or genre by name, queue, like, skip. **`aura://` links** <sup>1.4</sup> for Shortcuts.
-- **Your iPhone and your Mac** <sup>1.4</sup> control each other on the same Wi-Fi: play on the Mac from Now Playing, and see what the other plays in a second mini player.
+- **Siri and Shortcuts**: play an artist, album, song, playlist or genre by name, queue, like, skip. **`aura://` links** for Shortcuts.
+- **Your iPhone and your Mac** control each other on the same Wi-Fi: play on the Mac from Now Playing, and see what the other plays in a second mini player.
 - **Share links** that open a song on other services.
 - **Yours to arrange**: light or dark, any accent colour, tabs and Home sections in your order, a landscape clock, and iPhone Duo layouts.
-- **Nine languages**: English, French, Italian, Spanish, German, Catalan, Dutch, plus Chinese and Russian <sup>1.4</sup>.
+- **Nine languages**: English, French, Italian, Spanish, German, Catalan, Dutch, plus Chinese and Russian.
 
 ## Every device
 
@@ -139,7 +139,7 @@ All free, with no account and no in-app purchases.
 | CarPlay | Yes | No: re-signing drops Apple's CarPlay entitlement | – |
 | Get It (Soulseek via your own [slskd](https://github.com/slskd/slskd)) | No | Opt-in, Settings → Developer Options | Opt-in, Settings → Developer |
 | NetEase lyrics-timing check | No | Yes | Yes |
-| Download | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Latest IPA](https://github.com/adrbn/aura/releases/latest) | [Mac zip](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.447/Aura-mac-1.4.0-build.447.zip) |
+| Download | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Latest IPA](https://github.com/adrbn/aura/releases/latest) | [Mac zip](https://github.com/adrbn/aura/releases/download/mac-v1.5.0-build.484/Aura-mac-1.5.0-build.484.zip) |
 
 Every build needs a [Navidrome](https://www.navidrome.org) server, or any server speaking Subsonic API 1.16.1
 (OpenSubsonic extensions are used when offered). No server yet? Try Navidrome's public demo:
@@ -162,7 +162,7 @@ the signature expires after 7 days and the sideloading tool has to refresh it; t
 <details>
 <summary><b>Install the Mac app</b></summary>
 
-1. Download [`Aura-mac-1.4.0-build.447.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.4.0-build.447/Aura-mac-1.4.0-build.447.zip) from the [Mac release](https://github.com/adrbn/aura/releases/tag/mac-v1.4.0-build.447), which lists its SHA-256 checksum, and open it.
+1. Download [`Aura-mac-1.5.0-build.484.zip`](https://github.com/adrbn/aura/releases/download/mac-v1.5.0-build.484/Aura-mac-1.5.0-build.484.zip) from the [Mac release](https://github.com/adrbn/aura/releases/tag/mac-v1.5.0-build.484), which lists its SHA-256 checksum, and open it.
 2. Drag **Aura.app** into **Applications**.
 3. Open Aura. The app is signed with a Developer ID and notarized by Apple, so it opens like any other app.
 4. Enter your server's address, username and password.
