@@ -231,12 +231,24 @@ struct OfflineSongsPage: View {
 /// Every album with songs here, in the online Albums grid.
 struct OfflineAlbumsPage: View {
     @State private var library = OfflineLibrary.shared
+    /// Name or artist: the other online orders need the server's play counts and dates.
+    @AppStorage("offline_albums_by_artist") private var byArtist = false
     private let columns = [GridItem(.adaptive(minimum: 160), spacing: 16)]
+
+    private var albums: [OfflineAlbum] {
+        guard byArtist else { return library.albums }
+        return library.albums.sorted {
+            let order = $0.artist.localizedCaseInsensitiveCompare($1.artist)
+            return order == .orderedSame
+                ? $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+                : order == .orderedAscending
+        }
+    }
 
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(library.albums) { album in
+                ForEach(albums) { album in
                     OfflineAlbumCard(album: album)
                 }
             }
@@ -247,6 +259,18 @@ struct OfflineAlbumsPage: View {
         .background(Color.themeBg)
         .navigationTitle("albums")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Picker("Sort By", selection: $byArtist) {
+                        Text("Name").tag(false)
+                        Text("Artist").tag(true)
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                }
+            }
+        }
         .onAppear { library.refresh() }
     }
 }
