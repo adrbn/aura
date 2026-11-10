@@ -810,6 +810,25 @@ def kofi(fr):
     return svg(w, h, body, f"{top} on Ko-fi", defs)
 
 
+def listed(fr):
+    """Next to the App Store badge: Aura's entry in navidrome.org's app catalog. A record
+    in the accent (Navidrome's own mark is theirs to use), two lines of type, a chevron."""
+    top, sub = (("Référencé sur", "navidrome.org/apps") if fr else ("Listed on", "navidrome.org/apps"))
+    tw = max(width(top, 12, False), width(sub, 16, True))
+    h = 48
+    w = round(14 + 26 + 12 + tw + 18 + 8 + 14)
+    cx, cy = 14 + 13, h / 2
+    disc = (f'<circle cx="{cx}" cy="{cy}" r="12" fill="{ACCENT}"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="8.2" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="3.6" fill="#fff"/><circle cx="{cx}" cy="{cy}" r="1.3" fill="{ACCENT}"/>')
+    tx = 14 + 26 + 12
+    chev = (f'<path d="M{w - 22} {h / 2 - 5}l5 5-5 5" fill="none" stroke="#F2F2F2" stroke-width="2" '
+            f'stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>')
+    body = (f'<rect x=".5" y=".5" width="{w - 1}" height="{h - 1}" rx="{h / 2 - .5}" fill="{BG}" stroke="#333"/>'
+            + disc + text(tx, 20, top, 12, "#F2F2F2", 500, op=0.7) + text(tx, 37, sub, 16, "#F2F2F2", 600) + chev)
+    return svg(w, h, body, f"{top} navidrome.org/apps")
+
+
 def main():
     if "--sources" in sys.argv:
         make_sources()
@@ -827,6 +846,7 @@ def main():
         "card-eq.svg": card_eq(), "card-lyrics.svg": card_lyrics(), "card-mixes.svg": card_mixes(),
         "card-radar.svg": card_radar(), "card-offline.svg": card_offline(), "card-devices.svg": card_devices(),
         "btn-tip.svg": kofi(False), "btn-tip-fr.svg": kofi(True),
+        "btn-navidrome.svg": listed(False), "btn-navidrome-fr.svg": listed(True),
     }
     for key, (ic, en, fr, accent) in BUTTONS.items():
         files[f"btn-{key}.svg"] = button(ic, en, accent)
