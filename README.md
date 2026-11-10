@@ -8,7 +8,6 @@
 lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="48"></a>&nbsp;&nbsp;
-<a href="https://www.navidrome.org/apps/"><img src="docs/assets/btn-navidrome.svg" alt="Listed on navidrome.org/apps" height="48"></a>&nbsp;&nbsp;
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="Support me on Ko-fi" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Download IPA" height="40"></a>&nbsp;
@@ -27,6 +26,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20preview-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
 [![Navidrome / Subsonic](https://img.shields.io/badge/server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#get-aura)
+[![Listed on navidrome.org](https://img.shields.io/badge/listed%20on-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![No tracking](https://img.shields.io/badge/tracking-none-EB534D?style=flat-square&labelColor=121212)](#privacy)
 [![Latest release](https://img.shields.io/github/v/release/adrbn/aura?include_prereleases&filter=v*&style=flat-square&labelColor=121212&color=EB534D&label=release)](https://github.com/adrbn/aura/releases/latest)
 [![License GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-EB534D?style=flat-square&labelColor=121212)](LICENSE)
