@@ -4,7 +4,13 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.0] — 2026-11-05 (sent to App Review)
+## [1.5.1] — 2026-11-11 (sent to App Review)
+
+- Library > Albums sorts by name, artist, recently added, most played, recently played or random, and lists the whole library instead of stopping at 500 albums.
+- Offline, the Albums page sorts by name or by artist.
+- Mac: Albums sorts by artist too.
+
+## [1.5.0] — 2026-11-05
 
 - Sync Automatically listens to the song on the iPhone and times each line and word of the lyrics. Lyrics with no timing offer it in Now Playing's menu; a sync that placed only some lines saves, the rest following their pace; a sync saved offline reaches the server once it is back.
 - Remove Duplicates in a playlist's menu keeps the first copy of each song and removes the rest in one request.
