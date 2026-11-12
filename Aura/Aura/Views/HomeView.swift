@@ -313,7 +313,8 @@ struct HomeView: View {
                 if !homeTitle.isEmpty {
                     homeTitleLabel
                         .padding(.horizontal, 16)
-                        .padding(.top, 4)
+                        .padding(.top, Pad.titleTop)
+                        .padding(.bottom, Pad.titleBottom - 8)
                 }
 
                 // Server stats bar (configurable) — stays at the very top.

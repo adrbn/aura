@@ -258,11 +258,11 @@ struct ContentView: View {
     @ViewBuilder
     private func offlineTabContent(for tab: TabItem) -> some View {
         switch tab {
-        case .home: OfflineHomeView()
+        case .home: OfflineHomeView().padRoom()
         case .library: OfflineLibraryView().dynamicTypeSize(Self.listText).padRoom()
         case .playlists: OfflinePlaylistsView().dynamicTypeSize(Self.listText).padRoom()
         case .settings: SettingsView().dynamicTypeSize(Self.listText).padRoom()
-        case .search: OfflineSearchView()
+        case .search: OfflineSearchView().padRoom()
         }
     }
 
@@ -283,11 +283,11 @@ struct ContentView: View {
     @ViewBuilder
     private func tabContent(for tab: TabItem) -> some View {
         switch tab {
-        case .home: HomeView()
+        case .home: HomeView().padRoom()
         case .library: LibraryView().dynamicTypeSize(Self.listText).padRoom()
         case .playlists: PlaylistsView().dynamicTypeSize(Self.listText).padRoom()
         case .settings: SettingsView().dynamicTypeSize(Self.listText).padRoom()
-        case .search: SearchView()
+        case .search: SearchView().padRoom()
         }
     }
 

@@ -15,7 +15,9 @@ struct SearchView: View {
     /// The title goes up with the rows and fades as it goes; the field follows it until it
     /// reaches the top, then stays there, as in the system's music app, so a new search is
     /// never a scroll back up away. A pull still brings both down with the rows.
-    private var headerOffset: CGFloat { -min(scrollY, titleHeight + 8) }
+    private var headerOffset: CGFloat { -min(scrollY, titleRoom + titleHeight + Pad.titleBottom) }
+    /// On an iPad the title sits below the tab bar floating at the top.
+    private let titleRoom: CGFloat = BottomChrome.isPad ? Pad.titleTop + 12 : 0
     private var titleOpacity: Double { 1 - min(max(scrollY / (titleHeight * 0.7), 0), 1) }
 
     var body: some View {
@@ -23,10 +25,10 @@ struct SearchView: View {
             SearchResultsContainer(query: $query, navPath: $path)
                 // Results scroll UNDER the status bar; reserve room for title + search field.
                 .ignoresSafeArea(.container, edges: .top)
-                .contentMargins(.top, TabChrome.contentTop + titleHeight + 8 + searchBarHeight, for: .scrollContent)
+                .contentMargins(.top, TabChrome.contentTop + titleRoom + titleHeight + Pad.titleBottom + searchBarHeight, for: .scrollContent)
                 // Big-left title above the search field, both scrolling away with the rows.
                 .overlay(alignment: .top) {
-                    VStack(spacing: 8) {
+                    VStack(spacing: Pad.titleBottom) {
                         Text("search")
                             .auraDisplay(40)
                             .foregroundStyle(.primary)
@@ -37,7 +39,8 @@ struct SearchView: View {
                         SearchFieldBar(text: $query, prompt: "Search your library…")
                             .frame(height: searchBarHeight)
                     }
-                    .padding(.top, TabChrome.contentTop)
+                    .padding(.horizontal, Pad.side)
+                    .padding(.top, TabChrome.contentTop + titleRoom)
                     .offset(y: headerOffset)
                     .ignoresSafeArea(.container, edges: .top)
                 }

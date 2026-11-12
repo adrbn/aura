@@ -43,7 +43,8 @@ struct OfflineHomeView: View {
                                 .foregroundStyle(.primary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 16)
-                                .padding(.top, 4)
+                                .padding(.top, Pad.titleTop)
+                                .padding(.bottom, Pad.titleBottom - 8)
                         }
                         OfflineStatusLine()
                     }

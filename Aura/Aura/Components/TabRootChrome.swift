@@ -69,6 +69,8 @@ enum Pad {
     /// A tab title's room above and below: on an iPad it clears the tab bar floating at the top.
     static let titleTop: CGFloat = BottomChrome.isPad ? 64 : 4
     static let titleBottom: CGFloat = BottomChrome.isPad ? 24 : 8
+    /// How much further in from the screen's sides an iPad's tab roots stand.
+    static let side: CGFloat = BottomChrome.isPad ? 24 : 0
 }
 
 extension View {
@@ -77,7 +79,7 @@ extension View {
     @ViewBuilder
     func padRoom() -> some View {
         if BottomChrome.isPad {
-            contentMargins(.horizontal, 24, for: .scrollContent)
+            contentMargins(.horizontal, Pad.side, for: .scrollContent)
                 .labelStyle(RoomyLabelStyle())
         } else {
             self
