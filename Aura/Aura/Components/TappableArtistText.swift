@@ -199,7 +199,9 @@ private struct ArtistNameButton: View {
                 let result = try await SubsonicClient.shared.search3(
                     server: server,
                     query: name,
-                    artistCount: 10,
+                    // Wide enough for the solo artist to be there among the many joint
+                    // credits that also carry the name ("Martin Garrix, Dean Lewis"…).
+                    artistCount: 100,
                     albumCount: 0,
                     songCount: 0
                 )

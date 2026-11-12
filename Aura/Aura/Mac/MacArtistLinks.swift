@@ -47,7 +47,7 @@ struct MacArtistLinks: View {
         Task {
             let found = try? await SubsonicClient.shared.search3(
                 server: server, query: credit.name,
-                artistCount: 5, albumCount: 0, songCount: 0
+                artistCount: 100, albumCount: 0, songCount: 0
             ).artist
             let match = found?.first { $0.name.caseInsensitiveCompare(credit.name) == .orderedSame }
                 ?? found?.first

@@ -223,7 +223,7 @@ struct WrappedView: View {
             for artist in artists {
                 group.addTask {
                     let r = try? await SubsonicClient.shared.search3(
-                        server: server, query: artist.name, artistCount: 5, albumCount: 0, songCount: 0)
+                        server: server, query: artist.name, artistCount: 100, albumCount: 0, songCount: 0)
                     let m = Self.bestArtistMatch(in: r?.artist ?? [], name: artist.name)
                     return (artist.id, m.map { ListeningStats.Resolved(serverId: $0.id, coverArt: $0.coverArt) })
                 }
