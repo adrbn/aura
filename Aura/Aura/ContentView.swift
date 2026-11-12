@@ -259,9 +259,9 @@ struct ContentView: View {
     private func offlineTabContent(for tab: TabItem) -> some View {
         switch tab {
         case .home: OfflineHomeView()
-        case .library: OfflineLibraryView()
+        case .library: OfflineLibraryView().dynamicTypeSize(Self.listText)
         case .playlists: OfflinePlaylistsView()
-        case .settings: SettingsView()
+        case .settings: SettingsView().dynamicTypeSize(Self.listText)
         case .search: OfflineSearchView()
         }
     }
@@ -276,13 +276,17 @@ struct ContentView: View {
         #endif
     }
 
+    /// On an iPad, the tabs made of rows of text read a size above the rest.
+    private static let listText: ClosedRange<DynamicTypeSize> =
+        BottomChrome.isPad ? .xxLarge ... .accessibility5 : .xSmall ... .accessibility5
+
     @ViewBuilder
     private func tabContent(for tab: TabItem) -> some View {
         switch tab {
         case .home: HomeView()
-        case .library: LibraryView()
+        case .library: LibraryView().dynamicTypeSize(Self.listText)
         case .playlists: PlaylistsView()
-        case .settings: SettingsView()
+        case .settings: SettingsView().dynamicTypeSize(Self.listText)
         case .search: SearchView()
         }
     }
