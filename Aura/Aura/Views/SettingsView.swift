@@ -163,8 +163,8 @@ struct SettingsView: View {
                 .auraDisplay(40)
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 4)
-                .padding(.bottom, 8)
+                .padding(.top, Pad.titleTop)
+                .padding(.bottom, Pad.titleBottom)
                 .scrollEnter()
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
@@ -211,6 +211,9 @@ struct SettingsView: View {
         .listSectionSpacing(.compact)
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
+        // A grouped list keeps its own side margin: on an iPad the cards and title stand
+        // as far in as the other tabs' rows.
+        .padding(.horizontal, BottomChrome.isPad ? 12 : 0)
         // Reserve room for the floating mini-player so the bottom version footer isn't
         // hidden behind it (matches LibraryView's convention).
         .safeAreaInset(edge: .bottom) { ListEndSpacer() }

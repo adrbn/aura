@@ -66,6 +66,33 @@ final class BottomChrome {
 /// Covers, circles and grid cells on an iPad: the phone's sizes, a third larger.
 enum Pad {
     static let scale: CGFloat = BottomChrome.isPad ? 1.3 : 1
+    /// A tab title's room above and below: on an iPad it clears the tab bar floating at the top.
+    static let titleTop: CGFloat = BottomChrome.isPad ? 64 : 4
+    static let titleBottom: CGFloat = BottomChrome.isPad ? 24 : 8
+}
+
+extension View {
+    /// On an iPad a tab root stands further in from the screen's sides, title and rows alike,
+    /// and its rows' icons stand further from their labels.
+    @ViewBuilder
+    func padRoom() -> some View {
+        if BottomChrome.isPad {
+            contentMargins(.horizontal, 24, for: .scrollContent)
+                .labelStyle(RoomyLabelStyle())
+        } else {
+            self
+        }
+    }
+}
+
+private struct RoomyLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 20) {
+            configuration.icon.frame(width: 36)
+            configuration.title
+                .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+        }
+    }
 }
 
 /// The end of a page's list: room for the mini player, and for the fetch card while it shows.
@@ -324,8 +351,8 @@ struct TabTitleRow<Trailing: View>: View {
             trailing()
         }
         .padding(.horizontal, 16)
-        .padding(.top, 4)
-        .padding(.bottom, 8)
+        .padding(.top, Pad.titleTop)
+        .padding(.bottom, Pad.titleBottom)
         .scrollEnter()
     }
 }

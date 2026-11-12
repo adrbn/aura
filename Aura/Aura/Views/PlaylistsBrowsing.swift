@@ -216,19 +216,26 @@ struct PlaylistRowView: View {
     var isPinned: Bool = false
     /// When set, the pin is a button that pins or unpins the playlist.
     var onTogglePin: (() -> Void)? = nil
+    /// An iPad's rows a third larger, cover, text and pin alike.
+    #if os(iOS)
+    private let pad = BottomChrome.isPad
+    #else
+    private let pad = false
+    #endif
+    private var scale: CGFloat { pad ? 1.3 : 1 }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 12 * scale) {
             PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
-                              cacheToken: playlist.changed, size: 56, cornerRadius: 8)
-            VStack(alignment: .leading, spacing: 2) {
+                              cacheToken: playlist.changed, size: 56 * scale, cornerRadius: 8)
+            VStack(alignment: .leading, spacing: pad ? 4 : 2) {
                 Text(title ?? playlist.name)
-                    .font(.subheadline.weight(.medium))
+                    .font((pad ? Font.title3 : .subheadline).weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 if let subtitle {
                     Text(subtitle)
-                        .font(.caption)
+                        .font(pad ? .body : .caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -237,7 +244,7 @@ struct PlaylistRowView: View {
             if let onTogglePin {
                 Button(action: onTogglePin) {
                     Image(systemName: isPinned ? "pin.fill" : "pin")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 12 * scale, weight: .medium))
                         .foregroundStyle(isPinned ? .secondary : .quaternary)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())

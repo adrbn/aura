@@ -42,6 +42,9 @@ struct LibraryView: View {
                         } icon: {
                             Image(systemName: category.icon).foregroundStyle(accentColor)
                         }
+                        // An iPad's rows read at the size of its larger covers and headers.
+                        .font(BottomChrome.isPad ? .title2 : .body)
+                        .padding(.vertical, BottomChrome.isPad ? 10 : 0)
                     }
                     .scrollEnter()
                     .listRowBackground(Color.clear)
