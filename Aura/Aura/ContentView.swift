@@ -316,6 +316,8 @@ struct ContentView: View {
         case "nowPlaying", "lyrics":
             guard let songs = try? await SubsonicClient.shared.search3(server: server, query: query).song,
                   let song = songs.first else { return }
+            // A layout check, not a listening session: silent from the first frame.
+            audioPlayer.volume = 0
             audioPlayer.playSong(song, fromQueue: songs, startIndex: 0)
             audioPlayer.isShowingNowPlaying = true
             try? await Task.sleep(for: .seconds(2))
@@ -323,8 +325,8 @@ struct ContentView: View {
             // A layout check, not a listening session: the phone may be in a pocket.
             if DuoPreview.size != nil {
                 for _ in 0..<20 where !audioPlayer.isPlaying { try? await Task.sleep(for: .milliseconds(250)) }
-                // `-duoPlaying YES` keeps it playing, silent, to see the cover at its playing size.
-                if UserDefaults.standard.bool(forKey: "duoPlaying") { audioPlayer.volume = 0 } else { audioPlayer.pause() }
+                // `-duoPlaying YES` keeps it playing, to see the cover at its playing size.
+                if !UserDefaults.standard.bool(forKey: "duoPlaying") { audioPlayer.pause() }
             }
         default:
             break

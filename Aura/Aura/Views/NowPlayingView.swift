@@ -448,6 +448,11 @@ struct NowPlayingView: View {
                 .frame(height: height)
                 .scaleEffect(scale)
                 .frame(width: w * scale, height: size.height)
+        } else if size.height > Self.phoneSize.height {
+            // iPad: the column grows with the height, up to the half the lyrics leave it.
+            let room = lyricsBeside ? size.width / 2 : size.width
+            let w = min(room, Self.columnWidth * size.height / Self.phoneSize.height)
+            playerView(song: song, width: w, artSize: w - horizontalPadding * 2)
         } else {
             let w = min(size.width, Self.columnWidth)
             playerView(song: song, width: w, artSize: w - horizontalPadding * 2)
