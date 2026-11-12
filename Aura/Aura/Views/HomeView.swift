@@ -275,6 +275,15 @@ struct HomeView: View {
     /// Favourite artists as 110 pt circles: a glance at who, not a wall of faces.
     private static let artistCircle: CGFloat = 110
 
+    /// A few favourites on a wide screen grow to fill the row instead of huddling at its
+    /// start, up to half again their size; enough to overflow keep the phone's size.
+    private var artistCircle: CGFloat {
+        let count = CGFloat(starredArtists.count)
+        guard count > 0, layoutWidth > 0 else { return Self.artistCircle }
+        let fill = (layoutWidth - 32 - 16 * (count - 1)) / count
+        return min(Self.artistCircle * 1.5, max(Self.artistCircle, fill))
+    }
+
     /// The stats line's words, only for the counts the server reported.
     private var statsParts: [Text] {
         var parts: [Text] = []
@@ -563,8 +572,8 @@ struct HomeView: View {
                     .buttonStyle(.plain)
                     ScrollView(.horizontal, showsIndicators: false) {
                         LazyHStack(spacing: 16) {
-                            ForEach(Array(starredArtists.prefix(25).enumerated()), id: \.element.id) { index, artist in
-                                ArtistCardView(artist: artist, size: Self.artistCircle)
+                            ForEach(Array(starredArtists.enumerated()), id: \.element.id) { index, artist in
+                                ArtistCardView(artist: artist, size: artistCircle)
                                     .transition(.asymmetric(
                                         insertion: .move(edge: .trailing).combined(with: .opacity),
                                         removal: .opacity
@@ -574,7 +583,7 @@ struct HomeView: View {
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
-                .animation(Self.shelfMotion, value: starredArtists.prefix(25).map(\.id))
+                .animation(Self.shelfMotion, value: starredArtists.map(\.id))
             }
         }
     }

@@ -59,6 +59,8 @@ enum TabChrome {
 final class BottomChrome {
     static let shared = BottomChrome()
     var cardInset: CGFloat = 0
+    /// An iPad keeps its tabs at the top: the bottom holds only the mini player, drawn larger.
+    static let isPad = UIDevice.current.userInterfaceIdiom == .pad
 }
 
 /// The end of a page's list: room for the mini player, and for the fetch card while it shows.
@@ -141,7 +143,7 @@ struct ListEndSpacer: View {
     var height: CGFloat = 80
 
     var body: some View {
-        Color.clear.frame(height: height + BottomChrome.shared.cardInset)
+        Color.clear.frame(height: height + BottomChrome.shared.cardInset + (BottomChrome.isPad ? 16 : 0))
     }
 }
 

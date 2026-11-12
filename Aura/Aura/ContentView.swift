@@ -42,7 +42,7 @@ struct ContentView: View {
     /// Room left above the tab bar for what floats over the tabs. On an iPhone Duo the tab
     /// bar sits in the side column, by the status bar, so there is none to clear there: the
     /// mini player dips into the bottom inset to end level with the side tab bar's foot.
-    private var tabBarGap: CGFloat { tabBarBeside ? -10 : 57 }
+    private var tabBarGap: CGFloat { BottomChrome.isPad ? 0 : tabBarBeside ? -10 : 57 }
     /// Read from the layout, not the window: at launch the window has no insets yet, and a
     /// value read once then kept the phone's gap until something else redrew the bars.
     @State private var tabBarBeside = false
@@ -62,7 +62,7 @@ struct ContentView: View {
         ZStack(alignment: .bottom) {
             TabView(selection: tabSelection) {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
-                    Tab(tab.title, systemImage: tab.icon, value: index) {
+                    Tab(tab.title, systemImage: tab.icon, value: index, role: tab.role) {
                         tabContent(for: tab)
                     }
                 }
@@ -194,7 +194,7 @@ struct ContentView: View {
         ZStack(alignment: .bottom) {
             TabView(selection: tabSelection) {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
-                    Tab(tab.title, systemImage: tab.icon, value: index) {
+                    Tab(tab.title, systemImage: tab.icon, value: index, role: tab.role) {
                         offlineTabContent(for: tab)
                     }
                 }
@@ -298,6 +298,8 @@ struct ContentView: View {
         switch shot {
         case "library", "downloads":
             switchToLibraryTab()
+        case "playlists", "settings", "search":
+            if let idx = appSettings.tabOrder.firstIndex(where: { $0.rawValue == shot }) { selectedTab = idx }
         case "artist":
             let artists = (try? await SubsonicClient.shared.search3(server: server, query: query, artistCount: 20).artist) ?? []
             // The search can put "Avicii, CAZZETTE" and four others before "Avicii".

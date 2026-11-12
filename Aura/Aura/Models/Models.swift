@@ -727,6 +727,13 @@ enum TabItem: String, Codable, Identifiable, CaseIterable {
 
     var id: String { rawValue }
 
+    /// On an iPad, Search leaves the row of named tabs for the magnifier at its end.
+    #if os(iOS)
+    var role: TabRole? {
+        self == .search && UIDevice.current.userInterfaceIdiom == .pad ? .search : nil
+    }
+    #endif
+
     var title: String {
         switch self {
         case .home: return String(localized: "Home")
