@@ -170,7 +170,7 @@ struct SettingsView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             quickAccessGrid
-            Group {
+            EnterRows {
                 customiseSection
                 serversSection
                 homeCustomiseSection
@@ -184,17 +184,17 @@ struct SettingsView: View {
             }
             // The system's grouped rows are the canvas's own shade in dark mode; lift them.
             .listRowBackground(Color.themeGroupedBg)
-            Group {
+            EnterRows {
                 downloadsSection
                 storageCacheSection
             }
             .listRowBackground(Color.themeGroupedBg)
-            Group {
+            EnterRows {
                 musicFolderSection
                 libraryScanSection
             }
             .listRowBackground(Color.themeGroupedBg)
-            Group {
+            EnterRows {
                 #if !APPSTORE_BUILD
                 betaFeaturesSection
                 if appSettings.betaFeaturesEnabled {
@@ -1252,3 +1252,21 @@ private struct LyricsOnServerRows: View {
     }
 }
 #endif
+
+/// Each row of the sections it holds slides and fades in at the screen's edges, as the rows of
+/// the other tabs do. Rebuilt section by section: wrapped whole, a section stops being one.
+private struct EnterRows<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        ForEach(sections: content) { section in
+            Section {
+                ForEach(section.content) { $0.scrollEnter() }
+            } header: {
+                section.header
+            } footer: {
+                section.footer
+            }
+        }
+    }
+}
