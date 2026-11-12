@@ -504,6 +504,12 @@ struct RemoteBand: View {
 struct PlayingElsewhereRow: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var dismissed: String?
+    /// On an iPad, the size of the mini player it sits over.
+    #if os(iOS)
+    private let pad = BottomChrome.isPad
+    #else
+    private let pad = false
+    #endif
 
     var body: some View {
         let link = RemoteLink.shared
@@ -511,23 +517,23 @@ struct PlayingElsewhereRow: View {
             // The mini player's own shape, over it: a second player, the other device's. Left
             // alone, this device goes on playing its own music.
             HStack(spacing: 12) {
-                CoverArtImage(coverArt: device.cover, size: 44, cornerRadius: 6,
+                CoverArtImage(coverArt: device.cover, size: pad ? 60 : 44, cornerRadius: pad ? 8 : 6,
                               placeholderName: playing, placeholderKind: .song)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: pad ? 3 : 2) {
                     Text(playing)
-                        .font(.subheadline.weight(.semibold))
+                        .font((pad ? Font.body : .subheadline).weight(.semibold))
                         .lineLimit(1)
                     Label(device.name, systemImage: device.symbol)
-                        .font(.caption.weight(.semibold))
+                        .font((pad ? Font.subheadline : .caption).weight(.semibold))
                         .foregroundStyle(accentColor)
                         .lineLimit(1)
                 }
                 Spacer(minLength: 4)
                 Button { link.connect(to: device, bringing: false) } label: {
                     Image(systemName: "dot.radiowaves.left.and.right")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: pad ? 20 : 15, weight: .semibold))
                         .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
+                        .frame(width: pad ? 48 : 36, height: pad ? 48 : 36)
                         .background(accentColor, in: Circle())
                 }
                 .buttonStyle(.plain)
@@ -542,13 +548,13 @@ struct PlayingElsewhereRow: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Dismiss")
             }
-            .padding(.leading, 16).padding(.trailing, 10)
-            .padding(.vertical, 12)
+            .padding(.leading, pad ? 20 : 16).padding(.trailing, 10)
+            .padding(.vertical, pad ? 14 : 12)
             .contentShape(Rectangle())
             .onTapGesture { link.connect(to: device, bringing: false) }
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: pad ? 28 : 22))
             #if os(iOS)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, pad ? 24 : 16)
             .padding(.bottom, 8)
             .transition(.move(edge: .bottom).combined(with: .opacity))
             #else
