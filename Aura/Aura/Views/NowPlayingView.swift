@@ -27,6 +27,7 @@ struct NowPlayingView: View {
     @State private var backdropTone = BackdropTone.plain
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var screenWidth: CGFloat = 0
+    @State private var screenHeight: CGFloat = 0
     @State private var showClockMode = false
     @State private var clockOrientation: UIDeviceOrientation = .landscapeLeft
     /// Closed by hand while still on its side: it stays closed until the phone is upright
@@ -132,7 +133,7 @@ struct NowPlayingView: View {
                             // lyrics stay up on the right, rather than taking turns.
                             HStack(spacing: 0) {
                                 fittedPlayer(song: song, size: geo.size)
-                                    .frame(maxWidth: BottomChrome.isPad ? nil : .infinity)
+                                    .frame(maxWidth: .infinity)
                                 Group {
                                     if queueBeside { besideQueueList } else { besideLyrics }
                                 }
@@ -148,7 +149,7 @@ struct NowPlayingView: View {
                         }
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
-                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { screenWidth = $0 }
+                    .onGeometryChange(for: CGSize.self) { $0.size } action: { screenWidth = $0.width; screenHeight = $0.height }
                     // Under the action row, in the room it leaves above the home indicator.
                     .overlay(alignment: .bottom) {
                         if let band = RemoteLink.shared.bandText {
@@ -343,8 +344,10 @@ struct NowPlayingView: View {
     /// True on a wide screen (iPhone Duo open, on its side), where the lyrics sit beside the
     /// player. Open and upright the Duo is 669 points wide: the lyrics would get barely 230
     /// of them, so it keeps the phone layout.
+    /// An iPad upright keeps the single view, the queue and lyrics in the artwork's place as on
+    /// a phone; on its side it splits like the Duo.
     private var lyricsBeside: Bool {
-        horizontalSizeClass == .regular && screenWidth >= Self.columnWidth + Self.minLyricsWidth
+        (!BottomChrome.isPad || screenWidth > screenHeight) && horizontalSizeClass == .regular && screenWidth >= Self.columnWidth + Self.minLyricsWidth
     }
 
     /// The queue stands beside the player when asked for, or when the song has no lyrics.
@@ -450,9 +453,10 @@ struct NowPlayingView: View {
                 .frame(width: w * scale, height: size.height)
         } else if BottomChrome.isPad {
             // iPad: the whole player a third larger, text and controls with the artwork, in
-            // a column that grows with the height up to what the lyrics leave it.
-            let scale = Pad.scale
-            let room = (lyricsBeside ? size.width * 0.55 : size.width) / scale
+            // a column that grows with the height, centred in its half beside the lyrics. A
+            // narrow window (split screen) brings the scale back toward a phone's.
+            let scale = min(Pad.scale, max(1, size.width / Self.phoneSize.width))
+            let room = (lyricsBeside ? size.width * 0.45 : size.width) / scale
             let height = size.height / scale
             let w = min(room, Self.columnWidth * height / Self.phoneSize.height)
             playerView(song: song, width: w, artSize: w - horizontalPadding * 2)
