@@ -186,7 +186,7 @@ struct ArtistDetailView: View {
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 4, trailing: 16))
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 16)], spacing: 16) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 160 * Pad.scale), spacing: 16)], spacing: 16) {
                     ForEach(0..<4, id: \.self) { _ in
                         VStack(alignment: .leading, spacing: 6) {
                             RoundedRectangle(cornerRadius: 8)
@@ -254,17 +254,17 @@ struct ArtistDetailView: View {
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 4, trailing: 16))
 
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 16)], spacing: 16) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 170 * Pad.scale), spacing: 16)], spacing: 16) {
             ForEach(albums) { album in
                 Button {
                     selectedAlbumId = album.id
                 } label: {
                     VStack(alignment: .leading, spacing: 4) {
-                        CoverArtImage(coverArt: album.coverArt, size: 180, cornerRadius: 12)
+                        CoverArtImage(coverArt: album.coverArt, size: 180 * Pad.scale, cornerRadius: 12)
                         Text(album.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
                         Text(album.year != nil ? String(album.year!) : " ").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
                     }
-                    .frame(width: 180)
+                    .frame(width: 180 * Pad.scale)
                 }
                 .buttonStyle(.plain)
             }

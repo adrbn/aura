@@ -63,6 +63,11 @@ final class BottomChrome {
     static let isPad = UIDevice.current.userInterfaceIdiom == .pad
 }
 
+/// Covers, circles and grid cells on an iPad: the phone's sizes, a third larger.
+enum Pad {
+    static let scale: CGFloat = BottomChrome.isPad ? 1.3 : 1
+}
+
 /// The end of a page's list: room for the mini player, and for the fetch card while it shows.
 /// The rhythm of a page that opens on its artwork and lists songs — album, playlist, mix,
 /// radar release: the first song sits as far below the buttons as the closing line sits

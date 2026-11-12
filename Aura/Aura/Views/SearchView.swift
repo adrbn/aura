@@ -288,7 +288,7 @@ struct SearchResultsContainer: View {
             if case .mix(let mix) = entry {
                 EditorialMixCover(mix: mix, size: 48, cornerRadius: 6)
             } else {
-                CoverArtImage(coverArt: entry.coverArt, size: 48, cornerRadius: entry.isCircular ? 24 : 6)
+                CoverArtImage(coverArt: entry.coverArt, size: 48 * Pad.scale, cornerRadius: entry.isCircular ? 24 * Pad.scale : 6)
             }
             VStack(alignment: .leading, spacing: 2) {
                 // The playing song in the accent, as in every other song list.
@@ -483,7 +483,7 @@ struct SearchResultsContainer: View {
             navPath.append(value)
         } label: {
             HStack(spacing: 12) {
-                CoverArtImage(coverArt: coverArt, size: 44, cornerRadius: circular ? 22 : 6)
+                CoverArtImage(coverArt: coverArt, size: 44 * Pad.scale, cornerRadius: circular ? 22 * Pad.scale : 6)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.subheadline.weight(.medium)).lineLimit(1)
                     if let subtitle { Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1) }

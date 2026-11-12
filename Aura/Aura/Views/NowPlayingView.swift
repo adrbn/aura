@@ -132,7 +132,7 @@ struct NowPlayingView: View {
                             // lyrics stay up on the right, rather than taking turns.
                             HStack(spacing: 0) {
                                 fittedPlayer(song: song, size: geo.size)
-                                    .frame(maxWidth: .infinity)
+                                    .frame(maxWidth: BottomChrome.isPad ? nil : .infinity)
                                 Group {
                                     if queueBeside { besideQueueList } else { besideLyrics }
                                 }
@@ -448,11 +448,17 @@ struct NowPlayingView: View {
                 .frame(height: height)
                 .scaleEffect(scale)
                 .frame(width: w * scale, height: size.height)
-        } else if size.height > Self.phoneSize.height {
-            // iPad: the column grows with the height, up to the half the lyrics leave it.
-            let room = lyricsBeside ? size.width / 2 : size.width
-            let w = min(room, Self.columnWidth * size.height / Self.phoneSize.height)
+        } else if BottomChrome.isPad {
+            // iPad: the whole player a third larger, text and controls with the artwork, in
+            // a column that grows with the height up to what the lyrics leave it.
+            let scale = Pad.scale
+            let room = (lyricsBeside ? size.width * 0.55 : size.width) / scale
+            let height = size.height / scale
+            let w = min(room, Self.columnWidth * height / Self.phoneSize.height)
             playerView(song: song, width: w, artSize: w - horizontalPadding * 2)
+                .frame(height: height)
+                .scaleEffect(scale)
+                .frame(width: w * scale, height: size.height)
         } else {
             let w = min(size.width, Self.columnWidth)
             playerView(song: song, width: w, artSize: w - horizontalPadding * 2)

@@ -265,7 +265,7 @@ struct AlbumsGridView: View {
     ]
 
     let columns = [
-        GridItem(.adaptive(minimum: 160), spacing: 16)
+        GridItem(.adaptive(minimum: 160 * Pad.scale), spacing: 16)
     ]
 
     var body: some View {
@@ -570,7 +570,7 @@ struct ArtistsFullListView: View {
                 List(filteredArtists) { artist in
                     NavigationLink(value: artist) {
                         HStack(spacing: 12) {
-                            CoverArtImage(coverArt: artist.coverArt, size: 44, cornerRadius: 22)
+                            CoverArtImage(coverArt: artist.coverArt, size: 44 * Pad.scale, cornerRadius: 22 * Pad.scale)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(artist.name).font(.subheadline.weight(.medium))
                                 HStack(spacing: 4) {

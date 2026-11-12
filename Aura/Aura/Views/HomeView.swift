@@ -273,7 +273,7 @@ struct HomeView: View {
     private static let sectionFont = Font.title3.weight(.semibold)
 
     /// Favourite artists as 110 pt circles: a glance at who, not a wall of faces.
-    private static let artistCircle: CGFloat = 110
+    private static let artistCircle: CGFloat = 110 * Pad.scale
 
     /// A few favourites on a wide screen grow to fill the row instead of huddling at its
     /// start, up to half again their size; enough to overflow keep the phone's size.
@@ -426,7 +426,7 @@ struct HomeView: View {
                         // The cover already prints the mix's name, so no caption beneath it:
                         // the shelf reads as a row of covers, not covers plus their labels.
                         NavigationLink(value: mix) {
-                            EditorialMixCover(mix: mix, size: 150, cornerRadius: 12)
+                            EditorialMixCover(mix: mix, size: 150 * Pad.scale, cornerRadius: 12)
                         }
                         .buttonStyle(.plain)
                         .contextMenu { mixMenu(mix) }
@@ -491,7 +491,7 @@ struct HomeView: View {
                                     }
                                 } label: {
                                     VStack(spacing: 6) {
-                                        CoverArtImage(coverArt: song.coverArt, size: 120, cornerRadius: 10)
+                                        CoverArtImage(coverArt: song.coverArt, size: 120 * Pad.scale, cornerRadius: 10)
                                         Text(song.title)
                                             .font(.caption.weight(.medium))
                                             .lineLimit(1)
@@ -500,7 +500,7 @@ struct HomeView: View {
                                             .foregroundStyle(.secondary)
                                             .lineLimit(1)
                                     }
-                                    .frame(width: 120)
+                                    .frame(width: 120 * Pad.scale)
                                 }
                                 .buttonStyle(.plain)
                                 .contextMenu {
@@ -647,7 +647,7 @@ struct HomeView: View {
             player.playSong(song, fromQueue: q, startIndex: idx, source: playSource)
         } label: {
             HStack(spacing: 12) {
-                CoverArtImage(coverArt: song.coverArt, size: 50, cornerRadius: 6)
+                CoverArtImage(coverArt: song.coverArt, size: 50 * Pad.scale, cornerRadius: 6)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(song.title).font(.subheadline.weight(.medium)).lineLimit(1)
                     Text(song.artist ?? String(localized: "Unknown Artist")).font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -656,7 +656,7 @@ struct HomeView: View {
                     Image(systemName: "heart.fill").font(.caption).foregroundStyle(accentColor)
                 }
             }
-            .frame(width: 220, alignment: .leading)
+            .frame(width: 220 * Pad.scale, alignment: .leading)
             .padding(.trailing, 12)
         }
         .buttonStyle(.plain)

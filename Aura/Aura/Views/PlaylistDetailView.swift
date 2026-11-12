@@ -578,7 +578,7 @@ struct PlaylistDetailView: View {
     /// type-checking in reasonable time.
     @ViewBuilder private var headerCover: some View {
         ZStack {
-            PlaylistCoverView(playlistId: playlistId, coverArt: playlist?.coverArt, size: 200, cornerRadius: 12)
+            PlaylistCoverView(playlistId: playlistId, coverArt: playlist?.coverArt, size: 200 * Pad.scale, cornerRadius: 12)
                 .id(coverArtRefreshId)
                 .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
 

@@ -110,7 +110,7 @@ struct SkeletonAlbumGrid: View {
     var count: Int = 6
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 16)], spacing: 16) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 160 * Pad.scale), spacing: 16)], spacing: 16) {
             ForEach(0..<count, id: \.self) { _ in
                 SkeletonAlbumCard()
             }

@@ -233,7 +233,7 @@ struct OfflineAlbumsPage: View {
     @State private var library = OfflineLibrary.shared
     /// Name or artist: the other online orders need the server's play counts and dates.
     @AppStorage("offline_albums_by_artist") private var byArtist = false
-    private let columns = [GridItem(.adaptive(minimum: 160), spacing: 16)]
+    private let columns = [GridItem(.adaptive(minimum: 160 * Pad.scale), spacing: 16)]
 
     private var albums: [OfflineAlbum] {
         guard byArtist else { return library.albums }

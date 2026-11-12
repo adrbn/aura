@@ -12,7 +12,7 @@ struct AlbumsFullListView: View {
     @State private var offset = 0
     private let pageSize = 40
 
-    let columns = [GridItem(.adaptive(minimum: 160), spacing: 16)]
+    let columns = [GridItem(.adaptive(minimum: 160 * Pad.scale), spacing: 16)]
 
     var body: some View {
         ScrollView {
@@ -91,7 +91,7 @@ struct ArtistsListView: View {
                 List(artists) { artist in
                     NavigationLink(value: artist) {
                         HStack(spacing: 12) {
-                            CoverArtImage(coverArt: artist.coverArt, size: 44, cornerRadius: 22)
+                            CoverArtImage(coverArt: artist.coverArt, size: 44 * Pad.scale, cornerRadius: 22 * Pad.scale)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(artist.name).font(.subheadline.weight(.medium))
                                 if let count = artist.albumCount {

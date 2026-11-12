@@ -26,7 +26,7 @@ struct SongRowView: View {
                     .font(.subheadline).foregroundStyle(.secondary).frame(width: 24)
             }
             if showArt {
-                CoverArtImage(coverArt: song.displayCoverArt, size: 50, cornerRadius: 6,
+                CoverArtImage(coverArt: song.displayCoverArt, size: 50 * Pad.scale, cornerRadius: 6,
                               fallbackCoverArt: song.albumId,
                               placeholderName: song.title, placeholderKind: .song)
             }

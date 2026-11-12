@@ -45,7 +45,7 @@ struct PlaylistsView: View {
         get { savedLayout.flatMap(PlaylistLayout.init) ?? (horizontalSizeClass == .regular ? .grid : .list) }
         nonmutating set { savedLayout = newValue.rawValue }
     }
-    let columns = [GridItem(.adaptive(minimum: 160), spacing: 16)]
+    let columns = [GridItem(.adaptive(minimum: 160 * Pad.scale), spacing: 16)]
 
     private var filterContext: PlaylistFilterContext {
         PlaylistFilterContext(username: serverManager.currentServer?.username,
@@ -930,7 +930,7 @@ struct PlaylistCardView: View {
         VStack(alignment: .leading, spacing: 4) {
             ZStack(alignment: .topTrailing) {
                 PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
-                                  cacheToken: playlist.changed, size: 180, cornerRadius: 12)
+                                  cacheToken: playlist.changed, size: 180 * Pad.scale, cornerRadius: 12)
                 if isPinned {
                     // A quiet badge, not a sticker: in the accent, every pinned cover carried a
                     // bright dot that outshouted the artwork. A small white pin on a dark,
@@ -1016,7 +1016,7 @@ struct ReorderPinnedView: View {
             List {
                 ForEach(orderedPinned) { playlist in
                     HStack(spacing: 12) {
-                        PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt, size: 40, cornerRadius: 6)
+                        PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt, size: 40 * Pad.scale, cornerRadius: 6)
                         Text(playlist.name)
                             .font(.subheadline.weight(.medium))
                         Spacer()

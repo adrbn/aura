@@ -69,6 +69,9 @@ struct AuraApp: App {
             ZStack {
                 OrientationRefresher()
                 ContentView()
+                    // An iPad is read from further away: text starts a size up, and a larger
+                    // size picked in Settings still wins.
+                    .dynamicTypeSize(BottomChrome.isPad ? .xLarge ... .accessibility5 : .xSmall ... .accessibility5)
                     .environment(serverManager)
                     .environment(audioPlayer)
                     .preferredColorScheme(appSettings.appearanceMode.colorScheme)
