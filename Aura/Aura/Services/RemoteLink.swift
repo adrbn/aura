@@ -112,6 +112,12 @@ final class RemoteLink: NSObject {
         return Data(SHA256.hash(data: Data("\(server.url)|\(server.username)".utf8)))
     }
 
+    /// A few bytes of that key in the announcement, so a device signed into another account,
+    /// which could never pair and whose covers this server doesn't have, isn't offered at all.
+    private var accountTag: String? {
+        accountKey.map { $0.prefix(8).map { String(format: "%02x", $0) }.joined() }
+    }
+
     var bandText: (text: String, symbol: String)? {
         if let connected { return (String(localized: "Playing on \(connected.name)"), connected.symbol) }
         if let controller = controllers.first {
@@ -194,6 +200,7 @@ final class RemoteLink: NSObject {
             retire(old)
         }
         var info = ["kind": Self.kind]
+        info["acct"] = accountTag
         // Kept short: the whole announcement has to fit in a Bonjour record.
         info["playing"] = song.map { String($0.title.prefix(80)) }
         info["artist"] = song?.artist.map { String($0.prefix(60)) }
@@ -443,6 +450,8 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
             guard peerID != peer else { return }
             // A device that relaunched comes back under a new identity with the same name.
             devices.removeAll { $0.name == peerID.displayName }
+            // An older Aura announces no account: kept, the invitation still checks it.
+            if let tag = info?["acct"], tag != accountTag { return }
             lastFound[peerID.displayName] = Date()
             devices.append(Device(peer: peerID, kind: info?["kind"] ?? "mac", playing: info?["playing"],
                                   artist: info?["artist"], cover: info?["cover"]))
