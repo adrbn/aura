@@ -174,6 +174,8 @@ final class AppSettings {
     var scrobbleEnabled: Bool = true
     var scrobbleThreshold: Double = 0.5
     var replayGain: Bool = false
+    /// Seconds the end of a song overlaps the start of the next; 0 plays them gapless.
+    var crossfadeSeconds: Double = 0
     var downloadQuality: DownloadQuality = .high
     var offlineMode: Bool = false
     var betaFeaturesEnabled: Bool = false
@@ -327,6 +329,7 @@ final class AppSettings {
             radarEnabled = decoded.radarEnabled ?? true
             radarInLibraryOffered = decoded.radarInLibraryOffered ?? false
             translateLyrics = decoded.translateLyrics ?? false
+            crossfadeSeconds = decoded.crossfadeSeconds ?? 0
             customAccentRGB = decoded.customAccentRGB.flatMap { $0.count == 3 ? $0 : nil }
                 ?? AppAccentColor.defaultCustomRGB
         }
@@ -378,7 +381,8 @@ final class AppSettings {
             radarEnabled: radarEnabled,
             radarInLibraryOffered: radarInLibraryOffered,
             translateLyrics: translateLyrics,
-            customAccentRGB: customAccentRGB
+            customAccentRGB: customAccentRGB,
+            crossfadeSeconds: crossfadeSeconds
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: settingsKey)
@@ -470,6 +474,7 @@ struct SettingsData: Codable {
     var radarInLibraryOffered: Bool?
     var translateLyrics: Bool?
     var customAccentRGB: [Double]?
+    var crossfadeSeconds: Double?
 }
 
 enum AppAccentColor: String, Codable, CaseIterable {

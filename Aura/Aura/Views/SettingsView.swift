@@ -410,8 +410,12 @@ struct SettingsView: View {
 
             Toggle("ReplayGain", isOn: $appSettings.replayGain)
 
-            // No Gapless switch: the player always lines the next song up behind the
-            // current one. Crossfade has no switch until it exists.
+            // No Gapless switch: with Crossfade off the player lines the next song up
+            // behind the current one.
+            Picker("Crossfade", selection: $appSettings.crossfadeSeconds) {
+                Text("Off").tag(0.0)
+                ForEach([3.0, 6.0, 9.0, 12.0], id: \.self) { Text("\(Int($0)) s").tag($0) }
+            }
 
             Toggle("Landscape Clock", isOn: $appSettings.landscapeClockEnabled)
 

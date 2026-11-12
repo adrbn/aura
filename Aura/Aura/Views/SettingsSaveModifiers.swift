@@ -12,6 +12,7 @@ private struct SettingsSaveModifier1: ViewModifier {
             // Re-applied at once, so the toggle is heard on the song already playing.
             .onChange(of: s.replayGain) { _, _ in s.save(); AudioPlayer.shared.applyOutputVolume() }
             .onChange(of: s.scrobbleThreshold) { _, _ in s.save() }
+            .onChange(of: s.crossfadeSeconds) { _, _ in s.save() }
             .onChange(of: s.cacheEnabled) { _, _ in s.save() }
             .onChange(of: s.cacheMaxSize) { _, _ in s.save() }
     }

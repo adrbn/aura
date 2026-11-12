@@ -181,7 +181,7 @@ struct MacSettingsView: View {
 
     /// Any setting changed, so one `onChange` saves them all.
     private var fingerprint: String {
-        [settings.streamingQuality.rawValue, String(settings.replayGain), String(settings.scrobbleEnabled),
+        [settings.streamingQuality.rawValue, String(settings.replayGain), String(settings.crossfadeSeconds), String(settings.scrobbleEnabled),
          String(settings.scrobbleThreshold), String(settings.betaKaraokeLyrics), String(settings.lyricsOffset),
          settings.appAccentColor.rawValue, settings.appearanceMode.rawValue, String(settings.betaFeaturesEnabled),
          settings.externalServiceURL, String(settings.externalServicePort), settings.slskdUsername,
@@ -288,8 +288,15 @@ private struct MacPlaybackSettings: View {
             }
         }
         SettingsCard(title: "Sound") {
-            SettingsRow(title: "ReplayGain", detail: "Every song at the same loudness", last: true) {
+            SettingsRow(title: "ReplayGain", detail: "Every song at the same loudness") {
                 Toggle("", isOn: $settings.replayGain).toggleStyle(.switch).labelsHidden()
+            }
+            SettingsRow(title: "Crossfade", last: true) {
+                Picker("", selection: $settings.crossfadeSeconds) {
+                    Text("Off").tag(0.0)
+                    ForEach([3.0, 6.0, 9.0, 12.0], id: \.self) { Text("\(Int($0)) s").tag($0) }
+                }
+                .labelsHidden().fixedSize()
             }
         }
         SettingsCard(title: "Scrobble") {

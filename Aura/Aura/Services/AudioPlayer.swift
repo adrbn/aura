@@ -139,6 +139,11 @@ final class AudioPlayer {
     var isBuildingQueue = false  // True while fetching similar songs for autoplay
 
     private var player: AVPlayer?
+    /// The song fading out under the next one during a crossfade, on a player of its own.
+    private var fadingPlayer: AVPlayer?
+    private var crossfadeTask: Task<Void, Never>?
+    /// How far the incoming song has faded in: 1 outside a crossfade.
+    private var fadeInLevel: Float = 1
 
     /// The song played up or down by whole semitones. It is a
     /// turntable's pitch — the speed goes with it — since AVPlayer can't move one without the
@@ -1104,6 +1109,7 @@ final class AudioPlayer {
             return
         }
         playbackErrorHandled = false
+        endCrossfade()
         if let queued = queuedNext, queued.songId == song.id,
            let queuePlayer = player as? AVQueuePlayer, queuePlayer.items().contains(queued.item) {
             continueGapless(into: queued.item, song: song, on: queuePlayer)
@@ -1184,6 +1190,7 @@ final class AudioPlayer {
                 self.prefetchNextTrack()
             }
             self.queueSuccessor()
+            self.crossfadeIfDue()
             self.scrobbleIfDue()
         }
 
@@ -1229,7 +1236,7 @@ final class AudioPlayer {
         if let queued = queuedNext, queued.songId != successor?.id, queued.item !== queuePlayer.currentItem {
             dropQueuedNext()
         }
-        guard queuedNext == nil, let song = successor, hasPrefetchedNext, !isSeeking,
+        guard queuedNext == nil, let song = successor, !crossfades(into: song), hasPrefetchedNext, !isSeeking,
               duration > 0, duration - currentTime <= Self.gaplessLead,
               let current = queuePlayer.currentItem,
               let server = ServerManager.shared.currentServer else { return }
@@ -1239,6 +1246,64 @@ final class AudioPlayer {
         queuePlayer.actionAtItemEnd = .advance
         queuedNext = (item, song.id)
         AppLogger.shared.log("⏭ Gapless: \(song.title) lined up")
+    }
+
+    /// Whether the end of the current song overlaps `next`. Not between two songs of the
+    /// same album: those were mastered to run into each other, so they stay gapless.
+    private func crossfades(into next: Song) -> Bool {
+        guard AppSettings.shared.crossfadeSeconds > 0, remote == nil, let current = currentSong else { return false }
+        return current.albumId == nil || current.albumId != next.albumId
+    }
+
+    /// In the last seconds of a song with a crossfade due, the song moves to a player of its
+    /// own to fade out there while the next one starts, fading in, on a new main player.
+    private func crossfadeIfDue() {
+        let seconds = AppSettings.shared.crossfadeSeconds
+        guard seconds > 0, fadingPlayer == nil, isPlaying, !isSeeking, streamOffset == 0,
+              duration > seconds * 2, duration - currentTime <= seconds,
+              let next = gaplessSuccessor, crossfades(into: next), let outgoing = player else { return }
+        AppLogger.shared.log("🔀 Crossfade into \(next.title)")
+        dropQueuedNext()
+        if let observer = timeObserver {
+            outgoing.removeTimeObserver(observer)
+            timeObserver = nil
+        }
+        // Its end must not advance the queue a second time.
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+        player = nil
+        let outgoingLevel = outgoing.volume
+        let length = max(1, duration - currentTime)
+        handlePlayerDidFinish()
+        // After the start, which ends any earlier crossfade and so resets the level.
+        fadeInLevel = 0
+        applyOutputVolume()
+        fadingPlayer = outgoing
+        crossfadeTask = Task { @MainActor [weak self] in
+            let steps = max(1, Int(length * 20))
+            for step in 1...steps {
+                try? await Task.sleep(for: .milliseconds(50))
+                guard let self, !Task.isCancelled else { return }
+                // Equal power: the sum stays as loud as either song alone.
+                let t = Double(step) / Double(steps)
+                outgoing.volume = outgoingLevel * Float(cos(t * .pi / 2))
+                self.fadeInLevel = Float(sin(t * .pi / 2))
+                self.applyOutputVolume()
+            }
+            self?.endCrossfade()
+        }
+    }
+
+    /// Stops the song fading out and brings the one playing to its full level.
+    private func endCrossfade() {
+        crossfadeTask?.cancel()
+        crossfadeTask = nil
+        fadingPlayer?.pause()
+        fadingPlayer?.replaceCurrentItem(with: nil)
+        fadingPlayer = nil
+        if fadeInLevel != 1 {
+            fadeInLevel = 1
+            applyOutputVolume()
+        }
     }
 
     private func dropQueuedNext() {
@@ -1550,7 +1615,7 @@ final class AudioPlayer {
     /// Sets the player's level: the app's own fader, times the song's ReplayGain.
     /// Every place a player is created goes through here, and so does the toggle.
     func applyOutputVolume(for song: Song? = nil) {
-        player?.volume = Float(volume * replayGainFactor(for: song ?? currentSong))
+        player?.volume = Float(volume * replayGainFactor(for: song ?? currentSong)) * fadeInLevel
     }
 
     /// ReplayGain as a multiplier of the fader, or 1 when it is off or the song has none.
@@ -1736,6 +1801,7 @@ final class AudioPlayer {
         playbackWatchdog?.cancel()
         interruptionRecovery?.cancel()
         interruptedWhilePlayingAt = nil
+        endCrossfade()
         player?.pause(); isPlaying = false; publishPlaybackState(); updateLiveActivity()
     }
 
@@ -1872,6 +1938,7 @@ final class AudioPlayer {
     func seek(to time: TimeInterval) {
         if let remote { remote(.seek(time)); return }
         guard let player = player else { return }
+        endCrossfade()
         // Every seek gets an id, so a completion belonging to a superseded one can be
         // recognised and ignored.
         seekGeneration &+= 1
