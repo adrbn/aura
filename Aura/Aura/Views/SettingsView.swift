@@ -138,15 +138,15 @@ struct SettingsView: View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 26, weight: .medium))
+                    .font(.system(size: 26 * Pad.scale, weight: .medium))
                     .foregroundStyle(color)
                 Text(label)
-                    .font(.caption.weight(.medium))
+                    .font((BottomChrome.isPad ? Font.subheadline : .caption).weight(.medium))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 84)
+            .frame(height: 84 * Pad.scale)
             // Same card colour as the grouped sections below (white in light), not a
             // material — a material over the grey page just reads as more grey.
             .background(Color.themeGroupedBg)
