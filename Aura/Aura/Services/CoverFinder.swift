@@ -27,7 +27,7 @@ actor CoverFinder {
     private static let retryAfter: TimeInterval = 7 * 24 * 3600
     private static let file: URL = FileManager.default
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("found_covers_v1.json")
+        .appendingPathComponent("found_covers_v2.json")
 
     private init() {
         entries = (try? JSONDecoder().decode([String: Entry].self, from: Data(contentsOf: Self.file))) ?? [:]
@@ -81,7 +81,37 @@ actor CoverFinder {
                 return hit.cover_xl
             }
         }
-        return nil
+        // Deezer files a joint release under its first artist alone; Apple's catalogue
+        // credits every one of them, so the album's own artist can still be found there.
+        return await appleCover(artist: artist, album: album)
+    }
+
+    private struct AppleHit: Decodable {
+        let collectionName: String
+        let artistName: String
+        let artworkUrl100: String?
+    }
+
+    private struct ApplePage: Decodable { let results: [AppleHit] }
+
+    private static func appleCover(artist: String, album: String) async -> String? {
+        var components = URLComponents(string: "https://itunes.apple.com/search")
+        components?.queryItems = [URLQueryItem(name: "term", value: "\(artist) \(album)"),
+                                  URLQueryItem(name: "entity", value: "album"),
+                                  URLQueryItem(name: "limit", value: "10")]
+        guard let url = components?.url,
+              let (data, response) = try? await URLSession.shared.data(from: url),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let page = try? JSONDecoder().decode(ApplePage.self, from: data)
+        else { return nil }
+        let hit = page.results.first { hit in
+            hit.artworkUrl100 != nil
+                && (RadarRules.credits(hit.artistName, artist) || RadarRules.credits(artist, hit.artistName))
+                && (RadarRules.sameTitle(hit.collectionName, album)
+                    || RadarRules.sameTitle(unbracketed(hit.collectionName), unbracketed(album)))
+        }
+        // Same naming as Deezer's: 1000x1000 in the address, swapped for 500x500 in rows.
+        return hit?.artworkUrl100?.replacingOccurrences(of: "100x100bb", with: "1000x1000bb")
     }
 
     /// The album a cover belongs to, as its artist and title. Navidrome names covers after
