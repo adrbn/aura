@@ -545,8 +545,9 @@ struct ArtistHero: View {
                 }
             }
             // 16, the same column as Top Songs and the rows below, so the name lines up
-            // with everything under it rather than sitting a few points off.
-            .padding(.horizontal, 16)
+            // with everything under it rather than sitting a few points off. On an iPad the
+            // rows stand a further `Pad.side` in, and so does the name.
+            .padding(.horizontal, 16 + Pad.side)
             // Low in the picture, where a name belongs and where it reads as one block with
             // the actions just beneath. Over a dark page the dissolve fades to black and
             // white type stays legible across it. Over a light page it fades to white, so
@@ -557,6 +558,8 @@ struct ArtistHero: View {
         // Laid out at the resting height, with the stretch growing upward into the space
         // the pull opens above the list — so pulling never pushes the page down.
         .frame(height: height, alignment: .bottom)
+        // The iPad's side room insets every row; the photograph still runs edge to edge.
+        .padding(.horizontal, -Pad.side)
     }
 }
 
