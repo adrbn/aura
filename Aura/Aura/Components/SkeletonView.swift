@@ -37,6 +37,9 @@ extension View {
     }
 }
 
+/// An iPad's placeholders at the scale of the rows and covers that replace them.
+private let s = Pad.scale
+
 // MARK: - Reusable Skeleton Rows
 
 /// A single song-row shaped skeleton placeholder
@@ -49,20 +52,20 @@ struct SkeletonSongRow: View {
             if showsArt {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color(.systemGray5))
-                    .frame(width: 44, height: 44)
+                    .frame(width: 50 * s, height: 50 * s)
             } else {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color(.systemGray6))
-                    .frame(width: 14, height: 14)
+                    .frame(width: 14 * s, height: 14 * s)
                     .frame(minWidth: 22)
             }
             VStack(alignment: .leading, spacing: 4) {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color(.systemGray5))
-                    .frame(width: CGFloat.random(in: 100...180), height: 14)
+                    .frame(width: CGFloat.random(in: 100...180) * s, height: 14)
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color(.systemGray6))
-                    .frame(width: CGFloat.random(in: 60...120), height: 12)
+                    .frame(width: CGFloat.random(in: 60...120) * s, height: 12)
             }
             Spacer()
         }
@@ -95,10 +98,10 @@ struct SkeletonAlbumCard: View {
                 .aspectRatio(1, contentMode: .fit)
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color(.systemGray5))
-                .frame(height: 14)
+                .frame(height: 14 * s)
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color(.systemGray6))
-                .frame(width: 60, height: 12)
+                .frame(width: 60 * s, height: 12 * s)
         }
         .redacted(reason: .placeholder)
         .shimmering()
@@ -128,10 +131,10 @@ struct SkeletonPlaylistCard: View {
                 .aspectRatio(1, contentMode: .fit)
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color(.systemGray5))
-                .frame(height: 14)
+                .frame(height: 14 * s)
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color(.systemGray6))
-                .frame(width: 50, height: 11)
+                .frame(width: 50 * s, height: 11 * s)
         }
         .redacted(reason: .placeholder)
         .shimmering()
@@ -144,14 +147,14 @@ struct SkeletonArtistRow: View {
         HStack(spacing: 14) {
             Circle()
                 .fill(Color(.systemGray5))
-                .frame(width: 48, height: 48)
+                .frame(width: 48 * s, height: 48 * s)
             VStack(alignment: .leading, spacing: 4) {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color(.systemGray5))
-                    .frame(width: CGFloat.random(in: 80...160), height: 15)
+                    .frame(width: CGFloat.random(in: 80...160) * s, height: 15)
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color(.systemGray6))
-                    .frame(width: 60, height: 12)
+                    .frame(width: 60 * s, height: 12 * s)
             }
             Spacer()
         }
@@ -169,11 +172,11 @@ struct SkeletonGenreRow: View {
         HStack {
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color(.systemGray5))
-                .frame(width: CGFloat.random(in: 80...180), height: 16)
+                .frame(width: CGFloat.random(in: 80...180) * s, height: 16)
             Spacer()
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color(.systemGray6))
-                .frame(width: 30, height: 14)
+                .frame(width: 30 * s, height: 14 * s)
         }
         .padding(.vertical, 8)
         .redacted(reason: .placeholder)
@@ -189,19 +192,19 @@ struct SkeletonPlaylistRow: View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color(.systemGray5))
-                .frame(width: 44, height: 44)
+                .frame(width: 50 * s, height: 50 * s)
             VStack(alignment: .leading, spacing: 4) {
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color(.systemGray5))
-                    .frame(width: CGFloat.random(in: 100...180), height: 14)
+                    .frame(width: CGFloat.random(in: 100...180) * s, height: 14)
                 RoundedRectangle(cornerRadius: 3)
                     .fill(Color(.systemGray6))
-                    .frame(width: 50, height: 12)
+                    .frame(width: 50 * s, height: 12 * s)
             }
             Spacer()
             Circle()
                 .fill(Color(.systemGray5))
-                .frame(width: 24, height: 24)
+                .frame(width: 24 * s, height: 24 * s)
         }
         .padding(.vertical, 4)
         .redacted(reason: .placeholder)
@@ -217,24 +220,24 @@ struct SkeletonAlbumHeader: View {
         VStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemGray5))
-                .frame(width: 240, height: 240)
+                .frame(width: 240 * s, height: 240 * s)
                 .shimmering()
 
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color(.systemGray5))
-                .frame(width: 180, height: 22)
+                .frame(width: 180 * s, height: 22 * s)
                 .shimmering()
 
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color(.systemGray6))
-                .frame(width: 120, height: 16)
+                .frame(width: 120 * s, height: 16 * s)
                 .shimmering()
 
             HStack(spacing: 16) {
                 ForEach(0..<3, id: \.self) { _ in
                     Circle()
                         .fill(Color(.systemGray5))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 36 * s, height: 36 * s)
                 }
             }
             .shimmering()
@@ -251,17 +254,17 @@ struct SkeletonPlaylistHeader: View {
         VStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemGray5))
-                .frame(width: 200, height: 200)
+                .frame(width: 200 * s, height: 200 * s)
                 .shimmering()
 
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color(.systemGray5))
-                .frame(width: 160, height: 20)
+                .frame(width: 160 * s, height: 20 * s)
                 .shimmering()
 
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color(.systemGray6))
-                .frame(width: 80, height: 14)
+                .frame(width: 80 * s, height: 14 * s)
                 .shimmering()
         }
         .frame(maxWidth: .infinity)

@@ -755,7 +755,7 @@ struct HomeView: View {
                     ForEach(0..<8, id: \.self) { _ in
                         RoundedRectangle(cornerRadius: 16)
                             .fill(Color.themeSecondaryBg)
-                            .frame(width: 176, height: 176)
+                            .frame(width: 150 * Pad.scale, height: 150 * Pad.scale)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -767,21 +767,21 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     RoundedRectangle(cornerRadius: 6)
                         .fill(Color.themeSecondaryBg)
-                        .frame(width: 150, height: 22)
+                        .frame(width: 150 * Pad.scale, height: 22 * Pad.scale)
                         .padding(.horizontal, 16)
                     // One column of rows on a phone, more side by side on a wide screen.
                     HStack(alignment: .top, spacing: 0) {
-                        ForEach(0..<max(1, Int(layoutWidth / 340)), id: \.self) { _ in
+                        ForEach(0..<max(1, Int(layoutWidth / (340 * Pad.scale))), id: \.self) { _ in
                             VStack(alignment: .leading, spacing: 12) {
                                 ForEach(0..<3, id: \.self) { _ in
                                     HStack(spacing: 12) {
                                         RoundedRectangle(cornerRadius: 8).fill(Color.themeSecondaryBg)
-                                            .frame(width: 50, height: 50)
+                                            .frame(width: 50 * Pad.scale, height: 50 * Pad.scale)
                                         VStack(alignment: .leading, spacing: 6) {
                                             RoundedRectangle(cornerRadius: 4).fill(Color.themeSecondaryBg)
-                                                .frame(width: 180, height: 13)
+                                                .frame(width: 180 * Pad.scale, height: 13 * Pad.scale)
                                             RoundedRectangle(cornerRadius: 4).fill(Color.themeSecondaryBg)
-                                                .frame(width: 120, height: 11)
+                                                .frame(width: 120 * Pad.scale, height: 11 * Pad.scale)
                                         }
                                         Spacer()
                                     }
