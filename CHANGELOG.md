@@ -4,7 +4,14 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.1] — 2026-11-11 (sent to App Review)
+## [1.6.0] — 2026-11-13 (sent to App Review)
+
+- Aura runs on iPad, laid out for it: Now Playing puts the lyrics or the queue beside the artwork in landscape, text and covers read at the screen's scale, Search sits at the end of the tab bar, and the widget comes along.
+- Crossfade in Settings > Sound: off, or 3 to 12 seconds between songs.
+- Tapping one name in a joint credit opens that artist alone.
+- Fixed: another Aura signed into a different account is no longer offered as a device to play on.
+
+## [1.5.1] — 2026-11-11
 
 - Library > Albums sorts by name, artist, recently added, most played, recently played or random, and lists the whole library instead of stopping at 500 albums.
 - Offline, the Albums page sorts by name or by artist.
