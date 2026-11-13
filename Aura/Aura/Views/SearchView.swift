@@ -9,7 +9,7 @@ struct SearchView: View {
     @State private var path = NavigationPath()
     @State private var scrollY: CGFloat = 0
 
-    private let titleHeight: CGFloat = 52
+    private let titleHeight: CGFloat = BottomChrome.isPad ? 84 : 52
     private let searchBarHeight: CGFloat = 56
 
     /// The title goes up with the rows and fades as it goes; the field follows it until it
@@ -30,7 +30,8 @@ struct SearchView: View {
                 .overlay(alignment: .top) {
                     VStack(spacing: Pad.titleBottom) {
                         Text("search")
-                            .auraDisplay(40)
+                            .auraDisplay(Pad.titleSize)
+                            .dynamicTypeSize(Pad.titleType)
                             .foregroundStyle(.primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .frame(height: titleHeight)

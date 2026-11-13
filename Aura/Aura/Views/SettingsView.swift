@@ -160,7 +160,7 @@ struct SettingsView: View {
             // Title aligned to the grouped content inset (no extra padding) so it lines up
             // with the cards/tiles below and matches the other tabs' left edge.
             Text("settings")
-                .auraDisplay(40)
+                .auraDisplay(Pad.titleSize)
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, Pad.titleTop)

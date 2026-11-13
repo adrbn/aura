@@ -39,7 +39,8 @@ struct OfflineHomeView: View {
                     VStack(alignment: .leading, spacing: 15) {
                         if !title.isEmpty {
                             Text(title)
-                                .auraDisplay(40)
+                                .auraDisplay(Pad.titleSize)
+                                .dynamicTypeSize(Pad.titleType)
                                 .foregroundStyle(.primary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 16)

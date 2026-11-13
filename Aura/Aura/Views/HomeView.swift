@@ -246,7 +246,8 @@ struct HomeView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Text(homeTitle)
-                            .auraDisplay(40)
+                            .auraDisplay(Pad.titleSize)
+                            .dynamicTypeSize(Pad.titleType)
                             .foregroundStyle(.primary)
                         Image(systemName: "chevron.down")
                             .font(.title3.weight(.semibold))
@@ -259,7 +260,8 @@ struct HomeView: View {
             }
         } else {
             Text(homeTitle)
-                .auraDisplay(40)
+                .auraDisplay(Pad.titleSize)
+                .dynamicTypeSize(Pad.titleType)
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

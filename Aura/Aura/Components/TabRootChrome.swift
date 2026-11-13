@@ -69,6 +69,11 @@ enum Pad {
     /// A tab title's room above and below: on an iPad it clears the tab bar floating at the top.
     static let titleTop: CGFloat = BottomChrome.isPad ? 64 : 4
     static let titleBottom: CGFloat = BottomChrome.isPad ? 24 : 8
+    /// A tab title's size: on an iPad it holds its own in the room around it.
+    static let titleSize: CGFloat = BottomChrome.isPad ? 54 : 40
+    /// The text size every tab title reads at on an iPad, rows of text or not, so all five match.
+    static let titleType: ClosedRange<DynamicTypeSize> =
+        BottomChrome.isPad ? .xxxLarge ... .accessibility5 : .xSmall ... .accessibility5
     /// How much further in from the screen's sides an iPad's tab roots stand.
     static let side: CGFloat = BottomChrome.isPad ? 24 : 0
 }
@@ -347,7 +352,7 @@ struct TabTitleRow<Trailing: View>: View {
     var body: some View {
         ZStack(alignment: .trailing) {
             Text(title)
-                .auraDisplay(40)
+                .auraDisplay(Pad.titleSize)
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             trailing()
