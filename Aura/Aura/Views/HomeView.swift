@@ -282,7 +282,7 @@ struct HomeView: View {
     private var artistCircle: CGFloat {
         let count = CGFloat(starredArtists.count)
         guard count > 0, layoutWidth > 0 else { return Self.artistCircle }
-        let fill = (layoutWidth - 32 - 16 * (count - 1)) / count
+        let fill = (contentWidth - 32 - 16 * (count - 1)) / count
         return min(Self.artistCircle * 1.5, max(Self.artistCircle, fill))
     }
 
@@ -624,8 +624,13 @@ struct HomeView: View {
 
     /// Height for album row: card image + text labels + spacing
     private var albumRowHeight: CGFloat {
-        max(Self.albumCardSize(for: layoutWidth), 0) + 36  // image + two text lines
+        max(Self.albumCardSize(for: contentWidth), 0) + 36  // image + two text lines
     }
+
+    /// The width the rows lay out in: the screen's, less the side room an iPad adds to the
+    /// scroll content. Measured on the whole scroll view, the rows' height came from a wider
+    /// width than their cards, one cover fewer, so each row cut the top off its covers.
+    private var contentWidth: CGFloat { layoutWidth - 2 * Pad.side }
 
     /// Two covers to a phone's width, about 187 points each. A wider screen (iPhone Duo)
     /// shows more covers at that size rather than two huge ones.
@@ -797,7 +802,7 @@ struct HomeView: View {
     }
 
     private func prefetchHomeCovers() {
-        let cardSize = layoutWidth > 0 ? Self.albumCardSize(for: layoutWidth) : 180
+        let cardSize = layoutWidth > 0 ? Self.albumCardSize(for: contentWidth) : 180
         let albumArt = (newestAlbums + frequentAlbums + randomAlbums).compactMap(\.coverArt)
         ArtworkCache.shared.prefetch(coverArtIds: albumArt, pointSize: cardSize)
         ArtworkCache.shared.prefetch(coverArtIds: starredSongs.compactMap(\.coverArt), pointSize: 50)
