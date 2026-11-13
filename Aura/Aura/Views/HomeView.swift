@@ -424,12 +424,12 @@ struct HomeView: View {
             .padding(.horizontal)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 14) {
+                LazyHStack(spacing: 12) {
                     ForEach(shelf) { mix in
                         // The cover already prints the mix's name, so no caption beneath it:
                         // the shelf reads as a row of covers, not covers plus their labels.
                         NavigationLink(value: mix) {
-                            EditorialMixCover(mix: mix, size: 150 * Pad.scale, cornerRadius: 12)
+                            EditorialMixCover(mix: mix, size: coverSize, cornerRadius: Self.coverRadius)
                         }
                         .buttonStyle(.plain)
                         .contextMenu { mixMenu(mix) }
@@ -494,7 +494,7 @@ struct HomeView: View {
                                     }
                                 } label: {
                                     VStack(spacing: 6) {
-                                        CoverArtImage(coverArt: song.coverArt, size: 120 * Pad.scale, cornerRadius: 10)
+                                        CoverArtImage(coverArt: song.coverArt, size: coverSize, cornerRadius: Self.coverRadius)
                                         Text(song.title)
                                             .font(.caption.weight(.medium))
                                             .lineLimit(1)
@@ -503,7 +503,7 @@ struct HomeView: View {
                                             .foregroundStyle(.secondary)
                                             .lineLimit(1)
                                     }
-                                    .frame(width: 120 * Pad.scale)
+                                    .frame(width: coverSize)
                                 }
                                 .buttonStyle(.plain)
                                 .contextMenu {
@@ -632,6 +632,11 @@ struct HomeView: View {
     /// width than their cards, one cover fewer, so each row cut the top off its covers.
     private var contentWidth: CGFloat { layoutWidth - 2 * Pad.side }
 
+    /// One size and one corner for every square cover on Home — mixes, Up Next and the album
+    /// rows — so the shelves line up column for column instead of three scales side by side.
+    private var coverSize: CGFloat { layoutWidth > 0 ? Self.albumCardSize(for: contentWidth) : 150 * Pad.scale }
+    static let coverRadius: CGFloat = 12
+
     /// Two covers to a phone's width, about 187 points each. A wider screen (iPhone Duo)
     /// shows more covers at that size rather than two huge ones.
     private static func albumCardSize(for width: CGFloat) -> CGFloat {
@@ -755,12 +760,12 @@ struct HomeView: View {
             // HStack its 3×176 + gaps = 560pt intrinsic width forced the whole VStack —
             // page title included — wider than the screen, shifting everything left.
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
+                HStack(spacing: 12) {
                     // As many as a wide screen shows; the scroll view clips the rest.
                     ForEach(0..<8, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 16)
+                        RoundedRectangle(cornerRadius: Self.coverRadius)
                             .fill(Color.themeSecondaryBg)
-                            .frame(width: 150 * Pad.scale, height: 150 * Pad.scale)
+                            .frame(width: coverSize, height: coverSize)
                     }
                 }
                 .padding(.horizontal, 16)

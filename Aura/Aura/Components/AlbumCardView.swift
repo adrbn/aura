@@ -24,7 +24,7 @@ struct AlbumCardView: View {
     var body: some View {
         NavigationLink(value: album) {
             VStack(alignment: .leading, spacing: 4) {
-                CoverArtImage(coverArt: album.coverArt, size: size, cornerRadius: 10,
+                CoverArtImage(coverArt: album.coverArt, size: size, cornerRadius: 12,
                               placeholderName: album.name, placeholderKind: .album)
                 Text(album.name).font(.caption.weight(.medium)).lineLimit(1).foregroundStyle(.primary)
                 Text(album.artist ?? String(localized: "Unknown Artist")).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
@@ -87,7 +87,7 @@ struct SongCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            CoverArtImage(coverArt: song.coverArt, size: size, cornerRadius: 10,
+            CoverArtImage(coverArt: song.coverArt, size: size, cornerRadius: 12,
                           placeholderName: song.title, placeholderKind: .song)
             Text(song.title).font(.caption.weight(.medium)).lineLimit(1)
             Text(song.artist ?? String(localized: "Unknown Artist")).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
