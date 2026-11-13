@@ -86,6 +86,7 @@ enum CoverPortraits {
             if let running = tasks[flightKey] { return running }
             let task = Task<CoverPortrait?, Never> {
                 guard let picture = await image() else { return nil }
+                if let cg = picture.cgImage, CoverImaging.looksBlank(cg) { return nil }
                 let portrait = await Task.detached(priority: .utility) {
                     analyse(picture, artistId: key, subject: subject)
                 }.value
@@ -269,6 +270,10 @@ enum ArtistPhotos {
                     return nil
                 }
                 guard (response as? HTTPURLResponse)?.statusCode == 200, let image = UIImage(data: data) else {
+                    return nil
+                }
+                if let cg = image.cgImage, CoverImaging.looksBlank(cg) {
+                    unknown.withLock { _ = $0.insert(folded) }
                     return nil
                 }
                 ArtworkCache.shared.store(image, for: key)

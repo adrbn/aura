@@ -206,6 +206,31 @@ enum CoverPalette {
 enum CoverImaging {
     private static let context = CIContext()
 
+    /// A picture with nothing in it: one flat tone, or a near-flat grey like the silhouette
+    /// Deezer files under a real-looking hash for artists it has no photo of. A cover never
+    /// leads with one; the next artist, or the album, takes its place.
+    static func looksBlank(_ cg: CGImage) -> Bool {
+        let n = 32
+        var px = [UInt8](repeating: 0, count: n * n * 4)
+        guard let ctx = CGContext(data: &px, width: n, height: n, bitsPerComponent: 8, bytesPerRow: n * 4,
+                                  space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: n, height: n))
+        var sum = 0.0, sumSq = 0.0, sat = 0.0
+        for i in 0..<(n * n) {
+            let r = Double(px[i * 4]), g = Double(px[i * 4 + 1]), b = Double(px[i * 4 + 2])
+            let luma = 0.299 * r + 0.587 * g + 0.114 * b
+            sum += luma; sumSq += luma * luma
+            let hi = max(r, g, b)
+            sat += hi > 0 ? (hi - min(r, g, b)) / hi : 0
+        }
+        let count = Double(n * n), mean = sum / count
+        let spread = (max(0, sumSq / count - mean * mean)).squareRoot()
+        // Measured: Deezer's silhouette spreads 7 with saturation 0.02; a black-and-white
+        // press photo spreads well over 30.
+        return spread < 12 || (spread < 22 && sat / count < 0.1)
+    }
+
     /// Grey, contrast up, then shadows mapped to `dark` and highlights to `light` — how
     /// unrelated press shots are made to belong to one series.
     static func duotone(_ image: UIImage, dark: UIColor, light: UIColor) -> UIImage? {
