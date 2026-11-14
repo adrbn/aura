@@ -213,6 +213,7 @@
 		E100000100000000000000A1 /* MixGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A1 /* MixGenerator.swift */; };
 		E100000100000000000000A2 /* MixDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000A2 /* MixDetailView.swift */; };
 		E100000100000000000000B0 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = E100000500000000000000B0 /* AppShortcuts.strings */; };
+		E1000001000000005A1C0000 /* AppIntentVocabulary.plist in Resources */ = {isa = PBXBuildFile; fileRef = E1000005000000005A1C0000 /* AppIntentVocabulary.plist */; };
 		E100000100000000000000B1 /* SkeletonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000B1 /* SkeletonView.swift */; };
 		E100000100000000000000B2 /* SearchIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000B2 /* SearchIndex.swift */; };
 		E100000100000000000000C0 /* SongQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000C0 /* SongQuery.swift */; };
@@ -547,6 +548,15 @@
 		E10000020000000051C10004 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		E10000020000000051C10005 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/AppShortcuts.strings"; sourceTree = "<group>"; };
 		E10000020000000051C10006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		E1000002000000005A1C0000 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = en; path = en.lproj/AppIntentVocabulary.plist; sourceTree = "<group>"; };
+		E1000002000000005A1C0001 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = fr; path = fr.lproj/AppIntentVocabulary.plist; sourceTree = "<group>"; };
+		E1000002000000005A1C0002 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = it; path = it.lproj/AppIntentVocabulary.plist; sourceTree = "<group>"; };
+		E1000002000000005A1C0003 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = es; path = es.lproj/AppIntentVocabulary.plist; sourceTree = "<group>"; };
+		E1000002000000005A1C0004 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = de; path = de.lproj/AppIntentVocabulary.plist; sourceTree = "<group>"; };
+		E1000002000000005A1C0005 /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = ca; path = ca.lproj/AppIntentVocabulary.plist; sourceTree = "<group>"; };
+		E1000002000000005A1C0006 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = nl; path = nl.lproj/AppIntentVocabulary.plist; sourceTree = "<group>"; };
+		E1000002000000005A1C0007 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "zh-Hans"; path = "zh-Hans.lproj/AppIntentVocabulary.plist"; sourceTree = "<group>"; };
+		E1000002000000005A1C0008 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = ru; path = ru.lproj/AppIntentVocabulary.plist; sourceTree = "<group>"; };
 		E10000030000000000000001 /* Aura.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aura.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E10000030000000000000002 /* AuraWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AuraWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E318A59381EE24D9E5853599 /* DisplayFontTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayFontTests.swift; sourceTree = "<group>"; };
@@ -740,6 +750,7 @@
 				E10000020000000000000001 /* AuraApp.swift */,
 				E10000020000000000000002 /* ContentView.swift */,
 				E100000500000000000000B0 /* AppShortcuts.strings */,
+				E1000005000000005A1C0000 /* AppIntentVocabulary.plist */,
 				E10000020000000000000003 /* Assets.xcassets */,
 				E100000200000000000000F2 /* AppIcon.icon */,
 				E10000020000000000000060 /* MusicIntents.swift */,
@@ -1115,6 +1126,7 @@
 			files = (
 				E10000010000000000000003 /* Assets.xcassets in Resources */,
 				E100000100000000000000B0 /* AppShortcuts.strings in Resources */,
+				E1000001000000005A1C0000 /* AppIntentVocabulary.plist in Resources */,
 				E100000100000000000000F2 /* AppIcon.icon in Resources */,
 				E10000010000000000000070 /* Localizable.xcstrings in Resources */,
 				E10000010000000000000090 /* PrivacyInfo.xcprivacy in Resources */,
@@ -1559,6 +1571,22 @@
 				E10000020000000051C10006 /* ru */,
 			);
 			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+		E1000005000000005A1C0000 /* AppIntentVocabulary.plist */ = {
+			isa = PBXVariantGroup;
+			children = (
+				E1000002000000005A1C0000 /* en */,
+				E1000002000000005A1C0001 /* fr */,
+				E1000002000000005A1C0002 /* it */,
+				E1000002000000005A1C0003 /* es */,
+				E1000002000000005A1C0004 /* de */,
+				E1000002000000005A1C0005 /* ca */,
+				E1000002000000005A1C0006 /* nl */,
+				E1000002000000005A1C0007 /* zh-Hans */,
+				E1000002000000005A1C0008 /* ru */,
+			);
+			name = AppIntentVocabulary.plist;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
