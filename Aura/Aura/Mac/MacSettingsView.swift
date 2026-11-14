@@ -756,15 +756,18 @@ private struct MacMadeForYouSettings: View {
     @AppStorage(MixPreferences.discoverKey) private var discover = true
     @AppStorage(MixPreferences.genresKey) private var genresRaw = ""
     @AppStorage(MixPreferences.lengthKey) private var length = 50
+    @AppStorage(MixPreferences.excludedGenresKey) private var excludedRaw = ""
     @AppStorage(MixPreferences.moodKey(.chill)) private var chill = true
     @AppStorage(MixPreferences.moodKey(.focus)) private var focus = true
     @AppStorage(MixPreferences.moodKey(.feelGood)) private var feelGood = true
     @AppStorage(MixPreferences.moodKey(.energy)) private var energy = true
     @State private var serverGenres: [GenreEntry] = []
+    @State private var allGenres: [String] = []
     @State private var signatureOnAppear = ""
     @State private var generator = MixGenerator.shared
 
     private var pickedGenres: [String] { genresRaw.split(separator: "\n").map(String.init) }
+    private var excludedGenres: [String] { excludedRaw.split(separator: "\n").map(String.init) }
 
     var body: some View {
         SettingsCard(title: "Mixes", footer: "The time of day mix follows the hour: morning, afternoon, evening or late night.") {
@@ -782,6 +785,27 @@ private struct MacMadeForYouSettings: View {
                     genreRow(genre.value, selected: pickedGenres.contains(genre.value),
                              last: genre.value == serverGenres.last?.value) { pick(genre.value) }
                 }
+            }
+        }
+        SettingsCard(title: "Left Out of Mixes", footer: "Songs in these genres never play in a mix.") {
+            ForEach(excludedGenres, id: \.self) { genre in
+                SettingsRow(title: LocalizedStringKey(genre)) {
+                    Button { setExcluded(genre, false) } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Remove"))
+                }
+            }
+            SettingsRow(title: "Leave Out a Genre", last: true) {
+                Menu {
+                    ForEach(allGenres.filter { !excludedGenres.contains($0) }, id: \.self) { genre in
+                        Button(genre) { setExcluded(genre, true) }
+                    }
+                } label: { Image(systemName: "plus") }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .disabled(allGenres.isEmpty)
             }
         }
         SettingsCard(footer: "Mixes are made again every eight hours, and when the time of day changes.") {
@@ -836,10 +860,18 @@ private struct MacMadeForYouSettings: View {
         genresRaw = picked.joined(separator: "\n")
     }
 
-    /// The server's genres, biggest first, so the ones worth a mix are at the top.
+    private func setExcluded(_ genre: String, _ excluded: Bool) {
+        let kept = excludedGenres.filter { $0 != genre }
+        excludedRaw = (excluded ? kept + [genre] : kept).joined(separator: "\n")
+    }
+
+    /// The server's genres, biggest first, so the ones worth a mix are at the top; every
+    /// genre, A to Z, to leave out.
     private func loadGenres() async {
         guard let server = ServerManager.shared.currentServer,
               let genres = try? await SubsonicClient.shared.getGenres(server: server) else { return }
+        allGenres = genres.map(\.value).filter { !$0.isEmpty }
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
         serverGenres = genres
             .filter { ($0.songCount ?? 0) >= 8 && !$0.value.isEmpty }
             .sorted { ($0.songCount ?? 0) > ($1.songCount ?? 0) }

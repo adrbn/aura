@@ -188,6 +188,7 @@ enum MixPreferences {
     static let discoverKey = "mfy_discover"
     static let genresKey = "mfy_genres"
     static let lengthKey = "mfy_length"
+    static let excludedGenresKey = "mfy_excluded_genres"
     static func moodKey(_ mood: MixGenerator.Mood) -> String { "mfy_mood_\(mood.rawValue)" }
 
     private static func flag(_ key: String) -> Bool {
@@ -202,6 +203,18 @@ enum MixPreferences {
         (UserDefaults.standard.string(forKey: genresKey) ?? "")
             .split(separator: "\n").map(String.init)
     }
+    /// Genres no mix may play, lowercased.
+    static var excludedGenres: Set<String> {
+        Set((UserDefaults.standard.string(forKey: excludedGenresKey) ?? "")
+            .split(separator: "\n").map { $0.lowercased() })
+    }
+    /// False when any of the song's genres — a tag can hold several, "Pop; Christmas" — is left out.
+    static func allows(_ song: Song, excluded: Set<String> = excludedGenres) -> Bool {
+        guard !excluded.isEmpty, let genre = song.genre?.lowercased() else { return true }
+        let parts = genre.split(whereSeparator: { ";,/".contains($0) })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        return !excluded.contains(genre) && !parts.contains(where: excluded.contains)
+    }
     static var length: Int {
         let v = UserDefaults.standard.integer(forKey: lengthKey)
         return v > 0 ? v : 50
@@ -212,7 +225,7 @@ enum MixPreferences {
     /// Changes whenever a setting does, so leaving the page can tell whether to rebuild.
     static var signature: String {
         ([timeOfDay, genreMixes, discover] + MixGenerator.Mood.allCases.map(mood)).map { $0 ? "1" : "0" }.joined()
-            + "|\(genres.joined(separator: ","))|\(length)"
+            + "|\(genres.joined(separator: ","))|\(length)|\(excludedGenres.sorted().joined(separator: ","))"
     }
 }
 
@@ -388,6 +401,8 @@ final class MixGenerator {
         if userGenres.isEmpty, let all = try? await SubsonicClient.shared.getGenres(server: server) {
             userGenres = all.sorted { ($0.songCount ?? 0) > ($1.songCount ?? 0) }.prefix(4).map(\.value)
         }
+        let excluded = MixPreferences.excludedGenres
+        userGenres = userGenres.filter { !excluded.contains($0.lowercased()) }
         let length = MixPreferences.length
         let genres = Array(Set(Mood.allCases.flatMap { $0.genres }).union(userGenres))
         let served = cache.served(for: server.id)
@@ -475,6 +490,8 @@ final class MixGenerator {
     /// a mix changes from one generation to the next without running dry on a small library.
     private func rested(_ songs: [Song], served: Set<String>, limit: Int,
                         pick: ([Song], Int) -> [Song]) -> [Song] {
+        let excluded = MixPreferences.excludedGenres
+        let songs = songs.filter { MixPreferences.allows($0, excluded: excluded) }
         let fresh = pick(songs.filter { !served.contains($0.id) }, limit)
         guard fresh.count < limit else { return fresh }
         let taken = Set(fresh.map(\.id))
@@ -571,7 +588,8 @@ final class MixGenerator {
     }
 
     private func fallbackMix(server: ServerConfig) async -> Mix? {
-        guard let random = try? await SubsonicClient.shared.getRandomSongs(server: server, size: 50), random.count >= 8 else { return nil }
+        guard let random = (try? await SubsonicClient.shared.getRandomSongs(server: server, size: 50))?
+            .filter({ MixPreferences.allows($0) }), random.count >= 8 else { return nil }
         return Mix(id: "fallback", title: String(localized: "Your Mix"), subtitle: String(localized: "A fresh shuffle from your library"), songs: random)
     }
 
