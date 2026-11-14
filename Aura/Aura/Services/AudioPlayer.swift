@@ -1817,6 +1817,17 @@ final class AudioPlayer {
         // to this device, away from the one actually playing.
         MPNowPlayingInfoCenter.default().playbackState = isPlaying && remote == nil ? .playing : .paused
     }
+    /// Whether sound is actually coming out within a few seconds. `isPlaying` only says a
+    /// play was asked for, so Siri was told "now playing" over silence.
+    @MainActor func soundStarted(within seconds: Double = 6) async -> Bool {
+        if remote != nil { return true }
+        for _ in 0..<Int(seconds * 4) {
+            if player?.timeControlStatus == .playing { return true }
+            try? await Task.sleep(for: .milliseconds(250))
+        }
+        return false
+    }
+
     func togglePlayPause() { if let remote { remote(.playPause); return }; if isPlaying { pause() } else { play() } }
 
     /// Begin caching the next track in queue when the current song is near completion

@@ -448,9 +448,13 @@ final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling, INUpdateM
         // is what tells that song from every other one of the same name.
         let both = [named, search?.artistName].compactMap { $0 }.filter { !$0.isEmpty }
         let query = both.count == 2 ? both.joined(separator: " ") : said
-        guard let found = try? await client.search3(
-            server: server, query: query, artistCount: 5, albumCount: 5, songCount: 5)
-        else { return [.unsupported()] }
+        // "Miss Rachel" for "Ms. Rachel": as said, then spelled the way libraries write it.
+        var found: SearchResult3?
+        for attempt in [query, Self.key(query)] where found.map(Self.isEmpty) ?? true {
+            found = try? await client.search3(
+                server: server, query: attempt, artistCount: 5, albumCount: 5, songCount: 5)
+        }
+        guard let found else { return [.unsupported()] }
         let playlists = ((try? await client.getPlaylists(server: server)) ?? [])
             .filter { Self.same($0.name, said) }
         let genres = ((try? await client.getGenres(server: server)) ?? [])
@@ -488,13 +492,13 @@ final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling, INUpdateM
               let kind = Kind(rawValue: String(identifier[..<colon])) else {
             // "Resume on Aura" names nothing at all.
             await AudioPlayer.shared.playSomething()
-            return INPlayMediaIntentResponse(code: .success, userActivity: nil)
+            return await Self.outcome()
         }
         let id = String(identifier[identifier.index(after: colon)...])
         let name = item.title ?? ""
         if kind == .resume {
             await AudioPlayer.shared.playSomething()
-            return INPlayMediaIntentResponse(code: .success, userActivity: nil)
+            return await Self.outcome()
         }
         guard let server = ServerManager.shared.currentServer else {
             return INPlayMediaIntentResponse(code: .failureNoUnplayedContent, userActivity: nil)
@@ -557,7 +561,15 @@ final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling, INUpdateM
                 }
             }
         }
-        return INPlayMediaIntentResponse(code: .success, userActivity: nil)
+        if place == .next || place == .later { return INPlayMediaIntentResponse(code: .success, userActivity: nil) }
+        return await Self.outcome()
+    }
+
+    /// "Now playing" only once sound comes out; otherwise Siri says it could not.
+    private static func outcome() async -> INPlayMediaIntentResponse {
+        let started = await AudioPlayer.shared.soundStarted()
+        if !started { AppLogger.shared.log("🗣 Siri: playback never started") }
+        return INPlayMediaIntentResponse(code: started ? .success : .failure, userActivity: nil)
     }
 
     // MARK: Like
@@ -596,8 +608,23 @@ final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling, INUpdateM
     }
 
     /// "kygo" is "Kygo", and "beyonce" is "Beyoncé".
-    private static func same(_ a: String, _ b: String) -> Bool {
-        a.compare(b, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+    private static func same(_ a: String, _ b: String) -> Bool { key(a) == key(b) }
+
+    private static let spoken = ["miss": "ms", "mister": "mr", "missus": "mrs", "doctor": "dr",
+                                 "saint": "st", "and": "&", "n": "&"]
+
+    /// A name the way it is said and the way it is written meet here: "Miss Rachel" and
+    /// "Ms. Rachel", "Guns and Roses" and "Guns N' Roses", "The Weeknd" and "Weeknd".
+    static func key(_ name: String) -> String {
+        let words = name.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            .replacingOccurrences(of: "'", with: "").replacingOccurrences(of: "\u{2019}", with: "")
+            .components(separatedBy: CharacterSet.alphanumerics.union(["&"]).inverted)
+            .filter { !$0.isEmpty }.map { spoken[$0] ?? $0 }
+        return (words.first == "the" && words.count > 1 ? words.dropFirst() : words[...]).joined(separator: " ")
+    }
+
+    private static func isEmpty(_ r: SearchResult3) -> Bool {
+        (r.artist ?? []).isEmpty && (r.album ?? []).isEmpty && (r.song ?? []).isEmpty
     }
 }
 
