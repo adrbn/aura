@@ -73,7 +73,8 @@ enum CarPlayArtwork {
             (part.icon?.size.width ?? 0) + (part.icon == nil ? 0 : gap)
                 + NSAttributedString(string: part.text, attributes: [.font: font]).size().width
         }
-        let size = CGSize(width: min(limit.width, ceil(widths.max() ?? 0)), height: limit.height)
+        // The button's full size: a narrower face is stretched across the button by the car.
+        let size = limit
         return zip(parts, widths).map { part, width in
             let draw = { (tint: UIColor) -> UIImage in
                 let text = NSAttributedString(string: part.text, attributes: [.font: font, .foregroundColor: tint])
