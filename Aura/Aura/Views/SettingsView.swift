@@ -237,23 +237,28 @@ struct SettingsView: View {
     private var serversSection: some View {
         Section {
             ForEach(serverManager.servers) { server in
-                if server.id == serverManager.currentServer?.id {
-                    NavigationLink { ServerDetailView(server: server) } label: {
-                        serverRow(server, isActive: true)
+                Group {
+                    if server.id == serverManager.currentServer?.id {
+                        NavigationLink { ServerDetailView(server: server) } label: {
+                            serverRow(server, isActive: true)
+                        }
+                    } else {
+                        Button {
+                            serverManager.selectServer(server)
+                            Task { await serverManager.testConnection() }
+                        } label: {
+                            serverRow(server, isActive: false)
+                        }
+                        .buttonStyle(.plain)
                     }
-                } else {
-                    Button {
-                        serverManager.selectServer(server)
-                        Task { await serverManager.testConnection() }
-                    } label: {
-                        serverRow(server, isActive: false)
-                    }
-                    .buttonStyle(.plain)
                 }
-            }
-            .onDelete { idx in
-                for i in idx.sorted().reversed() {
-                    serverManager.removeServer(serverManager.servers[i])
+                // On each row rather than `.onDelete` on the ForEach, which never offered
+                // the swipe here (issue 9). A long press removes it too.
+                .swipeActions(edge: .trailing) {
+                    Button("Remove", role: .destructive) { serverManager.removeServer(server) }
+                }
+                .contextMenu {
+                    Button("Remove", systemImage: "trash", role: .destructive) { serverManager.removeServer(server) }
                 }
             }
 
