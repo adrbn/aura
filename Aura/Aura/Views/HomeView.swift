@@ -429,7 +429,7 @@ struct HomeView: View {
                         // The cover already prints the mix's name, so no caption beneath it:
                         // the shelf reads as a row of covers, not covers plus their labels.
                         NavigationLink(value: mix) {
-                            EditorialMixCover(mix: mix, size: 150 * Pad.scale, cornerRadius: Self.coverRadius)
+                            EditorialMixCover(mix: mix, size: coverSize, cornerRadius: Self.coverRadius)
                         }
                         .buttonStyle(.plain)
                         .contextMenu { mixMenu(mix) }
@@ -632,9 +632,9 @@ struct HomeView: View {
     /// width than their cards, one cover fewer, so each row cut the top off its covers.
     private var contentWidth: CGFloat { layoutWidth - 2 * Pad.side }
 
-    /// One size and one corner for every square cover on Home — mixes, Up Next and the album
-    /// rows — so the shelves line up column for column instead of three scales side by side.
-    private var coverSize: CGFloat { layoutWidth > 0 ? Self.albumCardSize(for: contentWidth) : 150 * Pad.scale }
+    /// Mixes and Up Next share one smaller square, about two and a half to a phone's width;
+    /// the album rows keep their two-to-a-width cards.
+    private var coverSize: CGFloat { 150 * Pad.scale }
     static let coverRadius: CGFloat = 12
 
     /// Two covers to a phone's width, about 187 points each. A wider screen (iPhone Duo)
@@ -765,7 +765,7 @@ struct HomeView: View {
                     ForEach(0..<8, id: \.self) { _ in
                         RoundedRectangle(cornerRadius: Self.coverRadius)
                             .fill(Color.themeSecondaryBg)
-                            .frame(width: 150 * Pad.scale, height: 150 * Pad.scale)
+                            .frame(width: coverSize, height: coverSize)
                     }
                 }
                 .padding(.horizontal, 16)
