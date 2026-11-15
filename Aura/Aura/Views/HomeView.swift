@@ -429,7 +429,7 @@ struct HomeView: View {
                         // The cover already prints the mix's name, so no caption beneath it:
                         // the shelf reads as a row of covers, not covers plus their labels.
                         NavigationLink(value: mix) {
-                            EditorialMixCover(mix: mix, size: coverSize, cornerRadius: Self.coverRadius)
+                            EditorialMixCover(mix: mix, size: 150 * Pad.scale, cornerRadius: Self.coverRadius)
                         }
                         .buttonStyle(.plain)
                         .contextMenu { mixMenu(mix) }
@@ -765,7 +765,7 @@ struct HomeView: View {
                     ForEach(0..<8, id: \.self) { _ in
                         RoundedRectangle(cornerRadius: Self.coverRadius)
                             .fill(Color.themeSecondaryBg)
-                            .frame(width: coverSize, height: coverSize)
+                            .frame(width: 150 * Pad.scale, height: 150 * Pad.scale)
                     }
                 }
                 .padding(.horizontal, 16)
