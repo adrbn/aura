@@ -1079,6 +1079,10 @@
 				nl,
 				"zh-Hans",
 				ru,
+				sv,
+				"pt-PT",
+				"pt-BR",
+				pl,
 			);
 			mainGroup = E10000050000000000000001;
 			productRefGroup = E10000050000000000000009 /* Products */;
