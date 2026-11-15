@@ -4,7 +4,20 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.0] — 2026-11-13 (sent to App Review)
+## [1.6.2] — 2026-11-15 (sent to App Review)
+
+- Settings > Servers > Switch When Unreachable: with two servers or more, when the one in use stops answering, Aura moves to the next one that does.
+- Settings > Appearance > Player Buttons: reorder or hide lyrics, radio, queue, sleep timer, output and share under Now Playing.
+- Siri finds an artist said differently from how the library spells it, Miss Rachel for Ms. Rachel or Guns and Roses for Guns N' Roses, and says so when playback could not start.
+- Fixed: swiping a server to the left offers Remove again, and a long press removes it too.
+
+## [1.6.1] — 2026-11-14
+
+- Settings > Made For You > Left Out of Mixes: pick genres and no mix plays them.
+- CarPlay: the Play and Shuffle buttons atop an album, playlist or mix are no longer stretched.
+- An album the server has no cover for is also looked up in Apple's catalogue.
+
+## [1.6.0] — 2026-11-13
 
 - Aura runs on iPad, laid out for it: Now Playing puts the lyrics or the queue beside the artwork in landscape, text and covers read at the screen's scale, Search sits at the end of the tab bar, and the widget comes along.
 - Crossfade in Settings > Sound: off, or 3 to 12 seconds between songs.
