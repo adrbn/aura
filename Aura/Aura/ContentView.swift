@@ -1,5 +1,4 @@
 import SwiftUI
-import StoreKit
 
 struct ContentView: View {
     @Environment(ServerManager.self) private var serverManager
@@ -8,10 +7,7 @@ struct ContentView: View {
     @State private var showAddServer = false
     @State private var isOpeningDemo = false
     @State private var demoError: String?
-    @Environment(\.requestReview) private var requestReview
-    /// Songs started since the last rating prompt, and the version that prompt was for.
-    @AppStorage("review_songs") private var reviewSongs = 0
-    @AppStorage("review_version") private var reviewVersion = ""
+    @Environment(\.scenePhase) private var scenePhase
     @State private var appSettings = AppSettings.shared
     @Environment(\.appAccentColor) private var accentColor
     @State private var showDownloadManager = false
@@ -126,8 +122,10 @@ struct ContentView: View {
                 DownloadManagerView()
             }
         }
-        .onChange(of: audioPlayer.currentSong?.id) { _, id in
-            askForRatingIfDue(songID: id)
+        .onChange(of: scenePhase) { _, phase in
+            // A rating prompt that came due while the app was in the background.
+            guard phase == .active else { return }
+            Task { try? await Task.sleep(for: .seconds(2)); audioPlayer.requestReviewIfDue() }
         }
         .onChange(of: audioPlayer.pendingArtistId) { _, newId in
             guard newId != nil else { return }
@@ -424,19 +422,6 @@ struct ContentView: View {
             Spacer()
         }
         .sheet(isPresented: $showAddServer) { AddServerView() }
-    }
-
-    /// Asks for an App Store rating once per version, after 40 songs, never on the demo
-    /// server: someone listening that much to their own library has an opinion worth giving.
-    private func askForRatingIfDue(songID: String?) {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        guard songID != nil, reviewVersion != version,
-              serverManager.currentServer?.url.contains("demo.navidrome.org") == false else { return }
-        reviewSongs += 1
-        guard reviewSongs >= 10 else { return }
-        reviewSongs = 0
-        reviewVersion = version
-        requestReview()
     }
 
     /// The public Navidrome demo, so someone without a server of their own sees what Aura does.

@@ -1674,17 +1674,8 @@ final class AudioPlayer {
     private func askForReviewIfDue() {
         #if os(iOS) && APPSTORE_BUILD
         let defaults = UserDefaults.standard
-        let plays = defaults.integer(forKey: "reviewPromptPlays") + 1
-        defaults.set(plays, forKey: "reviewPromptPlays")
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        guard plays >= 20, defaults.string(forKey: "reviewPromptVersion") != version else { return }
-        Task { @MainActor in
-            guard let scene = UIApplication.shared.connectedScenes
-                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
-            else { return }
-            UserDefaults.standard.set(version, forKey: "reviewPromptVersion")
-            AppStore.requestReview(in: scene)
-        }
+        defaults.set(defaults.integer(forKey: "reviewPromptPlays") + 1, forKey: "reviewPromptPlays")
+        Task { @MainActor in self.requestReviewIfDue() }
         #elseif os(macOS)
         // The Mac app lives on GitHub, not the App Store, so it asks for a star and points
         // to Ko-fi instead, with the same once-per-version rule, after ten songs.
@@ -1697,6 +1688,25 @@ final class AudioPlayer {
         else { return }
         defaults.set(version, forKey: "reviewPromptVersion")
         Task { @MainActor in MacSupportPrompt.show() }
+        #endif
+    }
+
+    /// The rating prompt itself: from the twentieth song, once per version, never on the demo
+    /// server, and only while the app is on screen. Most listening happens in the background,
+    /// so ContentView also calls this when the app comes back to the front: a prompt that
+    /// came due on the lock screen is shown then instead of being lost.
+    @MainActor func requestReviewIfDue() {
+        #if os(iOS) && APPSTORE_BUILD
+        let defaults = UserDefaults.standard
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        guard defaults.integer(forKey: "reviewPromptPlays") >= 20,
+              defaults.string(forKey: "reviewPromptVersion") != version,
+              ServerManager.shared.currentServer?.url.contains("demo.navidrome.org") == false,
+              let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+        else { return }
+        defaults.set(version, forKey: "reviewPromptVersion")
+        AppStore.requestReview(in: scene)
         #endif
     }
 
