@@ -602,21 +602,16 @@ struct HomeView: View {
                 sectionHeader(title)
             }
             .buttonStyle(.plain)
-            GeometryReader { geo in
-                let spacing: CGFloat = 12
-                let horizontalPadding: CGFloat = 16
-                let cardSize = Self.albumCardSize(for: geo.size.width)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: spacing) {
-                        ForEach(Array(albums.enumerated()), id: \.element.id) { index, album in
-                            AlbumCardView(album: album, size: cardSize)
-                                .transition(.asymmetric(
-                                    insertion: .move(edge: .trailing).combined(with: .opacity),
-                                    removal: .opacity
-                                ))
-                        }
-                    }.padding(.horizontal, horizontalPadding)
-                }
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 12) {
+                    ForEach(Array(albums.enumerated()), id: \.element.id) { index, album in
+                        AlbumCardView(album: album, size: coverSize)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                    }
+                }.padding(.horizontal, 16)
             }
             .frame(height: albumRowHeight)
         }
@@ -624,7 +619,7 @@ struct HomeView: View {
 
     /// Height for album row: card image + text labels + spacing
     private var albumRowHeight: CGFloat {
-        max(Self.albumCardSize(for: contentWidth), 0) + 36  // image + two text lines
+        coverSize + 36  // image + two text lines
     }
 
     /// The width the rows lay out in: the screen's, less the side room an iPad adds to the
@@ -632,17 +627,10 @@ struct HomeView: View {
     /// width than their cards, one cover fewer, so each row cut the top off its covers.
     private var contentWidth: CGFloat { layoutWidth - 2 * Pad.side }
 
-    /// Mixes and Up Next share one smaller square, about two and a half to a phone's width;
-    /// the album rows keep their two-to-a-width cards.
+    /// One square for every cover on Home — mixes, Up Next and the album rows — about two
+    /// and a half to a phone's width, so the shelves line up and the next cover peeks in.
     private var coverSize: CGFloat { 150 * Pad.scale }
     static let coverRadius: CGFloat = 12
-
-    /// Two covers to a phone's width, about 187 points each. A wider screen (iPhone Duo)
-    /// shows more covers at that size rather than two huge ones.
-    private static func albumCardSize(for width: CGFloat) -> CGFloat {
-        let count = max(2, ((width - 16) / 199).rounded(.down))
-        return (width - 16 - 12 * (count - 1)) / count
-    }
 
     private func sectionHeader(_ title: String) -> some View {
         HStack {
@@ -807,9 +795,8 @@ struct HomeView: View {
     }
 
     private func prefetchHomeCovers() {
-        let cardSize = layoutWidth > 0 ? Self.albumCardSize(for: contentWidth) : 180
-        let albumArt = (newestAlbums + frequentAlbums + randomAlbums).compactMap(\.coverArt)
-        ArtworkCache.shared.prefetch(coverArtIds: albumArt, pointSize: cardSize)
+                let albumArt = (newestAlbums + frequentAlbums + randomAlbums).compactMap(\.coverArt)
+        ArtworkCache.shared.prefetch(coverArtIds: albumArt, pointSize: coverSize)
         ArtworkCache.shared.prefetch(coverArtIds: starredSongs.compactMap(\.coverArt), pointSize: 50)
         ArtworkCache.shared.prefetch(coverArtIds: starredArtists.compactMap(\.coverArt), pointSize: 44)
         ArtworkCache.shared.prefetch(coverArtIds: recentSongs.compactMap(\.coverArt), pointSize: 50)
