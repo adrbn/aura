@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @Environment(ServerManager.self) private var serverManager
     @State private var showAddServer = false
+    @AppStorage(ServerManager.autoSwitchKey) private var autoSwitch = false
     @State private var appSettings = AppSettings.shared
     @State private var downloadManager = DownloadManager.shared
     @State private var scanStatus: ScanStatus?
@@ -262,6 +263,11 @@ struct SettingsView: View {
                 }
             }
 
+            if serverManager.servers.count > 1 {
+                Toggle("Switch When Unreachable", isOn: $autoSwitch)
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
+
             Button { showAddServer = true } label: {
                 Label("Add Server", systemImage: "plus.circle.fill")
                     .foregroundStyle(accentColor)
@@ -270,7 +276,7 @@ struct SettingsView: View {
             Text("Servers")
         } footer: {
             Text(serverManager.servers.count > 1
-                 ? "Tap another server to switch to it. Swipe left to remove."
+                 ? "Tap another server to switch to it. Swipe left to remove. When the one in use stops answering, Aura can move to the next one that does."
                  : "Add another server to switch between libraries — you can also switch straight from the Home title.")
         }
     }
@@ -788,6 +794,10 @@ struct SettingsView: View {
 
             NavigationLink("Tab Bar Order") {
                 TabOrderView()
+            }
+
+            NavigationLink("Player Buttons") {
+                PlayerButtonsView()
             }
 
             AccentColourPicker(accent: $appSettings.appAccentColor,

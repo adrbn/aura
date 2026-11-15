@@ -206,6 +206,7 @@ final class ServerManager {
                 }
             }
             AppLogger.shared.log("🖥 testConnection: \(ok ? "connected" : "failed")")
+            if !ok, await switchToReachableServer() { return true }
             return ok
         } catch is CancellationError {
             AppLogger.shared.log("⚠️ testConnection cancelled (view lifecycle)")
@@ -221,8 +222,28 @@ final class ServerManager {
                 self.enableAutoOfflineIfNeeded()
             }
             AppLogger.shared.log("❌ testConnection error: \(error.localizedDescription)")
-            return false
+            return await switchToReachableServer()
         }
+    }
+
+    static let autoSwitchKey = "server_auto_switch"
+    private var isSwitching = false
+
+    /// With "Switch When Unreachable" on, the first other server that answers takes over:
+    /// the same library at a home and a remote address, kept as two servers (issue 10).
+    @MainActor private func switchToReachableServer() async -> Bool {
+        guard UserDefaults.standard.bool(forKey: Self.autoSwitchKey), !isSwitching, hasNetwork,
+              let current = currentServer, servers.count > 1 else { return false }
+        isSwitching = true
+        defer { isSwitching = false }
+        for other in servers where other.id != current.id {
+            guard (try? await SubsonicClient.shared.ping(server: other, timeout: 3)) == true else { continue }
+            AppLogger.shared.log("🖥 \(current.friendlyName) unreachable — switching to \(other.friendlyName)")
+            selectServer(other)
+            ToastManager.shared.show(String(localized: "Switched to \(other.friendlyName)"), icon: "server.rack")
+            return await testConnection()
+        }
+        return false
     }
 
     /// Uses the server's home address while it answers within two seconds, its main

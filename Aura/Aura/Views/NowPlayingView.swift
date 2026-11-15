@@ -6,6 +6,7 @@ struct NowPlayingView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(\.dismiss) private var dismiss
     @State private var appSettings = AppSettings.shared
+    @AppStorage(PlayerButton.key) private var playerButtons = ""
     @State private var serverManager = ServerManager.shared
     @State private var translator = LyricsTranslator.shared
     /// `-queueInline YES` opens on the queue under the artwork header, for checking the layout.
@@ -774,77 +775,87 @@ struct NowPlayingView: View {
         isEffectivelyOffline || player.currentSong?.isPreview == true
     }
 
-    /// Lyrics, radio, queue, sleep timer, output and sharing, each a tap away.
+    /// Lyrics, radio, queue, sleep timer, output and sharing, each a tap away, in the
+    /// order chosen in Settings and without the ones switched off there.
     private var optionsBar: some View {
             HStack {
-                // Beside the player the right-hand column shows either the lyrics or the
-                // queue, and these two buttons pick which.
-                let lyricsUp = lyricsBeside ? !queueBeside : showLyrics && !queueInline
                 Spacer()
-                Button {
-                    if lyricsBeside {
-                        withAnimation(.smooth(duration: 0.3)) { besideQueue = false; wordlessQueue = false }
-                    } else {
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
-                            showLyrics = !lyricsUp
-                            queueInline = false
-                        }
-                    }
-                } label: {
-                    Image(systemName: lyricsUp ? "quote.bubble.fill" : "quote.bubble")
-                        .font(.title2)
-                        .foregroundStyle(lyricsUp ? accentColor : .white.opacity(0.6))
+                ForEach(PlayerButton.layout(playerButtons).filter(\.shown).map(\.button)) { button in
+                    optionsButton(button)
+                    Spacer()
                 }
-                .accessibilityLabel(lyricsUp ? "Hide lyrics" : "Show lyrics")
-                Spacer()
-                Button {
-                    if let current = player.currentSong {
-                        // Check if in-memory radio is specifically FOR this song
-                        let radioNameForSong = "Radio: \(current.title)"
-                        if player.radioPlaylistName == radioNameForSong && !player.radioPlaylistSongs.isEmpty {
-                            existingRadioPlaylistId = nil
-                            existingRadioPlaylistName = player.radioPlaylistName
-                            showRadioExistsDialog = true
-                        } else {
-                            // Check saved playlists on server for this song's radio
-                            Task { await checkForSavedRadio(song: current) }
-                        }
-                    }
-                } label: {
-                    Image(systemName: "antenna.radiowaves.left.and.right")
-                        .font(.title2)
-                        .foregroundStyle(.white.opacity(radioUnavailable ? 0.25 : 0.6))
-                }
-                .disabled(radioUnavailable)
-                .accessibilityLabel("Start radio from this song")
-                Spacer()
-                Button { showQueue() } label: {
-                    Image(systemName: "list.bullet")
-                        .font(.title2)
-                        .foregroundStyle((lyricsBeside ? queueBeside : showLyrics && queueInline) ? accentColor : .white.opacity(0.6))
-                }
-                .accessibilityLabel("Show queue")
-                Spacer()
-                Button {
-                    showSleepTimerSheet = true
-                } label: {
-                    Image(systemName: player.sleepTimerActive ? "moon.fill" : "moon.zzz")
-                        .font(.title2)
-                        .foregroundStyle(player.sleepTimerActive ? accentColor : .white.opacity(0.6))
-                }
-                .accessibilityLabel(player.sleepTimerActive ? "Sleep timer active" : "Sleep timer")
-                Spacer()
-                AudioOutputButtonWrapper(accentColor: accentColor)
-                Spacer()
-                Button { showShareSheet = true } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.title2)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                .accessibilityLabel("Share song")
-                Spacer()
             }
             .padding(.horizontal, horizontalPadding)
+    }
+
+    @ViewBuilder private func optionsButton(_ button: PlayerButton) -> some View {
+        // Beside the player the right-hand column shows either the lyrics or the
+        // queue, and these two buttons pick which.
+        let lyricsUp = lyricsBeside ? !queueBeside : showLyrics && !queueInline
+        switch button {
+        case .lyrics:
+            Button {
+                if lyricsBeside {
+                    withAnimation(.smooth(duration: 0.3)) { besideQueue = false; wordlessQueue = false }
+                } else {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                        showLyrics = !lyricsUp
+                        queueInline = false
+                    }
+                }
+            } label: {
+                Image(systemName: lyricsUp ? "quote.bubble.fill" : "quote.bubble")
+                    .font(.title2)
+                    .foregroundStyle(lyricsUp ? accentColor : .white.opacity(0.6))
+            }
+            .accessibilityLabel(lyricsUp ? "Hide lyrics" : "Show lyrics")
+        case .radio:
+            Button {
+                if let current = player.currentSong {
+                    // Check if in-memory radio is specifically FOR this song
+                    let radioNameForSong = "Radio: \(current.title)"
+                    if player.radioPlaylistName == radioNameForSong && !player.radioPlaylistSongs.isEmpty {
+                        existingRadioPlaylistId = nil
+                        existingRadioPlaylistName = player.radioPlaylistName
+                        showRadioExistsDialog = true
+                    } else {
+                        // Check saved playlists on server for this song's radio
+                        Task { await checkForSavedRadio(song: current) }
+                    }
+                }
+            } label: {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.title2)
+                    .foregroundStyle(.white.opacity(radioUnavailable ? 0.25 : 0.6))
+            }
+            .disabled(radioUnavailable)
+            .accessibilityLabel("Start radio from this song")
+        case .queue:
+            Button { showQueue() } label: {
+                Image(systemName: "list.bullet")
+                    .font(.title2)
+                    .foregroundStyle((lyricsBeside ? queueBeside : showLyrics && queueInline) ? accentColor : .white.opacity(0.6))
+            }
+            .accessibilityLabel("Show queue")
+        case .sleep:
+            Button {
+                showSleepTimerSheet = true
+            } label: {
+                Image(systemName: player.sleepTimerActive ? "moon.fill" : "moon.zzz")
+                    .font(.title2)
+                    .foregroundStyle(player.sleepTimerActive ? accentColor : .white.opacity(0.6))
+            }
+            .accessibilityLabel(player.sleepTimerActive ? "Sleep timer active" : "Sleep timer")
+        case .output:
+            AudioOutputButtonWrapper(accentColor: accentColor)
+        case .share:
+            Button { showShareSheet = true } label: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.title2)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            .accessibilityLabel("Share song")
+        }
     }
 
     /// A lyric line, word-highlighted when karaoke mode is on and this is the line being sung.
