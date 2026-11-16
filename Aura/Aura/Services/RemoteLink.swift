@@ -25,6 +25,7 @@ final class RemoteLink: NSObject {
         case playSong(Song, queue: [Song]?, index: Int, source: PlaybackSource, at: Double)
         case setQueue(Queue)
         case removeFromQueue(Int)
+        case pitch(Int)
         /// The controller's accent, so both ends show the same colour.
         case accent(red: Double, green: Double, blue: Double)
     }
@@ -37,6 +38,8 @@ final class RemoteLink: NSObject {
         var isShuffled = false
         var repeatMode: RepeatMode = .off
         var volume: Double = 1
+        /// Optional so a device from before it still reads the state.
+        var pitch: Int?
         /// Sent only when it changed since the last state: a queue can be hundreds of songs.
         var queue: Queue?
     }
@@ -224,7 +227,8 @@ final class RemoteLink: NSObject {
         let player = AudioPlayer.shared
         var now = State(song: player.currentSong, isPlaying: player.isPlaying,
                         currentTime: player.currentTime, duration: player.duration,
-                        isShuffled: player.isShuffled, repeatMode: player.repeatMode, volume: player.volume)
+                        isShuffled: player.isShuffled, repeatMode: player.repeatMode, volume: player.volume,
+                        pitch: player.pitchSemitones)
         #if os(iOS)
         now.volume = Double(AVAudioSession.sharedInstance().outputVolume)
         #endif
@@ -264,6 +268,7 @@ final class RemoteLink: NSObject {
             player.queue = queue.songs
             player.userQueue = queue.upNext
             player.queueIndex = min(queue.index, max(queue.songs.count - 1, 0))
+        case .pitch(let semitones): player.pitchSemitones = semitones
         case .removeFromQueue(let index):
             if player.queue.indices.contains(index) { player.removeFromQueue(at: index) }
         case .accent(let red, let green, let blue):
@@ -380,6 +385,7 @@ final class RemoteLink: NSObject {
         player.isShuffled = state.isShuffled
         player.repeatMode = state.repeatMode
         player.volume = state.volume
+        if let pitch = state.pitch { player.pitchSemitones = pitch }
         if let queue = state.queue {
             player.queue = queue.songs
             player.userQueue = queue.upNext

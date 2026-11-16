@@ -138,7 +138,11 @@ final class AudioPlayer {
     var isBuffering = false
     var isBuildingQueue = false  // True while fetching similar songs for autoplay
 
-    private var player: AVPlayer?
+    private var player: AVPlayer? {
+        // A player made again for the same song (a retry, a quality change) starts at 1×:
+        // it keeps the pitch still shown instead of dropping it until the next song.
+        didSet { if pitchSemitones != 0 { player?.currentItem?.audioTimePitchAlgorithm = .varispeed; player?.defaultRate = pitchRate } }
+    }
     /// The song fading out under the next one during a crossfade, on a player of its own.
     private var fadingPlayer: AVPlayer?
     private var crossfadeTask: Task<Void, Never>?
@@ -149,7 +153,11 @@ final class AudioPlayer {
     /// turntable's pitch — the speed goes with it — since AVPlayer can't move one without the
     /// other. Back to 0 at the next song.
     var pitchSemitones = 0 {
-        didSet { applyPitch() }
+        didSet {
+            guard pitchSemitones != oldValue else { return }
+            // Controlling another device: the pitch is its player's, sent there.
+            if let remote, !isMirroring { remote(.pitch(pitchSemitones)) } else { applyPitch() }
+        }
     }
 
     /// The speed the pitch sets, passed to the Lock Screen and the car so their bar keeps time.
