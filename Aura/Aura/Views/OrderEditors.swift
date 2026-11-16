@@ -13,8 +13,6 @@ struct TabOrderView: View {
                     HStack {
                         Image(systemName: tab.icon).foregroundStyle(accentColor).frame(width: 30)
                         Text(tab.title)
-                        Spacer()
-                        Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
                     }
                 }
                 .onMove { source, destination in

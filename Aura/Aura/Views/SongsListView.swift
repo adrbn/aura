@@ -358,11 +358,12 @@ struct SongsListView: View {
                                         .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
                             }
+                            // Borderless: two buttons in one List row each keep their own tap,
+                            // instead of the row swallowing it (iOS 26 ignored both).
+                            .buttonStyle(.borderless)
                             .padding(.horizontal, 20)
                         }
                         .frame(maxWidth: .infinity)
-                        .contentShape(Rectangle())
-                        .onTapGesture { } // Absorb taps on header area (outside buttons)
                         .padding(.vertical, 16)
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets())

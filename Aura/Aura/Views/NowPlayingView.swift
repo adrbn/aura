@@ -685,6 +685,7 @@ struct NowPlayingView: View {
                     showCredits: $showCredits,
                     showEqualizer: $showEqualizer
                 )
+                .equatable()
             }
             .padding(.horizontal, horizontalPadding)
             .padding(.top, 2)
@@ -1904,7 +1905,14 @@ private struct UncoveredByArtwork: Transition {
 
 /// Extracted view so the Menu doesn't re-render on every progress tick.
 /// Only reads `currentSong` and `lyricsSource` from AudioPlayer — NOT progress/currentTime.
-struct SongActionsRow: View {
+/// Equatable, and `.equatable()` where it is placed: Now Playing redraws each time the
+/// elapsed time moves, and a fresh row every second made an open menu blink. Its own
+/// reads of the player still refresh it; the bindings always point at the same state.
+struct SongActionsRow: View, Equatable {
+    static func == (a: Self, b: Self) -> Bool {
+        a.song == b.song && a.showLyrics == b.showLyrics && a.accentColor == b.accentColor
+    }
+
     let song: Song
     let showLyrics: Bool
     let accentColor: Color
