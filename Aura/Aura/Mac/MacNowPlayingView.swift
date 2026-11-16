@@ -200,8 +200,10 @@ struct MacLyricsSheet: View {
                         // Only the line being sung redraws on the display link, and only
                         // while playback is moving. Every other line is paused, so it draws
                         // once and costs nothing.
-                        TimelineView(.animation(minimumInterval: 1.0 / 60.0,
-                                                paused: index != currentIndex || !player.isPlaying)) { _ in
+                        // 120 a second for ProMotion screens, and still while scrolling by hand,
+                        // so the scroll gets the frames.
+                        TimelineView(.animation(minimumInterval: 1.0 / 120.0,
+                                                paused: index != currentIndex || !player.isPlaying || browsing)) { _ in
                             lineView(line: line, index: index)
                         }
                         .id(index)
