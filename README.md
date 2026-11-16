@@ -239,6 +239,16 @@ place on your home screen:
 
 A star on the repo helps other people find it too.
 
+### Thanks
+
+To the people whose reports and ideas shaped Aura:
+
+- [willvebert](https://github.com/willvebert): CarPlay's buttons and back navigation, Siri search, genre exclusions in mixes
+- [dominak3](https://github.com/dominak3): automatic server switching, custom player buttons, Favorites downloads, Czech, and many bug reports
+- [nClarke0101](https://github.com/nClarke0101): custom HTTP headers, downloads to the Apple Watch
+- [DMcWetty](https://github.com/DMcWetty): several music folders at once
+- [Dedeham](https://github.com/Dedeham): song filters that stay when you come back
+
 ## License
 
 [GPL-3.0](LICENSE) © 2026 adrbn. You may share and change Aura under the same license; a modified version you
