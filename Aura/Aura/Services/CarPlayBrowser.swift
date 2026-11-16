@@ -301,10 +301,11 @@ final class CarPlayBrowser {
             ? CarPlayArtwork.glyph("heart.fill", tint: CarPlayArtwork.accent)
             : CarPlayArtwork.glyph("music.note.list"))
         let actions = [play, shuffle]
-        let faces = CarPlayArtwork.labels([(String(localized: "Play"), "play.fill"),
-                                           (String(localized: "Shuffle"), "shuffle")])
-        let buttons = zip(faces, actions).map { face, perform in
-            CPButton(image: face) { _ in Task { await perform() } }
+        // Plain SF Symbols the car draws itself, crisp at its own scale: a picture of icon plus
+        // text came out blurry and faint on car screens.
+        let symbols = ["play.fill", "shuffle"]
+        let buttons = zip(symbols, actions).map { symbol, perform in
+            CPButton(image: UIImage(systemName: symbol) ?? UIImage()) { _ in Task { await perform() } }
         }
         // A mix's or playlist's line is a description: it reads whole in the body, where the
         // subtitle would cut it to one line.
