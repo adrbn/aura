@@ -224,14 +224,21 @@ struct MacLyricsSheet: View {
             // Scrolling by hand suspends the follow. Without this the next playback tick
             // would yank the sheet straight back to the sung line, making it impossible to
             // read ahead or look back.
+            // While browsing, every line shows plainly, as on the iPhone; two seconds after
+            // the scroll stops the sheet goes back to the sung line.
             .onScrollPhaseChange { _, phase in
-                guard phase == .interacting || phase == .decelerating else { return }
-                browsing = true
                 browsingTimeout?.cancel()
-                browsingTimeout = Task {
-                    try? await Task.sleep(for: .seconds(5))
-                    guard !Task.isCancelled else { return }
-                    browsing = false
+                if phase == .interacting || phase == .decelerating {
+                    withAnimation(.easeOut(duration: 0.2)) { browsing = true }
+                } else if phase == .idle, browsing {
+                    browsingTimeout = Task {
+                        try? await Task.sleep(for: .seconds(2))
+                        guard !Task.isCancelled else { return }
+                        withAnimation(Self.lineChange) {
+                            browsing = false
+                            if let currentIndex { proxy.scrollTo(currentIndex, anchor: .center) }
+                        }
+                    }
                 }
             }
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
@@ -283,8 +290,8 @@ struct MacLyricsSheet: View {
                     .opacity(0.6)
             }
         }
-            .foregroundStyle(.white.opacity(synced ? opacity(distance) : 0.8))
-            .blur(radius: synced ? blur(distance) : 0)
+            .foregroundStyle(.white.opacity(synced && !browsing ? opacity(distance) : 0.8))
+            .blur(radius: synced && !browsing ? blur(distance) : 0)
             // Flattened into one GPU layer before the scale, so the line change animates a
             // texture instead of laying out and blurring 80pt text again on every frame.
             .drawingGroup()
