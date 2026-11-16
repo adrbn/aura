@@ -4,6 +4,16 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.4] — 2026-11-16
+
+- Aura speaks Czech.
+- Favorite Songs: the menu at the top right downloads them all, and Keep Downloaded downloads every song liked later right away.
+- Now Playing: scrolling down the queue under the artwork folds the timeline and controls away to show more songs; back at the top of the queue, they return.
+- CarPlay: the Play and Shuffle buttons atop an album, playlist or mix are sharp system icons.
+- Pitch up and down reach the device you are controlling from another one.
+- Mac: scrolling the lyrics shows every line, and the sung line comes back two seconds after you stop.
+- Fixed: Play and Shuffle in Favorite Songs start playback again, the Now Playing menu no longer blinks while open, and Tab Bar Order shows one drag handle per row.
+
 ## [1.6.3] — 2026-11-16 (sent to App Review)
 
 - Aura speaks Swedish, Portuguese (Portugal and Brazil), Polish, Japanese, Korean and Traditional Chinese, 16 languages in all.
