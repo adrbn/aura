@@ -1086,6 +1086,7 @@
 				ja,
 				ko,
 				"zh-Hant",
+				cs,
 			);
 			mainGroup = E10000050000000000000001;
 			productRefGroup = E10000050000000000000009 /* Products */;
