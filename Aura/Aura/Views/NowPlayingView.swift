@@ -68,9 +68,6 @@ struct NowPlayingView: View {
     @State private var yearRowHeight: CGFloat = 0
     @State private var transportHeight: CGFloat = 0
     private var controlsHeight: CGFloat { yearRowHeight + transportHeight }
-    /// A cover and its title change songs on an ease-in-out curve: they start and settle
-    /// gently, where the spring before landed with a small overshoot.
-    private static let coverChange = Animation.easeInOut(duration: 0.45)
     private var hideControls: Bool { showLyrics && queueInline && queueScrolled }
     /// The Duo's gap above the playback source with the artwork showing, kept with lyrics open.
     @State private var duoSourceGap: CGFloat = 0
@@ -622,7 +619,7 @@ struct NowPlayingView: View {
                 insertion: .offset(x: CGFloat(player.songChangeDirection.signum()) * w).combined(with: .opacity),
                 removal: .opacity
             ))
-            .animation(Self.coverChange, value: song.id)
+            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
             .offset(x: showLyrics ? 0 : coverDragOffset)
             // Measured before the collapsing frame below, and only while open, so the frame
             // has a real number to animate to and from rather than `nil`.
@@ -964,7 +961,7 @@ struct NowPlayingView: View {
                     removal: .opacity
                 ))
         }
-        .animation(Self.coverChange, value: song.id)
+        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
         // The lyrics header's title, drawn BEHIND the cover and pinned from its first frame
         // to where it ends up. The cover's top-left corner never moves — it shrinks into
         // it — so while the cover is large this spot is under it, and as the cover
@@ -993,7 +990,7 @@ struct NowPlayingView: View {
         // title only stays hidden if it shrinks with the cover. Opened while paused, the
         // cover starts at 85% and an unscaled title would already poke out above it.
         .scaleEffect(showLyrics || player.isPlaying ? 1.0 : 0.85)
-        .animation(.easeInOut(duration: 0.4), value: player.isPlaying)
+        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
     }
 
     /// Shows or hides a translation under each line. Only there when the lyrics are in
