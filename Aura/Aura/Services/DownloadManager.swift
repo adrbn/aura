@@ -20,6 +20,9 @@ final class DownloadManager: NSObject {
 
     /// Playlists kept downloaded: the songs added to them download whenever Aura comes to
     /// the front with the server in reach.
+    /// Stands for Favorite Songs among the kept playlists.
+    static let favoritesId = "aura.favorites"
+
     private(set) var keptPlaylistIds = Set(UserDefaults.standard.stringArray(forKey: "aura.keptPlaylists") ?? [])
 
     func setKeepDownloaded(_ playlistId: String, _ keep: Bool) {
@@ -34,11 +37,18 @@ final class DownloadManager: NSObject {
         guard !keptPlaylistIds.isEmpty, !AppSettings.shared.offlineMode, ServerManager.shared.hasNetwork,
               let server = ServerManager.shared.currentServer else { return }
         for id in keptPlaylistIds {
-            guard !isGroupDownloading(id),
-                  let playlist = try? await SubsonicClient.shared.getPlaylist(server: server, id: id) else { continue }
-            let missing = (playlist.entry ?? []).filter { !isDownloaded($0.id) }
+            guard !isGroupDownloading(id) else { continue }
+            let name: String, songs: [Song]
+            if id == Self.favoritesId {
+                guard let starred = try? await SubsonicClient.shared.getStarred2(server: server) else { continue }
+                (name, songs) = ("Favorites", starred.song ?? [])
+            } else {
+                guard let playlist = try? await SubsonicClient.shared.getPlaylist(server: server, id: id) else { continue }
+                (name, songs) = (playlist.name, playlist.entry ?? [])
+            }
+            let missing = songs.filter { !isDownloaded($0.id) }
             guard !missing.isEmpty else { continue }
-            AppLogger.shared.log("⬇️ Kept playlist \(playlist.name): \(missing.count) new songs")
+            AppLogger.shared.log("⬇️ Kept playlist \(name): \(missing.count) new songs")
             await downloadAlbum(missing, groupId: id)
         }
     }

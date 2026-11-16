@@ -448,6 +448,23 @@ struct SongsListView: View {
                     Image(systemName: "arrow.up.arrow.down")
                 }
             }
+            if fetchType == .starred {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        favoritesDownloadButton
+                        Toggle(isOn: Binding(
+                            get: { DownloadManager.shared.keptPlaylistIds.contains(DownloadManager.favoritesId) },
+                            set: { DownloadManager.shared.setKeepDownloaded(DownloadManager.favoritesId, $0) }
+                        )) {
+                            Label("Keep Downloaded", systemImage: "arrow.down.circle.dotted")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .rotationEffect(.degrees(90))
+                    }
+                    .tint(.primary)
+                }
+            }
         }
         .task { await loadSongs() }
         .refreshable {
@@ -467,6 +484,25 @@ struct SongsListView: View {
         .onChange(of: searchText) { _, _ in
             displayLimit = 44
             resort()
+        }
+    }
+
+    /// Favorites' Download entry, in the same three states as a playlist's.
+    @ViewBuilder private var favoritesDownloadButton: some View {
+        let downloads = DownloadManager.shared
+        if downloads.isGroupDownloading(DownloadManager.favoritesId) {
+            Button(role: .destructive) { downloads.cancelGroupDownload(DownloadManager.favoritesId) } label: {
+                Label("Cancel Download", systemImage: "xmark.circle")
+            }
+        } else if !songs.isEmpty, downloads.allDownloaded(songs.map(\.id)) {
+            Button {} label: { Label("Downloaded", systemImage: "checkmark.circle.fill") }
+                .disabled(true)
+        } else {
+            Button {
+                Task { await downloads.downloadAlbum(songs, groupId: DownloadManager.favoritesId) }
+            } label: {
+                Label("Download", systemImage: "arrow.down.circle")
+            }
         }
     }
 

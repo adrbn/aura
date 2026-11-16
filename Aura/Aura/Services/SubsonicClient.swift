@@ -186,7 +186,13 @@ actor SubsonicClient {
         }
         do {
             _ = try await fetchData(from: url)
-            if type == .song { StarQueue.shared.sent(id) }
+            if type == .song {
+                StarQueue.shared.sent(id)
+                // A new favorite downloads right away when Favorites are kept downloaded.
+                if DownloadManager.shared.keptPlaylistIds.contains(DownloadManager.favoritesId) {
+                    Task { await DownloadManager.shared.syncKeptPlaylists() }
+                }
+            }
         } catch where type == .song {
             // The server can't be reached: the song is a favourite here, and there once it's back.
             StarQueue.shared.enqueue(id, starred: true)
