@@ -8,6 +8,8 @@ struct QueueView: View {
     @State private var undoTimer: Timer?
     /// Drawn beside the player on an iPhone Duo instead of in its own sheet.
     var embedded = false
+    /// Told whether the reader is heading down the list (true) or back up (false).
+    var onScrollDown: ((Bool) -> Void)? = nil
 
     var body: some View {
         if embedded {
@@ -325,6 +327,11 @@ extension QueueView {
             // The top one is short: the head sits right above the first row.
             .contentMargins(.top, 10, for: .scrollContent)
             .contentMargins(.bottom, 48, for: .scrollContent)
+            .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y + $0.contentInsets.top } action: { old, new in
+                if new < 24 { onScrollDown?(false) }
+                else if new - old > 4 { onScrollDown?(true) }
+                else if old - new > 4 { onScrollDown?(false) }
+            }
             .mask {
                 VStack(spacing: 0) {
                     LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)

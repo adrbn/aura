@@ -63,6 +63,15 @@ struct NowPlayingView: View {
     /// Height of the artwork-plus-title region, captured from the normal state and then held
     /// constant so switching to lyrics cannot move anything above or below it.
     @State private var mediaRegionHeight: CGFloat?
+    /// The inline queue scrolled down: the timeline and transport fold away to show more of it.
+    @State private var queueScrolled = false
+    @State private var yearRowHeight: CGFloat = 0
+    @State private var transportHeight: CGFloat = 0
+    private var controlsHeight: CGFloat { yearRowHeight + transportHeight }
+    /// A cover and its title change songs on an ease-in-out curve: they start and settle
+    /// gently, where the spring before landed with a small overshoot.
+    private static let coverChange = Animation.easeInOut(duration: 0.45)
+    private var hideControls: Bool { showLyrics && queueInline && queueScrolled }
     /// The Duo's gap above the playback source with the artwork showing, kept with lyrics open.
     @State private var duoSourceGap: CGFloat = 0
     /// The Duo's gap above the toolbar with the artwork showing, kept with lyrics open.
@@ -233,6 +242,7 @@ struct NowPlayingView: View {
             }
         }
         // Opening the Duo with the phone's lyrics up would show them twice.
+        .onChange(of: queueInline) { _, open in if !open { queueScrolled = false } }
         .onChange(of: lyricsBeside) { _, beside in
             if beside { showLyrics = false }
         }
@@ -403,7 +413,10 @@ struct NowPlayingView: View {
 
     /// The queue under the artwork header, where the lyrics go, its rows lined up with the art.
     private var inlineQueueList: some View {
-        QueueView(embedded: true)
+        QueueView(embedded: true) { down in
+            guard down != queueScrolled else { return }
+            withAnimation(.smooth(duration: 0.3)) { queueScrolled = down }
+        }
             .frame(maxHeight: .infinity)
             .mask(queueFootFade)
             .padding(.horizontal, horizontalPadding)
@@ -609,7 +622,7 @@ struct NowPlayingView: View {
                 insertion: .offset(x: CGFloat(player.songChangeDirection.signum()) * w).combined(with: .opacity),
                 removal: .opacity
             ))
-            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
+            .animation(Self.coverChange, value: song.id)
             .offset(x: showLyrics ? 0 : coverDragOffset)
             // Measured before the collapsing frame below, and only while open, so the frame
             // has a real number to animate to and from rather than `nil`.
@@ -643,7 +656,8 @@ struct NowPlayingView: View {
             //
             // `.frame(height:)` also centres its content unless told otherwise, which pushed
             // the header down the locked box instead of pinning it to the top.
-            .frame(height: showLyrics && !duo ? mediaRegionHeight : nil, alignment: .top)
+            .frame(height: showLyrics && !duo ? mediaRegionHeight.map { $0 + (hideControls ? controlsHeight : 0) } : nil,
+                   alignment: .top)
             // On the Duo's short screens the column is a fixed height already, so the lyrics
             // take whatever the gaps around them don't need, rather than a height measured
             // from the other state that left them a sliver between two stretched gaps.
@@ -689,9 +703,13 @@ struct NowPlayingView: View {
             }
             .padding(.horizontal, horizontalPadding)
             .padding(.top, 2)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { if !hideControls { yearRowHeight = $0 } }
+            .modifier(FoldAway(hidden: hideControls))
 
             progressAndControls
                 .padding(.horizontal, horizontalPadding)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { if !hideControls { transportHeight = $0 } }
+                .modifier(FoldAway(hidden: hideControls))
 
             // Held at its artwork-mode height with lyrics open, which otherwise take it and
             // drop the timeline and transport towards the toolbar.
@@ -946,7 +964,7 @@ struct NowPlayingView: View {
                     removal: .opacity
                 ))
         }
-        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: song.id)
+        .animation(Self.coverChange, value: song.id)
         // The lyrics header's title, drawn BEHIND the cover and pinned from its first frame
         // to where it ends up. The cover's top-left corner never moves — it shrinks into
         // it — so while the cover is large this spot is under it, and as the cover
@@ -975,7 +993,7 @@ struct NowPlayingView: View {
         // title only stays hidden if it shrinks with the cover. Opened while paused, the
         // cover starts at 85% and an unscaled title would already poke out above it.
         .scaleEffect(showLyrics || player.isPlaying ? 1.0 : 0.85)
-        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: player.isPlaying)
+        .animation(.easeInOut(duration: 0.4), value: player.isPlaying)
     }
 
     /// Shows or hides a translation under each line. Only there when the lyrics are in
@@ -2171,4 +2189,16 @@ struct BackdropTone: Equatable {
 
     /// A grey cover stays grey; a pastel one keeps its hue as it darkens.
     var saturation: Double { 1 + max(0, veil - Self.plain.veil) * Self.saturationPerVeil }
+}
+
+/// Folds a row of the player to nothing while the inline queue is scrolled down.
+private struct FoldAway: ViewModifier {
+    let hidden: Bool
+    func body(content: Content) -> some View {
+        content
+            .frame(height: hidden ? 0 : nil, alignment: .top)
+            .clipped()
+            .opacity(hidden ? 0 : 1)
+            .allowsHitTesting(!hidden)
+    }
 }
