@@ -6,8 +6,11 @@ struct QueueView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var undoQueue: [Song]?
     @State private var undoTimer: Timer?
-    /// How tall the fade under the head is: none at rest, growing as the rows scroll under it.
-    @State private var topFade: CGFloat = 0
+    /// Rows have scrolled under the head: its fade shows. Flipped once, not set every frame —
+    /// a state change per frame redrew the list and broke its momentum.
+    @State private var scrolledUnder = false
+    /// The list is back near its top, where the controls come back once it stops moving.
+    @State private var nearTop = true
     /// Drawn beside the player on an iPhone Duo instead of in its own sheet.
     var embedded = false
     /// Told when the reader heads down the list (true) and when they are back at its top (false).
@@ -329,15 +332,23 @@ extension QueueView {
             .contentMargins(.top, 12, for: .scrollContent)
             .contentMargins(.bottom, 48, for: .scrollContent)
             .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y + $0.contentInsets.top } action: { old, new in
-                topFade = min(max(new, 0), 28)
-                // Back only at the top of the list, not on any scroll up.
-                if new < 24 { onScrollDown?(false) }
-                else if new - old > 4 { onScrollDown?(true) }
+                if new - old > 4, new >= 24 { onScrollDown?(true) }
+            }
+            .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 2 } action: { _, under in
+                withAnimation(.easeOut(duration: 0.2)) { scrolledUnder = under }
+            }
+            .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top < 24 } action: { _, top in
+                nearTop = top
+            }
+            // The controls come back only once the list rests at its top: brought back while it
+            // still flew, they shrank the list under it and cut its bounce dead.
+            .onScrollPhaseChange { _, phase in
+                if phase == .idle, nearTop { onScrollDown?(false) }
             }
             .mask {
                 VStack(spacing: 0) {
                     LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
-                        .frame(height: topFade)
+                        .frame(height: scrolledUnder ? 28 : 0)
                     Color.white
                 }
             }
