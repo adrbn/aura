@@ -458,10 +458,10 @@ struct OfflineAlbumCard: View {
         .contextMenu {
             Button {
                 if let first = album.songs.first {
-                    player.playSong(first, fromQueue: album.songs, startIndex: 0)
+                    player.playSong(first, fromQueue: album.songs, startIndex: 0, source: .album(id: album.id, name: album.name))
                 }
             } label: { Label("Play", systemImage: "play.fill") }
-            Button { player.playShuffled(album.songs) } label: {
+            Button { player.playShuffled(album.songs, source: .album(id: album.id, name: album.name)) } label: {
                 Label("Shuffle", systemImage: "shuffle")
             }
             Button { player.addToQueue(album.songs) } label: {

@@ -38,7 +38,7 @@ struct AlbumCardView: View {
         .contextMenu {
             Button {
                 performWithAlbumSongs { songs in
-                    player.playSong(songs[0], fromQueue: songs)
+                    player.playSong(songs[0], fromQueue: songs, source: .album(id: album.id, name: album.name))
                 }
             } label: { Label("Play", systemImage: "play.fill") }
 

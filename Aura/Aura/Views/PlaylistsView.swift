@@ -833,7 +833,7 @@ struct PlaylistsView: View {
                 guard let server = serverManager.currentServer else { return }
                 let detail = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id)
                 if let songs = detail?.entry, !songs.isEmpty {
-                    await MainActor.run { player.playSong(songs[0], fromQueue: songs) }
+                    await MainActor.run { player.playSong(songs[0], fromQueue: songs, source: .playlist(id: playlist.id, name: playlist.name)) }
                 }
             }
         } label: { Label("Play", systemImage: "play.fill") }
