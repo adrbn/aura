@@ -1139,6 +1139,11 @@ final class AudioPlayer {
         AppLogger.shared.log("▶️ Playing: \(song.title) by \(song.artist ?? "Unknown") | bitRate: \(bitRate) | id: \(song.id)")
         currentTime = 0
         duration = 0
+        // A new song starts at 0:00. Siri in CarPlay cuts our audio while it listens, and
+        // the play that ends that cut rebuilt the old song's player with a seek to where
+        // it stood; the song Siri then asked for picked that seek up and began at 1:30.
+        pendingSeekTime = nil
+        playerNeedsRebuild = false
 
         player?.pause()
         if let observer = timeObserver {
