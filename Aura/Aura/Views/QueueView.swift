@@ -9,8 +9,6 @@ struct QueueView: View {
     /// Rows have scrolled under the head: its fade shows. Flipped once, not set every frame —
     /// a state change per frame redrew the list and broke its momentum.
     @State private var scrolledUnder = false
-    /// The list is back near its top, where the controls come back once it stops moving.
-    @State private var nearTop = true
     /// Drawn beside the player on an iPhone Duo instead of in its own sheet.
     var embedded = false
     /// Told when the reader heads down the list (true) and when they are back at its top (false).
@@ -337,13 +335,9 @@ extension QueueView {
             .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 2 } action: { _, under in
                 withAnimation(.easeOut(duration: 0.2)) { scrolledUnder = under }
             }
+            // The controls come back the moment the list reaches its top, not on any scroll up.
             .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top < 24 } action: { _, top in
-                nearTop = top
-            }
-            // The controls come back only once the list rests at its top: brought back while it
-            // still flew, they shrank the list under it and cut its bounce dead.
-            .onScrollPhaseChange { _, phase in
-                if phase == .idle, nearTop { onScrollDown?(false) }
+                if top { onScrollDown?(false) }
             }
             .mask {
                 VStack(spacing: 0) {
