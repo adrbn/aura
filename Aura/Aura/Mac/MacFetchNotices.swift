@@ -18,7 +18,7 @@ struct MacFetchNotices: View {
     @State private var listing = false
 
     var body: some View {
-        let fetches = fetcher.fetches
+        let fetches = fetcher.shown
         VStack(alignment: .trailing, spacing: 8) {
             if fetches.count > 1 {
                 MacFetchGroupBubble(fetches: fetches)
@@ -41,12 +41,12 @@ struct MacFetchNotices: View {
         }
         .animation(.smooth(duration: 0.35), value: listing)
         .animation(.spring(duration: 0.45, bounce: 0.2), value: fetches.map(\.id))
-        .onChange(of: fetcher.fetches.map(\.id)) { old, new in
+        .onChange(of: fetcher.shown.map(\.id)) { old, new in
             for id in new where !old.contains(id) { show(id) }
         }
         // Done or stuck: worth a look without having to go and find it.
-        .onChange(of: fetcher.fetches.map { "\($0.id)\($0.stage)" }) { _, _ in
-            for fetch in fetcher.fetches where !fetch.isActive && !open.contains(fetch.id) { show(fetch.id) }
+        .onChange(of: fetcher.shown.map { "\($0.id)\($0.stage)" }) { _, _ in
+            for fetch in fetcher.shown where !fetch.isActive && !open.contains(fetch.id) { show(fetch.id) }
         }
     }
 
@@ -144,8 +144,9 @@ private struct MacFetchNotice: View {
             if isOpen, fetch.stage == .ready { Task { await play() } } else { reopen() }
         }
         .contextMenu {
-            Button(role: fetch.isActive ? .destructive : nil) { fetcher.dismiss(fetch.id) } label: {
-                Label(fetch.isActive ? "Stop" : "Dismiss", systemImage: "xmark")
+            // Only the card goes: the fetch carries on, on the server.
+            Button { fetch.isActive ? fetcher.hide(fetch.id) : fetcher.dismiss(fetch.id) } label: {
+                Label(fetch.isActive ? "Hide" : "Dismiss", systemImage: fetch.isActive ? "eye.slash" : "xmark")
             }
         }
         .accessibilityElement(children: .combine)
@@ -213,7 +214,7 @@ private struct MacFetchNotice: View {
 
     static func clearFinished() {
         let fetcher = ReleaseFetcher.shared
-        for fetch in fetcher.fetches where !fetch.isActive { fetcher.dismiss(fetch.id) }
+        for fetch in fetcher.shown where !fetch.isActive { fetcher.dismiss(fetch.id) }
     }
 }
 
@@ -228,7 +229,7 @@ struct MacFetchPanelView: View {
             HStack {
                 Text("Get It").font(.system(size: 20, weight: .bold))
                 Spacer()
-                if fetcher.fetches.contains(where: { !$0.isActive }) {
+                if fetcher.shown.contains(where: { !$0.isActive }) {
                     Button("Clear Finished") { MacFetchPanel.clearFinished() }
                         .buttonStyle(MacPressStyle())
                         .font(.callout.weight(.medium))
@@ -240,13 +241,13 @@ struct MacFetchPanelView: View {
             .padding(.trailing, 36)
             .padding(.bottom, 12)
             Rectangle().fill(.primary.opacity(0.06)).frame(height: 1)
-            if fetcher.fetches.isEmpty {
+            if fetcher.shown.isEmpty {
                 ContentUnavailableView("Nothing on its way", systemImage: "arrow.down.circle")
                     .frame(maxHeight: .infinity)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 2) {
-                        ForEach(fetcher.fetches) { MacFetchPanelRow(fetch: $0) }
+                        ForEach(fetcher.shown) { MacFetchPanelRow(fetch: $0) }
                     }
                     .padding(10)
                 }
@@ -272,7 +273,7 @@ struct MacFetchPanelView: View {
         .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.primary.opacity(0.1)))
         .shadow(color: .black.opacity(0.5), radius: 40, y: 16)
         .tint(Color.appAccent)
-        .animation(.smooth(duration: 0.3), value: fetcher.fetches.map(\.id))
+        .animation(.smooth(duration: 0.3), value: fetcher.shown.map(\.id))
     }
 }
 
@@ -311,13 +312,13 @@ private struct MacFetchPanelRow: View {
             default:
                 FetchStepsRing(fetch: fetch, tint: accentColor).frame(width: 28, height: 28)
             }
-            Button { fetcher.dismiss(fetch.id) } label: {
+            Button { fetch.isActive ? fetcher.hide(fetch.id) : fetcher.dismiss(fetch.id) } label: {
                 Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary)
                     .frame(width: 24, height: 24)
                     .background(.primary.opacity(hovering ? 0.08 : 0), in: Circle())
             }
             .buttonStyle(MacPressStyle())
-            .help(fetch.isActive ? "Stop" : "Dismiss")
+            .help(fetch.isActive ? "Hide" : "Dismiss")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -325,8 +326,8 @@ private struct MacFetchPanelRow: View {
         .onHover { hovering = $0 }
         .contextMenu {
             if fetch.stage == .failed { Button("Retry") { fetcher.retry(fetch.id) } }
-            Button(role: fetch.isActive ? .destructive : nil) { fetcher.dismiss(fetch.id) } label: {
-                Text(fetch.isActive ? "Stop" : "Dismiss")
+            Button { fetch.isActive ? fetcher.hide(fetch.id) : fetcher.dismiss(fetch.id) } label: {
+                Text(fetch.isActive ? "Hide" : "Dismiss")
             }
         }
     }

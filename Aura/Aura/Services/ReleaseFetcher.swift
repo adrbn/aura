@@ -228,6 +228,9 @@ final class ReleaseFetcher {
         start(id)
     }
 
+    /// The fetches whose card is still up.
+    var shown: [ReleaseFetch] { fetches.filter { !hidden.contains($0.id) } }
+
     /// Puts the card away; the fetch goes on.
     func hide(_ id: String) {
         hidden.insert(id)

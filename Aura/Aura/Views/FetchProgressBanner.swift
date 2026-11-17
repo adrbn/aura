@@ -25,8 +25,12 @@ struct FetchProgressBanner: View {
         // Songs saving to the iPhone first, then the fetches in the order they were asked
         // for, newest first — not running-first like `visible`, which would reshuffle the
         // row under the finger as fetches finish.
-        let items = (DownloadManager.shared.isDownloading ? [DeckItem.download] : [])
-            + fetcher.fetches.filter { !fetcher.hidden.contains($0.id) }.map(DeckItem.fetch)
+        #if os(iOS)
+        let saving = DownloadManager.shared.isDownloading ? [DeckItem.download] : []
+        #else
+        let saving: [DeckItem] = []
+        #endif
+        let items = saving + fetcher.shown.map(DeckItem.fetch)
         FetchDeck(items: items, selected: $selected, openDownloads: openDownloads)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
             .padding(.bottom, items.isEmpty ? 0 : bottomGap)
@@ -79,7 +83,9 @@ private struct FetchDeck: View {
                 Group {
                     switch item {
                     case .download:
+                        #if os(iOS)
                         DownloadIndicatorView().onTapGesture(perform: openDownloads)
+                        #endif
                     case .fetch(let fetch):
                         FetchCard(fetch: fetch,
                                   position: items.count > 1 ? "\(offset + 1)/\(items.count)" : nil)
