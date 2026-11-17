@@ -72,15 +72,16 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                // Download indicator
+                // Download indicator; the sideload build shows it first in the fetch row.
+                #if APPSTORE_BUILD
                 if DownloadManager.shared.isDownloading {
                     DownloadIndicatorView()
                         .padding(.bottom, audioPlayer.hasQueue ? 0 : tabBarGap - 8)
                         .onTapGesture { showDownloadManager = true }
                 }
-
-                #if !APPSTORE_BUILD
-                FetchProgressBanner(bottomGap: audioPlayer.hasQueue ? 6 : tabBarGap, height: $fetchCardHeight)
+                #else
+                FetchProgressBanner(bottomGap: audioPlayer.hasQueue ? 6 : tabBarGap, height: $fetchCardHeight,
+                                    openDownloads: { showDownloadManager = true })
                     .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.fetches.map(\.id))
                 #endif
 

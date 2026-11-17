@@ -72,12 +72,15 @@ final class ReleaseFetcher {
     /// Releases the server has in part, from songs fetched one by one: the radar keeps
     /// listing them so the rest can be had, until the server has them whole.
     private(set) var picked: Set<String> = []
+    /// Fetches whose card was put away: they carry on, out of sight.
+    private(set) var hidden: Set<String> = []
     @ObservationIgnored private var isSettling = false
     @ObservationIgnored private var tasks: [String: Task<Void, Never>] = [:]
     @ObservationIgnored private let activities = ReleaseFetchActivities()
 
     private static let storeKey = "release_fetches_v1"
     private static let pickedKey = "release_fetch_picked_v1"
+    private static let hiddenKey = "release_fetch_hidden_v1"
     /// Stop listening for more answers once a complete copy from a free peer is in hand.
     private static let searchWindow: TimeInterval = 25
     private static let earlyPick: TimeInterval = 6
@@ -114,6 +117,8 @@ final class ReleaseFetcher {
         // or forgotten — have nobody left to end them.
         activities.endAll(except: Set(fetches.filter(\.isActive).map(\.id)))
         picked = Set(UserDefaults.standard.stringArray(forKey: Self.pickedKey) ?? [])
+        hidden = Set(UserDefaults.standard.stringArray(forKey: Self.hiddenKey) ?? [])
+            .intersection(fetches.map(\.id))
         // Whatever was under way when the app last quit picks up where it was.
         for fetch in fetches where fetch.isActive { start(fetch.id) }
         // A finished card restored here lost the timer that would have let it go.
@@ -221,6 +226,12 @@ final class ReleaseFetcher {
             if $0.downloaded != nil { $0.downloaded = Date() } else { $0.tried = [] }
         }
         start(id)
+    }
+
+    /// Puts the card away; the fetch goes on.
+    func hide(_ id: String) {
+        hidden.insert(id)
+        UserDefaults.standard.set(Array(hidden), forKey: Self.hiddenKey)
     }
 
     func dismiss(_ id: String) {
@@ -464,8 +475,8 @@ final class ReleaseFetcher {
                 lastScan = Date()
             }
             update(id) { _ in }
-            let quick = waited > Self.firstScan || ImportPace.estimate < 5 * 60
-            try? await Task.sleep(for: .seconds(quick ? 30 : 60))
+            // One search a fetch: cheap enough that the card goes the moment the song is in.
+            try? await Task.sleep(for: .seconds(10))
         }
     }
 
@@ -748,6 +759,11 @@ private final class ReleaseFetchActivities {
             running[fetch.id] = activity
             Task { await activity.update(content) }
         } else if ActivityAuthorizationInfo().areActivitiesEnabled {
+            // The card let go while the app slept is ended but still on the Lock Screen
+            // until its countdown runs out; the new one replaces it rather than joining it.
+            for old in Activity<ReleaseFetchAttributes>.activities where old.attributes.releaseId == fetch.id {
+                Task { await old.end(nil, dismissalPolicy: .immediate) }
+            }
             let attributes = ReleaseFetchAttributes(releaseId: fetch.id, title: fetch.title,
                                                     artist: fetch.release.artist.name)
             running[fetch.id] = try? Activity.request(attributes: attributes, content: content, pushType: nil)

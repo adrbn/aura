@@ -16,17 +16,21 @@ struct FetchProgressBanner: View {
     let bottomGap: CGFloat
     /// The card's own height, so the pages behind it can end above it.
     @Binding var height: CGFloat
+    /// Tapping the downloads card: the downloads screen.
+    let openDownloads: () -> Void
     @State private var fetcher = ReleaseFetcher.shared
     @State private var selected: String?
 
     var body: some View {
-        // In the order they were asked for, newest first — not running-first like
-        // `visible`, which would reshuffle the row under the finger as fetches finish.
-        let fetches = fetcher.fetches
-        FetchDeck(fetches: fetches, selected: $selected)
+        // Songs saving to the iPhone first, then the fetches in the order they were asked
+        // for, newest first — not running-first like `visible`, which would reshuffle the
+        // row under the finger as fetches finish.
+        let items = (DownloadManager.shared.isDownloading ? [DeckItem.download] : [])
+            + fetcher.fetches.filter { !fetcher.hidden.contains($0.id) }.map(DeckItem.fetch)
+        FetchDeck(items: items, selected: $selected, openDownloads: openDownloads)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
-            .padding(.bottom, fetches.isEmpty ? 0 : bottomGap)
-            .onChange(of: fetches.map(\.id)) { old, new in
+            .padding(.bottom, items.isEmpty ? 0 : bottomGap)
+            .onChange(of: items.map(\.id)) { old, new in
                 withAnimation(FetchDeck.settle) {
                     // One just asked for comes to the front; one that's gone hands the front
                     // over to its neighbour.
@@ -41,25 +45,46 @@ struct FetchProgressBanner: View {
     }
 }
 
+/// A card of the row: the songs saving to the iPhone, or a release being fetched.
+private enum DeckItem: Identifiable {
+    case download
+    case fetch(ReleaseFetch)
+
+    var id: String {
+        switch self {
+        case .download: "downloads-to-iphone"
+        case .fetch(let fetch): fetch.id
+        }
+    }
+}
+
 private struct FetchDeck: View {
-    let fetches: [ReleaseFetch]
+    let items: [DeckItem]
     @Binding var selected: String?
+    let openDownloads: () -> Void
     @State private var drag: CGFloat = 0
     @State private var width: CGFloat = 1
 
     static let settle = Animation.spring(response: 0.42, dampingFraction: 0.72)
 
-    private var index: Int { fetches.firstIndex { $0.id == selected } ?? 0 }
+    private var index: Int { items.firstIndex { $0.id == selected } ?? 0 }
 
     var body: some View {
         ZStack(alignment: .top) {
-            ForEach(Array(fetches.enumerated()), id: \.element.id) { offset, fetch in
+            ForEach(Array(items.enumerated()), id: \.element.id) { offset, item in
                 // 0 on screen, -1 off to the left, 1 waiting off to the right; a swipe
                 // carries the whole row with the finger.
                 let place = CGFloat(offset - index) + drag / max(width, 1)
                 let onScreen = offset == index
-                FetchCard(fetch: fetch,
-                          position: fetches.count > 1 ? "\(offset + 1)/\(fetches.count)" : nil)
+                Group {
+                    switch item {
+                    case .download:
+                        DownloadIndicatorView().onTapGesture(perform: openDownloads)
+                    case .fetch(let fetch):
+                        FetchCard(fetch: fetch,
+                                  position: items.count > 1 ? "\(offset + 1)/\(items.count)" : nil)
+                    }
+                }
                     .offset(x: place * width)
                     // Only a neighbour ever slides into view; the rest keep out of the way.
                     .opacity(abs(place) < 1.5 ? 1 : 0)
@@ -81,7 +106,7 @@ private struct FetchDeck: View {
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = max($0, 1) }
-        .gesture(swipe, including: fetches.count > 1 ? .all : .subviews)
+        .gesture(swipe, including: items.count > 1 ? .all : .subviews)
     }
 
     private var swipe: some Gesture {
@@ -91,7 +116,7 @@ private struct FetchDeck: View {
                 // Sideways only: a mostly vertical drag is left alone.
                 guard drag != 0 || abs(x) > abs(value.translation.height) else { return }
                 // Past either end the row gives a little, then springs back.
-                let pastEnd = (index == 0 && x > 0) || (index == fetches.count - 1 && x < 0)
+                let pastEnd = (index == 0 && x > 0) || (index == items.count - 1 && x < 0)
                 drag = pastEnd ? x / (1 + abs(x) / 90) : x
             }
             .onEnded { value in
@@ -103,10 +128,10 @@ private struct FetchDeck: View {
     }
 
     private func settle(on target: Int) {
-        let clamped = min(max(target, 0), fetches.count - 1)
-        guard fetches.indices.contains(clamped) else { return }
+        let clamped = min(max(target, 0), items.count - 1)
+        guard items.indices.contains(clamped) else { return }
         withAnimation(Self.settle) {
-            selected = fetches[clamped].id
+            selected = items[clamped].id
             drag = 0
         }
     }
@@ -166,8 +191,9 @@ private struct FetchCard: View {
             if let link = fetch.release.link.flatMap(URL.init(string:)) {
                 Button { openURL(link) } label: { Label("Open in Deezer", systemImage: "arrow.up.right") }
             }
-            Button(role: fetch.isActive ? .destructive : nil) { fetcher.dismiss(fetch.id) } label: {
-                Label(fetch.isActive ? "Stop" : "Dismiss", systemImage: "xmark")
+            // Only the card goes: the fetch carries on.
+            Button { fetch.isActive ? fetcher.hide(fetch.id) : fetcher.dismiss(fetch.id) } label: {
+                Label(fetch.isActive ? "Hide" : "Dismiss", systemImage: fetch.isActive ? "eye.slash" : "xmark")
             }
         }
         .foregroundStyle(.primary)
@@ -217,14 +243,14 @@ private struct FetchCard: View {
                 // Past the server's usual pace, the wait may be for nothing — a release filed
                 // under another name, say: it can be let go without a long press.
                 if fetch.stage == .importing, let end = fetch.importEnd, end < .now {
-                    Button { fetcher.dismiss(fetch.id) } label: {
+                    Button { fetcher.hide(fetch.id) } label: {
                         Image(systemName: "xmark")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(.secondary)
                             .frame(width: 26, height: 30)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Dismiss")
+                    .accessibilityLabel("Hide")
                 }
             }
         }
