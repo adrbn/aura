@@ -343,6 +343,11 @@ CAPTURES = {  # name: (capture, crop box, width in px)
     "card-radar.jpg": ("Aura Screenshots 2026-09-26/2-radar.png", BELOW_BAR, CARD_PX),
     "card-offline.jpg": ("Aura Screenshots 2026-10-01/7-offline-raw.png", BELOW_BAR, CARD_PX),
     "card-now-playing.jpg": ("Aura Screenshots 2026-10-01/1-now-playing-raw.png", FULL, 240),
+    # the hero's other screens: the Mac window, and iPad captures from the App Store shoot
+    "mac-home.jpg": ("Aura Screenshots 2026-11-17/mac-home.jpg", (0, 0, 1389, 868), 1040),
+    "ipad-playlists.jpg": ("tools/app-store-shots/ipad/out-1.6/7-playlists.png", (0, 0, 2064, 2752), 420),
+    "ipad-now-playing.jpg": ("tools/app-store-shots/ipad/out-1.6/5-np.png", (0, 0, 2064, 2752), 420),
+    "ipad-lyrics.jpg": ("tools/app-store-shots/ipad/out-1.6/6-lyrics.png", (0, 0, 2064, 2752), 420),
 }
 
 
@@ -388,40 +393,63 @@ def crossfade(layers, T, fade=1.0):
     return out
 
 
-# --- hero: two iPhones and an Apple Watch, real captures crossfading inside them ---------------------------
+# --- hero: Aura on every screen it runs on, real captures crossfading inside them -----------------------------
 PHONE_W, PHONE_H, PHONE_R, PHONE_BEZEL = 230, 500, 33, 9   # 1206 × 2622 captures
 WATCH_W, WATCH_H = 150, 179                                # 416 × 496 renders
 
 
-def iphone(uid, x, y, light, inner):
-    w, h, b = PHONE_W, PHONE_H, PHONE_BEZEL
+def iphone(uid, x, y, light, inner, w=PHONE_W, h=PHONE_H):
+    k = w / PHONE_W
+    b, r = PHONE_BEZEL * k, PHONE_R * k
     side = "#BDBDC3" if light else "#2C2C2F"
-    buttons = (f'<rect x="{x - 3}" y="{y + 96}" width="4" height="24" rx="1.5" fill="{side}"/>'
-               f'<rect x="{x - 3}" y="{y + 134}" width="4" height="44" rx="1.5" fill="{side}"/>'
-               f'<rect x="{x + w + 2 * b - 1}" y="{y + 144}" width="4" height="66" rx="1.5" fill="{side}"/>')
-    island = f'<rect x="{w / 2 - 36}" y="11" width="72" height="21" rx="10.5" fill="#000"/>'
-    return buttons + shell(uid, x, y, w, h, PHONE_R, b, light, inner + island)
+    buttons = (f'<rect x="{x - 3}" y="{y + 96 * k:.1f}" width="3.5" height="{24 * k:.1f}" rx="1.5" fill="{side}"/>'
+               f'<rect x="{x - 3}" y="{y + 134 * k:.1f}" width="3.5" height="{44 * k:.1f}" rx="1.5" fill="{side}"/>'
+               f'<rect x="{x + w + 2 * b - 0.5:.1f}" y="{y + 144 * k:.1f}" width="3.5" height="{66 * k:.1f}" rx="1.5" fill="{side}"/>')
+    island = f'<rect x="{w / 2 - 36 * k:.1f}" y="{11 * k:.1f}" width="{72 * k:.1f}" height="{21 * k:.1f}" rx="{10.5 * k:.1f}" fill="#000"/>'
+    return buttons + shell(uid, x, y, w, h, r, b, light, inner + island)
+
+
+def mac(uid, x, y, w, h, light, inner):
+    """A MacBook: the lid around a w×h screen, and the base under it."""
+    b = 10
+    base_top, base_bot = ("#E4E4E8", "#B9B9BF") if light else ("#3A3A3D", "#1B1B1D")
+    bw, bx, by = w + 2 * b + 64, x - 32, y + h + 2 * b
+    base = (f'<linearGradient id="{uid}bs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{base_top}"/>'
+            f'<stop offset="1" stop-color="{base_bot}"/></linearGradient>'
+            f'<path d="M{bx} {by}h{bw}v6q0 6-8 7H{bx + 8}q-8-1-8-7z" fill="url(#{uid}bs)"/>'
+            f'<rect x="{bx + bw / 2 - 40}" y="{by}" width="80" height="4" rx="2" fill="#000" fill-opacity=".25"/>')
+    return shell(uid, x, y, w, h, 6, b, light, inner) + base
 
 
 def hero(light):
     uid = "hl" if light else "hd"
-    W, H, T = 860, 560, 18.0
-    pic = {k: data_uri(SRC / f"phone-{k}.jpg") for k in ("now-playing", "lyrics", "home", "radio", "offline")}
-    # The watch app's own Now Playing page, drawn by scripts/watch-screenshots.sh around the same song
-    # (WATCH_COVER / WATCH_TITLE / WATCH_ARTIST), so the wrist and the phone agree.
-    wpic = data_uri(SRC / "watch-now-playing.jpg")
-    py = (H - PHONE_H - 2 * PHONE_BEZEL) / 2
-    gap, wgap = 36, 56
-    x1 = (W - (2 * (PHONE_W + 2 * PHONE_BEZEL) + gap + wgap + WATCH_W + 16 + 7)) / 2
-    x2 = x1 + PHONE_W + 2 * PHONE_BEZEL + gap
-    xw = x2 + PHONE_W + 2 * PHONE_BEZEL + wgap
-    phone_pic = lambda k: picture(pic[k], PHONE_W, PHONE_H)
-    body = iphone(uid + "a", x1, py, light, crossfade([phone_pic("now-playing"), phone_pic("lyrics")], T))
-    body += iphone(uid + "b", x2, py, light, crossfade([phone_pic(k) for k in ("home", "radio", "offline")], T))
-    body += watch(uid + "w", xw, H / 2 - (WATCH_H + 16) / 2, WATCH_W, WATCH_H, light,
-                  picture(wpic, WATCH_W, WATCH_H))
-    return svg(W, H, body, "Aura on two iPhones and an Apple Watch: Now Playing, synced lyrics, Home, a radio and "
-                           "an album ready offline, captured from the app")
+    W, H, T = 860, 520, 18.0
+    src = lambda n: data_uri(SRC / n)
+    floor = 488                                      # every device stands on this line
+    # MacBook at the back, in the middle
+    mw, mh = 520, round(520 * 868 / 1389)
+    mx, my = (W - mw - 20) / 2, 34
+    body = mac(uid + "m", mx, my, mw, mh, light, picture(src("mac-home.jpg"), mw, mh))
+    # iPad, front left
+    iw, ih = 196, round(196 * 2752 / 2064)
+    ipad_pics = [picture(src(f"ipad-{k}.jpg"), iw, ih) for k in ("playlists", "now-playing", "lyrics")]
+    body += shell(uid + "i", 36, floor - ih - 20, iw, ih, 14, 10, light, crossfade(ipad_pics, T))
+    # iPhone Duo, open, front right of the Mac
+    dw, dh = 236, round(236 * 619 / 880)
+    duo_pics = [picture(src(f"duo-{k}.jpg"), dw, dh) for k in ("now-playing", "album")]
+    body += shell(uid + "d", 470, floor - dh - 16, dw, dh, 12, 8, light, crossfade(duo_pics, T))
+    # iPhone, far right
+    pw, ph = 128, round(128 * PHONE_H / PHONE_W)
+    k = pw / PHONE_W
+    phone_pics = [picture(src(f"phone-{n}.jpg"), pw, ph) for n in ("now-playing", "lyrics", "home")]
+    body += iphone(uid + "p", W - 36 - pw - 2 * PHONE_BEZEL * k, floor - ph - 2 * PHONE_BEZEL * k, light,
+                   crossfade(phone_pics, T), pw, ph)
+    # Apple Watch, in front between the iPad and the Duo
+    ww, wh = 92, round(92 * WATCH_H / WATCH_W)
+    body += watch(uid + "w", 300, floor - wh - 16 - 18, ww, wh, light,
+                  picture(src("watch-now-playing.jpg"), ww, wh), band=18)
+    return svg(W, H, body, "Aura on a Mac, an iPad, an open iPhone Duo, an iPhone and an Apple Watch: Home, Now "
+                           "Playing, synced lyrics and an album, captured from the app")
 
 
 # --- cards (portrait, like the app's screens) ----------------------------------------------------------------

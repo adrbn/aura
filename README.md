@@ -18,7 +18,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 <br><br>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura on two iPhones and an Apple Watch, captured from the app: Now Playing and synced lyrics, Home, a radio and an album" width="600">
+  <img src="docs/assets/aura-hero.svg" alt="Aura on a Mac, an iPad, an Apple Watch, an open iPhone Duo and an iPhone, captured from the app: Home, playlists, Now Playing, synced lyrics and an album" width="600">
 </picture>
 <br><br>
 
