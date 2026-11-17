@@ -570,12 +570,13 @@ final class AudioPlayer {
                 guard self.remote == nil, !self.isPlaying else { return }
                 let index = songs.firstIndex { $0.id == remote.current } ?? 0
                 let position = TimeInterval(remote.position ?? 0) / 1000
+                let source = Self.sourceOfResumed(songs, keeping: self.queue, self.playbackSource)
                 self.currentSong = songs[index]
                 self.queue = songs
                 self.originalQueue = songs
                 self.queueIndex = index
                 self.userQueue = []
-                self.playbackSource = .unknown
+                self.playbackSource = source
                 self.autoplayFromIndex = nil
                 self.currentTime = position
                 self.pendingSeekTime = position > 1 ? position : nil
@@ -586,6 +587,16 @@ final class AudioPlayer {
                 AppLogger.shared.log("🎵 Resumed the queue \(remote.changedBy ?? "another client") saved: \(songs.count) songs")
             }
         }
+    }
+
+    /// The source a queue picked up from the server goes on showing: the one already here
+    /// when it is the same queue, else its album when every song comes from one. The server
+    /// keeps no source, and without one the queue lost its "From …" line.
+    private static func sourceOfResumed(_ songs: [Song], keeping local: [Song], _ current: PlaybackSource) -> PlaybackSource {
+        if songs.map(\.id) == local.map(\.id) { return current }
+        if let first = songs.first, let id = first.albumId, let name = first.album,
+           songs.allSatisfy({ $0.albumId == id }) { return .album(id: id, name: name) }
+        return .unknown
     }
 
     private func restoreLastPlayback() {
