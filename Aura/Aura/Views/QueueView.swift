@@ -6,6 +6,8 @@ struct QueueView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var undoQueue: [Song]?
     @State private var undoTimer: Timer?
+    /// How tall the fade under the head is: none at rest, growing as the rows scroll under it.
+    @State private var topFade: CGFloat = 0
     /// Drawn beside the player on an iPhone Duo instead of in its own sheet.
     var embedded = false
     /// Told when the reader heads down the list (true) and when they are back at its top (false).
@@ -272,8 +274,9 @@ struct QueueView: View {
 extension QueueView {
     var embeddedQueue: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // The head sits 36pt above the first row, room for the rows to fade out under it.
-            embeddedHeader.padding(.top, 14).padding(.bottom, 8)
+            // The head sits 18pt above the first row; the fade under it only shows once the
+            // rows scroll, so at rest it doesn't hold them away.
+            embeddedHeader.padding(.top, 14).padding(.bottom, 6)
             List {
                 ForEach(Self.keyed(player.userQueue)) { row in
                     embeddedRow(row.song)
@@ -323,9 +326,10 @@ extension QueueView {
             .scrollContentBackground(.hidden)
             // Rows fade out under the head as they scroll up and at the foot (Now Playing's
             // mask); a margin as tall as each fade lets the first and last rows rest clear of it.
-            .contentMargins(.top, 28, for: .scrollContent)
+            .contentMargins(.top, 12, for: .scrollContent)
             .contentMargins(.bottom, 48, for: .scrollContent)
             .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.y + $0.contentInsets.top } action: { old, new in
+                topFade = min(max(new, 0), 28)
                 // Back only at the top of the list, not on any scroll up.
                 if new < 24 { onScrollDown?(false) }
                 else if new - old > 4 { onScrollDown?(true) }
@@ -333,7 +337,7 @@ extension QueueView {
             .mask {
                 VStack(spacing: 0) {
                     LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 28)
+                        .frame(height: topFade)
                     Color.white
                 }
             }
