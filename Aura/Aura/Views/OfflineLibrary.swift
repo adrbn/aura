@@ -143,7 +143,7 @@ extension View {
     }
 }
 
-private struct OfflineRouteView: View {
+struct OfflineRouteView: View {
     let route: OfflineRoute
     @State private var library = OfflineLibrary.shared
 

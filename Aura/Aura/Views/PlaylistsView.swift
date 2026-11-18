@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct PlaylistsView: View {
+    /// Offline: the playlists with songs on this iPhone, from their saved copies, with the
+    /// same sort, pins and layouts; what only the server can do is left out.
+    var offline = false
     @Environment(ServerManager.self) private var serverManager
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
@@ -189,8 +192,10 @@ struct PlaylistsView: View {
                 .padding(.trailing, -15)
                 .accessibilityLabel(layout == .grid ? "Show as List" : "Show as Grid")
                 Menu {
-                    Button { showCreatePlaylist = true } label: {
-                        Label("Create Playlist", systemImage: "plus")
+                    if !offline {
+                        Button { showCreatePlaylist = true } label: {
+                            Label("Create Playlist", systemImage: "plus")
+                        }
                     }
                     if !appSettings.pinnedPlaylistIds.isEmpty {
                         Toggle(isOn: $pinnedOnTop.animation(.spring(response: 0.3, dampingFraction: 0.85))) {
@@ -202,10 +207,12 @@ struct PlaylistsView: View {
                             Label("Reorder Pinned", systemImage: "arrow.up.arrow.down")
                         }
                     }
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { isSelecting = true }
-                    } label: {
-                        Label("Select", systemImage: "checkmark.circle")
+                    if !offline {
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { isSelecting = true }
+                        } label: {
+                            Label("Select", systemImage: "checkmark.circle")
+                        }
                     }
                     Divider()
                     Picker("Sort", selection: $sortOrder) {
@@ -352,10 +359,9 @@ struct PlaylistsView: View {
             }
             .tabRootGlass(scrollY: $scrollY)
             .refreshable { await refreshTabContent { await loadPlaylists() } }
-            .navigationDestination(for: Playlist.self) { PlaylistDetailView(playlistId: $0.id) }
-            .navigationDestination(for: PlaylistDeepLink.self) { link in
-                PlaylistDetailView(playlistId: link.id)
-            }
+            .navigationDestination(for: Playlist.self) { detail(for: $0.id) }
+            .navigationDestination(for: PlaylistDeepLink.self) { detail(for: $0.id) }
+            .offlineDestinations()
             .onChange(of: downloadSignature, initial: true) {
                 downloadedIds = PlaylistFilterContext.downloadedPlaylistIds()
             }
@@ -460,6 +466,10 @@ struct PlaylistsView: View {
         .task { await loadPlaylists() }
     }
 
+    @ViewBuilder private func detail(for id: String) -> some View {
+        if offline { OfflineRouteView(route: .playlist(id)) } else { PlaylistDetailView(playlistId: id) }
+    }
+
     @ViewBuilder private var loadingPlaceholder: some View {
         switch layout {
         case .grid:
@@ -555,7 +565,7 @@ struct PlaylistsView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
-                .contextMenu { folderMenu(path: folder + entry.name + "/", name: entry.name) }
+                .contextMenu { if !offline { folderMenu(path: folder + entry.name + "/", name: entry.name) } }
             }
         }
         .padding(.horizontal)
@@ -826,13 +836,23 @@ struct PlaylistsView: View {
         }
     }
 
+    /// A playlist's songs: from the server, or offline those on this iPhone.
+    private func songs(of playlist: Playlist) async -> [Song] {
+        if offline {
+            return await MainActor.run {
+                OfflineLibrary.shared.playlists.first { $0.snapshot.id == playlist.id }?.available ?? []
+            }
+        }
+        guard let server = serverManager.currentServer else { return [] }
+        return (try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id))?.entry ?? []
+    }
+
     @ViewBuilder
     private func playlistContextMenu(_ playlist: Playlist) -> some View {
         Button {
             Task {
-                guard let server = serverManager.currentServer else { return }
-                let detail = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id)
-                if let songs = detail?.entry, !songs.isEmpty {
+                let songs = await songs(of: playlist)
+                if !songs.isEmpty {
                     await MainActor.run { player.playSong(songs[0], fromQueue: songs, source: .playlist(id: playlist.id, name: playlist.name)) }
                 }
             }
@@ -840,9 +860,8 @@ struct PlaylistsView: View {
 
         Button {
             Task {
-                guard let server = serverManager.currentServer else { return }
-                let detail = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id)
-                if let songs = detail?.entry, !songs.isEmpty {
+                let songs = await songs(of: playlist)
+                if !songs.isEmpty {
                     await MainActor.run {
                         player.playShuffled(songs, source: .playlist(id: playlist.id, name: playlist.name))
                     }
@@ -852,9 +871,8 @@ struct PlaylistsView: View {
 
         Button {
             Task {
-                guard let server = serverManager.currentServer else { return }
-                let detail = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id)
-                if let songs = detail?.entry, !songs.isEmpty {
+                let songs = await songs(of: playlist)
+                if !songs.isEmpty {
                     var shuffled = songs; shuffled.shuffle()
                     await MainActor.run { player.addToQueue(shuffled) }
                 }
@@ -870,32 +888,42 @@ struct PlaylistsView: View {
                   systemImage: appSettings.isPinned(playlist.id) ? "pin.slash" : "pin")
         }
 
-        Button {
-            editingPlaylist = playlist
-        } label: {
-            Label("Edit", systemImage: "pencil")
-        }
+        if !offline {
+            Button {
+                editingPlaylist = playlist
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
 
-        Divider()
+            Divider()
 
-        Button {
-            selectedPlaylistIds = [playlist.id]
-            isSelecting = true
-        } label: {
-            Label("Select", systemImage: "checkmark.circle")
-        }
+            Button {
+                selectedPlaylistIds = [playlist.id]
+                isSelecting = true
+            } label: {
+                Label("Select", systemImage: "checkmark.circle")
+            }
 
-        Divider()
+            Divider()
 
-        Button(role: .destructive) {
-            selectedPlaylistIds = [playlist.id]
-            showDeleteConfirmation = true
-        } label: {
-            Label("Delete Playlist", systemImage: "trash")
+            Button(role: .destructive) {
+                selectedPlaylistIds = [playlist.id]
+                showDeleteConfirmation = true
+            } label: {
+                Label("Delete Playlist", systemImage: "trash")
+            }
         }
     }
 
     private func loadPlaylists() async {
+        if offline {
+            await MainActor.run {
+                OfflineLibrary.shared.refresh()
+                playlists = OfflineLibrary.shared.playlists.map(\.snapshot.asPlaylist)
+                isLoading = false
+            }
+            return
+        }
         guard let server = serverManager.currentServer else { return }
         do {
             let result = try await SubsonicClient.shared.getPlaylists(server: server)

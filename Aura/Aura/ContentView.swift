@@ -263,7 +263,7 @@ struct ContentView: View {
         switch tab {
         case .home: OfflineHomeView().padRoom()
         case .library: OfflineLibraryView().dynamicTypeSize(Self.listText).padRoom()
-        case .playlists: OfflinePlaylistsView().dynamicTypeSize(Self.listText).padRoom()
+        case .playlists: PlaylistsView(offline: true).dynamicTypeSize(Self.listText).padRoom()
         case .settings: SettingsView().dynamicTypeSize(Self.listText).padRoom()
         case .search: OfflineSearchView().padRoom()
         }
