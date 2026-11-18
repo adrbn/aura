@@ -308,7 +308,6 @@ struct AboutView: View {
             #if APPSTORE_BUILD
             guard await Storefront.current?.countryCode == "USA" else { return }
             #endif
-            postpone(days: 60)
             isShown = true
         }
     }
@@ -367,5 +366,7 @@ struct SupportCard: View {
         .presentationDetents([.height(height)])
         .presentationSizing(.fitted)
         .presentationBackground(Color.themeBg)
+        // Counted from when it shows: a sheet that could not open does not cost two months.
+        .onAppear { SupportPrompt.shared.postpone(days: 60) }
     }
 }

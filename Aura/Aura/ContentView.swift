@@ -16,14 +16,23 @@ struct ContentView: View {
     @State private var fetchCardHeight: CGFloat = 0
 
     var body: some View {
-        if serverManager.hasServer {
-            if appSettings.offlineMode {
-                offlineContent
+        Group {
+            if serverManager.hasServer {
+                if appSettings.offlineMode {
+                    offlineContent
+                } else {
+                    mainContent
+                }
             } else {
-                mainContent
+                welcomeView
             }
-        } else {
-            welcomeView
+        }
+        // Online and offline alike, and at launch as well as on coming back to the front.
+        .sheet(isPresented: Bindable(SupportPrompt.shared).isShown) { SupportCard() }
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            // A rating prompt that came due while the app was in the background.
+            guard phase == .active else { return }
+            Task { try? await Task.sleep(for: .seconds(2)); audioPlayer.requestReviewIfDue() }
         }
     }
 
@@ -122,12 +131,6 @@ struct ContentView: View {
             NavigationStack {
                 DownloadManagerView()
             }
-        }
-        .sheet(isPresented: Bindable(SupportPrompt.shared).isShown) { SupportCard() }
-        .onChange(of: scenePhase) { _, phase in
-            // A rating prompt that came due while the app was in the background.
-            guard phase == .active else { return }
-            Task { try? await Task.sleep(for: .seconds(2)); audioPlayer.requestReviewIfDue() }
         }
         .onChange(of: audioPlayer.pendingArtistId) { _, newId in
             guard newId != nil else { return }

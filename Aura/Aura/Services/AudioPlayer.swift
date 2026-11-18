@@ -1737,8 +1737,8 @@ final class AudioPlayer {
         #else
         _ = scene
         #endif
-        // The card is a sheet of the online main screen, which cannot show one over Now Playing.
-        guard !isShowingNowPlaying, !AppSettings.shared.offlineMode else { return }
+        // The card is a sheet of the main screen, which cannot show one over Now Playing.
+        guard !isShowingNowPlaying else { return }
         SupportPrompt.shared.showIfDue()
         #endif
     }
