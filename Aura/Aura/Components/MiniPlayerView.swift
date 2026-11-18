@@ -14,7 +14,8 @@ struct MiniPlayerView: View {
                 HStack(spacing: 12) {
                     // The list thumbnails' corner: ten cut into square frames near the
                     // artwork's edges, the hero's proportion (1.5) read as a sharp square.
-                    CoverArtImage(coverArt: song.coverArt, size: pad ? 60 : 44, cornerRadius: pad ? 8 : 6,
+                    CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: pad ? 60 : 44, cornerRadius: pad ? 8 : 6,
+                                  fallbackCoverArt: song.albumId,
                                   placeholderName: song.title, placeholderKind: .song)
                         .id("mini-\(song.id)-\(song.coverArt ?? "")")
 

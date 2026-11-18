@@ -49,7 +49,7 @@ struct QueueView: View {
                 if !embedded, let song = player.currentSong {
                     Section("Now Playing") {
                         HStack(spacing: 12) {
-                            CoverArtImage(coverArt: song.coverArt, size: 50, cornerRadius: 6)
+                            CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 50, cornerRadius: 6, fallbackCoverArt: song.albumId)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(song.title)
                                     .font(.subheadline.weight(.medium))
@@ -78,7 +78,7 @@ struct QueueView: View {
                             let index = row.index
                             let song = row.song
                             HStack(spacing: 12) {
-                                CoverArtImage(coverArt: song.coverArt, size: 46, cornerRadius: 6)
+                                CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 46, cornerRadius: 6, fallbackCoverArt: song.albumId)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(song.title)
                                         .font(.subheadline.weight(.medium))
@@ -129,7 +129,7 @@ struct QueueView: View {
                             let index = row.index
                             let song = row.song
                             HStack(spacing: 12) {
-                                CoverArtImage(coverArt: song.coverArt, size: 46, cornerRadius: 6)
+                                CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 46, cornerRadius: 6, fallbackCoverArt: song.albumId)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(song.title)
                                         .font(.subheadline.weight(.medium))
@@ -417,7 +417,7 @@ extension QueueView {
 
     private func embeddedRow(_ song: Song) -> some View {
         HStack(spacing: 12) {
-            CoverArtImage(coverArt: song.coverArt, size: 52, cornerRadius: 6)
+            CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 52, cornerRadius: 6, fallbackCoverArt: song.albumId)
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title)
                     .font(.body)

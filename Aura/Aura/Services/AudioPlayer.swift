@@ -3458,7 +3458,7 @@ final class AudioPlayer {
         updateLiveActivity()
         updateWidget(song: song, artwork: nil)
 
-        if let coverArt = song.coverArt {
+        if let coverArt = song.coverArt ?? song.albumId {
             // Same bucket as the Now Playing hero, so the lock screen usually costs the
             // server nothing — the image is already cached by the time it's needed.
             let artSize = ArtworkCache.fullSize
@@ -3478,9 +3478,14 @@ final class AudioPlayer {
             // request to an endpoint that was already being saturated.
             if ServerManager.shared.currentServer != nil {
                 let songId = song.id
+                let albumId = song.albumId
                 Task {
-                    if let image = await ArtworkCache.shared.fetchImage(
-                        coverArt: coverArt, requestSize: artSize, key: cacheKey) {
+                    // A song with no art of its own falls back to its album's, as Now Playing does.
+                    var image = await ArtworkCache.shared.fetchImage(coverArt: coverArt, requestSize: artSize, key: cacheKey)
+                    if image == nil, let albumId, albumId != coverArt {
+                        image = await ArtworkCache.shared.fetchImage(coverArt: albumId, requestSize: artSize, key: "\(albumId)_\(artSize)")
+                    }
+                    if let image {
                         await MainActor.run {
                             guard self.currentSong?.id == songId else { return }
                             self.cachedArtwork = image

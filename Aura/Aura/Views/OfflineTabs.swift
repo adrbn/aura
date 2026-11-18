@@ -219,7 +219,7 @@ struct OfflineHomeView: View {
             player.playSong(song, fromQueue: queue, startIndex: index, source: .favorites)
         } label: {
             HStack(spacing: 12) {
-                CoverArtImage(coverArt: song.coverArt, size: 50, cornerRadius: 6)
+                CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 50, cornerRadius: 6, fallbackCoverArt: song.albumId)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(song.title).font(.subheadline.weight(.medium)).lineLimit(1)
                     Text(song.artist ?? String(localized: "Unknown Artist")).font(.caption).foregroundStyle(.secondary).lineLimit(1)

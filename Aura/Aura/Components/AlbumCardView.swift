@@ -87,8 +87,8 @@ struct SongCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            CoverArtImage(coverArt: song.coverArt, size: size, cornerRadius: 12,
-                          placeholderName: song.title, placeholderKind: .song)
+            CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: size, cornerRadius: 12,
+                          fallbackCoverArt: song.albumId, placeholderName: song.title, placeholderKind: .song)
             Text(song.title).font(.caption.weight(.medium)).lineLimit(1)
             Text(song.artist ?? String(localized: "Unknown Artist")).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
         }

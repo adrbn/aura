@@ -88,7 +88,7 @@ struct MacSongTable: View {
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
         } else {
-            CoverArtImage(coverArt: song.coverArt, size: 24, cornerRadius: 3)
+            CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 24, cornerRadius: 3, fallbackCoverArt: song.albumId)
         }
     }
 

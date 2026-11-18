@@ -243,7 +243,7 @@ struct MacQueueView: View {
 
     private func row(_ song: Song, key: Int, part: Part) -> some View {
         HStack(spacing: 10) {
-            CoverArtImage(coverArt: song.coverArt, size: 38, cornerRadius: 5)
+            CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 38, cornerRadius: 5, fallbackCoverArt: song.albumId)
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title).font(.system(size: 13, weight: .medium)).lineLimit(1)
                 Text(song.artist ?? "").font(.system(size: 11))
@@ -278,7 +278,7 @@ struct MacQueueView: View {
         .onTapGesture(count: 2) { play(key, part: part) }
         .draggable("\(part == .added ? "a" : "u")\(key)") {
             HStack(spacing: 8) {
-                CoverArtImage(coverArt: song.coverArt, size: 28, cornerRadius: 4)
+                CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 28, cornerRadius: 4, fallbackCoverArt: song.albumId)
                 Text(song.title).font(.system(size: 12, weight: .medium)).lineLimit(1)
             }
             .padding(6)

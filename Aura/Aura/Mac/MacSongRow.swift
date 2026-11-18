@@ -19,7 +19,7 @@ struct MacSongRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                CoverArtImage(coverArt: song.coverArt, size: 52, cornerRadius: 6)
+                CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 52, cornerRadius: 6, fallbackCoverArt: song.albumId)
                 if hovering {
                     Color.black.opacity(0.45)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -257,7 +257,7 @@ struct MacSongInfoSheet: View {
             Form {
                 Section {
                     HStack(spacing: 14) {
-                        CoverArtImage(coverArt: song.coverArt, size: 72, cornerRadius: 8)
+                        CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: 72, cornerRadius: 8, fallbackCoverArt: song.albumId)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(song.title).font(.headline)
                             Text(song.artist ?? String(localized: "Unknown Artist")).foregroundStyle(.secondary)
