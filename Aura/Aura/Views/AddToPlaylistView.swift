@@ -15,13 +15,14 @@ struct AddToPlaylistView: View {
     @FocusState private var nameFieldFocused: Bool
     @State private var searchText = ""
     @State private var isFavorited: Bool = false
-    @State private var favoriteCount: Int = 0
+    /// Last count seen, so the row shows a number at once instead of 0 while it's fetched.
+    @AppStorage("aura.favoriteSongCount") private var favoriteCount: Int = 0
 
     private let spring = Animation.spring(duration: 0.35, bounce: 0.3)
 
     /// Read from the shared pre-fetched cache
     private var playlistsContainingSong: Set<String> {
-        PlaylistMembershipCache.shared.cache[song.id] ?? []
+        PlaylistMembershipCache.shared.containing(song.id)
     }
 
     /// Playlists in stable order — sort is captured at load time so toggling doesn't reorder
@@ -61,7 +62,7 @@ struct AddToPlaylistView: View {
                 // Load favorite count
                 if let server = serverManager.currentServer {
                     if let starred = try? await SubsonicClient.shared.getStarred2(server: server) {
-                        await MainActor.run { favoriteCount = starred.song?.count ?? 0 }
+                        await MainActor.run { favoriteCount = starred.song?.count ?? favoriteCount }
                     }
                 }
             }
@@ -237,9 +238,12 @@ struct AddToPlaylistView: View {
                         .buttonStyle(.plain)
                     }
 
-                    tintedRow(on: isFavorited, action: tapFavorite) {
-                        heartTile(size: 56, radius: 10)
-                    } title: { Text("Favorite Songs") } subtitle: { Text("\(favoriteCount) songs") }
+                    if searchText.isEmpty
+                        || String(localized: "Favorite Songs").localizedCaseInsensitiveContains(searchText) {
+                        tintedRow(on: isFavorited, action: tapFavorite) {
+                            heartTile(size: 56, radius: 10)
+                        } title: { Text("Favorite Songs") } subtitle: { Text("\(favoriteCount) songs") }
+                    }
 
                     ForEach(filteredPlaylists) { playlist in
                         tintedRow(on: isIn(playlist), action: { toggle(playlist) }) {
@@ -322,23 +326,34 @@ struct AddToPlaylistView: View {
     }
 
     private func loadPlaylists() async {
+        // The playlists saved on the device show at once, ticks included; the server's
+        // list replaces them when it arrives and refreshes the saved ones behind it.
+        await MainActor.run {
+            if playlists.isEmpty {
+                let saved = OfflinePlaylistsStore.shared.playlists.map(\.asPlaylist)
+                if !saved.isEmpty { show(saved) }
+            }
+        }
         guard let server = serverManager.currentServer else { return }
         do {
+            var seen = Set<String>()
             let result = try await SubsonicClient.shared.getPlaylists(server: server)
-
-            // If the cache doesn't have data for this song yet, trigger a fetch now
-            // (fallback for when Add to Playlist is opened from outside NowPlayingView)
-            if PlaylistMembershipCache.shared.cache[song.id] == nil {
-                PlaylistMembershipCache.shared.preloadMembership(for: song.id)
-                // Brief wait for membership cache to populate
-                try? await Task.sleep(for: .milliseconds(200))
-            }
-
+                .filter { seen.insert($0.id).inserted }
             await MainActor.run {
+                show(result)
+                OfflinePlaylistsStore.shared.refresh(from: result)
+            }
+        } catch {
+            await MainActor.run { isLoading = false }
+        }
+    }
+
+    @MainActor
+    private func show(_ result: [Playlist]) {
                 playlists = result
                 // Capture stable sort order: containing first, then pinned, then by date
                 if sortedPlaylistIds.isEmpty {
-                    let membership = PlaylistMembershipCache.shared.cache[song.id] ?? []
+                    let membership = PlaylistMembershipCache.shared.containing(song.id)
                     let containing = result.filter { membership.contains($0.id) }
                     let notContaining = result.filter { !membership.contains($0.id) }
                     let pinned = notContaining.filter { AppSettings.shared.isPinned($0.id) }
@@ -347,10 +362,6 @@ struct AddToPlaylistView: View {
                     sortedPlaylistIds = (containing + pinned + rest).map(\.id)
                 }
                 isLoading = false
-            }
-        } catch {
-            await MainActor.run { isLoading = false }
-        }
     }
 
     private func addToPlaylist(_ playlist: Playlist) async {

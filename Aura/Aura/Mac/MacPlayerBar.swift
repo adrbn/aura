@@ -386,7 +386,7 @@ extension NSMenu {
 /// so it can open upward: the bar sits at the foot of the screen, where a SwiftUI menu
 /// slides up over the pointer instead.
 enum MacCurrentSongMenu {
-    static func make(for song: Song) -> NSMenu {
+    @MainActor static func make(for song: Song) -> NSMenu {
         let player = AudioPlayer.shared, actions = MacSongActions.shared
         let menu = NSMenu()
         if let albumId = song.albumId {
@@ -424,14 +424,14 @@ enum MacCurrentSongMenu {
         return menu
     }
 
-    private static func playlists(for song: Song) -> NSMenu {
+    @MainActor private static func playlists(for song: Song) -> NSMenu {
         let actions = MacSongActions.shared
         // The list as last fetched; a fresh one is asked for so the next menu has it.
         actions.refreshPlaylists()
         let menu = NSMenu()
         menu.add(String(localized: "New Playlist…")) { actions.newPlaylistSongs = [song] }
         if !actions.playlists.isEmpty { menu.addItem(.separator()) }
-        let containing = PlaylistMembershipCache.shared.cache[song.id] ?? []
+        let containing = PlaylistMembershipCache.shared.containing(song.id)
         for playlist in actions.playlists {
             if containing.contains(playlist.id) {
                 // Already there: said, and not added a second time.

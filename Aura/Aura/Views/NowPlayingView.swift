@@ -259,8 +259,7 @@ struct NowPlayingView: View {
                 }
             }
             // Pre-fetch song links for the new song in background
-            if let newId, let song = player.currentSong {
-                PlaylistMembershipCache.shared.trimCache(keeping: newId)
+            if newId != nil, let song = player.currentSong {
                 SongLinkService.shared.preloadLinks(title: song.title, artist: song.artist ?? "")
                 SongLinkService.shared.trimCache(keeping: song.title, artist: song.artist ?? "")
             }

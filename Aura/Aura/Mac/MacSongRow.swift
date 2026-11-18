@@ -211,7 +211,7 @@ struct MacSongMenuItems: View {
             if !actions.playlists.isEmpty { Divider() }
             ForEach(actions.playlists) { playlist in
                 // Already there: said, and not added a second time.
-                if let song, PlaylistMembershipCache.shared.cache[song.id]?.contains(playlist.id) == true {
+                if let song, PlaylistMembershipCache.shared.containing(song.id).contains(playlist.id) {
                     Button {} label: { Label(playlist.name, systemImage: "checkmark") }.disabled(true)
                 } else {
                     Button(playlist.name) { actions.add(songs, to: playlist) }
