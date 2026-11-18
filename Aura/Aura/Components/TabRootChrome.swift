@@ -446,32 +446,3 @@ extension View {
             .presentationBackground(Color.themeBg)
     }
 }
-
-// MARK: - Design trial switcher
-
-/// Temporary: lets the user try several designs of one screen on the device and pick one.
-/// Each screen keeps its choice under `design_trial_<screen>`; remove once a style is chosen.
-struct DesignTrialSwitcher: View {
-    @Binding var variant: Int
-    var count: Int = 3
-
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(0..<count, id: \.self) { i in
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    withAnimation(.snappy) { variant = i }
-                } label: {
-                    Text(verbatim: "\(i + 1)")
-                        .font(.footnote.weight(.semibold).monospacedDigit())
-                        .frame(width: 26, height: 26)
-                        .background(Circle().fill(variant == i ? Color.primary.opacity(0.18) : .clear))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(3)
-        .glassEffect(.regular, in: Capsule())
-        .accessibilityElement(children: .contain)
-    }
-}

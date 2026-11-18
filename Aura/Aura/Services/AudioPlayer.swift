@@ -2921,6 +2921,10 @@ final class AudioPlayer {
         }
         guard await findLyrics(for: song, generation: generation) else { return false }
         await checkVersionIfNeeded(of: song, generation: generation)
+        await MainActor.run {
+            let lines = generation == self.lyricsGeneration ? self.lyrics : self.aheadLyrics?.lines
+            DownloadManager.shared.keepLyrics(lines ?? [], for: song.id)
+        }
         return true
     }
 

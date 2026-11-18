@@ -49,6 +49,7 @@ struct HomeView: View {
     @Environment(\.appAccentColor) private var accentColor
 
     @State private var recentSongs: [Song] = []
+    @State private var addingToPlaylist: Song?
     @State private var frequentAlbums: [Album] = []
     @State private var newestAlbums: [Album] = []
     @State private var randomAlbums: [Album] = []
@@ -129,6 +130,7 @@ struct HomeView: View {
             // The page, the glow at its top, and the cutting mat drawn over both.
             .tabRootCanvas(grid: true)
             .toolbar(.hidden, for: .navigationBar)
+            .sheet(item: $addingToPlaylist) { AddToPlaylistView(song: $0) }
             .navigationDestination(for: Album.self) { AlbumDetailView(albumId: $0.id) }
             .navigationDestination(for: Artist.self) { ArtistDetailView(artistId: $0.id, artistName: $0.name, coverArt: $0.coverArt) }
             .navigationDestination(for: Playlist.self) { PlaylistDetailView(playlistId: $0.id) }
@@ -904,6 +906,9 @@ struct HomeView: View {
             Label("Add to Queue", systemImage: "text.append")
         }
         Divider()
+        Button { addingToPlaylist = song } label: {
+            Label("Add to Playlist", systemImage: "text.badge.plus")
+        }
         Button { toggleStar(song) } label: {
             Label(song.isStarred ? "Unfavorite" : "Favorite",
                   systemImage: song.isStarred ? "heart.slash" : "heart")

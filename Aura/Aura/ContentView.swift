@@ -184,6 +184,7 @@ struct ContentView: View {
             serverManager.startMonitoring()
             // Backfill permanent artwork for existing downloads while we have a connection.
             await DownloadManager.shared.ensureOfflineArtwork()
+            await DownloadManager.shared.ensureOfflineLyrics()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { note in
             withAnimation(.easeOut(duration: 0.25)) { keyboardVisible = Self.coversContent(note) }

@@ -11,7 +11,6 @@ struct OfflineHomeView: View {
     @Environment(\.appAccentColor) private var accentColor
     @State private var library = OfflineLibrary.shared
     @State private var appSettings = AppSettings.shared
-    @State private var layoutWidth: CGFloat = 0
     @State private var navPath: [OfflineRoute] = []
 
     /// Section titles, as online: they name a row, they don't shout over it.
@@ -68,7 +67,6 @@ struct OfflineHomeView: View {
             .scrollIndicators(.hidden)
             .ignoresSafeArea(.container, edges: .top)
             .contentMargins(.top, TabChrome.contentTop, for: .scrollContent)
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { layoutWidth = $0 }
             .tabRootCanvas(grid: true)
             .toolbar(.hidden, for: .navigationBar)
             .offlineDestinations()
@@ -199,11 +197,8 @@ struct OfflineHomeView: View {
         }
     }
 
-    /// Two covers across, as Home's album rows online.
-    private var albumCardSize: CGFloat {
-        guard layoutWidth > 0 else { return 160 }
-        return max((layoutWidth - 16 - 12) / 2, 100)
-    }
+    /// Home's cover size online.
+    private var albumCardSize: CGFloat { 150 * Pad.scale }
 
     private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         HStack {

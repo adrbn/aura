@@ -1,8 +1,6 @@
 import SwiftUI
 
-/// The downloads screen. Three presentations of the same state and actions, switchable
-/// live from the toolbar while the owner picks one (`design_trial_downloads`):
-/// 0 storage-first, 1 cover grid with progress rings, 2 grouped list.
+/// The downloads screen: storage first, then what's downloading, the albums and the songs.
 struct DownloadManagerView: View {
     #if DEBUG
     private static let inScreenshot = Shot.name != nil
@@ -14,7 +12,7 @@ struct DownloadManagerView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
     @State private var searchText = ""
-    @AppStorage("design_trial_downloads") private var variant = 0
+    @State private var addingToPlaylist: Song?
     @State private var freeBytes: Int64 = 0
     @State private var capacityBytes: Int64 = 0
 
@@ -142,21 +140,15 @@ struct DownloadManagerView: View {
             if isEmpty {
                 emptyState
             } else {
-                switch variant {
-                case 1: gridLayout
-                case 2: listLayout
-                default: storageLayout
-                }
+                storageLayout
             }
         }
         .background(Color.themeBg)
         .searchable(text: $searchText, prompt: "Search downloads")
         .navigationTitle("downloaded")
         .task(id: dm.downloadedSongs.count) { refreshStorage() }
+        .sheet(item: $addingToPlaylist) { AddToPlaylistView(song: $0) }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                DesignTrialSwitcher(variant: $variant)
-            }
             if !dm.downloadedSongs.isEmpty || !dm.queueItems.isEmpty || dm.hasPaused {
                 ToolbarItem(placement: .topBarTrailing) { overflowMenu }
             }
@@ -319,7 +311,7 @@ struct DownloadManagerView: View {
         }
     }
 
-    // MARK: - Rows (variants 0 and 2)
+    // MARK: - Rows
 
     private func downloadedSongRow(_ downloaded: DownloadedSong, cover: CGFloat, queue: [Song]) -> some View {
         Button {
@@ -350,6 +342,7 @@ struct DownloadManagerView: View {
             Button { player.playNext(downloaded.song) } label: { Label("Play Next", systemImage: "text.insert") }
             Button { player.addToQueue(downloaded.song) } label: { Label("Add to Queue", systemImage: "text.append") }
             Divider()
+            Button { addingToPlaylist = downloaded.song } label: { Label("Add to Playlist", systemImage: "text.badge.plus") }
             if let albumId = downloaded.song.albumId {
                 Button { player.pendingAlbumId = albumId } label: { Label("Go to Album", systemImage: "square.stack") }
             }
@@ -435,7 +428,7 @@ struct DownloadManagerView: View {
         .padding(.vertical, 2)
     }
 
-    // MARK: - Variant 0: storage first
+    // MARK: - Layout
 
     private var storageLayout: some View {
         List {
@@ -547,154 +540,6 @@ struct DownloadManagerView: View {
             }
         }
         .textCase(nil)
-    }
-
-    // MARK: - Variant 1: cover grid
-
-    private var gridLayout: some View {
-        let groups = albumGroups(includingQueue: true)
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                if searchText.isEmpty {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("\(dm.downloadedSongs.count) songs · \(dm.totalDownloadSize)")
-                            .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
-                        Spacer()
-                        if !pendingItems.isEmpty {
-                            Text("\(Int(overallProgress * 100))%")
-                                .font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(accentColor)
-                        }
-                    }
-                    if !dm.downloadedSongs.isEmpty { playShufflePills }
-                    if dm.isDownloading || dm.hasPaused { queueControlPills }
-                }
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 14)], spacing: 20) {
-                    ForEach(groups) { gridTile($0) }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
-        }
-        .scrollIndicators(.hidden)
-        .endsAboveBottomChrome()
-    }
-
-    private func gridTile(_ group: AlbumGroup) -> some View {
-        let failed = group.queue.filter { $0.state == .failed }
-        let inFlight = group.inFlight
-        let paused = !inFlight.isEmpty && inFlight.allSatisfy { $0.state == .paused }
-        return Button {
-            if !failed.isEmpty { retry(failed) }
-            else if paused { resume(inFlight) }
-            else if !inFlight.isEmpty { pause(inFlight) }
-            else { play(group.orderedSongs) }
-        } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                Color.clear
-                    .aspectRatio(1, contentMode: .fit)
-                    .overlay {
-                        GeometryReader { geo in
-                            CoverArtImage(coverArt: group.coverArt, size: geo.size.width, cornerRadius: 14,
-                                          placeholderName: group.title)
-                        }
-                    }
-                    .overlay { tileBadge(progress: group.progress, inFlight: !inFlight.isEmpty,
-                                         paused: paused, failed: !failed.isEmpty) }
-                Text(group.title).font(.subheadline.weight(.semibold)).lineLimit(1)
-                HStack(spacing: 4) {
-                    Text(group.artist ?? String(localized: "Unknown")).lineLimit(1)
-                    Spacer(minLength: 4)
-                    if group.size > 0 {
-                        Text(verbatim: DownloadManager.formatBytes(group.size)).monospacedDigit()
-                    }
-                }
-                .font(.caption).foregroundStyle(.secondary)
-            }
-        }
-        .buttonStyle(.plain)
-        .contextMenu { albumMenu(group) }
-    }
-
-    @ViewBuilder
-    private func tileBadge(progress: Double, inFlight: Bool, paused: Bool, failed: Bool) -> some View {
-        if failed || inFlight {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14).fill(.black.opacity(0.45))
-                if failed {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.title2.weight(.semibold)).foregroundStyle(.red)
-                        .frame(width: 56, height: 56)
-                        .glassEffect(.regular, in: Circle())
-                } else {
-                    ProgressRing(progress: progress, tint: paused ? .orange : accentColor, lineWidth: 5)
-                        .frame(width: 64, height: 64)
-                        .overlay {
-                            Image(systemName: paused ? "play.fill" : "pause.fill")
-                                .font(.title3).foregroundStyle(.white)
-                        }
-                }
-            }
-        }
-    }
-
-    // MARK: - Variant 2: grouped list
-
-    private var listLayout: some View {
-        List {
-            if searchText.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("\(dm.downloadedSongs.count) songs · \(dm.totalDownloadSize)")
-                            .font(.subheadline.weight(.semibold).monospacedDigit())
-                        Spacer()
-                        legend("Available", freeBytes, Color.primary.opacity(0.18))
-                    }
-                    capacityBar(height: 5)
-                    if !dm.downloadedSongs.isEmpty { playShufflePills.padding(.top, 6) }
-                }
-                .plainRow(EdgeInsets(top: 8, leading: 20, bottom: 16, trailing: 20))
-            }
-            queueSection("Downloading", activeItems)
-            queueSection("Paused", pausedItems)
-            queueSection("Failed", failedItems)
-            ForEach(albumGroups(includingQueue: false)) { group in
-                Section {
-                    songRows(group.songs.sorted { ($0.song.discNumber ?? 1, $0.song.track ?? 0) < ($1.song.discNumber ?? 1, $1.song.track ?? 0) },
-                             cover: 52)
-                } header: {
-                    Button { play(group.orderedSongs) } label: {
-                        HStack(alignment: .firstTextBaseline) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(group.title).font(.headline).foregroundStyle(.primary).lineLimit(1)
-                                if let artist = group.artist {
-                                    Text(artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                                }
-                            }
-                            Spacer()
-                            Text(verbatim: DownloadManager.formatBytes(group.size))
-                                .font(.footnote.weight(.semibold).monospacedDigit()).foregroundStyle(.secondary)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .textCase(nil)
-                    .contextMenu { albumMenu(group) }
-                }
-            }
-        }
-        .listChrome()
-    }
-
-    @ViewBuilder
-    private func queueSection(_ title: LocalizedStringKey, _ items: [DownloadQueueItem]) -> some View {
-        if !items.isEmpty && searchText.isEmpty {
-            Section {
-                ForEach(items) { queueRow($0, cover: 52).listRowBackground(Color.clear) }
-            } header: {
-                sectionTitle(title, trailing: "\(items.count)")
-            }
-        }
     }
 }
 

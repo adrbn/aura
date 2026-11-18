@@ -916,9 +916,43 @@ final class DownloadManager: NSObject {
         guard let server = ServerManager.shared.currentServer else { return }
         var coverArts = Set(downloadedSongs.compactMap { $0.song.coverArt })
         coverArts.formUnion(AudioCacheManager.shared.getCachedSongs().compactMap { $0.coverArt })
+        // Playlists' own pictures too, or their pages show a placeholder offline.
+        coverArts.formUnion(OfflinePlaylistsStore.shared.playlists.compactMap(\.coverArt))
         for coverArt in coverArts where !ArtworkCache.shared.hasOfflineArtwork(forCoverArt: coverArt) {
             await ArtworkCache.shared.cacheOfflineArtwork(forCoverArt: coverArt, server: server)
         }
+    }
+
+    /// Lyrics for songs downloaded before lyrics were kept with them, or whose lookup missed
+    /// at the time: asked once a song, the server first, then LRCLIB. Online only.
+    @MainActor
+    func ensureOfflineLyrics() async {
+        guard let server = ServerManager.shared.currentServer else { return }
+        let key = "aura.offlineLyricsTried"
+        var tried = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+        for item in downloadedSongs where !tried.contains(item.song.id) && localLyrics(for: item.song.id) == nil {
+            let song = item.song
+            if let sheets = try? await SubsonicClient.shared.getLyricsBySongId(server: server, id: song.id),
+               let sheet = sheets.first(where: { $0.synced == true }) ?? sheets.first,
+               let lines = sheet.line, !lines.isEmpty {
+                let offset = Double(sheet.offset ?? 0) / 1000
+                keepLyrics(lines.compactMap { line in
+                    line.value.map { LyricsLine(time: sheet.synced == true ? line.start.map { Double($0) / 1000 + offset } : nil, text: $0) }
+                }, for: song.id)
+            }
+            if localLyrics(for: song.id) == nil { await downloadLyrics(for: song) }
+            tried.insert(song.id)
+            UserDefaults.standard.set(Array(tried), forKey: key)
+        }
+    }
+
+    /// Keeps the lyrics found for a downloaded song beside it, so they show with the network off.
+    func keepLyrics(_ lines: [LyricsLine], for songId: String) {
+        guard !lines.isEmpty, isDownloaded(songId), localLyrics(for: songId) == nil else { return }
+        let text = lines.map { line in
+            line.time.map { "[\(LyricsOverrides.stamp($0))]\(line.text)" } ?? line.text
+        }.joined(separator: "\n")
+        try? text.write(to: downloadsDirectory.appendingPathComponent("\(songId).lrc"), atomically: true, encoding: .utf8)
     }
 
     static func formatBytes(_ bytes: Int64) -> String {
