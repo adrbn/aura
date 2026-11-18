@@ -271,12 +271,21 @@ final class CarPlayBrowser {
                 await self?.play(songs, of: item, at: 0, shuffled: true)
             }
             // Every song on an album shares its cover: the rows go without.
-            let rows = songs.prefix(max(0, Self.rowLimit - 2)).enumerated().map { index, song in
+            // An artist's page: their top songs, then their albums.
+            let songLimit = item.kind == .artist ? 10 : max(0, Self.rowLimit - 2)
+            let rows = songs.prefix(songLimit).enumerated().map { index, song in
                 songRow(song, showsCover: item.kind != .album) { [weak self] in
                     await self?.play(songs, of: item, at: index, shuffled: false)
                 }
             }
             var sections = [CPListSection(items: rows)]
+            if item.kind == .artist, let server = ServerManager.shared.currentServer,
+               let albums = try? await SubsonicClient.shared.getArtist(server: server, id: item.id).album,
+               !albums.isEmpty {
+                sections = [CPListSection(items: rows, header: String(localized: "Top Songs"), sectionIndexTitle: nil),
+                            CPListSection(items: albums.prefix(Self.rowLimit - 12).map(albumRow),
+                                          header: String(localized: "Albums"), sectionIndexTitle: nil)]
+            }
             if #available(iOS 26.4, *) {
                 template.listHeader = await header(item, cover: cover, play: playAll, shuffle: shuffleAll)
             } else {

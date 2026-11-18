@@ -165,8 +165,9 @@ final class LibraryIndex {
         let head = query.hasSuffix(" ") || query.isEmpty ? query : String(query[..<(query.lastIndex(of: " ").map { query.index(after: $0) } ?? query.startIndex)])
         let last = String(query.dropFirst(head.count))
         if last.isEmpty {
-            var ops = ["artist:", "album:", "genre:", "year:", "\"", "-"]
-            if !query.trimmingCharacters(in: .whitespaces).isEmpty { ops.append("OR ") }
+            // Offered on the empty field only: after every space typed they crowded the results.
+            guard query.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+            let ops = ["artist:", "album:", "genre:", "year:", "\"", "-"]
             return ops.map { Chip(label: $0 == "\"" ? "\"…\"" : $0.trimmingCharacters(in: .whitespaces), query: query + $0) }
         }
         guard let colon = last.firstIndex(of: ":") else { return [] }

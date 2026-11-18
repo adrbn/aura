@@ -1684,6 +1684,11 @@ final class AudioPlayer {
         let fraction = currentTime / duration
         let previous = scrobbleProgress
         scrobbleProgress = fraction
+        // The first moment of playing: the server learns what's on now.
+        if previous == nil, let song = currentSong, !song.isPreview, AppSettings.shared.scrobbleEnabled,
+           !isEffectivelyOffline, let server = ServerManager.shared.currentServer {
+            Task { try? await SubsonicClient.shared.scrobble(server: server, id: song.id, submission: false) }
+        }
         let threshold = AppSettings.shared.scrobbleThreshold
         guard !hasScrobbledCurrent, let previous, previous < threshold, fraction >= threshold,
               let song = currentSong, !song.isPreview else { return }

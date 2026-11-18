@@ -257,8 +257,11 @@ actor SubsonicClient {
         _ = try await fetchData(from: url)
     }
 
-    func scrobble(server: ServerConfig, id: String) async throws {
-        guard let url = buildURL(server: server, endpoint: "scrobble", params: ["id": id]) else {
+    /// `submission: false` only says what's playing now (the server's Now Playing, passed on
+    /// to ListenBrainz or Last.fm); true counts the listen.
+    func scrobble(server: ServerConfig, id: String, submission: Bool = true) async throws {
+        guard let url = buildURL(server: server, endpoint: "scrobble",
+                                 params: ["id": id, "submission": submission ? "true" : "false"]) else {
             throw SubsonicClientError.invalidURL
         }
         _ = try await fetchData(from: url)

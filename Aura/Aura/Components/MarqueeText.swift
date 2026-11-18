@@ -65,6 +65,8 @@ struct Marquee<Content: View>: View {
     /// Identity of the moving copy. A fresh one per run, so a slide still in flight from
     /// the previous run can't carry over into the next one's first frames.
     @State private var run = 0
+    /// The line the offset belongs to: a new one never inherits the old one's slide.
+    @State private var shownKey = ""
 
     private var overflow: CGFloat { max(0, textWidth - containerWidth) }
     /// A point of slack, so text that "overflows" by a rounding error doesn't animate.
@@ -91,6 +93,16 @@ struct Marquee<Content: View>: View {
     }
 
     private func loop() async {
+        if shownKey != key {
+            // A new title (the next song) starts at its first word at once. Easing the old
+            // title's offset back to zero made a short new title slide in from the left.
+            shownKey = key
+            if offset != 0 {
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) { offset = 0; run &+= 1 }
+            }
+        }
         guard shouldScroll, isMoving else {
             // Stopped, or nothing to scroll: back to the first word, gently. Never by
             // replacing the text — see `startOver`.

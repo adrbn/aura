@@ -102,6 +102,10 @@ struct SearchResultsContainer: View {
     @State private var history = SearchHistory.shared
     /// What Deezer has for the query that the library doesn't.
     @State private var deezer = DeezerFinds()
+    /// A link pasted from another service, read back to the song it plays; the search then
+    /// runs on its title and artist.
+    @State private var linkTrack: (query: String, track: PastedLink.Track)?
+    @State private var linkCopied = false
 
     private let collapsedLimit = 4
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespaces) }
@@ -116,6 +120,7 @@ struct SearchResultsContainer: View {
             if trimmedQuery.isEmpty {
                 recentsRows
             } else {
+                pastedLinkRow
                 resultsRows
             }
             // Under the recents as under the results: the last row clears the mini player.
@@ -135,6 +140,7 @@ struct SearchResultsContainer: View {
         .task { SearchIndex.shared.prefetchIfNeeded() }
         .task(id: query) { await runSearch() }
         .task(id: query) { await runDeezerSearch() }
+        .task(id: query) { await identifyPastedLink() }
         // What turns a look into a listen. An album or artist opened from search sits armed
         // until something from it actually plays.
         .onChange(of: player.playbackSource) { _, source in
@@ -147,6 +153,44 @@ struct SearchResultsContainer: View {
     }
 
     // MARK: Search execution
+
+    private func identifyPastedLink() async {
+        guard let url = PastedLink.url(in: query) else { return }
+        guard let track = await PastedLink.identify(url), !Task.isCancelled else { return }
+        let text = [track.title, track.artist].filter { !$0.isEmpty }.joined(separator: " ")
+        linkTrack = (text, track)
+        linkCopied = false
+        query = text
+    }
+
+    /// The song a pasted link plays, to read or copy (a title in another alphabet, say).
+    @ViewBuilder
+    private var pastedLinkRow: some View {
+        if let linkTrack, linkTrack.query == query {
+            let line = [linkTrack.track.title, linkTrack.track.artist].filter { !$0.isEmpty }.joined(separator: " · ")
+            HStack(spacing: 10) {
+                Image(systemName: "link").foregroundStyle(.secondary)
+                Text(line)
+                    .font(.subheadline.weight(.medium))
+                    .lineLimit(2)
+                    .textSelection(.enabled)
+                Spacer(minLength: 8)
+                Button {
+                    UIPasteboard.general.string = line
+                    linkCopied = true
+                } label: {
+                    Image(systemName: linkCopied ? "checkmark" : "doc.on.doc")
+                        .contentTransition(.symbolEffect(.replace))
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Copy All")
+                .sensoryFeedback(.success, trigger: linkCopied) { _, new in new }
+            }
+            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+        }
+    }
 
     private func runSearch() async {
         let q = trimmedQuery
@@ -163,6 +207,9 @@ struct SearchResultsContainer: View {
         // already had on screen — the whole page visibly jumped for nothing.
         if q == searchedQuery, !results.isEmpty { return }
         expandedSections = []
+        // A pasted link is about to be replaced by the song it plays: no "No results" for the URL.
+        if PastedLink.url(in: q) != nil { isSearching = true; try? await Task.sleep(for: .seconds(4)) }
+        if Task.isCancelled { return }
         // Raise the spinner BEFORE the debounce sleep — otherwise the empty query state
         // sits with isSearching == false during those 350ms and the empty-state flashes.
         isSearching = true

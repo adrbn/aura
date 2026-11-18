@@ -286,3 +286,83 @@ final class SongLinkService {
         }
     }
 }
+
+// MARK: - A pasted link, back to a title and an artist
+
+/// What a link from another service plays: a title and an artist to search for. Deezer and
+/// Apple Music through their key-less lookups, YouTube through oEmbed, anything else
+/// (Spotify, SoundCloud, song.link…) from the page's own og: tags.
+enum PastedLink {
+    struct Track: Equatable { let title: String; let artist: String }
+
+    /// The link a whole query is, if it is one.
+    static func url(in query: String) -> URL? {
+        let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.contains(" "), text.hasPrefix("http"),
+              let url = URL(string: text), url.host != nil else { return nil }
+        return url
+    }
+
+    static func identify(_ url: URL) async -> Track? {
+        var request = URLRequest(url: url, timeoutInterval: 10)
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X)", forHTTPHeaderField: "User-Agent")
+        // Short links (link.deezer.com, spotify.link…) land on the real page first.
+        guard let (data, response) = try? await URLSession.shared.data(for: request) else { return nil }
+        let final = response.url ?? url
+        let host = final.host ?? ""
+        if host.hasSuffix("deezer.com"), let id = id(after: "track", in: final) {
+            return await json("https://api.deezer.com/track/\(id)") { obj in
+                (obj["title"] as? String, (obj["artist"] as? [String: Any])?["name"] as? String)
+            }
+        }
+        if host.hasSuffix("music.apple.com") {
+            let comps = URLComponents(url: final, resolvingAgainstBaseURL: false)
+            if let id = comps?.queryItems?.first(where: { $0.name == "i" })?.value ?? (final.path.contains("/song/") && Int(final.lastPathComponent) != nil ? final.lastPathComponent : nil) {
+                return await json("https://itunes.apple.com/lookup?id=\(id)") { obj in
+                    let first = (obj["results"] as? [[String: Any]])?.first
+                    return (first?["trackName"] as? String, first?["artistName"] as? String)
+                }
+            }
+        }
+        if host.contains("youtube.com") || host.contains("youtu.be"),
+           let encoded = url.absoluteString.addingPercentEncoding(withAllowedCharacters: .alphanumerics) {
+            return await json("https://www.youtube.com/oembed?format=json&url=\(encoded)") { obj in
+                let artist = (obj["author_name"] as? String)?.replacingOccurrences(of: " - Topic", with: "") ?? ""
+                var title = obj["title"] as? String ?? ""
+                if title.hasPrefix(artist + " - ") { title.removeFirst(artist.count + 3) }
+                // "(Official Video) [4K]" and the like are the video's, not the song's.
+                title = title.replacingOccurrences(of: #"\s*[\(\[][^\)\]]*[\)\]]"#, with: "", options: .regularExpression)
+                return (title.trimmingCharacters(in: .whitespaces), artist)
+            }
+        }
+        guard let html = String(data: data, encoding: .utf8),
+              let title = meta("og:title", in: html), !title.isEmpty else { return nil }
+        // Spotify: "Artist · Album · Song · 1987".
+        let artist = meta("og:description", in: html)?.components(separatedBy: " · ").first ?? ""
+        return Track(title: title, artist: artist.count < 80 ? artist : "")
+    }
+
+    /// The path component after `marker` ("/track/123" → "123").
+    private static func id(after marker: String, in url: URL) -> String? {
+        let parts = url.pathComponents
+        guard let i = parts.lastIndex(of: marker), i + 1 < parts.count else { return nil }
+        return parts[i + 1]
+    }
+
+    private static func json(_ address: String, _ read: ([String: Any]) -> (String?, String?)) async -> Track? {
+        guard let url = URL(string: address),
+              let (data, _) = try? await URLSession.shared.data(from: url),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        let (title, artist) = read(obj)
+        guard let title, !title.isEmpty else { return nil }
+        return Track(title: title, artist: artist ?? "")
+    }
+
+    private static func meta(_ property: String, in html: String) -> String? {
+        guard let start = html.range(of: "property=\"\(property)\" content=\""),
+              let end = html[start.upperBound...].firstIndex(of: "\"") else { return nil }
+        return String(html[start.upperBound..<end])
+            .replacingOccurrences(of: "&amp;", with: "&").replacingOccurrences(of: "&#x27;", with: "'")
+            .replacingOccurrences(of: "&quot;", with: "\"").replacingOccurrences(of: "&#39;", with: "'")
+    }
+}
