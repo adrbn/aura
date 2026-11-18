@@ -395,7 +395,18 @@ struct PlaylistDetailView: View {
     }
 
     private func loadPlaylist() async {
-        await MainActor.run { isLoading = true }
+        // The copy saved for offline shows at once, so a slow mobile network only delays the
+        // refresh, not the page.
+        await MainActor.run {
+            if playlist == nil,
+               let saved = OfflinePlaylistsStore.shared.playlists.first(where: { $0.id == playlistId }) {
+                playlist = PlaylistWithSongs(id: saved.id, name: saved.name, songCount: saved.songCount,
+                                             duration: saved.songs.compactMap(\.duration).reduce(0, +),
+                                             coverArt: saved.coverArt, owner: nil, entry: saved.songs,
+                                             comment: nil, public: nil)
+            }
+            isLoading = playlist == nil
+        }
         guard let server = serverManager.currentServer else {
             await MainActor.run { isLoading = false }
             return
