@@ -360,6 +360,10 @@ struct AddToPlaylistView: View {
                     let rest = notContaining.filter { !AppSettings.shared.isPinned($0.id) }
                         .sorted { ($0.created ?? "") > ($1.created ?? "") }
                     sortedPlaylistIds = (containing + pinned + rest).map(\.id)
+                } else {
+                    // One just created goes on top, not at the end of a long list.
+                    let known = Set(sortedPlaylistIds)
+                    sortedPlaylistIds = result.map(\.id).filter { !known.contains($0) } + sortedPlaylistIds
                 }
                 isLoading = false
     }
@@ -411,6 +415,9 @@ struct AddToPlaylistView: View {
             }
         } catch {
             AppLogger.shared.log("Failed to create playlist: \(error.localizedDescription)")
+            await MainActor.run {
+                ToastManager.shared.show(String(localized: "Couldn't create the playlist"), icon: "exclamationmark.triangle.fill")
+            }
         }
     }
 }

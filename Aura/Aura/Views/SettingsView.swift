@@ -426,9 +426,20 @@ struct SettingsView: View {
 
             // No Gapless switch: with Crossfade off the player lines the next song up
             // behind the current one.
-            Picker("Crossfade", selection: $appSettings.crossfadeSeconds) {
-                Text("Off").tag(0.0)
-                ForEach([3.0, 6.0, 9.0, 12.0], id: \.self) { Text("\(Int($0)) s").tag($0) }
+            Toggle("Crossfade", isOn: Binding(
+                get: { appSettings.crossfadeSeconds > 0 },
+                set: { appSettings.crossfadeSeconds = $0 ? 6 : 0 }
+            ))
+            if appSettings.crossfadeSeconds > 0 {
+                // One-second steps from 1 to 12, as the system's own music app.
+                HStack(spacing: 12) {
+                    Slider(value: $appSettings.crossfadeSeconds, in: 1...12, step: 1)
+                        .tint(accentColor)
+                    Text("\(Int(appSettings.crossfadeSeconds)) s")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 36, alignment: .trailing)
+                }
             }
 
             Toggle("Landscape Clock", isOn: $appSettings.landscapeClockEnabled)

@@ -94,6 +94,7 @@ struct AuraApp: App {
                         if newPhase == .background {
                             wasInBackground = true
                             audioPlayer.saveQueueOnServer()
+                            DownloadManager.shared.handOffQueueForBackground()
                         } else if newPhase == .active && wasInBackground {
                             wasInBackground = false
                             Task {

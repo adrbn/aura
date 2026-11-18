@@ -136,7 +136,9 @@ struct TappableArtistText: View {
                 }
                 ArtistNameButton(
                     name: part.name,
-                    artistId: index == 0 ? primaryArtistId : nil,
+                    // The song's artist id can be the joint credit ("Lost Frequencies, Nathan
+                    // Nicholson") rather than the first name, so the name is looked up first.
+                    fallbackId: index == 0 ? primaryArtistId : nil,
                     font: font,
                     style: tappableStyle,
                     dismissNowPlaying: dismissNowPlaying,
@@ -149,11 +151,11 @@ struct TappableArtistText: View {
 
 // MARK: - ArtistNameButton
 
-/// A button that navigates to an artist. If `artistId` is provided, uses it directly.
-/// Otherwise, searches for the artist by name via the Subsonic API.
+/// A button that searches the artist by exact name via the Subsonic API, and opens
+/// `fallbackId` when no artist has exactly that name (or the search fails, e.g. offline).
 private struct ArtistNameButton: View {
     let name: String
-    let artistId: String?
+    let fallbackId: String?
     let font: Font
     let style: AnyShapeStyle
     let dismissNowPlaying: Bool
@@ -164,11 +166,7 @@ private struct ArtistNameButton: View {
 
     var body: some View {
         Button {
-            if let artistId {
-                navigateToArtist(artistId)
-            } else {
-                searchAndNavigate()
-            }
+            searchAndNavigate()
         } label: {
             Text(name)
                 .font(font)
@@ -191,7 +189,10 @@ private struct ArtistNameButton: View {
     }
 
     private func searchAndNavigate() {
-        guard let server = ServerManager.shared.currentServer else { return }
+        guard let server = ServerManager.shared.currentServer else {
+            if let fallbackId { navigateToArtist(fallbackId) }
+            return
+        }
         isSearching = true
         Task {
             defer { isSearching = false }
@@ -206,17 +207,13 @@ private struct ArtistNameButton: View {
                     songCount: 0
                 )
                 // Try to find an exact (case-insensitive) match first, fall back to first result
-                if let artists = result.artist {
-                    let match = artists.first { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }
-                        ?? artists.first
-                    if let match {
-                        await MainActor.run {
-                            navigateToArtist(match.id)
-                        }
-                    }
+                let artists = result.artist ?? []
+                let exact = artists.first { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }
+                if let id = exact?.id ?? fallbackId ?? artists.first?.id {
+                    await MainActor.run { navigateToArtist(id) }
                 }
             } catch {
-                // Silently fail — the button just does nothing
+                if let fallbackId { await MainActor.run { navigateToArtist(fallbackId) } }
             }
         }
     }

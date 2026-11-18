@@ -118,7 +118,7 @@ struct PlaylistDetailView: View {
                     .listRowBackground(Color.clear)
 
                     if let songs = playlist.entry {
-                        ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
+                        ForEach(Array(songs.enumerated()), id: \.offset) { index, song in
                             SongRowView(song: song, tappableArtist: false, disableSwipeActions: true) {
                                 player.playSong(song, fromQueue: songs, startIndex: index, source: .playlist(id: playlistId, name: playlist.name))
                             }
@@ -196,6 +196,11 @@ struct PlaylistDetailView: View {
                 Menu {
                     Button { togglePlaylistStar() } label: {
                         Label(isStarred ? "Unpin" : "Pin", systemImage: isStarred ? "pin.slash" : "pin")
+                    }
+                    Button {
+                        if let songs = playlist?.entry { player.playNext(songs, name: playlist?.name ?? "") }
+                    } label: {
+                        Label("Play Next", systemImage: "text.insert")
                     }
                     Button {
                         if let songs = playlist?.entry, !songs.isEmpty {
@@ -589,7 +594,8 @@ struct PlaylistDetailView: View {
     /// type-checking in reasonable time.
     @ViewBuilder private var headerCover: some View {
         ZStack {
-            PlaylistCoverView(playlistId: playlistId, coverArt: playlist?.coverArt, size: 200 * Pad.scale, cornerRadius: 12)
+            PlaylistCoverView(playlistId: playlistId, coverArt: playlist?.coverArt, size: 200 * Pad.scale, cornerRadius: 12,
+                              placeholderName: playlist?.name)
                 .id(coverArtRefreshId)
                 .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
 

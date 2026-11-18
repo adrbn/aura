@@ -769,6 +769,7 @@ private final class ReleaseFetchActivities {
             }
             let attributes = ReleaseFetchAttributes(releaseId: fetch.id, title: fetch.title,
                                                     artist: fetch.release.artist.name)
+            NowPlayingSnapshot.saveAccent(.appAccent)
             running[fetch.id] = try? Activity.request(attributes: attributes, content: content, pushType: nil)
         }
     }

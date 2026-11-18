@@ -93,7 +93,7 @@ struct ReleaseFetchLiveActivity: Widget {
                     if state.step < 0 {
                         Capsule().fill(Color.red.opacity(index == 0 ? 0.8 : 0.25))
                     } else if index < state.step || state.step == ReleaseFetchAttributes.steps - 1 {
-                        Capsule().fill(Color.pink)
+                        Capsule().fill(NowPlayingSnapshot.accent)
                     } else if index == state.step {
                         progress(state)
                     } else {
@@ -112,13 +112,13 @@ struct ReleaseFetchLiveActivity: Widget {
         if let start = state.waitStart, let end = state.waitEnd, end > start {
             ProgressView(timerInterval: start...end, countsDown: false) { EmptyView() } currentValueLabel: { EmptyView() }
                 .progressViewStyle(.linear)
-                .tint(.pink)
+                .tint(NowPlayingSnapshot.accent)
         } else if let value = state.progress {
             ProgressView(value: min(max(value, 0), 1))
                 .progressViewStyle(.linear)
-                .tint(.pink)
+                .tint(NowPlayingSnapshot.accent)
         } else {
-            Capsule().fill(Color.pink.opacity(0.45))
+            Capsule().fill(NowPlayingSnapshot.accent.opacity(0.45))
         }
     }
 
@@ -148,6 +148,6 @@ struct ReleaseFetchLiveActivity: Widget {
         default: "exclamationmark.triangle"
         }
         return Image(systemName: name)
-            .foregroundStyle(step < 0 ? Color.orange : Color.pink)
+            .foregroundStyle(step < 0 ? Color.orange : NowPlayingSnapshot.accent)
     }
 }

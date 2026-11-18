@@ -205,6 +205,8 @@ private struct EQCurveEditor: View {
     private static let scaleMarks: Set<Float> = [-12, 0, 12]
 
     @State private var dragging: Int?
+    /// A drag that starts away from every point moves the whole curve: the gains it started from.
+    @State private var shiftFrom: [Float]?
 
     var body: some View {
         GeometryReader { geo in
@@ -270,12 +272,26 @@ private struct EQCurveEditor: View {
     private func drag(in size: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { gesture in
-                let index = dragging ?? nearestBand(to: gesture.startLocation.x, width: size.width)
-                if dragging == nil { dragging = index }
-                onChange(index, Self.value(forY: gesture.location.y, height: size.height))
+                if dragging == nil && shiftFrom == nil {
+                    let nearest = nearestBand(to: gesture.startLocation.x, width: size.width)
+                    let p = point(nearest, in: size)
+                    if hypot(p.x - gesture.startLocation.x, p.y - gesture.startLocation.y) > 32 {
+                        shiftFrom = bands
+                    } else {
+                        dragging = nearest
+                    }
+                }
+                if let from = shiftFrom {
+                    let delta = Self.value(forY: gesture.location.y, height: size.height)
+                        - Self.value(forY: gesture.startLocation.y, height: size.height)
+                    for i in from.indices { onChange(i, Self.clamp(from[i] + delta)) }
+                } else if let index = dragging {
+                    onChange(index, Self.value(forY: gesture.location.y, height: size.height))
+                }
             }
             .onEnded { _ in
                 dragging = nil
+                shiftFrom = nil
                 onEnd()
             }
     }

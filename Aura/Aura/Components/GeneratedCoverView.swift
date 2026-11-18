@@ -273,8 +273,21 @@ struct PlaylistCoverView: View {
     /// Seeds the gradient shown when the server has no picture for it.
     var placeholderName: String? = nil
 
+    @Environment(\.appAccentColor) private var accentColor
+
     var body: some View {
-        if let period = WrappedCovers.period(for: playlistId) {
+        if Playlist.isLikedSongs(name: placeholderName) {
+            // The liked songs, under the heart they wear everywhere else.
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(LinearGradient(colors: [accentColor, accentColor.opacity(0.7)],
+                                     startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: size, height: size)
+                .overlay {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: size * 0.38))
+                        .foregroundStyle(.white)
+                }
+        } else if let period = WrappedCovers.period(for: playlistId) {
             GeneratedCoverView(nature: .retrospective(period.coverLabel),
                                size: size, cornerRadius: cornerRadius)
         } else {
@@ -283,4 +296,15 @@ struct PlaylistCoverView: View {
                           placeholderName: placeholderName, placeholderKind: .playlist)
         }
     }
+}
+
+extension Playlist {
+    // ponytail: matched by name, as services name the liked-songs playlist they export;
+    // a flag on the server would be exact, if one ever exists.
+    static func isLikedSongs(name: String?) -> Bool {
+        guard let name else { return false }
+        return ["liked songs", "titres likés", "favorite songs"].contains(name.lowercased())
+    }
+
+    var isLikedSongs: Bool { Self.isLikedSongs(name: name) }
 }

@@ -805,7 +805,6 @@ final class AudioPlayer {
     private var autoplayFillGeneration = 0
 
     func fillQueueWithRandomSongs(around song: Song) async {
-        guard !AppSettings.shared.offlineMode else { return }
         guard let server = ServerManager.shared.currentServer else { return }
         let generation = await MainActor.run { () -> Int in
             autoplayFillGeneration += 1
@@ -815,6 +814,17 @@ final class AudioPlayer {
         defer { Task { @MainActor in
             if self.autoplayFillGeneration == generation { self.isBuildingQueue = false }
         } }
+
+        // Offline the queue still goes on, from the songs on this device: the same artist's
+        // first, then the rest at random. It used to stay empty.
+        if isEffectivelyOffline {
+            let pool = await MainActor.run { OfflineLibrary.shared.songs }.filter { $0.id != song.id }
+            let sameArtist = pool.filter { $0.artist == song.artist }.shuffled().prefix(10)
+            let taken = Set(sameArtist.map(\.id))
+            let rest = pool.filter { !taken.contains($0.id) }.shuffled()
+            _ = await applyAutoplay(Array((Array(sameArtist) + rest).prefix(50)), around: song, generation: generation)
+            return
+        }
 
         // Two sources, asked at the same time rather than one after the other.
         // Random songs answer in about a second and exist so the queue is never
@@ -2153,6 +2163,14 @@ final class AudioPlayer {
         AppLogger.shared.log("➕ playNext: \(song.title)")
         userQueue.insert(song, at: 0)
         ToastManager.shared.show(String(localized: "Playing next: \(song.title)"), icon: "text.insert")
+    }
+
+    /// A whole album or playlist, in order, ahead of the rest of the queue.
+    func playNext(_ songs: [Song], name: String) {
+        guard !songs.isEmpty else { return }
+        AppLogger.shared.log("➕ playNext: \(songs.count) songs")
+        userQueue.insert(contentsOf: songs, at: 0)
+        ToastManager.shared.show(String(localized: "Playing next: \(name)"), icon: "text.insert")
     }
 
     func addToQueue(_ song: Song) {
@@ -3543,6 +3561,7 @@ final class AudioPlayer {
             }
         }
         snapshot.save()
+        NowPlayingSnapshot.saveAccent(.appAccent)
         WidgetCenter.shared.reloadTimelines(ofKind: NowPlayingSnapshot.widgetKind)
         #endif
     }

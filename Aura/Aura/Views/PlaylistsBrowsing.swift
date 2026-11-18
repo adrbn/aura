@@ -227,7 +227,8 @@ struct PlaylistRowView: View {
     var body: some View {
         HStack(spacing: 12 * scale) {
             PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
-                              cacheToken: playlist.changed, size: 56 * scale, cornerRadius: 8)
+                              cacheToken: playlist.changed, size: 56 * scale, cornerRadius: 8,
+                              placeholderName: playlist.name)
             VStack(alignment: .leading, spacing: pad ? 4 : 2) {
                 Text(title ?? playlist.name)
                     .font((pad ? Font.title3 : .subheadline).weight(.medium))

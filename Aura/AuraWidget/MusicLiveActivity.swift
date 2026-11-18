@@ -47,7 +47,7 @@ struct MusicLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     ProgressView(value: progressValue(context.state), total: 1.0)
-                        .tint(Color.pink)
+                        .tint(NowPlayingSnapshot.accent)
                         .padding(.horizontal, 8)
                         .padding(.bottom, 4)
                 }
@@ -81,7 +81,7 @@ struct MusicLiveActivity: Widget {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                 ProgressView(value: progressValue(context.state), total: 1.0)
-                    .tint(Color.pink)
+                    .tint(NowPlayingSnapshot.accent)
             }
 
             Spacer()

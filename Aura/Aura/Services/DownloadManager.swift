@@ -205,8 +205,10 @@ final class DownloadManager: NSObject {
             // after another. An older build could leave hundreds running at once, every
             // row at 0 % and none actually moving.
             let tasks = all.filter { $0.state == .running || $0.state == .suspended }
-            let keep = tasks.max { $0.countOfBytesReceived < $1.countOfBytesReceived }
-            let extras = tasks.filter { $0 !== keep }
+                .sorted { $0.countOfBytesReceived > $1.countOfBytesReceived }
+            // The songs handed over on leaving the app keep going (handOffQueueForBackground).
+            let kept = Array(tasks.prefix(Self.backgroundHandoff))
+            let extras = Array(tasks.dropFirst(Self.backgroundHandoff))
             self.droppedTasksLock.lock()
             self.droppedTasks.formUnion(extras.map(\.taskIdentifier))
             self.droppedTasksLock.unlock()
@@ -223,7 +225,7 @@ final class DownloadManager: NSObject {
                     self.pausedIds.remove(songId)
                     self.queueItems[idx].state = .waiting
                 }
-                for task in [keep].compactMap({ $0 }) {
+                for task in kept {
                     guard let songId = task.taskDescription,
                           let downloadTask = task as? URLSessionDownloadTask else { continue }
                     self.activeURLTasks[songId] = downloadTask
@@ -243,6 +245,34 @@ final class DownloadManager: NSObject {
                 self.restartWaitingDownloads()
             }
         }
+    }
+
+    /// How many songs go to the system at once when the app leaves the screen.
+    static let backgroundHandoff = 20
+
+    /// iOS treats a transfer started while the app is in the background as discretionary
+    /// and wakes the app only once every transfer is done, so one song after another
+    /// stalls as soon as the app leaves the screen. Leaving hands the next songs in line
+    /// to the session at once; they finish while the app sleeps.
+    @MainActor
+    func handOffQueueForBackground() {
+        guard let server = ServerManager.shared.currentServer, !isHalted,
+              ServerManager.shared.hasNetwork, !AppSettings.shared.offlineMode else { return }
+        let free = Self.backgroundHandoff - activeDownloads.count
+        guard free > 0 else { return }
+        let next = queueItems.filter { $0.state == .waiting && !activeDownloads.contains($0.id) }.prefix(free)
+        for item in next {
+            guard let url = buildDownloadURL(server: server, id: item.id) else { continue }
+            rememberSong(item.song)
+            activeDownloads.insert(item.id)
+            let task = consumeResumeData(for: item.id).map { session.downloadTask(withResumeData: $0) }
+                ?? session.downloadTask(with: ServerHeaders.request(url))
+            task.taskDescription = item.id
+            activeURLTasks[item.id] = task
+            if let idx = queueItems.firstIndex(where: { $0.id == item.id }) { queueItems[idx].state = .downloading }
+            task.resume()
+        }
+        if !next.isEmpty { AppLogger.shared.log("🌙 Handed \(next.count) download(s) to the system for the background") }
     }
 
     /// Queue items persisted as `.waiting` belong to a batch whose driver died with
@@ -923,15 +953,15 @@ final class DownloadManager: NSObject {
         }
     }
 
-    /// Lyrics for songs downloaded before lyrics were kept with them, or whose lookup missed
-    /// at the time: asked once a song, the server first, then LRCLIB. Online only.
+    /// Lyrics for downloaded and cached songs that have none kept yet: asked once a song,
+    /// the server first, then LRCLIB. Online only.
     @MainActor
     func ensureOfflineLyrics() async {
         guard let server = ServerManager.shared.currentServer else { return }
         let key = "aura.offlineLyricsTried"
         var tried = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
-        for item in downloadedSongs where !tried.contains(item.song.id) && localLyrics(for: item.song.id) == nil {
-            let song = item.song
+        let songs = downloadedSongs.map(\.song) + AudioCacheManager.shared.getCachedSongs()
+        for song in songs where !tried.contains(song.id) && localLyrics(for: song.id) == nil {
             if let sheets = try? await SubsonicClient.shared.getLyricsBySongId(server: server, id: song.id),
                let sheet = sheets.first(where: { $0.synced == true }) ?? sheets.first,
                let lines = sheet.line, !lines.isEmpty {
@@ -941,14 +971,17 @@ final class DownloadManager: NSObject {
                 }, for: song.id)
             }
             if localLyrics(for: song.id) == nil { await downloadLyrics(for: song) }
+            if Task.isCancelled { return }
             tried.insert(song.id)
             UserDefaults.standard.set(Array(tried), forKey: key)
         }
     }
 
-    /// Keeps the lyrics found for a downloaded song beside it, so they show with the network off.
+    /// Keeps the lyrics found for a downloaded or cached song, so they show with the network off.
     func keepLyrics(_ lines: [LyricsLine], for songId: String) {
-        guard !lines.isEmpty, isDownloaded(songId), localLyrics(for: songId) == nil else { return }
+        guard !lines.isEmpty, localLyrics(for: songId) == nil,
+              isDownloaded(songId) || AudioCacheManager.shared.getCachedSongs().contains(where: { $0.id == songId })
+        else { return }
         let text = lines.map { line in
             line.time.map { "[\(LyricsOverrides.stamp($0))]\(line.text)" } ?? line.text
         }.joined(separator: "\n")
@@ -1100,7 +1133,8 @@ final class DownloadManager: NSObject {
     private func cleanupOrphanedFiles() {
         let fm = FileManager.default
         let referenced = Set(downloadedSongs.map(\.localPath))
-        let downloadedIds = Set(downloadedSongs.map(\.id))
+        // Lyrics are kept for songs in the listening cache too.
+        let downloadedIds = Set(downloadedSongs.map(\.id)).union(AudioCacheManager.shared.getCachedSongs().map(\.id))
         guard let files = try? fm.contentsOfDirectory(at: downloadsDirectory, includingPropertiesForKeys: nil) else { return }
         for file in files {
             let name = file.lastPathComponent

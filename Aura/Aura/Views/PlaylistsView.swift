@@ -71,10 +71,11 @@ struct PlaylistsView: View {
     }
 
     var pinnedPlaylists: [Playlist] {
-        guard pinnedOnTop else { return [] }
-        let pinned = filteredPlaylists.filter { appSettings.isPinned($0.id) }
+        let liked = filteredPlaylists.filter(\.isLikedSongs)
+        guard pinnedOnTop else { return liked }
+        let pinned = filteredPlaylists.filter { appSettings.isPinned($0.id) && !$0.isLikedSongs }
         let order = appSettings.pinnedPlaylistOrder
-        return pinned.sorted { a, b in
+        return liked + pinned.sorted { a, b in
             let ia = order.firstIndex(of: a.id) ?? Int.max
             let ib = order.firstIndex(of: b.id) ?? Int.max
             return ia < ib
@@ -96,7 +97,7 @@ struct PlaylistsView: View {
     }
 
     private func isOnTop(_ playlist: Playlist) -> Bool {
-        pinnedOnTop && appSettings.isPinned(playlist.id)
+        playlist.isLikedSongs || (pinnedOnTop && appSettings.isPinned(playlist.id))
     }
 
     /// Splits the playlists under `folder` into its subfolders and the playlists right in it.
@@ -919,7 +920,13 @@ struct PlaylistsView: View {
         if offline {
             await MainActor.run {
                 OfflineLibrary.shared.refresh()
-                playlists = OfflineLibrary.shared.playlists.map(\.snapshot.asPlaylist)
+                // Counts what plays here, not what the server holds.
+                playlists = OfflineLibrary.shared.playlists.map { item in
+                    let p = item.snapshot.asPlaylist
+                    return Playlist(id: p.id, name: p.name, songCount: item.available.count, duration: nil,
+                                    coverArt: p.coverArt, owner: p.owner, created: p.created, changed: p.changed,
+                                    comment: nil, public: nil)
+                }
                 isLoading = false
             }
             return
@@ -958,7 +965,8 @@ struct PlaylistCardView: View {
         VStack(alignment: .leading, spacing: 4) {
             ZStack(alignment: .topTrailing) {
                 PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
-                                  cacheToken: playlist.changed, size: 180 * Pad.scale, cornerRadius: 12)
+                                  cacheToken: playlist.changed, size: 180 * Pad.scale, cornerRadius: 12,
+                                  placeholderName: playlist.name)
                 if isPinned {
                     // A quiet badge, not a sticker: in the accent, every pinned cover carried a
                     // bright dot that outshouted the artwork. A small white pin on a dark,
@@ -1044,7 +1052,8 @@ struct ReorderPinnedView: View {
             List {
                 ForEach(orderedPinned) { playlist in
                     HStack(spacing: 12) {
-                        PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt, size: 40 * Pad.scale, cornerRadius: 6)
+                        PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt, size: 40 * Pad.scale, cornerRadius: 6,
+                                          placeholderName: playlist.name)
                         Text(playlist.name)
                             .font(.subheadline.weight(.medium))
                         Spacer()

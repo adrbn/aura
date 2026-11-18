@@ -223,6 +223,7 @@ struct AlbumDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .modifier(QueueAllMenu(songs: album?.song ?? [], name: album?.name ?? ""))
         .task { await loadAlbum() }
         #if !APPSTORE_BUILD
         .task(id: album?.id) {

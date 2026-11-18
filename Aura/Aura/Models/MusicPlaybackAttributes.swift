@@ -1,5 +1,6 @@
 import ActivityKit
 import Foundation
+import SwiftUI
 
 struct MusicPlaybackAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
@@ -36,6 +37,17 @@ struct NowPlayingSnapshot: Codable, Equatable {
     static var coverURL: URL? {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID)?
             .appendingPathComponent("nowplaying-cover.jpg")
+    }
+
+    /// The app's accent for the Live Activities, which can't read the app's settings.
+    static var accent: Color {
+        guard let c = defaults?.array(forKey: "accentRGB") as? [Double], c.count == 3 else { return .pink }
+        return Color(.sRGBLinear, red: c[0], green: c[1], blue: c[2])
+    }
+
+    static func saveAccent(_ color: Color) {
+        let r = color.resolve(in: EnvironmentValues())
+        defaults?.set([Double(r.red), Double(r.green), Double(r.blue)], forKey: "accentRGB")
     }
 
     static func load() -> NowPlayingSnapshot? {

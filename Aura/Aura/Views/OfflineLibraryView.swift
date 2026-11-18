@@ -368,33 +368,57 @@ struct OfflinePlayButtons: View {
     @Environment(\.appAccentColor) private var accentColor
 
     var body: some View {
+        // The online pages' pair: Play and Shuffle, side by side, the same width.
         HStack(spacing: 12) {
-            Button { player.playShuffled(songs, source: source) } label: {
-                Image(systemName: "shuffle")
-                    .font(.title3)
-                    .frame(width: 50, height: 40)
-                    .background(Color.themeGroupedBg)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel("Shuffle")
-
             Button {
                 guard let first = songs.first else { return }
                 player.playSong(first, fromQueue: songs, startIndex: 0, source: source)
             } label: {
                 Label("Play", systemImage: "play.fill")
                     .lineLimit(1).minimumScaleFactor(0.8)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 40)
-                    .background(accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity).padding(.vertical, 11)
+                    .background(accentColor).foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.borderless)
+            Button { player.playShuffled(songs, source: source) } label: {
+                Label("Shuffle", systemImage: "shuffle")
+                    .lineLimit(1).minimumScaleFactor(0.8)
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity).padding(.vertical, 11)
+                    .background(Color.primary.opacity(0.08)).foregroundStyle(.primary)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.borderless)
         }
         .disabled(songs.isEmpty)
+    }
+}
+
+/// Play Next and Add to Queue for a whole album or playlist, from the page's top bar.
+struct QueueAllMenu: ViewModifier {
+    let songs: [Song]
+    let name: String
+    @Environment(AudioPlayer.self) private var player
+
+    func body(content: Content) -> some View {
+        content.toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button { player.playNext(songs, name: name) } label: {
+                        Label("Play Next", systemImage: "text.insert")
+                    }
+                    Button { player.addToQueue(songs) } label: {
+                        Label("Add to Queue", systemImage: "text.append")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis").rotationEffect(.degrees(90))
+                }
+                .tint(.primary)
+                .disabled(songs.isEmpty)
+            }
+        }
     }
 }
 
@@ -486,7 +510,7 @@ private struct OfflinePageHeader<Cover: View>: View {
     var body: some View {
         // The online album header's rhythm, space for space.
         VStack(spacing: 12) {
-            Spacer().frame(height: 16)
+            Spacer().frame(height: 0)
             cover()
                 .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
             Text(title)
@@ -532,7 +556,7 @@ private struct OfflineSongRows: View {
     @Environment(AudioPlayer.self) private var player
 
     var body: some View {
-        ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
+        ForEach(Array(songs.enumerated()), id: \.offset) { index, song in
             SongRowView(song: song, showArt: showArt, showTrackNumber: showTrackNumber) {
                 player.playSong(song, fromQueue: songs, startIndex: index, source: source)
             }
@@ -576,6 +600,7 @@ struct OfflineAlbumDetailView: View {
             ListEndSpacer().clearRow()
         }
         .offlinePage(title: album.name, coverArt: album.coverArt)
+        .modifier(QueueAllMenu(songs: album.songs, name: album.name))
     }
 }
 
@@ -591,9 +616,10 @@ struct OfflinePlaylistDetailView: View {
             OfflinePageHeader(title: snapshot.name,
                               songs: availableSongs, source: .playlist(id: snapshot.id, name: snapshot.name)) {
                 if let period = WrappedCovers.period(for: snapshot.id) {
-                    GeneratedCoverView(nature: .retrospective(period.coverLabel), size: 260, cornerRadius: 12)
+                    GeneratedCoverView(nature: .retrospective(period.coverLabel), size: 200, cornerRadius: 12)
                 } else {
-                    CoverArtAsyncImage(coverArt: snapshot.coverArt, size: 260)
+                    PlaylistCoverView(playlistId: snapshot.id, coverArt: snapshot.coverArt, size: 200,
+                                      cornerRadius: 12, placeholderName: snapshot.name)
                 }
             }
             .clearRow()
@@ -602,6 +628,7 @@ struct OfflinePlaylistDetailView: View {
             ListEndSpacer().clearRow()
         }
         .offlinePage(title: snapshot.name, coverArt: snapshot.coverArt)
+        .modifier(QueueAllMenu(songs: availableSongs, name: snapshot.name))
     }
 }
 
@@ -719,6 +746,9 @@ struct OfflineArtistDetailView: View {
                       alignment: .leading, spacing: 16) {
                 ForEach(albums) { album in OfflineAlbumCard(album: album, size: cardSize) }
             }
+            // A List row holding links gets the list's disclosure arrow, which sat beside
+            // the right-hand cover.
+            .navigationLinkIndicatorVisibility(.hidden)
             .padding(.horizontal, 16)
             .clearRow()
             ListEndSpacer().clearRow()

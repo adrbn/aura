@@ -552,14 +552,20 @@ struct NowPlayingView: View {
                 .padding(.bottom, showLyrics ? 14 : 0)
                 .offset(x: showLyrics ? 0 : coverDragOffset)
                 .gesture(showLyrics ? nil : coverDragGesture)
+                // In front of the queue or lyrics while it shrinks over where they land.
+                .zIndex(1)
 
             if showLyrics {
                 // Takes whatever the artwork and the title block give up. The container
                 // is height-locked, so this expands into exactly the space they vacate.
+                // Fading in once the cover has mostly shrunk, so the first rows don't show
+                // around it on the way.
                 Group {
                     if queueInline { inlineQueueList } else { fadedLyrics }
                 }
-                .transition(.opacity)
+                .transition(.asymmetric(
+                    insertion: .opacity.animation(.easeOut(duration: 0.2).delay(0.22)),
+                    removal: .opacity.animation(.easeOut(duration: 0.12))))
             }
 
             Spacer().frame(height: duo ? Self.duoGaps.title : 20)
