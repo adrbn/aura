@@ -727,28 +727,51 @@ enum LyricsAutoSync {
         return (anchors, anchors[0]! - top)
     }
 
-    /// The lyrics' language, in the form the transcriber knows, or nil when it doesn't.
+    /// The lyrics' language, or nil when it can't be told.
     private static func locale(of lines: [LyricsLine]) async -> Locale? {
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(lines.map(\.text).joined(separator: "\n"))
         guard let language = recognizer.dominantLanguage, language != .undetermined else { return nil }
-        return await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: language.rawValue))
+        return Locale(identifier: language.rawValue)
     }
 
-    private static func transcribe(_ url: URL, locale: Locale, hints: [String]) async throws -> [Heard] {
-        let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [],
-                                            attributeOptions: [.audioTimeRange])
+    /// The newer transcriber first; for a language whose model it lacks or can't fetch
+    /// (Russian, among others), the dictation one, which knows many more.
+    private static func transcribe(_ url: URL, locale language: Locale, hints: [String]) async throws -> [Heard] {
+        if let locale = await SpeechTranscriber.supportedLocale(equivalentTo: language) {
+            let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [],
+                                                attributeOptions: [.audioTimeRange])
+            do {
+                return try await analyze(url, with: transcriber, hints: hints) {
+                    try await collect(transcriber.results.map(\.text))
+                }
+            } catch {
+                AppLogger.shared.log("🎵 Auto sync falls back to dictation after: \(error)")
+            }
+        }
+        guard let locale = await DictationTranscriber.supportedLocale(equivalentTo: language) else {
+            throw Failure.language
+        }
+        let dictation = DictationTranscriber(locale: locale, contentHints: [], transcriptionOptions: [],
+                                             reportingOptions: [], attributeOptions: [.audioTimeRange])
+        return try await analyze(url, with: dictation, hints: hints) {
+            try await collect(dictation.results.map(\.text))
+        }
+    }
+
+    private static func analyze(_ url: URL, with module: any SpeechModule, hints: [String],
+                                collecting: @escaping @Sendable () async throws -> [Heard]) async throws -> [Heard] {
         // The language's model, the first time: a download iOS keeps for every app.
-        if let install = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
+        if let install = try await AssetInventory.assetInstallationRequest(supporting: [module]) {
             try await install.downloadAndInstall()
         }
         let file = try AVAudioFile(forReading: url)
-        let analyzer = SpeechAnalyzer(modules: [transcriber])
+        let analyzer = SpeechAnalyzer(modules: [module])
         // The lyrics' own words, so a sung word is read as the one written.
         let context = AnalysisContext()
         context.contextualStrings[.general] = Array(hints.prefix(200))
         try await analyzer.setContext(context)
-        async let collected: [Heard] = collect(transcriber)
+        async let collected: [Heard] = collecting()
         if let end = try await analyzer.analyzeSequence(from: file) {
             try await analyzer.finalizeAndFinish(through: end)
         } else {
@@ -757,12 +780,12 @@ enum LyricsAutoSync {
         return try await collected
     }
 
-    private static func collect(_ transcriber: SpeechTranscriber) async throws -> [Heard] {
+    private static func collect(_ texts: some AsyncSequence<AttributedString, any Error>) async throws -> [Heard] {
         var heard: [Heard] = []
-        for try await result in transcriber.results {
-            for run in result.text.runs {
+        for try await text in texts {
+            for run in text.runs {
                 guard let range = run[AttributeScopes.SpeechAttributes.TimeRangeAttribute.self] else { continue }
-                let spoken = words(in: String(result.text[run.range].characters))
+                let spoken = words(in: String(text[run.range].characters))
                 // A run holding several words shares its time between them.
                 let step = spoken.isEmpty ? 0 : range.duration.seconds / Double(spoken.count)
                 for (index, word) in spoken.enumerated() {
