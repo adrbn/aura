@@ -75,7 +75,7 @@ struct DeezerSearchRows: View {
             SearchSectionHeader(title: "Songs on Deezer", hidden: finds.songs.count - collapsedLimit,
                                 isExpanded: showsAllSongs) { showsAllSongs.toggle() }
             ForEach(showsAllSongs ? finds.songs : Array(finds.songs.prefix(collapsedLimit))) { find in
-                DeezerSongRow(find: find) { play(find) }
+                DeezerSongRow(find: find, openAlbum: { navPath.append(find.release) }) { play(find) }
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: density, leading: 16, bottom: density, trailing: 16))
             }
@@ -106,6 +106,7 @@ struct DeezerSearchRows: View {
 /// build, a button to get it.
 private struct DeezerSongRow: View {
     let find: DeezerFind
+    let openAlbum: () -> Void
     let play: () -> Void
 
     @Environment(AudioPlayer.self) private var player
@@ -143,6 +144,7 @@ private struct DeezerSongRow: View {
         .opacity(find.preview == nil ? 0.5 : 1)
         .contextMenu {
             Button(action: play) { Label("Play Preview", systemImage: "play.circle") }
+            Button(action: openAlbum) { Label("Go to Album", systemImage: "square.stack") }
             #if !APPSTORE_BUILD
             if canFetch {
                 Button { ReleaseFetcher.shared.get(find.release, track: SoulseekPick.Track(find.hit.track)) } label: {
