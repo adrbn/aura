@@ -453,6 +453,9 @@ struct DownloadIndicatorView: View {
         let dm = DownloadManager.shared
         if dm.isDownloading {
             let songProgress = dm.currentDownloadId.flatMap { dm.downloadProgress[$0] } ?? 0
+            // An album, a playlist or Favorite Songs reads as itself, its ring as the whole set.
+            let group = dm.currentGroup
+            let ring = group.map { (Double($0.completed) + songProgress) / Double($0.total) } ?? songProgress
 
             HStack(spacing: 12) {
                 ZStack {
@@ -460,20 +463,26 @@ struct DownloadIndicatorView: View {
                         .stroke(Color.primary.opacity(0.18), lineWidth: 2.5)
                         .frame(width: 30, height: 30)
                     Circle()
-                        .trim(from: 0, to: CGFloat(songProgress))
+                        .trim(from: 0, to: CGFloat(ring))
                         .stroke(accentColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
                         .frame(width: 30, height: 30)
                         .rotationEffect(.degrees(-90))
-                        .animation(.easeInOut(duration: 0.2), value: songProgress)
+                        .animation(.easeInOut(duration: 0.2), value: ring)
                     Image(systemName: "arrow.down")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.primary)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(dm.currentDownloadTitle ?? String(localized: "Downloading…"))
+                    Text(group?.name ?? dm.currentDownloadTitle ?? String(localized: "Downloading…"))
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
+                    if let group {
+                        Text(verbatim: "\(min(group.completed + 1, group.total)) / \(group.total) · \(dm.currentDownloadTitle ?? "")")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    } else {
                     HStack(spacing: 4) {
                         if let album = dm.currentDownloadAlbum {
                             Text(album)
@@ -486,6 +495,7 @@ struct DownloadIndicatorView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                    }
                     }
                 }
 

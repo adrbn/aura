@@ -235,7 +235,7 @@ struct PlaylistDetailView: View {
         .confirmationDialog("Download Playlist?", isPresented: $showDownloadConfirm, titleVisibility: .visible) {
             Button("Download All Songs") {
                 if let songs = playlist?.entry, !songs.isEmpty {
-                    Task { await DownloadManager.shared.downloadAlbum(songs, groupId: playlistId) }
+                    Task { await DownloadManager.shared.downloadAlbum(songs, groupId: playlistId, name: playlist?.name) }
                 }
             }
             Button("Cancel", role: .cancel) {}

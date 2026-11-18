@@ -41,7 +41,7 @@ final class DownloadManager: NSObject {
             let name: String, songs: [Song]
             if id == Self.favoritesId {
                 guard let starred = try? await SubsonicClient.shared.getStarred2(server: server) else { continue }
-                (name, songs) = ("Favorites", starred.song ?? [])
+                (name, songs) = (String(localized: "Favorite Songs"), starred.song ?? [])
             } else {
                 guard let playlist = try? await SubsonicClient.shared.getPlaylist(server: server, id: id) else { continue }
                 (name, songs) = (playlist.name, playlist.entry ?? [])
@@ -49,7 +49,7 @@ final class DownloadManager: NSObject {
             let missing = songs.filter { !isDownloaded($0.id) }
             guard !missing.isEmpty else { continue }
             AppLogger.shared.log("⬇️ Kept playlist \(name): \(missing.count) new songs")
-            await downloadAlbum(missing, groupId: id)
+            await downloadAlbum(missing, groupId: id, name: name)
         }
     }
 
@@ -76,6 +76,8 @@ final class DownloadManager: NSObject {
     var activeGroupDownloads: [String: Set<String>] = [:]
     var groupDownloadCompleted: [String: Int] = [:]
     var groupDownloadTotal: [String: Int] = [:]
+    /// What each group is called (an album, a playlist, Favorite Songs), for the download card.
+    var groupNames: [String: String] = [:]
     private var cancelledIds: Set<String> = []
     /// When true, the serial batch drivers (`downloadAlbum`, the artist multi-album loop)
     /// stop spawning new downloads. Set by Pause All / Stop All; cleared when a fresh
@@ -282,7 +284,7 @@ final class DownloadManager: NSObject {
                 return
             }
             await progress(String(localized: "Downloading \(toDownload.count) songs..."))
-            await downloadAlbum(toDownload, groupId: "library-all")
+            await downloadAlbum(toDownload, groupId: "library-all", name: String(localized: "Library"))
             await MainActor.run {
                 progress(nil)
                 ToastManager.shared.show(String(localized: "Download complete!"), icon: "checkmark.circle.fill")
@@ -398,6 +400,14 @@ final class DownloadManager: NSObject {
         guard let total = groupDownloadTotal[groupId], total > 0 else { return 0 }
         let completed = groupDownloadCompleted[groupId] ?? 0
         return Double(completed) / Double(total)
+    }
+
+    /// The named group (album, playlist, Favorite Songs) the song now downloading belongs to.
+    var currentGroup: (name: String, completed: Int, total: Int)? {
+        guard let id = currentDownloadId,
+              let gid = activeGroupDownloads.first(where: { $0.value.contains(id) && groupNames[$0.key] != nil })?.key,
+              let total = groupDownloadTotal[gid], total > 1 else { return nil }
+        return (groupNames[gid]!, min(groupDownloadCompleted[gid] ?? 0, total), total)
     }
 
     func isGroupDownloading(_ groupId: String) -> Bool {
@@ -712,6 +722,7 @@ final class DownloadManager: NSObject {
             cancelDownload(songId)
         }
         activeGroupDownloads.removeValue(forKey: groupId)
+        groupNames.removeValue(forKey: groupId)
         groupDownloadCompleted.removeValue(forKey: groupId)
         groupDownloadTotal.removeValue(forKey: groupId)
     }
@@ -748,6 +759,7 @@ final class DownloadManager: NSObject {
         activeDownloads.removeAll()
         downloadProgress.removeAll()
         activeGroupDownloads.removeAll()
+        groupNames.removeAll()
         groupDownloadCompleted.removeAll()
         groupDownloadTotal.removeAll()
         // Mark anything still in flight, paused, or not-yet-started as cancelled so it doesn't linger
@@ -771,7 +783,7 @@ final class DownloadManager: NSObject {
     ///   caller is already managing (e.g. the artist multi-album loop), so an in-progress
     ///   halt isn't accidentally cleared between albums.
     @MainActor
-    func downloadAlbum(_ songs: [Song], groupId: String? = nil, isBatchStart: Bool = true) async {
+    func downloadAlbum(_ songs: [Song], groupId: String? = nil, name: String? = nil, isBatchStart: Bool = true) async {
         if isBatchStart {
             isHalted = false
             for song in songs { cancelledIds.remove(song.id); pausedIds.remove(song.id) }
@@ -785,6 +797,7 @@ final class DownloadManager: NSObject {
         AppLogger.shared.log("⬇️ Download album: \(songs.count) songs, group: \(gid)")
         let songIds = Set(songs.map { $0.id })
         activeGroupDownloads[gid] = songIds
+        groupNames[gid] = name
         groupDownloadTotal[gid] = songs.count
         groupDownloadCompleted[gid] = 0
         totalQueueCount += songs.count
@@ -802,6 +815,7 @@ final class DownloadManager: NSObject {
             await downloadSong(song, groupId: gid)
         }
         activeGroupDownloads.removeValue(forKey: gid)
+        groupNames.removeValue(forKey: gid)
     }
 
     func isDownloaded(_ songId: String) -> Bool {

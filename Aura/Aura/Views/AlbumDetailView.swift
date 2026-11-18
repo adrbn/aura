@@ -115,7 +115,7 @@ struct AlbumDetailView: View {
                                     if DownloadManager.shared.isGroupDownloading(albumId) {
                                         DownloadManager.shared.cancelGroupDownload(albumId)
                                     } else {
-                                        Task { await DownloadManager.shared.downloadAlbum(songs, groupId: albumId) }
+                                        Task { await DownloadManager.shared.downloadAlbum(songs, groupId: albumId, name: album.name) }
                                     }
                                 }
                             } label: {

@@ -459,8 +459,14 @@ struct SongsListView: View {
                             Label("Keep Downloaded", systemImage: "arrow.down.circle.dotted")
                         }
                     } label: {
-                        Image(systemName: "ellipsis")
-                            .rotationEffect(.degrees(90))
+                        // While Favorite Songs download, the button itself shows how far along.
+                        if DownloadManager.shared.isGroupDownloading(DownloadManager.favoritesId) {
+                            CircularProgressView(progress: DownloadManager.shared.groupProgress(for: DownloadManager.favoritesId))
+                                .frame(width: 20, height: 20)
+                        } else {
+                            Image(systemName: "ellipsis")
+                                .rotationEffect(.degrees(90))
+                        }
                     }
                     .tint(.primary)
                 }
@@ -499,7 +505,7 @@ struct SongsListView: View {
                 .disabled(true)
         } else {
             Button {
-                Task { await downloads.downloadAlbum(songs, groupId: DownloadManager.favoritesId) }
+                Task { await downloads.downloadAlbum(songs, groupId: DownloadManager.favoritesId, name: String(localized: "Favorite Songs")) }
             } label: {
                 Label("Download", systemImage: "arrow.down.circle")
             }

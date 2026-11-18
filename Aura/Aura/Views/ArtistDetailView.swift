@@ -369,7 +369,7 @@ struct ArtistDetailView: View {
                       let songs = detail.song, !songs.isEmpty else { continue }
                 // isBatchStart: false — this batch is already managed here, so individual
                 // albums must not clear an in-progress halt.
-                await DownloadManager.shared.downloadAlbum(songs, groupId: album.id, isBatchStart: false)
+                await DownloadManager.shared.downloadAlbum(songs, groupId: album.id, name: album.name, isBatchStart: false)
                 await MainActor.run { downloadedAlbumIds.insert(album.id) }
             }
             await MainActor.run { isDownloadingAll = false }
