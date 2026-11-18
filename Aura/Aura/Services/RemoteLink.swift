@@ -413,6 +413,11 @@ extension RemoteLink: MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNe
             } else if state == .connected, invited == peerID {
                 invited = nil
                 takeControl(of: peerID)
+            } else if state == .notConnected, invited == peerID {
+                // The invitation went nowhere: most often a device that relaunched, still
+                // listed under its old identity. Gone from the list, the button stops lying.
+                invited = nil
+                devices.removeAll { $0.peer == peerID }
             } else if state == .notConnected, let lost = connected, lost.peer == peerID {
                 letGo()
                 // Dropped rather than handed back: link up again, or the next Space plays here
