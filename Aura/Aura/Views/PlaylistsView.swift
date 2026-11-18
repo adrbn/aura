@@ -71,8 +71,9 @@ struct PlaylistsView: View {
     }
 
     var pinnedPlaylists: [Playlist] {
+        // Without a pinned row, Liked Songs leads the grid instead of sitting alone in one.
+        guard pinnedOnTop else { return [] }
         let liked = filteredPlaylists.filter(\.isLikedSongs)
-        guard pinnedOnTop else { return liked }
         let pinned = filteredPlaylists.filter { appSettings.isPinned($0.id) && !$0.isLikedSongs }
         let order = appSettings.pinnedPlaylistOrder
         return liked + pinned.sorted { a, b in
@@ -88,7 +89,8 @@ struct PlaylistsView: View {
             ($0.comment ?? "").localizedCaseInsensitiveContains(searchText)
         }
         let unpinned = filtered.filter { !isOnTop($0) }
-        return sortPlaylists(searchText.isEmpty ? folderLevel(unpinned).loose : unpinned)
+        let liked = !pinnedOnTop && searchText.isEmpty && folder.isEmpty ? filtered.filter(\.isLikedSongs) : []
+        return liked + sortPlaylists(searchText.isEmpty ? folderLevel(unpinned).loose : unpinned)
     }
 
     /// The folders at this level, from playlists named "Folder/Name", as other apps do.
@@ -949,6 +951,14 @@ struct PlaylistsView: View {
                 unique.compactMap { p in p.coverArt.map { ($0, p.changed) } },
                 pointSize: 180
             )
+            // Kept for offline while the network is here, one at a time so the server's
+            // artwork queue never fills. Already-saved covers cost nothing.
+            // ponytail: a playlist's cover id changes with its songs, so old copies stay behind; a sweep if the store ever grows.
+            Task.detached(priority: .background) {
+                for coverArt in unique.compactMap(\.coverArt) {
+                    await ArtworkCache.shared.cacheOfflineArtwork(forCoverArt: coverArt, server: server)
+                }
+            }
         } catch {
             isLoading = false
         }

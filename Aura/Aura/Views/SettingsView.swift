@@ -88,10 +88,12 @@ struct SettingsView: View {
             let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
             LazyVGrid(columns: columns, spacing: 12) {
                 // Row 1: Server Status | Equalizer | Downloads
+                // Offline mode counts as offline here, or the two tiles told opposite stories.
+                let online = serverManager.isConnected && !appSettings.offlineMode
                 quickTile(
-                    icon: serverManager.isConnected ? "checkmark.circle.fill" : "xmark.circle.fill",
-                    label: serverManager.isConnected ? "Online" : "Offline",
-                    color: serverManager.isConnected ? .green : .red
+                    icon: online ? "checkmark.circle.fill" : "xmark.circle.fill",
+                    label: online ? "Online" : "Offline",
+                    color: online ? .green : .red
                 ) {
                     // Disable offline mode if active, then try reconnecting
                     if appSettings.offlineMode {
