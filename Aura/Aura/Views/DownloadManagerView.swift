@@ -70,6 +70,9 @@ struct DownloadManagerView: View {
 
     private var isEmpty: Bool { dm.downloadedSongs.isEmpty && pendingItems.isEmpty }
 
+    /// Under 2 GB free, the room left shows in orange.
+    private var lowSpace: Bool { freeBytes > 0 && freeBytes < 2_000_000_000 }
+
     private var downloadedBytes: Int64 { dm.downloadedSongs.reduce(0) { $0 + $1.fileSize } }
 
     /// Downloaded songs (and, when asked, pending queue items) folded into albums,
@@ -100,9 +103,12 @@ struct DownloadManagerView: View {
         }
     }
 
+    /// What is really moving: the album/playlist being saved, else the song in flight.
+    /// An average over hundreds of queued rows sat at 0 % whatever happened.
     private var overallProgress: Double {
-        let items = activeItems + pausedItems
-        return items.isEmpty ? 0 : items.reduce(0) { $0 + $1.progress } / Double(items.count)
+        let song = dm.currentDownloadId.flatMap { dm.downloadProgress[$0] } ?? 0
+        if let group = dm.currentGroup { return (Double(group.completed) + song) / Double(group.total) }
+        return song
     }
 
     private func refreshStorage() {
@@ -243,13 +249,12 @@ struct DownloadManagerView: View {
     /// Capacity bar: this app's downloads, everything else on the device, free space.
     private func capacityBar(height: CGFloat) -> some View {
         GeometryReader { geo in
-            let total = max(Double(capacityBytes), 1)
+            // Downloads against the room left: the whole device made them a dot.
+            let total = max(Double(downloadedBytes + freeBytes), 1)
             let mine = Double(downloadedBytes) / total
-            let other = max(0, Double(capacityBytes - freeBytes - downloadedBytes)) / total
             HStack(spacing: 2) {
-                Capsule().fill(accentColor).frame(width: max(height, geo.size.width * mine))
-                Capsule().fill(Color.primary.opacity(0.28)).frame(width: geo.size.width * other)
-                Capsule().fill(Color.primary.opacity(0.08))
+                Capsule().fill(accentColor).frame(width: max(height, (geo.size.width - 2) * mine))
+                Capsule().fill(lowSpace ? Color.orange.opacity(0.5) : Color.primary.opacity(0.12))
             }
         }
         .frame(height: height)
@@ -374,11 +379,15 @@ struct DownloadManagerView: View {
     @ViewBuilder
     private func queueActions(_ item: DownloadQueueItem) -> some View {
         switch item.state {
-        case .downloading, .waiting:
+        case .downloading:
             HStack(spacing: 10) {
                 iconButton("pause.circle.fill", .orange, "Pause") { dm.pauseDownload(item.id) }
                 iconButton("xmark.circle.fill", .secondary, "Cancel") { dm.cancelDownload(item.id) }
             }
+        case .waiting:
+            // In line, not started: no pause to offer, only a quiet way out.
+            iconButton("xmark", .secondary, "Cancel") { dm.cancelDownload(item.id) }
+                .font(.footnote)
         case .paused:
             HStack(spacing: 10) {
                 iconButton("play.circle.fill", accentColor, "Resume") { dm.resumeDownload(item.id) }
@@ -406,6 +415,8 @@ struct DownloadManagerView: View {
                         .font(.caption).foregroundStyle(.red).lineLimit(1)
                 case .paused:
                     Text("Paused").font(.caption).foregroundStyle(.orange)
+                case .waiting:
+                    Text("Queued…").font(.caption).foregroundStyle(.tertiary)
                 default:
                     Text(item.song.artist ?? String(localized: "Unknown"))
                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -464,7 +475,7 @@ struct DownloadManagerView: View {
             capacityBar(height: 10)
             HStack(spacing: 16) {
                 legend("Downloaded", downloadedBytes, accentColor)
-                legend("Available", freeBytes, Color.primary.opacity(0.18))
+                legend("Available", freeBytes, lowSpace ? .orange : Color.primary.opacity(0.18))
             }
             if !dm.downloadedSongs.isEmpty { playShufflePills.padding(.top, 4) }
         }

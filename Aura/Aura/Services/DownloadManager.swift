@@ -109,6 +109,10 @@ final class DownloadManager: NSObject {
     /// Song metadata readable from the URLSession delegate queue (off-main).
     private let knownSongsLock = NSLock()
     private var knownSongs: [String: Song] = [:]
+    /// Background tasks set aside on relaunch (all but one): their cancellation must not
+    /// mark the row cancelled, since it goes back in line. Read off-main, hence the lock.
+    private let droppedTasksLock = NSLock()
+    private var droppedTasks: Set<Int> = []
 
     /// Background session: transfers keep running while the app is suspended and
     /// survive a system kill (iOS relaunches us via handleEventsForBackgroundURLSession).
@@ -196,9 +200,30 @@ final class DownloadManager: NSObject {
     /// Re-adopt download tasks that kept running while the app was dead
     /// (system kill — user force-quit cancels them, which restoreQueue covers).
     private func reattachBackgroundSession() {
-        session.getAllTasks { tasks in
+        session.getAllTasks { all in
+            // Keep the furthest-along transfer only; the rest go back in line and run one
+            // after another. An older build could leave hundreds running at once, every
+            // row at 0 % and none actually moving.
+            let tasks = all.filter { $0.state == .running || $0.state == .suspended }
+            let keep = tasks.max { $0.countOfBytesReceived < $1.countOfBytesReceived }
+            let extras = tasks.filter { $0 !== keep }
+            self.droppedTasksLock.lock()
+            self.droppedTasks.formUnion(extras.map(\.taskIdentifier))
+            self.droppedTasksLock.unlock()
+            for task in extras {
+                guard let songId = task.taskDescription else { task.cancel(); continue }
+                (task as? URLSessionDownloadTask)?.cancel { data in
+                    if let data { self.saveResumeData(data, for: songId) }
+                }
+            }
             Task { @MainActor in
-                for task in tasks {
+                for task in extras {
+                    guard let songId = task.taskDescription,
+                          let idx = self.queueItems.firstIndex(where: { $0.id == songId }) else { continue }
+                    self.pausedIds.remove(songId)
+                    self.queueItems[idx].state = .waiting
+                }
+                for task in [keep].compactMap({ $0 }) {
                     guard let songId = task.taskDescription,
                           let downloadTask = task as? URLSessionDownloadTask else { continue }
                     self.activeURLTasks[songId] = downloadTask
@@ -1104,6 +1129,10 @@ extension DownloadManager: URLSessionDownloadDelegate {
         if let resumeData = (error as NSError).userInfo[NSURLSessionDownloadTaskResumeData] as? Data {
             saveResumeData(resumeData, for: songId)
         }
+        droppedTasksLock.lock()
+        let dropped = droppedTasks.remove(task.taskIdentifier) != nil
+        droppedTasksLock.unlock()
+        if dropped { return }
         Task { @MainActor in
             self.handleCompletionError(songId: songId, error: error)
         }
