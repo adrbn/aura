@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// The downloads screen. Three presentations of the same state and actions, switchable
+/// live from the toolbar while the owner picks one (`design_trial_downloads`):
+/// 0 storage-first, 1 cover grid with progress rings, 2 grouped list.
 struct DownloadManagerView: View {
     #if DEBUG
     private static let inScreenshot = Shot.name != nil
@@ -11,6 +14,31 @@ struct DownloadManagerView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
     @State private var searchText = ""
+    @AppStorage("design_trial_downloads") private var variant = 0
+    @State private var freeBytes: Int64 = 0
+    @State private var capacityBytes: Int64 = 0
+
+    // MARK: - Shared state
+
+    /// One album's downloaded songs (or one album's in-flight queue items).
+    fileprivate struct AlbumGroup: Identifiable {
+        let id: String
+        let title: String
+        let artist: String?
+        let coverArt: String?
+        var songs: [DownloadedSong] = []
+        var queue: [DownloadQueueItem] = []
+        var size: Int64 { songs.reduce(0) { $0 + $1.fileSize } }
+        var latest: Date { songs.map(\.downloadDate).max() ?? .distantFuture }
+        var orderedSongs: [Song] {
+            songs.map(\.song).sorted { ($0.discNumber ?? 1, $0.track ?? 0) < ($1.discNumber ?? 1, $1.track ?? 0) }
+        }
+        var inFlight: [DownloadQueueItem] { queue.filter { $0.state != .failed } }
+        var progress: Double {
+            let items = inFlight
+            return items.isEmpty ? 0 : items.reduce(0) { $0 + $1.progress } / Double(items.count)
+        }
+    }
 
     private var filteredDownloads: [DownloadedSong] {
         if searchText.isEmpty {
@@ -25,210 +53,6 @@ struct DownloadManagerView: View {
             .sorted { $0.downloadDate > $1.downloadDate }
     }
 
-    var body: some View {
-        List {
-            // Downloaded header with cover art
-            VStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(
-                            LinearGradient(
-                                colors: [.green, .green.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 160, height: 160)
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.white)
-                }
-                .shadow(color: .green.opacity(0.4), radius: 12, y: 6)
-
-                Text("\(dm.downloadedSongs.count) songs · \(dm.totalDownloadSize)")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                // Play / Shuffle buttons
-                HStack(spacing: 12) {
-                    Button {
-                        let songs = dm.downloadedSongs.map { $0.song }
-                        guard !songs.isEmpty else { return }
-                        player.playSong(songs[0], fromQueue: songs, startIndex: 0, source: .songs)
-                    } label: {
-                        Label("Play", systemImage: "play.fill")
-                            .lineLimit(1).minimumScaleFactor(0.8)
-                            .font(.subheadline.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.green.opacity(0.15))
-                            .foregroundStyle(.green)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-
-                    Button {
-                        let songs = dm.downloadedSongs.map { $0.song }
-                        guard !songs.isEmpty else { return }
-                        player.playShuffled(songs, source: .songs)
-                    } label: {
-                        Label("Shuffle", systemImage: "shuffle")
-                            .lineLimit(1).minimumScaleFactor(0.8)
-                            .font(.subheadline.weight(.semibold))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.green.opacity(0.15))
-                            .foregroundStyle(.green)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                }
-                .padding(.horizontal, 20)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .listRowSeparator(.hidden)
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
-
-            // Active downloads section
-            if !activeItems.isEmpty {
-                Section {
-                    ForEach(activeItems) { item in
-                        downloadQueueRow(item)
-                            .listRowBackground(Color.clear)
-                    }
-                } header: {
-                    HStack {
-                        Text("Downloading")
-                        Spacer()
-                        Button {
-                            dm.pauseAllDownloads()
-                        } label: {
-                            Label("Pause All", systemImage: "pause.circle")
-                                .font(.caption.weight(.semibold))
-                        }
-                        .textCase(nil)
-                        Button(role: .destructive) {
-                            dm.cancelAllDownloads()
-                        } label: {
-                            Label("Stop All", systemImage: "stop.circle")
-                                .font(.caption.weight(.semibold))
-                        }
-                        .textCase(nil)
-                    }
-                }
-            }
-
-            if !pausedItems.isEmpty {
-                Section {
-                    ForEach(pausedItems) { item in
-                        downloadQueueRow(item)
-                            .listRowBackground(Color.clear)
-                    }
-                } header: {
-                    HStack {
-                        Text("Paused")
-                        Spacer()
-                        Button {
-                            dm.resumeAllDownloads()
-                        } label: {
-                            Label("Resume All", systemImage: "play.circle")
-                                .font(.caption.weight(.semibold))
-                        }
-                        .textCase(nil)
-                    }
-                }
-            }
-
-            if !failedItems.isEmpty, !Self.inScreenshot {
-                Section("Failed") {
-                    ForEach(failedItems) { item in
-                        downloadQueueRow(item)
-                            .listRowBackground(Color.clear)
-                    }
-                }
-            }
-
-            // Downloaded songs library (always visible)
-            if !filteredDownloads.isEmpty {
-                Section("Downloaded (\(dm.downloadedSongs.count) songs, \(dm.totalDownloadSize))") {
-                    ForEach(filteredDownloads) { downloaded in
-                        downloadedSongRow(downloaded)
-                            .listRowBackground(Color.clear)
-                    }
-                    .onDelete { offsets in
-                        let toDelete = offsets.map { filteredDownloads[$0] }
-                        for item in toDelete {
-                            dm.deleteSong(item.id)
-                        }
-                    }
-                }
-            }
-
-            if dm.downloadedSongs.isEmpty && activeItems.isEmpty && failedItems.isEmpty {
-                ContentUnavailableView("No Downloads",
-                    systemImage: "arrow.down.circle",
-                    description: Text("Download songs or albums to listen offline."))
-                .listRowBackground(Color.clear)
-            }
-        }
-        .endsAboveBottomChrome()
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color.themeBg)
-        .scrollIndicators(.hidden)
-        .searchable(text: $searchText, prompt: "Search downloads")
-        .navigationTitle("downloaded")
-        .toolbar {
-            if !dm.downloadedSongs.isEmpty || !dm.queueItems.isEmpty || dm.hasPaused {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        if dm.isDownloading {
-                            Button {
-                                dm.pauseAllDownloads()
-                            } label: {
-                                Label("Pause All", systemImage: "pause.circle")
-                            }
-                        }
-                        if dm.hasPaused {
-                            Button {
-                                dm.resumeAllDownloads()
-                            } label: {
-                                Label("Resume All", systemImage: "play.circle")
-                            }
-                        }
-                        if dm.isDownloading || dm.hasPaused {
-                            Button(role: .destructive) {
-                                dm.cancelAllDownloads()
-                            } label: {
-                                Label("Stop All", systemImage: "stop.circle")
-                            }
-                        }
-                        if !dm.queueItems.filter({ $0.state == .completed || $0.state == .cancelled || $0.state == .failed }).isEmpty {
-                            Button("Clear Queue History") {
-                                dm.clearFinishedFromQueue()
-                            }
-                        }
-                        if !dm.downloadedSongs.isEmpty {
-                            Divider()
-                            Button("Play All") {
-                                let songs = dm.downloadedSongs.map { $0.song }
-                                guard !songs.isEmpty else { return }
-                                player.playSong(songs[0], fromQueue: songs, startIndex: 0, source: .songs)
-                            }
-                            Button("Shuffle All") {
-                                let songs = dm.downloadedSongs.map { $0.song }
-                                guard !songs.isEmpty else { return }
-                                player.playShuffled(songs, source: .songs)
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
-            }
-        }
-    }
-
     private var activeItems: [DownloadQueueItem] {
         dm.queueItems.filter { $0.state == .downloading || $0.state == .waiting }
     }
@@ -238,180 +62,658 @@ struct DownloadManagerView: View {
     }
 
     private var failedItems: [DownloadQueueItem] {
-        dm.queueItems.filter { $0.state == .failed }
+        Self.inScreenshot ? [] : dm.queueItems.filter { $0.state == .failed }
     }
 
-    // MARK: - Downloaded Song Row (clickable, plays the song)
+    private var pendingItems: [DownloadQueueItem] { activeItems + pausedItems + failedItems }
 
-    private func downloadedSongRow(_ downloaded: DownloadedSong) -> some View {
+    private var isEmpty: Bool { dm.downloadedSongs.isEmpty && pendingItems.isEmpty }
+
+    private var downloadedBytes: Int64 { dm.downloadedSongs.reduce(0) { $0 + $1.fileSize } }
+
+    /// Downloaded songs (and, when asked, pending queue items) folded into albums,
+    /// albums with something in flight first, then the most recently downloaded.
+    private func albumGroups(includingQueue: Bool) -> [AlbumGroup] {
+        func key(_ song: Song) -> String { song.albumId ?? song.album ?? song.id }
+        var groups: [String: AlbumGroup] = [:]
+        func group(for song: Song) -> AlbumGroup {
+            groups[key(song)] ?? AlbumGroup(id: key(song),
+                                             title: song.album ?? String(localized: "Unknown Album"),
+                                             artist: song.artist, coverArt: song.coverArt)
+        }
+        for item in filteredDownloads {
+            var g = group(for: item.song)
+            g.songs.append(item)
+            groups[g.id] = g
+        }
+        if includingQueue && searchText.isEmpty {
+            for item in pendingItems {
+                var g = group(for: item.song)
+                g.queue.append(item)
+                groups[g.id] = g
+            }
+        }
+        return groups.values.sorted {
+            if $0.queue.isEmpty != $1.queue.isEmpty { return !$0.queue.isEmpty }
+            return $0.latest > $1.latest
+        }
+    }
+
+    private var overallProgress: Double {
+        let items = activeItems + pausedItems
+        return items.isEmpty ? 0 : items.reduce(0) { $0 + $1.progress } / Double(items.count)
+    }
+
+    private func refreshStorage() {
+        let values = try? URL(fileURLWithPath: NSHomeDirectory())
+            .resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey, .volumeTotalCapacityKey])
+        freeBytes = values?.volumeAvailableCapacityForImportantUsage ?? 0
+        capacityBytes = Int64(values?.volumeTotalCapacity ?? 0)
+    }
+
+    // MARK: - Shared actions
+
+    private func playAll(shuffled: Bool = false) {
+        play(dm.downloadedSongs.map(\.song), shuffled: shuffled)
+    }
+
+    private func play(_ songs: [Song], shuffled: Bool = false) {
+        guard let first = songs.first else { return }
+        if shuffled { player.playShuffled(songs, source: .songs) }
+        else { player.playSong(first, fromQueue: songs, startIndex: 0, source: .songs) }
+    }
+
+    private func pause(_ items: [DownloadQueueItem]) { items.forEach { dm.pauseDownload($0.id) } }
+    private func resume(_ items: [DownloadQueueItem]) { items.forEach { dm.resumeDownload($0.id) } }
+    private func cancel(_ items: [DownloadQueueItem]) { items.forEach { dm.cancelDownload($0.id) } }
+    private func retry(_ items: [DownloadQueueItem]) { items.forEach { dm.retryDownload($0.song) } }
+
+    // MARK: - Body
+
+    var body: some View {
+        Group {
+            if isEmpty {
+                emptyState
+            } else {
+                switch variant {
+                case 1: gridLayout
+                case 2: listLayout
+                default: storageLayout
+                }
+            }
+        }
+        .background(Color.themeBg)
+        .searchable(text: $searchText, prompt: "Search downloads")
+        .navigationTitle("downloaded")
+        .task(id: dm.downloadedSongs.count) { refreshStorage() }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                DesignTrialSwitcher(variant: $variant)
+            }
+            if !dm.downloadedSongs.isEmpty || !dm.queueItems.isEmpty || dm.hasPaused {
+                ToolbarItem(placement: .topBarTrailing) { overflowMenu }
+            }
+        }
+    }
+
+    private var overflowMenu: some View {
+        Menu {
+            if dm.isDownloading {
+                Button { dm.pauseAllDownloads() } label: { Label("Pause All", systemImage: "pause.circle") }
+            }
+            if dm.hasPaused {
+                Button { dm.resumeAllDownloads() } label: { Label("Resume All", systemImage: "play.circle") }
+            }
+            if dm.isDownloading || dm.hasPaused {
+                Button(role: .destructive) { dm.cancelAllDownloads() } label: { Label("Stop All", systemImage: "stop.circle") }
+            }
+            if dm.queueItems.contains(where: { $0.state == .completed || $0.state == .cancelled || $0.state == .failed }) {
+                Button("Clear Queue History") { dm.clearFinishedFromQueue() }
+            }
+            if !dm.downloadedSongs.isEmpty {
+                Divider()
+                Button("Play All") { playAll() }
+                Button("Shuffle All") { playAll(shuffled: true) }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+    }
+
+    // MARK: - Shared pieces
+
+    private var emptyState: some View {
+        VStack(spacing: 18) {
+            ZStack {
+                Circle().stroke(accentColor.opacity(0.12), lineWidth: 1).frame(width: 168, height: 168)
+                Circle().stroke(accentColor.opacity(0.22), lineWidth: 1).frame(width: 124, height: 124)
+                Image(systemName: "arrow.down")
+                    .font(.system(size: 34, weight: .semibold))
+                    .foregroundStyle(accentColor)
+                    .frame(width: 80, height: 80)
+                    .glassEffect(.regular.tint(accentColor.opacity(0.18)), in: Circle())
+            }
+            VStack(spacing: 6) {
+                Text("No Downloads").font(.title3.weight(.semibold))
+                Text("Download songs or albums to listen offline.")
+                    .font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center)
+            }
+            if freeBytes > 0 {
+                Text("\(String(localized: "Available")) · \(DownloadManager.formatBytes(freeBytes))")
+                    .font(.footnote.monospacedDigit()).foregroundStyle(.tertiary)
+            }
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Dark rounded pill with an accent icon and label.
+    private func pill(_ title: LocalizedStringKey, _ icon: String, role: ButtonRole? = nil,
+                      action: @escaping () -> Void) -> some View {
+        Button(role: role, action: action) {
+            Label(title, systemImage: icon)
+                .lineLimit(1).minimumScaleFactor(0.8)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(role == .destructive ? Color.red : accentColor)
+                .frame(maxWidth: .infinity).padding(.vertical, 11)
+                .background(Color.primary.opacity(0.08), in: Capsule())
+        }
+        .buttonStyle(.borderless)
+    }
+
+    private var playShufflePills: some View {
+        HStack(spacing: 10) {
+            pill("Play", "play.fill") { playAll() }
+            pill("Shuffle", "shuffle") { playAll(shuffled: true) }
+        }
+    }
+
+    @ViewBuilder
+    private var queueControlPills: some View {
+        HStack(spacing: 10) {
+            if dm.isDownloading { pill("Pause All", "pause.fill") { dm.pauseAllDownloads() } }
+            if dm.hasPaused { pill("Resume All", "play.fill") { dm.resumeAllDownloads() } }
+            if dm.isDownloading || dm.hasPaused {
+                pill("Stop All", "stop.fill", role: .destructive) { dm.cancelAllDownloads() }
+            }
+        }
+    }
+
+    /// Capacity bar: this app's downloads, everything else on the device, free space.
+    private func capacityBar(height: CGFloat) -> some View {
+        GeometryReader { geo in
+            let total = max(Double(capacityBytes), 1)
+            let mine = Double(downloadedBytes) / total
+            let other = max(0, Double(capacityBytes - freeBytes - downloadedBytes)) / total
+            HStack(spacing: 2) {
+                Capsule().fill(accentColor).frame(width: max(height, geo.size.width * mine))
+                Capsule().fill(Color.primary.opacity(0.28)).frame(width: geo.size.width * other)
+                Capsule().fill(Color.primary.opacity(0.08))
+            }
+        }
+        .frame(height: height)
+        .opacity(capacityBytes > 0 ? 1 : 0)
+    }
+
+    private func legend(_ title: LocalizedStringKey, _ value: Int64, _ color: Color) -> some View {
+        HStack(spacing: 6) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(title).foregroundStyle(.secondary)
+            Text(verbatim: DownloadManager.formatBytes(value)).monospacedDigit()
+        }
+        .font(.footnote)
+    }
+
+    private func thinBar(_ progress: Double, tint: Color) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.primary.opacity(0.1))
+                Capsule().fill(tint).frame(width: geo.size.width * progress)
+            }
+        }
+        .frame(height: 3)
+        .animation(.linear(duration: 0.2), value: progress)
+    }
+
+    private func sizeText(_ bytes: Int64) -> some View {
+        Text(verbatim: DownloadManager.formatBytes(bytes))
+            .font(.caption.monospacedDigit())
+            .foregroundStyle(.secondary)
+    }
+
+    @ViewBuilder
+    private func albumMenu(_ group: AlbumGroup) -> some View {
+        if !group.songs.isEmpty {
+            Button { play(group.orderedSongs) } label: { Label("Play", systemImage: "play.fill") }
+            Button { play(group.orderedSongs, shuffled: true) } label: { Label("Shuffle", systemImage: "shuffle") }
+        }
+        if let albumId = group.songs.first?.song.albumId ?? group.queue.first?.song.albumId {
+            Button { player.pendingAlbumId = albumId } label: { Label("Go to Album", systemImage: "square.stack") }
+        }
+        if !group.queue.isEmpty { queueMenu(group.queue) }
+        if !group.songs.isEmpty {
+            Divider()
+            Button(role: .destructive) {
+                group.songs.forEach { dm.deleteSong($0.id) }
+            } label: { Label("Remove Download", systemImage: "trash") }
+        }
+    }
+
+    @ViewBuilder
+    private func queueMenu(_ items: [DownloadQueueItem]) -> some View {
+        let running = items.filter { $0.state == .downloading || $0.state == .waiting }
+        let paused = items.filter { $0.state == .paused }
+        let failed = items.filter { $0.state == .failed }
+        Divider()
+        if !running.isEmpty { Button { pause(running) } label: { Label("Pause", systemImage: "pause.fill") } }
+        if !paused.isEmpty { Button { resume(paused) } label: { Label("Resume", systemImage: "play.fill") } }
+        if !failed.isEmpty { Button { retry(failed) } label: { Label("Retry", systemImage: "arrow.clockwise") } }
+        if !(running + paused).isEmpty {
+            Button(role: .destructive) { cancel(running + paused) } label: { Label("Cancel", systemImage: "xmark") }
+        }
+    }
+
+    // MARK: - Rows (variants 0 and 2)
+
+    private func downloadedSongRow(_ downloaded: DownloadedSong, cover: CGFloat, queue: [Song]) -> some View {
         Button {
-            let allSongs = filteredDownloads.map { $0.song }
-            if let idx = allSongs.firstIndex(where: { $0.id == downloaded.song.id }) {
-                player.playSong(downloaded.song, fromQueue: allSongs, startIndex: idx, source: .songs)
+            if let idx = queue.firstIndex(where: { $0.id == downloaded.song.id }) {
+                player.playSong(downloaded.song, fromQueue: queue, startIndex: idx, source: .songs)
             }
         } label: {
             HStack(spacing: 12) {
-                CoverArtImage(coverArt: downloaded.song.coverArt, size: 44, cornerRadius: 6)
-
-                VStack(alignment: .leading, spacing: 2) {
+                CoverArtImage(coverArt: downloaded.song.coverArt, size: cover, cornerRadius: cover > 48 ? 8 : 6,
+                              fallbackCoverArt: downloaded.song.albumId)
+                VStack(alignment: .leading, spacing: 3) {
                     Text(downloaded.song.title)
                         .font(.subheadline.weight(.medium))
                         .lineLimit(1)
-                    HStack(spacing: 4) {
-                        Text(downloaded.song.artist ?? String(localized: "Unknown"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                        Text("·")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(downloaded.song.durationFormatted)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text("\(downloaded.song.artist ?? String(localized: "Unknown")) · \(downloaded.song.durationFormatted)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-
-                Spacer()
-
-                Text(DownloadManager.formatBytes(downloaded.fileSize))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                Spacer(minLength: 8)
+                sizeText(downloaded.fileSize)
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .contextMenu {
-            Button { player.playSong(downloaded.song) } label: {
-                Label("Play Now", systemImage: "play.fill")
-            }
-            Button { player.playNext(downloaded.song) } label: {
-                Label("Play Next", systemImage: "text.insert")
-            }
-            Button { player.addToQueue(downloaded.song) } label: {
-                Label("Add to Queue", systemImage: "text.append")
-            }
+            Button { player.playSong(downloaded.song) } label: { Label("Play Now", systemImage: "play.fill") }
+            Button { player.playNext(downloaded.song) } label: { Label("Play Next", systemImage: "text.insert") }
+            Button { player.addToQueue(downloaded.song) } label: { Label("Add to Queue", systemImage: "text.append") }
             Divider()
             if let albumId = downloaded.song.albumId {
-                Button {
-                    player.pendingAlbumId = albumId
-                } label: {
-                    Label("Go to Album", systemImage: "square.stack")
-                }
+                Button { player.pendingAlbumId = albumId } label: { Label("Go to Album", systemImage: "square.stack") }
             }
             if let artistId = downloaded.song.artistId {
-                Button {
-                    player.pendingArtistId = artistId
-                } label: {
-                    Label("Go to Artist", systemImage: "person")
-                }
+                Button { player.pendingArtistId = artistId } label: { Label("Go to Artist", systemImage: "person") }
             }
             Divider()
-            Button(role: .destructive) {
-                dm.deleteSong(downloaded.id)
-            } label: {
+            Button(role: .destructive) { dm.deleteSong(downloaded.id) } label: {
                 Label("Remove Download", systemImage: "trash")
             }
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button(role: .destructive) {
-                dm.deleteSong(downloaded.id)
-            } label: {
-                Image(systemName: "trash")
-            }
-            .accessibilityLabel("Delete")
+            Button(role: .destructive) { dm.deleteSong(downloaded.id) } label: { Image(systemName: "trash") }
+                .accessibilityLabel("Delete")
         }
     }
 
-    // MARK: - Queue Row (active/failed downloads)
+    private func iconButton(_ icon: String, _ color: Color, _ label: LocalizedStringKey,
+                            action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon).font(.title3).foregroundStyle(color)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
 
     @ViewBuilder
-    private func downloadQueueRow(_ item: DownloadQueueItem) -> some View {
-        HStack(spacing: 12) {
-            CoverArtImage(coverArt: item.song.coverArt, size: 44, cornerRadius: 6)
+    private func queueActions(_ item: DownloadQueueItem) -> some View {
+        switch item.state {
+        case .downloading, .waiting:
+            HStack(spacing: 10) {
+                iconButton("pause.circle.fill", .orange, "Pause") { dm.pauseDownload(item.id) }
+                iconButton("xmark.circle.fill", .secondary, "Cancel") { dm.cancelDownload(item.id) }
+            }
+        case .paused:
+            HStack(spacing: 10) {
+                iconButton("play.circle.fill", accentColor, "Resume") { dm.resumeDownload(item.id) }
+                iconButton("xmark.circle.fill", .secondary, "Cancel") { dm.cancelDownload(item.id) }
+            }
+        case .failed, .cancelled:
+            iconButton("arrow.clockwise.circle.fill", accentColor, "Retry") { dm.retryDownload(item.song) }
+        case .completed:
+            Image(systemName: "checkmark.circle.fill").font(.title3).foregroundStyle(.green)
+        }
+    }
 
-            VStack(alignment: .leading, spacing: 2) {
+    private func queueRow(_ item: DownloadQueueItem, cover: CGFloat) -> some View {
+        HStack(spacing: 12) {
+            CoverArtImage(coverArt: item.song.coverArt, size: cover, cornerRadius: cover > 48 ? 8 : 6,
+                          fallbackCoverArt: item.song.albumId)
+                .opacity(item.state == .downloading ? 1 : 0.6)
+            VStack(alignment: .leading, spacing: 4) {
                 Text(item.song.title)
                     .font(.subheadline.weight(.medium))
                     .lineLimit(1)
-                Text(item.song.artist ?? String(localized: "Unknown"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                if item.state == .downloading {
-                    ProgressView(value: item.progress, total: 1.0)
-                        .tint(accentColor)
-                } else if item.state == .paused {
-                    Text("Paused")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                } else if item.state == .failed, let error = item.error {
-                    Text(error)
-                        .font(.caption2)
-                        .foregroundStyle(.red)
-                        .lineLimit(1)
+                switch item.state {
+                case .failed:
+                    Text(item.error ?? String(localized: "Failed"))
+                        .font(.caption).foregroundStyle(.red).lineLimit(1)
+                case .paused:
+                    Text("Paused").font(.caption).foregroundStyle(.orange)
+                default:
+                    Text(item.song.artist ?? String(localized: "Unknown"))
+                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
+                if item.state == .downloading || item.state == .paused {
+                    thinBar(item.progress, tint: item.state == .paused ? .orange : accentColor)
                 }
             }
-
-            Spacer()
-
-            switch item.state {
-            case .downloading, .waiting:
-                HStack(spacing: 8) {
-                    Button {
-                        dm.pauseDownload(item.id)
-                    } label: {
-                        Image(systemName: "pause.circle.fill")
-                            .foregroundStyle(.orange)
-                            .font(.title3)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Pause")
-                    Button {
-                        dm.cancelDownload(item.id)
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                            .font(.title3)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Cancel")
-                }
-            case .paused:
-                HStack(spacing: 8) {
-                    Button {
-                        dm.resumeDownload(item.id)
-                    } label: {
-                        Image(systemName: "play.circle.fill")
-                            .foregroundStyle(accentColor)
-                            .font(.title3)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Resume")
-                    Button {
-                        dm.cancelDownload(item.id)
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                            .font(.title3)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Cancel")
-                }
-            case .failed, .cancelled:
-                Button {
-                    dm.retryDownload(item.song)
-                } label: {
-                    Image(systemName: "arrow.clockwise.circle.fill")
-                        .foregroundStyle(accentColor)
-                        .font(.title3)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Retry")
-            case .completed:
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .font(.title3)
+            Spacer(minLength: 8)
+            if item.state == .downloading {
+                Text("\(Int(item.progress * 100))%")
+                    .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
             }
+            queueActions(item)
         }
         .padding(.vertical, 2)
+    }
+
+    // MARK: - Variant 0: storage first
+
+    private var storageLayout: some View {
+        List {
+            if searchText.isEmpty {
+                storageHeader.plainRow(EdgeInsets(top: 8, leading: 20, bottom: 20, trailing: 20))
+                if !pendingItems.isEmpty {
+                    inProgressCard.plainRow(EdgeInsets(top: 0, leading: 16, bottom: 24, trailing: 16))
+                }
+                let albums = albumGroups(includingQueue: false)
+                if !albums.isEmpty {
+                    Section {
+                        albumShelf(albums).plainRow(EdgeInsets(top: 4, leading: 0, bottom: 20, trailing: 0))
+                    } header: { sectionTitle("Recently Downloaded") }
+                }
+            }
+            if !filteredDownloads.isEmpty {
+                Section {
+                    songRows(filteredDownloads, cover: 44)
+                } header: {
+                    sectionTitle("Downloaded Songs", trailing: searchText.isEmpty ? nil : "\(filteredDownloads.count)")
+                }
+            }
+        }
+        .listChrome()
+    }
+
+    private var storageHeader: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Storage Used").font(.subheadline).foregroundStyle(.secondary)
+                Text(verbatim: dm.totalDownloadSize)
+                    .font(.system(size: 44, weight: .bold).monospacedDigit())
+                    .contentTransition(.numericText())
+                Text("\(dm.downloadedSongs.count) songs")
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            capacityBar(height: 10)
+            HStack(spacing: 16) {
+                legend("Downloaded", downloadedBytes, accentColor)
+                legend("Available", freeBytes, Color.primary.opacity(0.18))
+            }
+            if !dm.downloadedSongs.isEmpty { playShufflePills.padding(.top, 4) }
+        }
+    }
+
+    private var inProgressCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 14) {
+                ProgressRing(progress: overallProgress, tint: dm.isDownloading ? accentColor : .orange, lineWidth: 5)
+                    .frame(width: 54, height: 54)
+                    .overlay {
+                        Text("\(Int(overallProgress * 100))%").font(.caption2.weight(.semibold).monospacedDigit())
+                    }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("In Progress").font(.headline)
+                    Text("\(pendingItems.count) songs")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            queueControlPills
+            VStack(spacing: 12) {
+                ForEach(pendingItems.prefix(6)) { queueRow($0, cover: 40) }
+            }
+            if pendingItems.count > 6 {
+                Text(verbatim: "+\(pendingItems.count - 6)")
+                    .font(.footnote.monospacedDigit()).foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .background(accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func albumShelf(_ albums: [AlbumGroup]) -> some View {
+        ScrollView(.horizontal) {
+            LazyHStack(alignment: .top, spacing: 14) {
+                ForEach(albums.prefix(20)) { group in
+                    Button { play(group.orderedSongs) } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            CoverArtImage(coverArt: group.coverArt, size: 136, cornerRadius: 12,
+                                          placeholderName: group.title)
+                            Text(group.title).font(.footnote.weight(.semibold)).lineLimit(1)
+                            Text("\(group.artist ?? String(localized: "Unknown")) · \(DownloadManager.formatBytes(group.size))")
+                                .font(.caption.monospacedDigit()).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        .frame(width: 136, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu { albumMenu(group) }
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func songRows(_ songs: [DownloadedSong], cover: CGFloat) -> some View {
+        let queue = songs.map(\.song)
+        return ForEach(songs) { downloadedSongRow($0, cover: cover, queue: queue).listRowBackground(Color.clear) }
+            .onDelete { offsets in offsets.map { songs[$0].id }.forEach { dm.deleteSong($0) } }
+    }
+
+    private func sectionTitle(_ title: LocalizedStringKey, trailing: String? = nil) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title).font(.title3.weight(.bold)).foregroundStyle(.primary)
+            Spacer()
+            if let trailing {
+                Text(verbatim: trailing).font(.footnote.monospacedDigit()).foregroundStyle(.secondary)
+            }
+        }
+        .textCase(nil)
+    }
+
+    // MARK: - Variant 1: cover grid
+
+    private var gridLayout: some View {
+        let groups = albumGroups(includingQueue: true)
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                if searchText.isEmpty {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("\(dm.downloadedSongs.count) songs · \(dm.totalDownloadSize)")
+                            .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                        Spacer()
+                        if !pendingItems.isEmpty {
+                            Text("\(Int(overallProgress * 100))%")
+                                .font(.subheadline.weight(.semibold).monospacedDigit()).foregroundStyle(accentColor)
+                        }
+                    }
+                    if !dm.downloadedSongs.isEmpty { playShufflePills }
+                    if dm.isDownloading || dm.hasPaused { queueControlPills }
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 14)], spacing: 20) {
+                    ForEach(groups) { gridTile($0) }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
+        }
+        .scrollIndicators(.hidden)
+        .endsAboveBottomChrome()
+    }
+
+    private func gridTile(_ group: AlbumGroup) -> some View {
+        let failed = group.queue.filter { $0.state == .failed }
+        let inFlight = group.inFlight
+        let paused = !inFlight.isEmpty && inFlight.allSatisfy { $0.state == .paused }
+        return Button {
+            if !failed.isEmpty { retry(failed) }
+            else if paused { resume(inFlight) }
+            else if !inFlight.isEmpty { pause(inFlight) }
+            else { play(group.orderedSongs) }
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                Color.clear
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay {
+                        GeometryReader { geo in
+                            CoverArtImage(coverArt: group.coverArt, size: geo.size.width, cornerRadius: 14,
+                                          placeholderName: group.title)
+                        }
+                    }
+                    .overlay { tileBadge(progress: group.progress, inFlight: !inFlight.isEmpty,
+                                         paused: paused, failed: !failed.isEmpty) }
+                Text(group.title).font(.subheadline.weight(.semibold)).lineLimit(1)
+                HStack(spacing: 4) {
+                    Text(group.artist ?? String(localized: "Unknown")).lineLimit(1)
+                    Spacer(minLength: 4)
+                    if group.size > 0 {
+                        Text(verbatim: DownloadManager.formatBytes(group.size)).monospacedDigit()
+                    }
+                }
+                .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .contextMenu { albumMenu(group) }
+    }
+
+    @ViewBuilder
+    private func tileBadge(progress: Double, inFlight: Bool, paused: Bool, failed: Bool) -> some View {
+        if failed || inFlight {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14).fill(.black.opacity(0.45))
+                if failed {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.title2.weight(.semibold)).foregroundStyle(.red)
+                        .frame(width: 56, height: 56)
+                        .glassEffect(.regular, in: Circle())
+                } else {
+                    ProgressRing(progress: progress, tint: paused ? .orange : accentColor, lineWidth: 5)
+                        .frame(width: 64, height: 64)
+                        .overlay {
+                            Image(systemName: paused ? "play.fill" : "pause.fill")
+                                .font(.title3).foregroundStyle(.white)
+                        }
+                }
+            }
+        }
+    }
+
+    // MARK: - Variant 2: grouped list
+
+    private var listLayout: some View {
+        List {
+            if searchText.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("\(dm.downloadedSongs.count) songs · \(dm.totalDownloadSize)")
+                            .font(.subheadline.weight(.semibold).monospacedDigit())
+                        Spacer()
+                        legend("Available", freeBytes, Color.primary.opacity(0.18))
+                    }
+                    capacityBar(height: 5)
+                    if !dm.downloadedSongs.isEmpty { playShufflePills.padding(.top, 6) }
+                }
+                .plainRow(EdgeInsets(top: 8, leading: 20, bottom: 16, trailing: 20))
+            }
+            queueSection("Downloading", activeItems)
+            queueSection("Paused", pausedItems)
+            queueSection("Failed", failedItems)
+            ForEach(albumGroups(includingQueue: false)) { group in
+                Section {
+                    songRows(group.songs.sorted { ($0.song.discNumber ?? 1, $0.song.track ?? 0) < ($1.song.discNumber ?? 1, $1.song.track ?? 0) },
+                             cover: 52)
+                } header: {
+                    Button { play(group.orderedSongs) } label: {
+                        HStack(alignment: .firstTextBaseline) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(group.title).font(.headline).foregroundStyle(.primary).lineLimit(1)
+                                if let artist = group.artist {
+                                    Text(artist).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                                }
+                            }
+                            Spacer()
+                            Text(verbatim: DownloadManager.formatBytes(group.size))
+                                .font(.footnote.weight(.semibold).monospacedDigit()).foregroundStyle(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .textCase(nil)
+                    .contextMenu { albumMenu(group) }
+                }
+            }
+        }
+        .listChrome()
+    }
+
+    @ViewBuilder
+    private func queueSection(_ title: LocalizedStringKey, _ items: [DownloadQueueItem]) -> some View {
+        if !items.isEmpty && searchText.isEmpty {
+            Section {
+                ForEach(items) { queueRow($0, cover: 52).listRowBackground(Color.clear) }
+            } header: {
+                sectionTitle(title, trailing: "\(items.count)")
+            }
+        }
+    }
+}
+
+// MARK: - Helpers
+
+private struct ProgressRing: View {
+    let progress: Double
+    let tint: Color
+    var lineWidth: CGFloat = 4
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(tint.opacity(0.2), lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: max(0.02, progress))
+                .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.linear(duration: 0.2), value: progress)
+        }
+    }
+}
+
+private extension View {
+    func plainRow(_ insets: EdgeInsets) -> some View {
+        listRowInsets(insets).listRowSeparator(.hidden).listRowBackground(Color.clear)
+    }
+
+    func listChrome() -> some View {
+        endsAboveBottomChrome()
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .scrollIndicators(.hidden)
     }
 }
