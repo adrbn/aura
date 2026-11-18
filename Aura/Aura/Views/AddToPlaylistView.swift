@@ -6,10 +6,7 @@ struct AddToPlaylistView: View {
     @Environment(ServerManager.self) private var serverManager
     @Environment(AudioPlayer.self) private var player
     @Environment(\.appAccentColor) private var accentColor
-    /// Design trial: 0 cover grid, 1 tinted list, 2 song card with a shelf.
-    @AppStorage("design_trial_addToPlaylist") private var variant = 0
-    @State private var detent: PresentationDetent =
-        UserDefaults.standard.integer(forKey: "design_trial_addToPlaylist") == 1 ? .medium : .large
+    @State private var detent: PresentationDetent = .medium
     @State private var playlists: [Playlist] = []
     @State private var sortedPlaylistIds: [String] = [] // Stable sort order captured on load
     @State private var isLoading = true
@@ -19,7 +16,6 @@ struct AddToPlaylistView: View {
     @State private var searchText = ""
     @State private var isFavorited: Bool = false
     @State private var favoriteCount: Int = 0
-    @State private var contentWidth: CGFloat = 0
 
     private let spring = Animation.spring(duration: 0.35, bounce: 0.3)
 
@@ -39,32 +35,16 @@ struct AddToPlaylistView: View {
         return filtered.sorted { (idOrder[$0.id] ?? Int.max) < (idOrder[$1.id] ?? Int.max) }
     }
 
-    /// The shelf of design 3: pinned first, then the newest. Built from `playlists` alone,
-    /// so toggling never reshuffles it.
-    private var recentPlaylists: [Playlist] {
-        let pinned = playlists.filter { AppSettings.shared.isPinned($0.id) }
-        let rest = playlists.filter { !AppSettings.shared.isPinned($0.id) }
-            .sorted { ($0.created ?? "") > ($1.created ?? "") }
-        return Array((pinned + rest).prefix(10))
-    }
-
     var body: some View {
         NavigationStack {
             ScrollView {
-                Group {
-                    switch variant {
-                    case 1: tintedListLayout
-                    case 2: shelfLayout
-                    default: gridLayout
-                    }
-                }
+                tintedListLayout
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
                 .animation(spring, value: isCreating)
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { contentWidth = $0 }
             .searchable(text: $searchText, prompt: "Search playlists")
             // The page's own colour under the rows, the search field and the bar alike.
             .background(Color.themeBg)
@@ -73,9 +53,6 @@ struct AddToPlaylistView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { dismiss() } label: { Image(systemName: "xmark") }
                         .accessibilityLabel(Text("Done"))
-                }
-                ToolbarItem(placement: .principal) {
-                    DesignTrialSwitcher(variant: $variant)
                 }
             }
             .task {
@@ -91,6 +68,7 @@ struct AddToPlaylistView: View {
         }
         .presentationDetents([.medium, .large], selection: $detent)
         .presentationDragIndicator(.visible)
+        .presentationContentInteraction(.scrolls)
         .presentationBackground(Color.themeBg)
     }
 
@@ -226,92 +204,7 @@ struct AddToPlaylistView: View {
         }
     }
 
-    // MARK: - Design 1: cover grid
-
-    private var tileSize: CGFloat { max(100, (contentWidth - 32 - 14) / 2) }
-    private var gridColumns: [GridItem] {
-        [GridItem(.flexible(), spacing: 14, alignment: .top), GridItem(.flexible(), spacing: 14, alignment: .top)]
-    }
-
-    private var gridLayout: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            songHeader
-            if isCreating { newPlaylistField }
-            LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 20) {
-                if isLoading {
-                    ForEach(0..<6, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.primary.opacity(0.06))
-                            .frame(width: tileSize, height: tileSize)
-                    }
-                } else {
-                    gridTile(on: isFavorited, action: tapFavorite) {
-                        heartTile(size: tileSize, radius: 16)
-                    } title: { Text("Favorite Songs") } subtitle: { Text("\(favoriteCount) songs") }
-
-                    if searchText.isEmpty && !isCreating {
-                        gridTile(on: false, action: startCreating) {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.primary.opacity(0.06))
-                                .frame(width: tileSize, height: tileSize)
-                                .overlay {
-                                    Image(systemName: "plus")
-                                        .font(.system(size: tileSize * 0.26, weight: .medium))
-                                        .foregroundStyle(accentColor)
-                                }
-                        } title: { Text("New Playlist") } subtitle: { Text(verbatim: " ") }
-                    }
-
-                    ForEach(filteredPlaylists) { playlist in
-                        gridTile(on: isIn(playlist), action: { toggle(playlist) }) {
-                            PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
-                                              size: tileSize, cornerRadius: 16, placeholderName: playlist.name)
-                        } title: { Text(playlist.name) } subtitle: { Text("\(playlist.songCount ?? 0) songs") }
-                    }
-                }
-            }
-        }
-    }
-
-    private func gridTile<Cover: View, Title: View, Subtitle: View>(
-        on: Bool, action: @escaping () -> Void,
-        @ViewBuilder cover: () -> Cover,
-        @ViewBuilder title: () -> Title,
-        @ViewBuilder subtitle: () -> Subtitle
-    ) -> some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
-                cover()
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(accentColor, lineWidth: on ? 3 : 0)
-                    }
-                    .overlay(alignment: .topTrailing) {
-                        if on {
-                            checkBadge(true, size: 30)
-                                .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
-                                .padding(8)
-                                .transition(.scale(scale: 0.4).combined(with: .opacity))
-                        }
-                    }
-                    .scaleEffect(on ? 0.96 : 1)
-                VStack(alignment: .leading, spacing: 2) {
-                    title()
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(on ? accentColor : .primary)
-                        .lineLimit(1)
-                    subtitle()
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 2)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Design 2: tinted list
+    // MARK: - Layout
 
     private var tintedListLayout: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -387,122 +280,6 @@ struct AddToPlaylistView: View {
                     .fill(accentColor.opacity(on ? 0.16 : 0))
             }
             .contentShape(RoundedRectangle(cornerRadius: 16))
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Design 3: song card, shelf, list
-
-    private var shelfLayout: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            if searchText.isEmpty {
-                VStack(spacing: 6) {
-                    CoverArtImage(coverArt: song.displayCoverArt, size: 140, cornerRadius: 18,
-                                  fallbackCoverArt: song.albumId,
-                                  placeholderName: song.title, placeholderKind: .song)
-                        .shadow(color: .black.opacity(0.45), radius: 18, y: 10)
-                        .padding(.bottom, 8)
-                    Text(song.title)
-                        .font(.title3.weight(.bold))
-                        .lineLimit(1)
-                    if let artist = song.artist {
-                        Text(artist)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 12)
-            }
-
-            HStack(spacing: 12) {
-                pillButton(icon: isFavorited ? "heart.fill" : "heart", title: "Favorite Songs",
-                           active: isFavorited, action: tapFavorite)
-                pillButton(icon: "plus", title: "New Playlist", active: false, action: startCreating)
-            }
-            if isCreating { newPlaylistField }
-
-            if isLoading {
-                skeletonRows
-            } else {
-                if searchText.isEmpty && !recentPlaylists.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Recent").font(.title3.weight(.bold))
-                        ScrollView(.horizontal) {
-                            LazyHStack(alignment: .top, spacing: 14) {
-                                ForEach(recentPlaylists) { shelfCard($0) }
-                            }
-                            .padding(.horizontal, 16)
-                        }
-                        .scrollIndicators(.hidden)
-                        .padding(.horizontal, -16)
-                    }
-                    Text("Playlists").font(.title3.weight(.bold))
-                }
-                LazyVStack(spacing: 2) {
-                    ForEach(filteredPlaylists) { playlist in
-                        let on = isIn(playlist)
-                        Button { toggle(playlist) } label: {
-                            HStack(spacing: 12) {
-                                PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
-                                                  size: 48, cornerRadius: 8, placeholderName: playlist.name)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(playlist.name)
-                                        .font(.subheadline.weight(.semibold))
-                                        .lineLimit(1)
-                                    Text("\(playlist.songCount ?? 0) songs")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer(minLength: 8)
-                                checkBadge(on, size: 24)
-                            }
-                            .padding(.vertical, 6)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-    }
-
-    private func pillButton(icon: String, title: LocalizedStringKey, active: Bool,
-                            action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label { Text(title) } icon: {
-                Image(systemName: icon).contentTransition(.symbolEffect(.replace))
-            }
-            .lineLimit(1).minimumScaleFactor(0.8)
-            .font(.subheadline.weight(.semibold))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(active ? accentColor.opacity(0.18) : Color.primary.opacity(0.08))
-            .foregroundStyle(accentColor)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func shelfCard(_ playlist: Playlist) -> some View {
-        let on = isIn(playlist)
-        return Button { toggle(playlist) } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                PlaylistCoverView(playlistId: playlist.id, coverArt: playlist.coverArt,
-                                  size: 116, cornerRadius: 14, placeholderName: playlist.name)
-                    .overlay(alignment: .bottomTrailing) {
-                        checkBadge(on, size: 28)
-                            .background(Circle().fill(on ? .clear : Color.black.opacity(0.35)))
-                            .padding(7)
-                    }
-                Text(playlist.name)
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(on ? accentColor : .primary)
-                    .lineLimit(1)
-            }
-            .frame(width: 116)
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

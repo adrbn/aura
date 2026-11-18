@@ -442,6 +442,10 @@ final class ArtworkCache: @unchecked Sendable {
             }
             return local
         }
+        // A downloaded song's cover is already on the phone: use it before asking the server,
+        // so a saved playlist doesn't wait on a slow mobile network for pictures it has.
+        // ponytail: a cover changed on the server after the download shows once it's re-saved.
+        if let local = offlineArtwork(forCoverArt: coverArt) { return local }
         let (task, isOwner) = inFlightLock.withLock { () -> (Task<PlatformImage?, Never>, Bool) in
         if let existing = inFlight[key] { return (existing, false) }
         let task = Task<PlatformImage?, Never> {
