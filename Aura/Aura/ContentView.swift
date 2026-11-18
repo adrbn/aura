@@ -123,6 +123,7 @@ struct ContentView: View {
                 DownloadManagerView()
             }
         }
+        .sheet(isPresented: Bindable(SupportPrompt.shared).isShown) { SupportCard() }
         .onChange(of: scenePhase) { _, phase in
             // A rating prompt that came due while the app was in the background.
             guard phase == .active else { return }

@@ -172144,6 +172144,598 @@
           }
         }
       }
+    },
+    "Enjoying Aura?": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "T'agrada Aura?"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Líbí se vám Aura?"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kan du lide Aura?"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gefällt dir Aura?"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Σου αρέσει το Aura;"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Te gusta Aura?"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nautitko Aurasta?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura te plaît ?"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ti piace Aura?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auraを楽しんでいますか?"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura를 잘 쓰고 계신가요?"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Liker du Aura?"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bevalt Aura je?"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podoba Ci się Aura?"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Curtindo o Aura?"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A gostar do Aura?"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Îți place Aura?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нравится Aura?"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gillar du Aura?"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ชอบ Aura ไหม"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura'yı beğendin mi?"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подобається Aura?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "喜欢 Aura 吗？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "喜歡 Aura 嗎？"
+          }
+        }
+      }
+    },
+    "Aura is free, with no ads, no tracking and no subscription, and made by one person. Just keeping it on the App Store costs $99 a year. If it has become your music player, a coffee keeps it going.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura és gratuïta, sense anuncis, sense rastreig ni subscripció, i la fa una sola persona. Només mantenir-la a l'App Store costa 99 $ l'any. Si s'ha convertit en el teu reproductor de música, un cafè l'ajuda a continuar."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura je zdarma, bez reklam, sledování a předplatného a vytváří ji jeden člověk. Jen udržet ji v App Storu stojí 99 $ ročně. Pokud se stala vaším hudebním přehrávačem, káva jí pomůže pokračovat."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura er gratis, uden reklamer, sporing og abonnement, og lavet af én person. Bare det at holde den i App Store koster 99 $ om året. Hvis den er blevet din musikafspiller, hjælper en kop kaffe den med at fortsætte."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura ist kostenlos, ohne Werbung, Tracking und Abo, und von einer einzigen Person gemacht. Allein sie im App Store zu halten kostet 99 $ im Jahr. Wenn sie dein Musikplayer geworden ist, hält ein Kaffee sie am Laufen."
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Το Aura είναι δωρεάν, χωρίς διαφημίσεις, παρακολούθηση και συνδρομή, και το φτιάχνει ένας άνθρωπος. Μόνο η παραμονή του στο App Store κοστίζει 99 $ τον χρόνο. Αν έγινε η εφαρμογή μουσικής σου, ένας καφές το βοηθά να συνεχίσει."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura es gratuita, sin anuncios, sin rastreo ni suscripción, y la hace una sola persona. Solo mantenerla en la App Store cuesta 99 $ al año. Si se ha convertido en tu reproductor de música, un café la ayuda a seguir."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura on ilmainen, ilman mainoksia, seurantaa ja tilauksia, ja yhden ihmisen tekemä. Pelkästään sen pitäminen App Storessa maksaa 99 $ vuodessa. Jos siitä on tullut musiikkisoittimesi, kahvi auttaa sitä jatkamaan."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura est gratuite, sans pub, sans pistage ni abonnement, et faite par une seule personne. Rien que la garder sur l'App Store coûte 99 $ par an. Si elle est devenue ton lecteur de musique, un café l'aide à continuer."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura è gratuita, senza pubblicità, tracciamento né abbonamento, e fatta da una sola persona. Solo tenerla sull'App Store costa 99 $ all'anno. Se è diventata il tuo lettore musicale, un caffè la aiuta ad andare avanti."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auraは無料で、広告もトラッキングもサブスクリプションもなく、1人で作られています。App Storeに置いておくだけで年99ドルかかります。Auraがあなたの音楽プレーヤーになっていたら、コーヒー1杯が開発を続ける助けになります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura는 광고도, 추적도, 구독도 없이 무료이고, 한 사람이 만들어요. App Store에 올려 두는 것만으로도 1년에 99달러가 들어요. Aura가 당신의 음악 플레이어가 되었다면, 커피 한 잔이 계속 이어 가는 데 힘이 돼요."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura er gratis, uten reklame, sporing og abonnement, og laget av én person. Bare det å holde den i App Store koster 99 $ i året. Hvis den har blitt musikkspilleren din, hjelper en kaffe den å fortsette."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura is gratis, zonder advertenties, tracking of abonnement, en gemaakt door één persoon. Alleen al haar in de App Store houden kost $ 99 per jaar. Als ze je muziekspeler is geworden, houdt een koffie haar draaiende."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura jest darmowa, bez reklam, śledzenia i subskrypcji, stworzona przez jedną osobę. Samo utrzymanie jej w App Store kosztuje 99 $ rocznie. Jeśli stała się Twoim odtwarzaczem muzyki, kawa pomoże jej działać dalej."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Aura é gratuito, sem anúncios, sem rastreamento e sem assinatura, e feito por uma pessoa só. Só mantê-lo na App Store custa US$ 99 por ano. Se ele virou o seu player de música, um café ajuda a mantê-lo."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Aura é gratuito, sem anúncios, sem rastreio nem subscrição, e feito por uma só pessoa. Só mantê-lo na App Store custa 99 $ por ano. Se se tornou o teu leitor de música, um café ajuda-o a continuar."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura este gratuită, fără reclame, fără urmărire și fără abonament, și e făcută de o singură persoană. Doar menținerea ei în App Store costă 99 $ pe an. Dacă a devenit playerul tău de muzică, o cafea o ajută să continue."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura бесплатна, без рекламы, слежки и подписки, и её делает один человек. Одно только размещение в App Store стоит 99 $ в год. Если она стала вашим музыкальным плеером, чашка кофе поможет ей жить дальше."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura är gratis, utan annonser, spårning och prenumeration, och görs av en enda person. Bara att hålla appen kvar i App Store kostar 99 $ om året. Om den har blivit din musikspelare hjälper en kaffe den att fortsätta."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura ใช้งานฟรี ไม่มีโฆษณา ไม่มีการติดตาม ไม่ต้องสมัครสมาชิก และสร้างโดยคนคนเดียว แค่การคงแอปไว้บน App Store ก็มีค่าใช้จ่าย 99 ดอลลาร์ต่อปี ถ้า Aura กลายเป็นเครื่องเล่นเพลงของคุณแล้ว กาแฟหนึ่งแก้วช่วยให้แอปไปต่อได้"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura ücretsizdir; reklam, takip ve abonelik yoktur, tek bir kişi tarafından yapılır. Sadece App Store'da kalması yılda 99 $ tutar. Senin müzik çalarına dönüştüyse, bir kahve devam etmesine yardım eder."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura безплатна, без реклами, стеження й підписки, і її створює одна людина. Лише утримання в App Store коштує 99 $ на рік. Якщо вона стала вашим музичним плеєром, кава допоможе їй працювати далі."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura 免费，无广告、无追踪、无订阅，由一个人制作。光是留在 App Store 上每年就要 99 美元。如果它已成为你的音乐播放器，请杯咖啡就能让它继续下去。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aura 免費、沒有廣告、沒有追蹤、沒有訂閱，由一個人製作。光是留在 App Store 上每年就要 99 美元。如果它已成為你的音樂播放器，請喝杯咖啡就能讓它繼續下去。"
+          }
+        }
+      }
+    },
+    "Supporters": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mecenes"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podporovatelé"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Støtter"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unterstützer"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Υποστηρικτές"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mecenas"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tukijat"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soutiens"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sostenitori"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サポーター"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "후원자"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Støttespillere"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supporters"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wspierający"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apoiadores"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apoiantes"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Susținători"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поддержавшие"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supportrar"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ผู้สนับสนุน"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destekçiler"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прихильники"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支持者"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支持者"
+          }
+        }
+      }
+    },
+    "Their coffees keep Aura going.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Els seus cafès fan que Aura continuï."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jejich káva drží Auru v chodu."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deres kaffe holder Aura i gang."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ihre Kaffees halten Aura am Laufen."
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Οι καφέδες τους κρατούν το Aura ζωντανό."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sus cafés mantienen Aura en marcha."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heidän kahvinsa pitävät Auran käynnissä."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leurs cafés font vivre Aura."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I loro caffè mandano avanti Aura."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "皆さんのコーヒーがAuraを支えています。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이분들의 커피가 Aura를 계속 움직이게 해요."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaffen deres holder Aura i gang."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hun koffie houdt Aura draaiende."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ich kawa pozwala Aurze działać dalej."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os cafés deles mantêm o Aura vivo."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os cafés deles mantêm o Aura vivo."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cafelele lor țin Aura în viață."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Их кофе помогает Aura жить."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deras kaffe håller Aura igång."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "กาแฟจากพวกเขาทำให้ Aura ไปต่อได้"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kahveleri Aura'yı ayakta tutuyor."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Їхня кава допомагає Aura жити."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "他们的咖啡让 Aura 得以继续。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "他們的咖啡讓 Aura 得以繼續。"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

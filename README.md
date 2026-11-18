@@ -249,6 +249,8 @@ To the people whose reports and ideas shaped Aura:
 - [DMcWetty](https://github.com/DMcWetty): several music folders at once
 - [Dedeham](https://github.com/Dedeham): song filters that stay when you come back
 
+And to the people whose coffees on [Ko-fi](https://ko-fi.com/adrbn) keep Aura going: Greg and DummyHead.
+
 ## License
 
 [GPL-3.0](LICENSE) © 2026 adrbn. You may share and change Aura under the same license; a modified version you

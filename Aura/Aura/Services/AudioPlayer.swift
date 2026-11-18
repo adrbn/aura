@@ -1691,12 +1691,10 @@ final class AudioPlayer {
         }
     }
 
-    /// Asks for an App Store rating once per version, from the twentieth song listened to
-    /// past the scrobble point, and only while the app is on screen (iOS itself caps it at
-    /// three times a year). The App Store build only: a sideloaded build would ask its own
-    /// developer.
+    /// Counts the songs listened to past the scrobble point, for the rating prompt and the
+    /// Ko-fi card that follow (iOS itself caps the rating prompt at three times a year).
     private func askForReviewIfDue() {
-        #if os(iOS) && APPSTORE_BUILD
+        #if os(iOS)
         let defaults = UserDefaults.standard
         defaults.set(defaults.integer(forKey: "reviewPromptPlays") + 1, forKey: "reviewPromptPlays")
         Task { @MainActor in self.requestReviewIfDue() }
@@ -1715,22 +1713,33 @@ final class AudioPlayer {
         #endif
     }
 
-    /// The rating prompt itself: from the twentieth song, once per version, never on the demo
-    /// server, and only while the app is on screen. Most listening happens in the background,
-    /// so ContentView also calls this when the app comes back to the front: a prompt that
-    /// came due on the lock screen is shown then instead of being lost.
+    /// The rating prompt (App Store build, from the twentieth song, once per version), else
+    /// the Ko-fi card when it is due, never both in one launch, never on the demo server, and
+    /// only while the app is on screen. Most listening happens in the background, so
+    /// ContentView also calls this when the app comes back to the front: a prompt that came
+    /// due on the lock screen is shown then instead of being lost.
     @MainActor func requestReviewIfDue() {
-        #if os(iOS) && APPSTORE_BUILD
-        let defaults = UserDefaults.standard
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        guard defaults.integer(forKey: "reviewPromptPlays") >= 20,
-              defaults.string(forKey: "reviewPromptVersion") != version,
-              ServerManager.shared.currentServer?.url.contains("demo.navidrome.org") == false,
+        #if os(iOS)
+        guard ServerManager.shared.currentServer?.url.contains("demo.navidrome.org") == false,
               let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
         else { return }
-        defaults.set(version, forKey: "reviewPromptVersion")
-        AppStore.requestReview(in: scene)
+        #if APPSTORE_BUILD
+        let defaults = UserDefaults.standard
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        if defaults.integer(forKey: "reviewPromptPlays") >= 20,
+           defaults.string(forKey: "reviewPromptVersion") != version {
+            defaults.set(version, forKey: "reviewPromptVersion")
+            SupportPrompt.shared.askedThisLaunch = true
+            AppStore.requestReview(in: scene)
+            return
+        }
+        #else
+        _ = scene
+        #endif
+        // The card is a sheet of the online main screen, which cannot show one over Now Playing.
+        guard !isShowingNowPlaying, !AppSettings.shared.offlineMode else { return }
+        SupportPrompt.shared.showIfDue()
         #endif
     }
 

@@ -255,6 +255,8 @@ Aux personnes dont les retours et les idées ont façonné Aura :
 - [DMcWetty](https://github.com/DMcWetty) : plusieurs dossiers de musique à la fois
 - [Dedeham](https://github.com/Dedeham) : les filtres de morceaux qui restent quand on revient
 
+Et aux personnes dont les cafés sur [Ko-fi](https://ko-fi.com/adrbn) font vivre Aura : Greg et DummyHead.
+
 ## Licence
 
 [GPL-3.0](LICENSE) © 2026 adrbn. Vous pouvez partager et modifier Aura sous la même licence ; une version modifiée que

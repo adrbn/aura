@@ -4,6 +4,11 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- About: a Supporters card thanks Greg and DummyHead, whose coffees on Ko-fi keep Aura going.
+- After 50 songs, a card offers a coffee on Ko-fi, at most once every two months. In the App Store version it shows in the United States only; elsewhere the link stays in About.
+
 ## [1.6.5] — 2026-11-17
 
 - Aura speaks Norwegian, Danish, Finnish, Romanian, Ukrainian, Turkish, Greek and Thai: 25 languages in all.

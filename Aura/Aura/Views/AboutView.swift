@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 import UIKit
 
@@ -7,7 +8,7 @@ struct AboutView: View {
     private var accent: Color { Color.appAccent }
 
     /// Single source of truth for outbound links — edit here when the repo goes public.
-    private enum Links {
+    fileprivate enum Links {
         static let github = URL(string: "https://github.com/adrbn/aura")!
         static let review = URL(string: "https://apps.apple.com/app/id6818241470?action=write-review")!
         static let kofi = URL(string: "https://ko-fi.com/adrbn")!
@@ -25,6 +26,7 @@ struct AboutView: View {
                 descriptionCard
                 featureCard
                 linksCard
+                supportersCard
                 footer
             }
             .padding(.horizontal, 20)
@@ -157,6 +159,28 @@ struct AboutView: View {
         }
     }
 
+    // MARK: Supporters
+
+    /// Ko-fi supporters who gave for Aura, under the name they chose to show there.
+    private static let supporters = ["Greg", "DummyHead"]
+
+    private var supportersCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Supporters", systemImage: "heart.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(accent)
+                Text("Their coffees keep Aura going.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(Self.supporters.joined(separator: " · "))
+                    .font(.subheadline.weight(.medium))
+                    .padding(.top, 4)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     // MARK: Footer
 
     private var footer: some View {
@@ -255,5 +279,93 @@ struct AboutView: View {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
             )
+    }
+}
+
+// MARK: - Support prompt
+
+/// Asks for a coffee on Ko-fi once 50 songs have been listened to, then at most every 60
+/// days, or a year later once the coffee button was tapped. App Review lets a free app point
+/// to an outside payment only on the US storefront, so the App Store build asks there alone
+/// and everywhere else keeps to the About page's link. Builds outside the App Store ask
+/// everyone, as the Mac app does.
+@MainActor @Observable final class SupportPrompt {
+    static let shared = SupportPrompt()
+    var isShown = false
+    /// One ask per launch at most, the rating prompt included.
+    var askedThisLaunch = false
+
+    private static let nextKey = "supportPromptNext"
+
+    func showIfDue() {
+        let defaults = UserDefaults.standard
+        guard !askedThisLaunch, !isShown,
+              defaults.integer(forKey: "reviewPromptPlays") >= 50,
+              Date() >= (defaults.object(forKey: Self.nextKey) as? Date ?? .distantPast)
+        else { return }
+        askedThisLaunch = true
+        Task {
+            #if APPSTORE_BUILD
+            guard await Storefront.current?.countryCode == "USA" else { return }
+            #endif
+            postpone(days: 60)
+            isShown = true
+        }
+    }
+
+    func postpone(days: Int) {
+        UserDefaults.standard.set(Date().addingTimeInterval(Double(days) * 86_400), forKey: Self.nextKey)
+    }
+}
+
+struct SupportCard: View {
+    @Environment(\.openURL) private var openURL
+    @Environment(\.dismiss) private var dismiss
+    @State private var height: CGFloat = 320
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Enjoying Aura?")
+                .font(.title2.bold())
+            Text("Aura is free, with no ads, no tracking and no subscription, and made by one person. Just keeping it on the App Store costs $99 a year. If it has become your music player, a coffee keeps it going.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 4) {
+                Button {
+                    SupportPrompt.shared.postpone(days: 365)
+                    openURL(AboutView.Links.kofi)
+                    dismiss()
+                } label: {
+                    Label("Buy a Coffee on Ko-fi", systemImage: "cup.and.saucer.fill")
+                        .font(.body.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(Color.appAccent, in: Capsule())
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                Button { dismiss() } label: {
+                    Text("Later")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 8)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 28)
+        .padding(.bottom, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        .presentationDetents([.height(height)])
+        .presentationSizing(.fitted)
+        .presentationBackground(Color.themeBg)
     }
 }
