@@ -95,7 +95,7 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
 - **Votre iPhone et votre Mac** se pilotent l'un l'autre sur le même Wi-Fi : lancez la lecture sur le Mac depuis En cours de lecture, et voyez ce que joue l'autre dans un second mini lecteur.
 - **Des liens de partage** qui ouvrent un morceau sur d'autres services.
 - **À votre goût** : clair ou sombre, la couleur d'accent de votre choix, onglets et sections de l'accueil dans votre ordre, une horloge en paysage, et des mises en page pour l'iPhone Duo.
-- **Neuf langues** : français, anglais, italien, espagnol, allemand, catalan, néerlandais, plus le chinois et le russe.
+- **25 langues** : français, anglais, italien, espagnol, catalan, allemand, néerlandais, portugais (Portugal et Brésil), suédois, norvégien, danois, finnois, polonais, tchèque, roumain, ukrainien, russe, grec, turc, thaï, japonais, coréen et chinois (simplifié et traditionnel).
 
 ## Sur chaque appareil
 

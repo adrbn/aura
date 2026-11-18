@@ -94,7 +94,7 @@ download still there with no signal.
 - **Your iPhone and your Mac** control each other on the same Wi-Fi: play on the Mac from Now Playing, and see what the other plays in a second mini player.
 - **Share links** that open a song on other services.
 - **Yours to arrange**: light or dark, any accent colour, tabs and Home sections in your order, a landscape clock, and iPhone Duo layouts.
-- **Nine languages**: English, French, Italian, Spanish, German, Catalan, Dutch, plus Chinese and Russian.
+- **25 languages**: English, French, Italian, Spanish, Catalan, German, Dutch, Portuguese (Portugal and Brazil), Swedish, Norwegian, Danish, Finnish, Polish, Czech, Romanian, Ukrainian, Russian, Greek, Turkish, Thai, Japanese, Korean, and Chinese (Simplified and Traditional).
 
 ## Every device
 

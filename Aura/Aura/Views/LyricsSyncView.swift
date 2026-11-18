@@ -425,7 +425,12 @@ struct LyricsSyncView: View {
                 #endif
             } catch {
                 AppLogger.shared.log("🎵 Auto sync failed: \(error)")
-                earFailure = error.localizedDescription
+                // The speech model's own errors run to a file path and a stack trace: the
+                // full text goes to the log, the alert gets one readable line.
+                let text = error.localizedDescription
+                earFailure = text.contains("No space left")
+                    ? String(localized: "Not enough free storage")
+                    : String(text.split(separator: "\n").first ?? "")
             }
         }
     }
