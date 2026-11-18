@@ -54,7 +54,8 @@ struct DownloadManagerView: View {
     }
 
     private var activeItems: [DownloadQueueItem] {
-        dm.queueItems.filter { $0.state == .downloading || $0.state == .waiting }
+        // The one actually downloading first, then the rest in line.
+        dm.queueItems.filter { $0.state == .downloading } + dm.queueItems.filter { $0.state == .waiting }
     }
 
     private var pausedItems: [DownloadQueueItem] {

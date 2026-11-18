@@ -203,6 +203,12 @@ final class DownloadManager: NSObject {
                           let downloadTask = task as? URLSessionDownloadTask else { continue }
                     self.activeURLTasks[songId] = downloadTask
                     self.activeDownloads.insert(songId)
+                    // The card names the song instead of a bare "Downloading…".
+                    if let song = self.knownSong(songId) {
+                        self.currentDownloadId = songId
+                        self.currentDownloadTitle = song.title
+                        self.currentDownloadAlbum = song.album
+                    }
                     self.pausedIds.remove(songId)
                     if let idx = self.queueItems.firstIndex(where: { $0.id == songId }) {
                         self.queueItems[idx].state = .downloading
@@ -235,10 +241,32 @@ final class DownloadManager: NSObject {
             return
         }
         AppLogger.shared.log("🔁 Restarting \(waiting.count) queued download(s) from last session")
-        for item in waiting {
-            let song = item.song
-            activeTasks[song.id] = Task { await self.downloadSong(song) }
+        downloadSerially(waiting.map(\.song))
+    }
+
+    /// One song after another, like an album. Starting each in its own task handed the
+    /// whole batch to the session at once: hundreds of rows read as downloading while
+    /// none moved, and the card lost track of which one was actually going.
+    @MainActor
+    private func downloadSerially(_ songs: [Song]) {
+        guard !songs.isEmpty else { return }
+        isHalted = false
+        Task { await downloadAlbum(songs, isBatchStart: false) }
+    }
+
+    /// Clears a paused row's flags and puts it back in line, without starting it.
+    @MainActor
+    private func requeue(_ songId: String) -> Song? {
+        guard let idx = queueItems.firstIndex(where: { $0.id == songId && $0.state == .paused }) else { return nil }
+        pausedIds.remove(songId)
+        networkPausedIds.remove(songId)
+        cancelledIds.remove(songId)
+        queueItems[idx].state = .waiting
+        if !FileManager.default.fileExists(atPath: resumeDataURL(for: songId).path) {
+            queueItems[idx].progress = 0
         }
+        queueItems[idx].error = nil
+        return queueItems[idx].song
     }
 
     /// Exporting hands over the file itself, so it is always the original — the point of
@@ -626,9 +654,7 @@ final class DownloadManager: NSObject {
         }
         guard !toResume.isEmpty else { return }
         AppLogger.shared.log("🔁 Auto-resuming \(toResume.count) network-paused download(s)")
-        for id in toResume {
-            resumeDownload(id)
-        }
+        downloadSerially(queueItems.map(\.id).filter(toResume.contains).compactMap(requeue))
     }
 
     @MainActor
@@ -709,9 +735,7 @@ final class DownloadManager: NSObject {
             .filter { $0.state == .paused }
             .map(\.id)
         AppLogger.shared.log("▶️ resumeAllDownloads: \(toResume.count) items")
-        for id in toResume {
-            resumeDownload(id)
-        }
+        downloadSerially(toResume.compactMap(requeue))
     }
 
     @MainActor
