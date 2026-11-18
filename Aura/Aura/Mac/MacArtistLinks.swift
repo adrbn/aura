@@ -22,7 +22,7 @@ struct MacArtistLinks: View {
                 if index > 0 {
                     Text("•")
                         .font(.system(size: size))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
                 Button { open(credit) } label: {
                     Text(credit.name)

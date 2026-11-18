@@ -79,7 +79,7 @@ struct MacRootView: View {
                 MacServerSetupView()
             }
         }
-        .blur(radius: panel.isShown || Self.fetchPanelShown ? 10 : 0)
+        .blur(radius: panel.isShown || Self.fetchPanelShown || MacSupportPrompt.shared.isShown ? 10 : 0)
         .overlay {
             if panel.isShown {
                 ZStack {
@@ -96,7 +96,11 @@ struct MacRootView: View {
         .overlay {
             if MacSupportPrompt.shared.isShown {
                 ZStack {
-                    Color.black.opacity(0.45).ignoresSafeArea()
+                    // Takes the clicks meant for what's behind, and closes the card like its cross.
+                    Color.black.opacity(0.45)
+                        .ignoresSafeArea()
+                        .contentShape(Rectangle())
+                        .onTapGesture { MacSupportPrompt.shared.isShown = false }
                     MacSupportCard()
                         .transition(.scale(scale: 0.96).combined(with: .opacity))
                 }

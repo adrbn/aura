@@ -93,7 +93,10 @@ struct MacSidebar: View {
     }
 
     private var pinned: [Playlist] {
-        playlists.filter { settings.isPinned($0.id) }
+        // In the order they were pinned and arranged, as on the phone, not the server's A to Z.
+        let order = settings.pinnedPlaylistOrder
+        return playlists.filter { settings.isPinned($0.id) }
+            .sorted { (order.firstIndex(of: $0.id) ?? Int.max) < (order.firstIndex(of: $1.id) ?? Int.max) }
     }
 
     private func loadPlaylists() async {
