@@ -143,6 +143,14 @@ struct WrappedView: View {
             do {
                 let wrapped = try await LastfmService.shared.fetchWrapped(period: period)
                 stats = ListeningStats.from(lastfm: wrapped, period: period)
+            } catch LastfmError.api(let code, let message) where cached == nil {
+                // Last.fm refusing the key (a key needs Last.fm Pro from 1 December 2026):
+                // the Wrapped this device kept instead, and why.
+                AppLogger.shared.log("Wrapped: Last.fm refused (\(code)) \(message), showing this iPhone's")
+                ToastManager.shared.show(message.isEmpty ? String(localized: "Last.fm rejected the request.") : message,
+                                         icon: "exclamationmark.triangle.fill")
+                source = .device
+                return
             } catch {
                 // A failed refresh must not take a perfectly good cached retrospective
                 // down with it — that is the difference between "offline" and "empty".
