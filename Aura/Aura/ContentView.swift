@@ -33,6 +33,8 @@ struct ContentView: View {
             // A rating prompt that came due while the app was in the background.
             guard phase == .active else { return }
             Task { try? await Task.sleep(for: .seconds(2)); audioPlayer.requestReviewIfDue() }
+            // The saved playlists answer Add to Playlist's ticks at once: keep them current.
+            OfflinePlaylistsStore.shared.refreshFromServer()
         }
     }
 

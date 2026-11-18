@@ -108,25 +108,32 @@ final class OfflinePlaylistsStore {
         isRefreshing = true
         Task {
             defer { isRefreshing = false }
-            var snapshots: [OfflinePlaylistSnapshot] = []
             let saved = Dictionary(playlists.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-            for playlist in serverPlaylists {
-                if let kept = saved[playlist.id], kept.changed != nil, kept.changed == playlist.changed {
-                    snapshots.append(kept)
-                    continue
-                }
-                guard let detail = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id) else { continue }
-                let songs = detail.entry ?? []
-                snapshots.append(OfflinePlaylistSnapshot(
-                    id: playlist.id,
-                    name: playlist.name,
-                    songCount: songs.count,
-                    coverArt: playlist.coverArt,
-                    songs: songs,
-                    changed: playlist.changed,
-                    created: playlist.created
-                ))
+            // Unchanged playlists are kept as saved; the others are fetched a few at a time
+            // (the server's worker pool is small) rather than one after another.
+            var fetched: [String: OfflinePlaylistSnapshot] = [:]
+            let stale = serverPlaylists.filter { p in
+                guard let kept = saved[p.id], kept.changed != nil, kept.changed == p.changed else { return true }
+                return false
             }
+            for start in stride(from: 0, to: stale.count, by: 6) {
+                let batch = stale[start..<min(start + 6, stale.count)]
+                await withTaskGroup(of: OfflinePlaylistSnapshot?.self) { group in
+                    for playlist in batch {
+                        group.addTask {
+                            guard let detail = try? await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id)
+                            else { return nil }
+                            let songs = detail.entry ?? []
+                            return OfflinePlaylistSnapshot(id: playlist.id, name: playlist.name, songCount: songs.count,
+                                                           coverArt: playlist.coverArt, songs: songs,
+                                                           changed: playlist.changed, created: playlist.created)
+                        }
+                    }
+                    for await snapshot in group { if let snapshot { fetched[snapshot.id] = snapshot } }
+                }
+            }
+            // A playlist that failed to load keeps its saved copy rather than vanishing.
+            let snapshots = serverPlaylists.compactMap { fetched[$0.id] ?? saved[$0.id] }
             guard !snapshots.isEmpty else { return }
             playlists = snapshots
             lastRefresh = Date()
