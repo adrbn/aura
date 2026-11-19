@@ -85,6 +85,18 @@ final class OfflinePlaylistsStore {
         }
     }
 
+    /// An edit kept for the server (`PlaylistEditQueue`) shows in the saved copy at once. The
+    /// stamp goes, so the server's copy is fetched again once the edit has landed there.
+    func applyLocally(_ playlistId: String, _ edit: ([Song]) -> [Song]) {
+        guard let i = playlists.firstIndex(where: { $0.id == playlistId }) else { return }
+        let old = playlists[i]
+        let songs = edit(old.songs)
+        playlists[i] = OfflinePlaylistSnapshot(id: old.id, name: old.name, songCount: songs.count,
+                                               coverArt: old.coverArt, songs: songs,
+                                               changed: nil, created: old.created)
+        persist()
+    }
+
     /// Refresh snapshots from a freshly-fetched playlist list, pulling each
     /// playlist's songs. Fire-and-forget, throttled, online only.
     /// Asks the server for the playlist list, then refreshes from it.
@@ -112,7 +124,11 @@ final class OfflinePlaylistsStore {
             // Unchanged playlists are kept as saved; the others are fetched a few at a time
             // (the server's worker pool is small) rather than one after another.
             var fetched: [String: OfflinePlaylistSnapshot] = [:]
+            // A playlist with edits still waiting keeps its saved copy, which already shows them;
+            // the server's would undo them on screen until they're sent.
+            let waiting = PlaylistEditQueue.shared.pendingPlaylistIds
             let stale = serverPlaylists.filter { p in
+                if waiting.contains(p.id), saved[p.id] != nil { return false }
                 guard let kept = saved[p.id], kept.changed != nil, kept.changed == p.changed else { return true }
                 return false
             }

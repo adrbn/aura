@@ -473,12 +473,17 @@ actor SubsonicClient {
     }
 
     func addSongToPlaylist(server: ServerConfig, playlistId: String, songId: String) async throws {
+        try await addSongsToPlaylist(server: server, playlistId: playlistId, songIds: [songId])
+    }
+
+    /// All in one request, so a retry never adds the first ones twice.
+    func addSongsToPlaylist(server: ServerConfig, playlistId: String, songIds: [String]) async throws {
         guard var components = buildURL(server: server, endpoint: "updatePlaylist", params: ["playlistId": playlistId])
             .flatMap({ URLComponents(url: $0, resolvingAgainstBaseURL: false) }) else {
             throw SubsonicClientError.invalidURL
         }
         var items = components.queryItems ?? []
-        items.append(URLQueryItem(name: "songIdToAdd", value: songId))
+        items += songIds.map { URLQueryItem(name: "songIdToAdd", value: $0) }
         components.queryItems = items
         guard let url = components.url else { throw SubsonicClientError.invalidURL }
         _ = try await fetchData(from: url)

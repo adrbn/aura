@@ -570,11 +570,11 @@ struct MacPlaylistDetailView: View {
     }
 
     private func add(_ song: Song) async {
-        guard let server = serverManager.currentServer else { return }
         do {
-            try await SubsonicClient.shared.addSongToPlaylist(server: server, playlistId: playlist.id, songId: song.id)
+            let sent = try await PlaylistEditQueue.shared.add([song], to: playlist.id)
             withAnimation { suggestions.removeAll { $0.id == song.id } }
-            await load()
+            // Kept for later, it shows here as it does in the saved copy.
+            if sent { await load() } else { songs.append(song) }
         } catch {
             ToastManager.shared.show(String(localized: "Couldn't add the song"), icon: "exclamationmark.triangle")
         }
@@ -617,16 +617,14 @@ struct MacPlaylistDetailView: View {
     }
 
     /// Subsonic has no "move" and only removes by position, so an edit sends the whole list
-    /// back in its new order, as saving a mix over its playlist does. On failure the list
-    /// returns to `previous`.
+    /// back in its new order, as saving a mix over its playlist does. Out of reach, it waits in
+    /// `PlaylistEditQueue`; when the server refuses it, the list returns to `previous`.
     // ponytail: edits made faster than the server answers can land out of order; a save
     // queue if that ever shows.
     private func save(previous: [Song]) {
         Task {
-            guard let server = serverManager.currentServer else { return }
             do {
-                try await SubsonicClient.shared.createPlaylist(server: server, name: name ?? playlist.name,
-                                                               songIds: songs.map(\.id), playlistId: playlist.id)
+                try await PlaylistEditQueue.shared.replace(playlist.id, name: name ?? playlist.name, with: songs)
             } catch {
                 songs = previous
                 ToastManager.shared.show(String(localized: "Couldn't save the playlist"), icon: "exclamationmark.triangle.fill")

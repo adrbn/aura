@@ -369,9 +369,9 @@ struct AddToPlaylistView: View {
     }
 
     private func addToPlaylist(_ playlist: Playlist) async {
-        guard let server = serverManager.currentServer else { return }
         do {
-            try await SubsonicClient.shared.addSongToPlaylist(server: server, playlistId: playlist.id, songId: song.id)
+            // Offline, the song is in the playlist here at once and on the server once it's back.
+            try await PlaylistEditQueue.shared.add([song], to: playlist.id)
             AppLogger.shared.log("Added '\(song.title)' to playlist '\(playlist.name)'")
             await MainActor.run {
                 PlaylistMembershipCache.shared.markSongInPlaylist(songId: song.id, playlistId: playlist.id)
@@ -383,18 +383,13 @@ struct AddToPlaylistView: View {
     }
 
     private func removeFromPlaylist(_ playlist: Playlist) async {
-        guard let server = serverManager.currentServer else { return }
         do {
-            // Get playlist detail to find the song's index
-            let detail = try await SubsonicClient.shared.getPlaylist(server: server, id: playlist.id)
-            if let entries = detail.entry,
-               let index = entries.firstIndex(where: { $0.id == song.id }) {
-                try await SubsonicClient.shared.removeSongFromPlaylist(server: server, playlistId: playlist.id, songIndex: index)
-                AppLogger.shared.log("Removed '\(song.title)' from playlist '\(playlist.name)'")
-                await MainActor.run {
-                    PlaylistMembershipCache.shared.unmarkSongFromPlaylist(songId: song.id, playlistId: playlist.id)
-                    ToastManager.shared.show(String(localized: "Removed from \(playlist.name)"), icon: "minus.circle")
-                }
+            // The queue finds the song's row in the server's list, now or once it's back.
+            try await PlaylistEditQueue.shared.remove([song.id], from: playlist.id)
+            AppLogger.shared.log("Removed '\(song.title)' from playlist '\(playlist.name)'")
+            await MainActor.run {
+                PlaylistMembershipCache.shared.unmarkSongFromPlaylist(songId: song.id, playlistId: playlist.id)
+                ToastManager.shared.show(String(localized: "Removed from \(playlist.name)"), icon: "minus.circle")
             }
         } catch {
             AppLogger.shared.log("Failed to remove from playlist: \(error.localizedDescription)")

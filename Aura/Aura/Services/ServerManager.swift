@@ -193,6 +193,7 @@ final class ServerManager {
                     }
                     ScrobbleQueue.shared.flush()
                     StarQueue.shared.flush()
+                    PlaylistEditQueue.shared.flush()
                     LyricsOnServer.flushPending()
                     SongRatings.shared.flush()
                     // Server reachable again — restart downloads that were parked
@@ -423,6 +424,7 @@ final class ServerManager {
         AppLogger.shared.log("🟢 Back online")
         ScrobbleQueue.shared.flush()
         StarQueue.shared.flush()
+        Task { @MainActor in PlaylistEditQueue.shared.flush() }
         LyricsOnServer.flushPending()
         SongRatings.shared.flush()
     }
@@ -587,6 +589,132 @@ final class StarQueue {
 
     private func save(_ pending: [String: Bool]) {
         UserDefaults.standard.set(pending, forKey: key)
+    }
+}
+
+// MARK: - Offline Playlist Edits
+
+/// A playlist edit kept for the server. Songs go by id, never by position: a position saved
+/// offline points at the wrong row once earlier edits land, so a removal finds its song in
+/// the server's list when it is sent.
+struct PlaylistEdit: Codable {
+    enum Kind: String, Codable { case add, remove, replace }
+    let playlistId: String
+    let kind: Kind
+    var songIds: [String] = []
+    /// The playlist's name, which `replace` sends along with its songs.
+    var name: String? = nil
+}
+
+/// Playlist edits the server couldn't take, sent in the order they were made once it's back.
+/// Each shows at once in the playlist's saved copy, so offline the edit reads as done.
+@MainActor
+final class PlaylistEditQueue {
+    static let shared = PlaylistEditQueue()
+    private let key = "aura_pending_playlist_edits"
+    private var isFlushing = false
+
+    var pendingPlaylistIds: Set<String> { Set(load().map(\.playlistId)) }
+
+    /// False when the songs were kept for later rather than sent. Throws only when the server
+    /// refused them.
+    @discardableResult
+    func add(_ songs: [Song], to playlistId: String) async throws -> Bool {
+        try await perform(PlaylistEdit(playlistId: playlistId, kind: .add, songIds: songs.map(\.id))) { $0 + songs }
+    }
+
+    /// `indexes`, the rows the user picked, are trusted only when the removal goes at once;
+    /// kept for later, the first copy of each song goes.
+    @discardableResult
+    func remove(_ songIds: [String], at indexes: [Int]? = nil, from playlistId: String) async throws -> Bool {
+        try await perform(PlaylistEdit(playlistId: playlistId, kind: .remove, songIds: songIds), indexes: indexes) { songs in
+            var left = songs
+            for id in songIds { if let i = left.firstIndex(where: { $0.id == id }) { left.remove(at: i) } }
+            return left
+        }
+    }
+
+    /// The whole list in its new order, the way Subsonic takes a reorder.
+    @discardableResult
+    func replace(_ playlistId: String, name: String, with songs: [Song]) async throws -> Bool {
+        try await perform(PlaylistEdit(playlistId: playlistId, kind: .replace, songIds: songs.map(\.id), name: name)) { _ in songs }
+    }
+
+    private func perform(_ edit: PlaylistEdit, indexes: [Int]? = nil, local: ([Song]) -> [Song]) async throws -> Bool {
+        // An older edit of this playlist still waiting goes first, or the two would land swapped.
+        let waiting = pendingPlaylistIds.contains(edit.playlistId)
+        if !waiting, let server = ServerManager.shared.currentServer {
+            do {
+                try await send(edit, indexes: indexes, server: server)
+                return true
+            } catch where Self.refused(error) {
+                throw error
+            } catch {}
+        }
+        save(load() + [edit])
+        OfflinePlaylistsStore.shared.applyLocally(edit.playlistId, local)
+        AppLogger.shared.log("📝 Playlist edit kept for later: \(edit.kind.rawValue) \(edit.playlistId)")
+        if waiting { flush() }
+        return false
+    }
+
+    func flush() {
+        guard !isFlushing, !load().isEmpty, let server = ServerManager.shared.currentServer else { return }
+        isFlushing = true
+        Task {
+            defer { isFlushing = false }
+            while let edit = load().first {
+                do {
+                    try await send(edit, indexes: nil, server: server)
+                } catch where Self.refused(error) {
+                    // It will never be taken (the playlist is gone, or not ours): waiting
+                    // would hold every edit behind it.
+                    AppLogger.shared.log("⚠️ Playlist edit refused, dropped: \(edit.kind.rawValue) \(edit.playlistId)")
+                } catch {
+                    break // Still out of reach: it stays first in line for the next time.
+                }
+                save(Array(load().dropFirst()))
+            }
+        }
+    }
+
+    private func send(_ edit: PlaylistEdit, indexes: [Int]?, server: ServerConfig) async throws {
+        let client = SubsonicClient.shared
+        switch edit.kind {
+        case .add:
+            try await client.addSongsToPlaylist(server: server, playlistId: edit.playlistId, songIds: edit.songIds)
+        case .remove:
+            var positions = indexes ?? []
+            if indexes == nil {
+                // One row per id, as they stand on the server now.
+                let entries = try await client.getPlaylist(server: server, id: edit.playlistId).entry ?? []
+                for id in edit.songIds {
+                    if let i = entries.indices.first(where: { entries[$0].id == id && !positions.contains($0) }) {
+                        positions.append(i)
+                    }
+                }
+            }
+            guard !positions.isEmpty else { return }
+            try await client.removeSongsFromPlaylist(server: server, playlistId: edit.playlistId, songIndexes: positions)
+        case .replace:
+            try await client.createPlaylist(server: server, name: edit.name ?? "", songIds: edit.songIds,
+                                            playlistId: edit.playlistId)
+        }
+    }
+
+    /// The server answered no, as opposed to not answering.
+    private static func refused(_ error: Error) -> Bool {
+        if case SubsonicClientError.apiError = error { return true }
+        return false
+    }
+
+    private func load() -> [PlaylistEdit] {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return [] }
+        return (try? JSONDecoder().decode([PlaylistEdit].self, from: data)) ?? []
+    }
+
+    private func save(_ edits: [PlaylistEdit]) {
+        UserDefaults.standard.set(try? JSONEncoder().encode(edits), forKey: key)
     }
 }
 

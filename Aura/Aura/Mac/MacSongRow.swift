@@ -142,12 +142,10 @@ final class MacSongActions {
     }
 
     func add(_ songs: [Song], to playlist: Playlist) {
-        guard let server = ServerManager.shared.currentServer else { return }
         Task {
             do {
-                for song in songs {
-                    try await SubsonicClient.shared.addSongToPlaylist(server: server, playlistId: playlist.id, songId: song.id)
-                }
+                // Offline, the songs are in the playlist here at once and on the server once it's back.
+                try await PlaylistEditQueue.shared.add(songs, to: playlist.id)
                 await MainActor.run {
                     songs.forEach { PlaylistMembershipCache.shared.markSongInPlaylist(songId: $0.id, playlistId: playlist.id) }
                     ToastManager.shared.show(String(localized: "Added to \(playlist.name)"), icon: "text.badge.plus")

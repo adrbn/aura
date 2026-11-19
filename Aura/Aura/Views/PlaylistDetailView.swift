@@ -310,7 +310,7 @@ struct PlaylistDetailView: View {
     private func removeSong(song: Song, at index: Int) {
         // A removal still in its undo window goes to the server now: the new one's task
         // replaces its task, and it used to be dropped, coming back on the next load.
-        let earlier = pendingRemoval?.index
+        let earlier = pendingRemoval
         // Optimistically remove from local list
         pendingRemoval = (song: song, index: index)
         playlist?.entry?.remove(at: index)
@@ -321,13 +321,13 @@ struct PlaylistDetailView: View {
         undoTask?.cancel()
         undoTask = Task {
             // ponytail: removals faster than the server answers can still race; a queue if that shows up.
-            if let earlier, let server = serverManager.currentServer {
-                try? await SubsonicClient.shared.removeSongFromPlaylist(server: server, playlistId: playlistId, songIndex: earlier)
+            if let earlier {
+                try? await PlaylistEditQueue.shared.remove([earlier.song.id], at: [earlier.index], from: playlistId)
             }
             try? await Task.sleep(for: .seconds(4))
             guard !Task.isCancelled else { return }
             // Commit removal to server
-            await commitRemoval(songIndex: index)
+            await commitRemoval(song, at: index)
         }
     }
 
@@ -343,7 +343,7 @@ struct PlaylistDetailView: View {
             // A removal still in its undo window goes first, so the server's positions match ours.
             if let removal = pendingRemoval {
                 undoTask?.cancel()
-                await commitRemoval(songIndex: removal.index)
+                await commitRemoval(removal.song, at: removal.index)
             }
             let copies = duplicateIndexes
             guard !copies.isEmpty, let songs = playlist?.entry, let server = serverManager.currentServer else { return }
@@ -370,10 +370,10 @@ struct PlaylistDetailView: View {
         pendingRemoval = nil
     }
 
-    private func commitRemoval(songIndex: Int) async {
-        guard let server = serverManager.currentServer else { return }
+    private func commitRemoval(_ song: Song, at songIndex: Int) async {
         do {
-            try await SubsonicClient.shared.removeSongFromPlaylist(server: server, playlistId: playlistId, songIndex: songIndex)
+            // Out of reach, the removal waits in the queue, by song rather than by row.
+            try await PlaylistEditQueue.shared.remove([song.id], at: [songIndex], from: playlistId)
         } catch {
             // If server fails, reload to get correct state
             await loadPlaylist()
@@ -504,11 +504,16 @@ struct PlaylistDetailView: View {
     }
 
     private func add(_ song: Song) async {
-        guard let server = serverManager.currentServer else { return }
         do {
-            try await SubsonicClient.shared.addSongToPlaylist(server: server, playlistId: playlistId, songId: song.id)
+            let sent = try await PlaylistEditQueue.shared.add([song], to: playlistId)
             await MainActor.run { withAnimation { suggestions.removeAll { $0.id == song.id } } }
-            await loadPlaylist()
+            if sent {
+                await loadPlaylist()
+            } else {
+                // Kept for later, it shows here as it does in the saved copy.
+                playlist?.entry?.append(song)
+                if let count = playlist?.songCount { playlist?.songCount = count + 1 }
+            }
         } catch {
             ToastManager.shared.show(String(localized: "Couldn't add the song"), icon: "exclamationmark.triangle")
         }
