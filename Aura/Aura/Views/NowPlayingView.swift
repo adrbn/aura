@@ -66,8 +66,8 @@ struct NowPlayingView: View {
     /// The inline queue scrolled down: the timeline and transport fold away to show more of it.
     @State private var queueScrolled = false
     @State private var yearRowHeight: CGFloat = 0
-    /// Only the year row folds away: the timeline and transport stay over a scrolled queue.
-    private var controlsHeight: CGFloat { yearRowHeight }
+    @State private var transportHeight: CGFloat = 0
+    private var controlsHeight: CGFloat { yearRowHeight + transportHeight }
     private var hideControls: Bool { showLyrics && queueInline && queueScrolled }
     /// The Duo's gap above the playback source with the artwork showing, kept with lyrics open.
     @State private var duoSourceGap: CGFloat = 0
@@ -710,6 +710,8 @@ struct NowPlayingView: View {
 
             progressAndControls
                 .padding(.horizontal, horizontalPadding)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { if !hideControls { transportHeight = $0 } }
+                .modifier(FoldAway(hidden: hideControls))
 
             // Held at its artwork-mode height with lyrics open, which otherwise take it and
             // drop the timeline and transport towards the toolbar.
