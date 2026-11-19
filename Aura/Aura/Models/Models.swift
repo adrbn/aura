@@ -1090,6 +1090,9 @@ struct ArtistWithAlbums: Codable {
     let albumCount: Int?; let artistImageUrl: String?; let album: [Album]?
 }
 struct PlaylistsContainer: Decodable { let playlist: [Playlist]? }
+/// One of the server's internet radio stations: a name and the live stream it plays.
+struct InternetRadioStation: Decodable, Identifiable { let id: String; let name: String; let streamUrl: String }
+struct InternetRadioStationsContainer: Decodable { let internetRadioStation: [InternetRadioStation]? }
 struct RandomSongsContainer: Decodable { let song: [Song]? }
 struct Starred2: Decodable { let artist: [Artist]?; let album: [Album]?; let song: [Song]? }
 struct TopSongsContainer: Decodable { let song: [Song]? }

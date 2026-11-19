@@ -40,7 +40,7 @@ final class CarPlayBrowser {
             }
             let played = await recent
             if !played.isEmpty {
-                sections.append(CPListSection(items: played.map(albumRow),
+                sections.append(CPListSection(items: albumGrid(played),
                                               header: String(localized: "Recently Played"), sectionIndexTitle: nil))
             }
             fill(template, with: sections)
@@ -50,29 +50,54 @@ final class CarPlayBrowser {
 
     private func playlists() -> CPListTemplate {
         let template = tab(String(localized: "Playlists"), symbol: "music.note.list")
+        fillPlaylists(template)
+        playlistsTab = template
+        return template
+    }
+
+    private weak var playlistsTab: CPListTemplate?
+    /// Whether the playlists on screen are the ones saved for offline, the server out of reach.
+    private var playlistsListedOffline = false
+
+    /// The server's playlists — or, offline or with the server out of reach, the ones saved
+    /// for offline, each reduced to the songs this iPhone holds, as the phone's offline tab.
+    private func fillPlaylists(_ template: CPListTemplate) {
         Task {
-            let favourites = WatchItem(kind: .favorites, id: "favorites", title: String(localized: "Favorites"),
-                                       subtitle: String(localized: "Your starred songs"), coverArt: nil)
-            var pinned = [row(favourites, placeholder: "heart.fill", tint: CarPlayArtwork.accent)]
-            var others: [CPListItem] = []
-            if let server = ServerManager.shared.currentServer {
+            guard let server = ServerManager.shared.currentServer else { return fill(template, with: []) }
+            var found: [Playlist]?
+            if !player.isEffectivelyOfflineForCar {
                 do {
-                    let found = try await SubsonicClient.shared.getPlaylists(server: server)
-                    let settings = AppSettings.shared
-                    let playlistRow = { (playlist: Playlist) in
-                        self.row(LibraryCatalog.item(playlist), placeholder: "music.note.list")
-                    }
-                    pinned += Self.pinnedFirst(found.filter { settings.isPinned($0.id) }).map(playlistRow)
-                    others = found.filter { !settings.isPinned($0.id) }
-                        .sorted { ($0.changed ?? "") > ($1.changed ?? "") }
-                        .map(playlistRow)
+                    found = try await SubsonicClient.shared.getPlaylists(server: server)
                 } catch {
                     AppLogger.shared.log("🚗 Playlists not loaded: \(error.localizedDescription)")
                 }
             }
+            // The songs each saved playlist can play here; nil online, where a page asks the server.
+            var available: [String: [Song]]?
+            var favouriteSongs: [Song]?
+            if found == nil {
+                let library = OfflineLibrary.shared
+                library.refresh()
+                let saved = library.playlists
+                found = saved.map(\.snapshot.asPlaylist)
+                available = Dictionary(saved.map { ($0.snapshot.id, $0.available) }, uniquingKeysWith: { first, _ in first })
+                favouriteSongs = library.favourites
+            }
+            playlistsListedOffline = available != nil
+            let favourites = WatchItem(kind: .favorites, id: "favorites", title: String(localized: "Favorites"),
+                                       subtitle: String(localized: "Your starred songs"), coverArt: nil)
+            var pinned = [row(favourites, placeholder: "heart.fill", tint: CarPlayArtwork.accent, songs: favouriteSongs)]
+            let settings = AppSettings.shared
+            let playlistRow = { (playlist: Playlist) in
+                self.row(LibraryCatalog.item(playlist), placeholder: "music.note.list", songs: available?[playlist.id])
+            }
+            let all = found ?? []
+            pinned += Self.pinnedFirst(all.filter { settings.isPinned($0.id) }).map(playlistRow)
+            let others = all.filter { !settings.isPinned($0.id) }
+                .sorted { ($0.changed ?? "") > ($1.changed ?? "") }
+                .map(playlistRow)
             fill(template, with: [CPListSection(items: pinned), CPListSection(items: others)])
         }
-        return template
     }
 
     private func library() -> CPListTemplate {
@@ -83,13 +108,16 @@ final class CarPlayBrowser {
         let artists = action(String(localized: "Artists"), symbol: "music.mic") { [weak self] in
             await self?.showArtists()
         }
-        template.updateSections([CPListSection(items: [shuffle, artists])])
+        let radio = action(String(localized: "Radio"), symbol: "antenna.radiowaves.left.and.right") { [weak self] in
+            await self?.showRadio()
+        }
+        template.updateSections([CPListSection(items: [shuffle, artists, radio])])
         Task {
             let newest = await albums("newest", count: 24)
             guard !newest.isEmpty else { return }
             fill(template, with: [
-                CPListSection(items: [shuffle, artists]),
-                CPListSection(items: newest.map(albumRow),
+                CPListSection(items: [shuffle, artists, radio]),
+                CPListSection(items: albumGrid(newest),
                               header: String(localized: "Recently Added"), sectionIndexTitle: nil),
             ])
         }
@@ -107,10 +135,13 @@ final class CarPlayBrowser {
 
     private weak var downloadedTab: CPListTemplate?
 
-    /// Called when the car shows a tab: the downloads may have grown since.
-    func refreshDownloadedIfShown(_ template: CPTemplate) {
-        guard let tab = downloadedTab, template === tab else { return }
-        fillDownloaded(tab)
+    /// Called when the car shows a tab: the downloads may have grown since, and the playlists
+    /// listed online are no use offline — nor the saved ones once the server is back.
+    func refreshIfShown(_ template: CPTemplate) {
+        if let tab = downloadedTab, template === tab { fillDownloaded(tab) }
+        if let tab = playlistsTab, template === tab, playlistsListedOffline != player.isEffectivelyOfflineForCar {
+            fillPlaylists(tab)
+        }
     }
 
     private func fillDownloaded(_ template: CPListTemplate) {
@@ -149,8 +180,9 @@ final class CarPlayBrowser {
         ])
     }
 
-    /// The artists with the most albums, A to Z — the car can't list a whole library, and
-    /// nobody scrolls past a few hundred names at a red light.
+    /// Every artist, A to Z under their letters, the letters down the side to jump by. A
+    /// library larger than a list can hold — each row fetches its picture — goes by its
+    /// letters first: a list of them, each opening its own artists.
     private func showArtists() async {
         guard let server = ServerManager.shared.currentServer else { return }
         let all: [Artist]
@@ -160,16 +192,83 @@ final class CarPlayBrowser {
             AppLogger.shared.log("🚗 Artists not loaded: \(error.localizedDescription)")
             return
         }
-        // ponytail: capped at the row limit by album count; a letter index page if it's missed.
-        let kept = all.sorted { ($0.albumCount ?? 0) > ($1.albumCount ?? 0) }
-            .prefix(Self.rowLimit)
-            .sorted { $0.sortKey.localizedCaseInsensitiveCompare($1.sortKey) == .orderedAscending }
-        let rows = kept.map { artist in
-            row(LibraryCatalog.item(artist), placeholder: "music.mic")
+        let sorted = all.sorted { $0.sortKey.localizedCaseInsensitiveCompare($1.sortKey) == .orderedAscending }
+        // Grouping keeps the A to Z order inside each letter; "#" goes last, as on the phone.
+        let letters = Dictionary(grouping: sorted, by: Self.indexLetter).sorted { lhs, rhs in
+            if (lhs.key == "#") != (rhs.key == "#") { return rhs.key == "#" }
+            return lhs.key < rhs.key
         }
         let template = CPListTemplate(title: String(localized: "Artists"), sections: [])
+        if sorted.count <= Self.rowLimit, letters.count <= Int(CPListTemplate.maximumSectionCount) {
+            fill(template, with: letters.map { letter, artists in
+                CPListSection(items: artists.map { row(LibraryCatalog.item($0), placeholder: "music.mic") },
+                              header: letter, sectionIndexTitle: letter)
+            })
+        } else {
+            let rows = letters.map { letter, artists in
+                let row = CPListItem(text: letter, detailText: nil, image: nil, accessoryImage: nil,
+                                     accessoryType: .disclosureIndicator)
+                row.handler = { [weak self] _, completion in
+                    self?.pushArtists(artists, title: letter)
+                    completion()
+                }
+                return row
+            }
+            fill(template, with: [CPListSection(items: rows)])
+        }
+        interfaceController?.pushTemplate(template, animated: true, completion: nil)
+    }
+
+    /// One letter's artists.
+    private func pushArtists(_ artists: [Artist], title: String) {
+        // ponytail: a letter past the row limit shows its first names only; split by second
+        // letter if a library ever has that many under one.
+        let rows = artists.prefix(Self.rowLimit).map { row(LibraryCatalog.item($0), placeholder: "music.mic") }
+        let template = CPListTemplate(title: title, sections: [])
         fill(template, with: [CPListSection(items: rows)])
         interfaceController?.pushTemplate(template, animated: true, completion: nil)
+    }
+
+    /// The letter an artist is filed under: the first of their sort name, accents dropped,
+    /// "#" for a digit or a sign. The car takes one character per index title.
+    private static func indexLetter(_ artist: Artist) -> String {
+        guard let first = artist.sortKey.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil).first,
+              first.isLetter else { return "#" }
+        return String(first.uppercased().prefix(1))
+    }
+
+    /// The server's internet radio stations; a tap plays the station.
+    private func showRadio() async {
+        guard let server = ServerManager.shared.currentServer else { return }
+        let stations: [InternetRadioStation]
+        do {
+            stations = try await SubsonicClient.shared.getInternetRadioStations(server: server)
+        } catch {
+            AppLogger.shared.log("🚗 Radio stations not loaded: \(error.localizedDescription)")
+            return
+        }
+        let rows = stations.map { station in
+            action(station.name, symbol: "antenna.radiowaves.left.and.right") { [weak self] in
+                self?.play(station)
+            }
+        }
+        let template = CPListTemplate(title: String(localized: "Radio"), sections: [])
+        fill(template, with: [CPListSection(items: rows)])
+        template.emptyViewTitleVariants = [String(localized: "No radio stations on your server")]
+        interfaceController?.pushTemplate(template, animated: true, completion: nil)
+    }
+
+    /// A station plays as a radar preview does, straight from its address: nothing about it
+    /// can be asked of the server or told to it — no star, no scrobble, no queue around it.
+    private func play(_ station: InternetRadioStation) {
+        guard URL(string: station.streamUrl) != nil else { return }
+        let song = Song(id: "radio-\(station.id)", title: station.name, album: nil, artist: nil, albumId: nil,
+                        artistId: nil, artists: nil, track: nil, year: nil, genre: nil, coverArt: nil,
+                        duration: nil, bitRate: nil, suffix: nil, contentType: nil, isDir: false, starred: nil,
+                        size: nil, path: nil, playCount: nil, mediaType: nil, explicit: nil, created: nil,
+                        replayGain: nil, preview: station.streamUrl)
+        player.playSong(song, fromQueue: [song])
+        showNowPlaying()
     }
 
     private func tab(_ title: String, symbol: String) -> CPListTemplate {
@@ -187,7 +286,7 @@ final class CarPlayBrowser {
             guard room > 0 else { return nil }
             let items = Array(section.items.prefix(room))
             room -= items.count
-            return CPListSection(items: items, header: section.header, sectionIndexTitle: nil)
+            return CPListSection(items: items, header: section.header, sectionIndexTitle: section.sectionIndexTitle)
         }
         template.emptyViewTitleVariants = [ServerManager.shared.currentServer == nil
             ? String(localized: "Sign in to Aura on your iPhone")
@@ -248,6 +347,39 @@ final class CarPlayBrowser {
         covers.map { CPListImageRowItemRowElement(image: $0, title: nil, subtitle: nil) }
     }
 
+    /// Albums as rows of covers, the name and artist under each, as the phone's grids show
+    /// them: a placeholder at once, the covers laid in as they come. A tap opens the album —
+    /// a single plays straight away.
+    private func albumGrid(_ albums: [Album]) -> [CPListImageRowItem] {
+        let perRow = Int(CPMaximumNumberOfGridImages)
+        let placeholder = CarPlayArtwork.glyph("square.stack")
+        let element = { (album: Album, image: UIImage) in
+            CPListImageRowItemRowElement(image: image, title: album.name, subtitle: album.artist)
+        }
+        return stride(from: 0, to: albums.count, by: perRow).map { start in
+            let chunk = Array(albums[start..<min(start + perRow, albums.count)])
+            let row = CPListImageRowItem(text: nil, elements: chunk.map { element($0, placeholder) },
+                                         allowsMultipleLines: true)
+            row.listImageRowHandler = { [weak self] row, index, completion in
+                guard let self, chunk.indices.contains(index) else { return completion() }
+                let shown = row.elements.indices.contains(index) ? row.elements[index].image : nil
+                let cover = shown === placeholder ? nil : shown
+                Task {
+                    await self.open(LibraryCatalog.item(chunk[index]), cover: cover)
+                    completion()
+                }
+            }
+            Task { [weak row] in
+                var covers: [CPListImageRowItemRowElement] = []
+                for album in chunk {
+                    covers.append(element(album, await CarPlayArtwork.cover(album.coverArt) ?? placeholder))
+                }
+                row?.elements = covers
+            }
+            return row
+        }
+    }
+
     // MARK: - Detail
 
     /// A mix, a playlist, the favourites or an album, as its page on the phone: Play and
@@ -283,7 +415,7 @@ final class CarPlayBrowser {
                let albums = try? await SubsonicClient.shared.getArtist(server: server, id: item.id).album,
                !albums.isEmpty {
                 sections = [CPListSection(items: rows, header: String(localized: "Top Songs"), sectionIndexTitle: nil),
-                            CPListSection(items: albums.prefix(Self.rowLimit - 12).map(albumRow),
+                            CPListSection(items: albumGrid(Array(albums.prefix(Self.rowLimit - 12))),
                                           header: String(localized: "Albums"), sectionIndexTitle: nil)]
             }
             if #available(iOS 26.4, *) {
@@ -416,32 +548,16 @@ final class CarPlayBrowser {
         }
     }
 
-    /// An album's row: a single plays straight away, anything longer opens its page.
-    private func albumRow(_ album: Album) -> CPListItem {
-        let item = LibraryCatalog.item(album)
-        guard album.songCount == 1 else { return row(item, placeholder: "square.stack") }
-        let row = CPListItem(text: item.title, detailText: item.subtitle.isEmpty ? nil : item.subtitle,
-                             image: CarPlayArtwork.glyph("music.note"))
-        row.handler = { [weak self] _, completion in
-            guard let self else { return completion() }
-            Task {
-                await self.open(item)
-                completion()
-            }
-        }
-        setCover(item.coverArt, on: row)
-        return row
-    }
-
-    /// A row that opens `item`'s page, its cover laid in once it comes.
-    private func row(_ item: WatchItem, placeholder: String, tint: UIColor = .white) -> CPListItem {
+    /// A row that opens `item`'s page, its cover laid in once it comes. `songs`, when given,
+    /// are what the page lists instead of asking the server — the offline playlists'.
+    private func row(_ item: WatchItem, placeholder: String, tint: UIColor = .white, songs: [Song]? = nil) -> CPListItem {
         let row = CPListItem(text: item.title, detailText: item.subtitle.isEmpty ? nil : item.subtitle,
                              image: CarPlayArtwork.glyph(placeholder, tint: tint), accessoryImage: nil,
                              accessoryType: .disclosureIndicator)
         row.handler = { [weak self] _, completion in
             guard let self else { return completion() }
             Task {
-                await self.open(item)
+                await self.open(item, songs: songs)
                 completion()
             }
         }

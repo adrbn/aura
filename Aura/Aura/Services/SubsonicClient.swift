@@ -111,6 +111,15 @@ actor SubsonicClient {
         return wrapper.playlist ?? []
     }
 
+    func getInternetRadioStations(server: ServerConfig) async throws -> [InternetRadioStation] {
+        guard let url = buildURL(server: server, endpoint: "getInternetRadioStations") else {
+            throw SubsonicClientError.invalidURL
+        }
+        let data = try await fetchData(from: url)
+        let wrapper = try decodeSubsonic(data: data, key: "internetRadioStations", as: InternetRadioStationsContainer.self)
+        return wrapper.internetRadioStation ?? []
+    }
+
     func getPlaylist(server: ServerConfig, id: String) async throws -> PlaylistWithSongs {
         guard let url = buildURL(server: server, endpoint: "getPlaylist", params: ["id": id]) else {
             throw SubsonicClientError.invalidURL

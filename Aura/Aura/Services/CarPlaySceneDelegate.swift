@@ -30,7 +30,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     nonisolated func templateWillAppear(_ aTemplate: CPTemplate, animated: Bool) {
-        MainActor.assumeIsolated { browser?.refreshDownloadedIfShown(aTemplate) }
+        MainActor.assumeIsolated { browser?.refreshIfShown(aTemplate) }
     }
 }
 
