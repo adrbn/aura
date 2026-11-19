@@ -1,4 +1,5 @@
 import SwiftUI
+import NaturalLanguage
 
 enum SongFetchType {
     case all
@@ -103,6 +104,11 @@ struct SongsListView: View {
     /// True while the full library is still paging in, so rows show in arrival order
     /// (no reshuffle on every page); the chosen sort applies once loading completes.
     @State private var isStreaming = false
+    /// The language picked in the sort menu, nil for every song.
+    @State private var language: String?
+    /// The languages offered there, most sung first: only those with a handful of songs,
+    /// so one stray guess doesn't become a filter of its own.
+    @State private var languages: [String] = []
 
     init(title: LocalizedStringKey, fetchType: SongFetchType) {
         self.title = title
@@ -128,7 +134,12 @@ struct SongsListView: View {
 
     private func resort() {
         let query = searchText.trimmingCharacters(in: .whitespaces)
-        let base = query.isEmpty ? songs : songs.filter {
+        let codes = SongLanguages.shared.codes
+        var counts: [String: Int] = [:]
+        for song in songs { if let code = codes[song.id], !code.isEmpty { counts[code, default: 0] += 1 } }
+        languages = counts.filter { $0.value >= 5 }.sorted { $0.value > $1.value }.map(\.key)
+        let spoken = language.map { code in songs.filter { codes[$0.id] == code } } ?? songs
+        let base = query.isEmpty ? spoken : spoken.filter {
             $0.title.localizedStandardContains(query)
                 || ($0.artist ?? "").localizedStandardContains(query)
                 || ($0.album ?? "").localizedStandardContains(query)
@@ -300,7 +311,7 @@ struct SongsListView: View {
                     // case. Favourites already has its own Play/Shuffle pair below.
                     if fetchType != .starred {
                         shuffleAllRow
-                        if fetchType == .all, !isStreaming, searchText.isEmpty {
+                        if fetchType == .all, !isStreaming, searchText.isEmpty, language == nil {
                             songCountRow
                         }
                     }
@@ -444,6 +455,17 @@ struct SongsListView: View {
                         Label(sortAscending ? "Descending" : "Ascending",
                               systemImage: sortAscending ? "arrow.down" : "arrow.up")
                     }
+                    if !languages.isEmpty || language != nil {
+                        Divider()
+                        Picker("Language", selection: $language) {
+                            Text("All Languages").tag(String?.none)
+                            ForEach(languages, id: \.self) { code in
+                                Text(Locale.current.localizedString(forLanguageCode: code)?.localizedCapitalized ?? code)
+                                    .tag(Optional(code))
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
                 } label: {
                     Image(systemName: "arrow.up.arrow.down")
                 }
@@ -486,7 +508,17 @@ struct SongsListView: View {
             resort()
         }
         .onChange(of: sortAscending) { _, _ in resort() }
-        .onChange(of: isStreaming) { _, _ in resort() }
+        .onChange(of: isStreaming) { _, _ in
+            resort()
+            if !isStreaming { SongLanguages.shared.detect(songs) }
+        }
+        // Languages are told once the list is whole, not on every page of a streaming library.
+        .task(id: songs.count) { if !isStreaming { SongLanguages.shared.detect(songs) } }
+        .onChange(of: SongLanguages.shared.codes.count) { _, _ in resort() }
+        .onChange(of: language) { _, _ in
+            displayLimit = 44
+            resort()
+        }
         .onChange(of: searchText) { _, _ in
             displayLimit = 44
             resort()
@@ -655,5 +687,88 @@ struct SongsListView: View {
                 }
             }
         }
+    }
+}
+
+/// The language each song is sung in, worked out on the phone since files carry no language
+/// tag, and kept on disk by song id: telling a whole library apart takes seconds. "" stands
+/// for a song that couldn't be told, so it isn't tried again on every visit.
+@Observable
+final class SongLanguages {
+    static let shared = SongLanguages()
+
+    private(set) var codes: [String: String]
+    private var isRunning = false
+    private static let file = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("SongLanguages.json")
+
+    private init() {
+        codes = (try? Data(contentsOf: Self.file))
+            .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
+    }
+
+    /// Works out the songs not seen yet in the background and publishes them in one go.
+    /// Lyrics are read only for downloaded songs, the only ones that keep theirs on disk.
+    @MainActor func detect(_ songs: [Song]) {
+        let known = codes
+        let todo = songs.filter { known[$0.id] == nil }
+        guard !isRunning, !todo.isEmpty else { return }
+        isRunning = true
+        let downloaded = Set(DownloadManager.shared.downloadedSongs.map(\.id))
+        Task.detached(priority: .utility) {
+            var found: [String: String] = [:]
+            for song in todo {
+                let lyrics = downloaded.contains(song.id) ? DownloadManager.shared.localLyrics(for: song.id) : nil
+                found[song.id] = SongLanguage.detect(lyrics: lyrics, title: song.title, album: song.album) ?? ""
+            }
+            await MainActor.run {
+                self.codes.merge(found) { _, new in new }
+                self.isRunning = false
+                if let data = try? JSONEncoder().encode(self.codes) { try? data.write(to: Self.file, options: .atomic) }
+            }
+        }
+    }
+}
+
+// MARK: - Song language
+
+enum SongLanguage {
+    /// A bare language code ("fr", "ja"), or nil when it can't be told. Lyrics say it best;
+    /// failing them the title and album, where a script of its own (Cyrillic, kana, hangul…)
+    /// is a sure sign, but a few Latin words are not: "Hotel California" reads as Indonesian.
+    static func detect(lyrics: String?, title: String, album: String?) -> String? {
+        if let lyrics {
+            // Timestamps and word timings out, so only the sung words are weighed.
+            let words = lyrics.replacingOccurrences(of: #"\[[^\]]*\]|<[^>]*>"#, with: " ", options: .regularExpression)
+            if words.filter(\.isLetter).count >= 40, let code = guess(words, above: 0.5) { return code }
+        }
+        // "(feat. …)", "[Live]" and "(Remix)" are English whatever the song; the album only
+        // adds words when it isn't the title again, since repeats inflate the confidence.
+        let parts = [title, album ?? ""].map {
+            $0.replacingOccurrences(of: #"\([^)]*\)|\[[^\]]*\]"#, with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
+        }
+        let name = parts[0].caseInsensitiveCompare(parts[1]) == .orderedSame ? parts[0] : parts.joined(separator: " ")
+        // Past Latin Extended: a mixed title like "夜に駆ける THE BOOK" is judged on its own
+        // script alone, or the English words win.
+        let own = String(String.UnicodeScalarView(name.unicodeScalars.filter {
+            $0.properties.isWhitespace || ($0.properties.isAlphabetic && $0.value > 0x24F)
+        })).trimmingCharacters(in: .whitespaces)
+        if !own.isEmpty { return guess(own, above: 0.5) }
+        let distinct = Set(name.lowercased().split { !$0.isLetter && $0 != "'" })
+        guard distinct.count >= 3 else { return nil }
+        // ponytail: Latin titles are only trusted for the languages most sung in; another one
+        // is told from its lyrics once the song is downloaded.
+        return guess(name, above: 0.9, among: [.english, .french, .spanish, .portuguese, .italian, .german, .dutch])
+    }
+
+    private static func guess(_ text: String, above threshold: Double, among: [NLLanguage] = []) -> String? {
+        let recognizer = NLLanguageRecognizer()
+        recognizer.languageConstraints = among
+        recognizer.processString(text)
+        guard let (language, probability) = recognizer.languageHypotheses(withMaximum: 1).first,
+              probability >= threshold else { return nil }
+        // "zh-Hans" and "zh-Hant" are both Chinese to a listener.
+        return String(language.rawValue.prefix { $0 != "-" })
     }
 }
