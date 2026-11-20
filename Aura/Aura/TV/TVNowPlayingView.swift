@@ -29,7 +29,7 @@ struct TVNowPlayingView: View {
 
     private var controls: some View {
         VStack(alignment: .leading, spacing: 34) {
-            CoverArtImage(coverArt: player.currentSong?.displayCoverArt, size: 600, cornerRadius: 16,
+            CoverArtImage(coverArt: player.currentSong?.displayCoverArt, size: 560, cornerRadius: 16,
                           placeholderName: player.currentSong?.album ?? player.currentSong?.title)
                 .shadow(color: .black.opacity(0.5), radius: 40, y: 20)
                 .id(player.currentSong?.id)
@@ -40,16 +40,16 @@ struct TVNowPlayingView: View {
                 Text(player.currentSong?.artist ?? "").font(.system(size: 30)).foregroundStyle(.white.opacity(0.7))
             }
             .lineLimit(1)
-            .frame(width: 600, alignment: .leading)
+            .frame(width: 560, alignment: .leading)
 
-            TVProgress(time: player.currentTime, duration: player.duration).frame(width: 600)
+            TVProgress(time: player.currentTime, duration: player.duration).frame(width: 560)
 
             HStack(spacing: 40) {
                 transport("backward.fill", .previous) { player.previous() }
                 transport(player.isPlaying ? "pause.fill" : "play.fill", .playPause) { player.togglePlayPause() }
                 transport("forward.fill", .next) { player.next() }
             }
-            .frame(width: 600)
+            .frame(width: 560)
         }
     }
 
@@ -60,7 +60,7 @@ struct TVNowPlayingView: View {
                 .frame(width: control == .playPause ? 110 : 90, height: control == .playPause ? 110 : 90)
                 .contentTransition(.symbolEffect(.replace))
         }
-        .buttonStyle(.borderless)
+        .buttonStyle(.bordered)
         .buttonBorderShape(.circle)
         .focused($focus, equals: control)
     }

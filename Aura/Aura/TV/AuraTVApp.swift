@@ -20,10 +20,19 @@ struct AuraTVApp: App {
                         serverManager.addServer(ServerConfig(url: "https://demo.navidrome.org", username: "demo",
                                                              password: "demo", friendlyName: "demo.navidrome.org"))
                     }
+                    // Silent playback, so screenshots of Now Playing make no sound on the Mac.
+                    if CommandLine.arguments.contains("-tvMute") { player.volume = 0 }
                     #endif
-                    guard serverManager.currentServer != nil else { return }
+                    guard let server = serverManager.currentServer else { return }
                     await serverManager.testConnection()
                     LibraryIndex.shared.refreshIfNeeded()
+                    #if DEBUG
+                    // `-tvPlay` starts random songs, to see Now Playing without the remote.
+                    if CommandLine.arguments.contains("-tvPlay"),
+                       let songs = try? await SubsonicClient.shared.getRandomSongs(server: server, size: 20) {
+                        TVPlayback.shared.play(songs, source: .search(query: ""))
+                    }
+                    #endif
                 }
         }
     }
@@ -51,6 +60,7 @@ struct TVRootView: View {
     @State private var serverManager = ServerManager.shared
     @State private var player = AudioPlayer.shared
     @State private var playback = TVPlayback.shared
+    @State private var tab = TVRootView.launchTab
 
     var body: some View {
         Group {
@@ -67,25 +77,34 @@ struct TVRootView: View {
     }
 
     private var tabs: some View {
-        TabView {
-            Tab("Home", systemImage: "house") {
+        TabView(selection: $tab) {
+            Tab("Home", systemImage: "house", value: 0) {
                 NavigationStack { TVHomeView().tvDestinations() }
             }
-            Tab("Library", systemImage: "square.stack") {
+            Tab("Library", systemImage: "square.stack", value: 1) {
                 NavigationStack { TVLibraryView().tvDestinations() }
             }
-            Tab(role: .search) {
+            Tab(value: 2, role: .search) {
                 NavigationStack { TVSearchView().tvDestinations() }
             }
             if player.currentSong != nil {
-                Tab("Now Playing", systemImage: "waveform") {
+                Tab("Now Playing", systemImage: "waveform", value: 3) {
                     TVNowPlayingTab()
                 }
             }
-            Tab("Settings", systemImage: "gearshape") {
+            Tab("Settings", systemImage: "gearshape", value: 4) {
                 NavigationStack { TVSettingsView() }
             }
         }
+    }
+
+    /// `-tvTab N` opens on tab N in debug builds, for screenshots in the simulator.
+    private static var launchTab: Int {
+        #if DEBUG
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "-tvTab"), i + 1 < args.count, let n = Int(args[i + 1]) { return n }
+        #endif
+        return 0
     }
 }
 

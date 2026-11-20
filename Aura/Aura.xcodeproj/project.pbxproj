@@ -55,6 +55,7 @@
 		32A49759C5A3CF32AEA00A68 /* MacPlaylistsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E86A6836D5829E443815C9 /* MacPlaylistsView.swift */; };
 		33030E571702CA856032DAC1 /* EqualizerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000085 /* EqualizerManager.swift */; };
 		34DACD5605C097D0442A0DF2 /* CoverPortrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FB /* CoverPortrait.swift */; };
+		36C531E86DB00ABBF2BCB01E /* TVAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 250BC239B584D216933467A4 /* TVAssets.xcassets */; };
 		37288D1A997E73BE6647E98D /* AuraURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3939277F6ABF2A5222CAC71B /* AuraURL.swift */; };
 		37F714D890A226E19DE5F65E /* CoverMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C50ECA7916A55ECF9EE4962 /* CoverMenu.swift */; };
 		38937ABA4C1C046DBB0779CD /* MacBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = E67D53CBB8991E7A47AB055E /* MacBackground.swift */; };
@@ -186,7 +187,6 @@
 		B7A1C0DE0000000000000003 /* MacPlaylistSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A1C0DE0000000000000002 /* MacPlaylistSheets.swift */; };
 		B9558E981AE98E721D07D4C4 /* TVLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E958A9F86CCDA99B7763BF /* TVLibraryView.swift */; };
 		BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000070 /* Localizable.xcstrings */; };
-		BAFAE292658216A677EE91C9 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000F2 /* AppIcon.icon */; };
 		BC53C870BB1A0B5438F7E37E /* LyricsOnServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B473B77C7F39B4A0C89FD065 /* LyricsOnServer.swift */; };
 		BD810962312AF0BE4C7E7884 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DC88F51AFE7480355DB58E /* WatchModel.swift */; };
 		BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E789F4384A074A1B5C0CC509 /* PinSync.swift */; };
@@ -433,6 +433,7 @@
 		1F62B0246C095CC3D591F47C /* MacWindowChrome.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacWindowChrome.swift; sourceTree = "<group>"; };
 		21E958A9F86CCDA99B7763BF /* TVLibraryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TVLibraryView.swift; sourceTree = "<group>"; };
 		22DC88F51AFE7480355DB58E /* WatchModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchModel.swift; sourceTree = "<group>"; };
+		250BC239B584D216933467A4 /* TVAssets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = TVAssets.xcassets; sourceTree = "<group>"; };
 		2840376375D75F5F54A64277 /* MacServerPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerPicker.swift; sourceTree = "<group>"; };
 		2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistsView.swift; sourceTree = "<group>"; };
 		2B3B5FB4CB9ED329D9240207 /* OfflineLibrary.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineLibrary.swift; sourceTree = "<group>"; };
@@ -836,6 +837,7 @@
 				21E958A9F86CCDA99B7763BF /* TVLibraryView.swift */,
 				E8EBB7BC621A716A454FB4AF /* TVSetupView.swift */,
 				6AE156FBC44D50D7355F79D6 /* TVNowPlayingView.swift */,
+				250BC239B584D216933467A4 /* TVAssets.xcassets */,
 			);
 			name = TV;
 			path = TV;
@@ -1265,7 +1267,7 @@
 			files = (
 				AF081203E2E378811D7CC3C4 /* Assets.xcassets in Resources */,
 				1DD12697FC0C99A07A4C1838 /* Localizable.xcstrings in Resources */,
-				BAFAE292658216A677EE91C9 /* AppIcon.icon in Resources */,
+				36C531E86DB00ABBF2BCB01E /* TVAssets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2094,7 +2096,7 @@
 		925B13AD96B48178DA48457A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 522;
@@ -2466,7 +2468,7 @@
 		F5F4ADD96C0ECD2CC12C2869 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 522;
@@ -2495,7 +2497,7 @@
 		F6969C14EDC215A8F4220D9C /* Release-AppStore */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 522;
