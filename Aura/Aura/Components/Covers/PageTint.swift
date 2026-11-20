@@ -44,7 +44,7 @@ enum PageTint {
         let neutral = s < 0.12
         let dark = UIColor(hue: h, saturation: neutral ? s : min(0.75, max(0.4, s)), brightness: 0.38, alpha: 1)
         let light = UIColor(hue: h, saturation: neutral ? s : 0.22, brightness: 0.96, alpha: 1)
-        #if os(iOS)
+        #if canImport(UIKit)
         return UIColor { $0.userInterfaceStyle == .dark ? dark : light }
         #else
         return NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light }

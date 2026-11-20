@@ -156,3 +156,21 @@ private struct ScrollEnter: ViewModifier {
         #endif
     }
 }
+
+#if canImport(UIKit)
+/// UIKit's page greys, which tvOS does not have: the Apple TV app is dark only, so it takes
+/// the canvas and card shades the phone uses in dark mode.
+extension UIColor {
+    #if os(tvOS)
+    static var auraSystemBackground: UIColor { UIColor(red: 0x12 / 255, green: 0x12 / 255, blue: 0x12 / 255, alpha: 1) }
+    static var auraSecondarySystemBackground: UIColor { UIColor(red: 0x1C / 255, green: 0x1C / 255, blue: 0x1E / 255, alpha: 1) }
+    static var auraSecondarySystemGroupedBackground: UIColor { auraSecondarySystemBackground }
+    static var auraSystemGroupedBackground: UIColor { auraSystemBackground }
+    #else
+    static var auraSystemBackground: UIColor { .systemBackground }
+    static var auraSecondarySystemBackground: UIColor { .secondarySystemBackground }
+    static var auraSecondarySystemGroupedBackground: UIColor { .secondarySystemGroupedBackground }
+    static var auraSystemGroupedBackground: UIColor { .systemGroupedBackground }
+    #endif
+}
+#endif

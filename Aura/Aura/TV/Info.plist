@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Aura connects to the music server on your local network that you configure.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>VavinCondensed-Regular-Latin.ttf</string>
+		<string>VavinCondensed-Bold-Latin.ttf</string>
+		<string>ArchivoXCondBlack.ttf</string>
+		<string>ArchivoExpBlack.ttf</string>
+		<string>ArchivoExpBold.ttf</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+</dict>
+</plist>

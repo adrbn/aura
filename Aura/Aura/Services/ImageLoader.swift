@@ -960,7 +960,7 @@ enum GenericArtwork {
     /// The image in grey, flattened onto white — a placeholder may come with its
     /// transparency or without — and averaged down to `side`×`side`.
     private static func thumbnail(of image: PlatformImage) -> [UInt8]? {
-        #if os(iOS)
+        #if canImport(UIKit)
         guard let picture = image.cgImage else { return nil }
         #else
         guard let picture = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }

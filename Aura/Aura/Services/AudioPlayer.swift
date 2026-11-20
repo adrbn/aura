@@ -297,7 +297,7 @@ final class AudioPlayer {
     private func setupAudioSession() {
         // No counterpart on macOS, and none wanted: there is no audio session to claim,
         // no interruption to arbitrate with a phone call, and no route to be yanked out.
-        #if os(iOS)
+        #if os(iOS) || os(tvOS)
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, policy: .longFormAudio)
             try AVAudioSession.sharedInstance().setActive(true)
@@ -315,7 +315,7 @@ final class AudioPlayer {
         #endif
     }
 
-    #if os(iOS)
+    #if os(iOS) || os(tvOS)
     @objc private func handleInterruption(_ notification: Notification) {
         guard let info = notification.userInfo,
               let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
@@ -809,6 +809,8 @@ final class AudioPlayer {
 
         // Offline the queue still goes on, from the songs on this device: the same artist's
         // first, then the rest at random. It used to stay empty.
+        // The Apple TV keeps no songs on the device, so it has no offline pool.
+        #if !os(tvOS)
         if isEffectivelyOffline {
             let pool = await MainActor.run { OfflineLibrary.shared.songs }.filter { $0.id != song.id }
             let sameArtist = pool.filter { $0.artist == song.artist }.shuffled().prefix(10)
@@ -817,6 +819,7 @@ final class AudioPlayer {
             _ = await applyAutoplay(Array((Array(sameArtist) + rest).prefix(50)), around: song, generation: generation)
             return
         }
+        #endif
 
         // Two sources, asked at the same time rather than one after the other.
         // Random songs answer in about a second and exist so the queue is never
@@ -1854,7 +1857,7 @@ final class AudioPlayer {
     /// it, and it means no missed notification can strand playback for the whole session.
     @discardableResult
     private func activateAudioSession() -> Bool {
-        #if os(iOS)
+        #if os(iOS) || os(tvOS)
         do {
             try AVAudioSession.sharedInstance().setActive(true)
             return true

@@ -1,0 +1,129 @@
+import SwiftUI
+
+/// The Apple TV app's entry point: the iPhone's engine under an interface made for the
+/// remote, three metres from the screen.
+@main
+struct AuraTVApp: App {
+    @State private var serverManager = ServerManager.shared
+    @State private var player = AudioPlayer.shared
+
+    var body: some Scene {
+        WindowGroup {
+            TVRootView()
+                .environment(serverManager)
+                .environment(player)
+                .preferredColorScheme(.dark)
+                .task {
+                    #if DEBUG
+                    // Screenshots in the simulator: `-tvDemo` connects the public demo server.
+                    if CommandLine.arguments.contains("-tvDemo"), serverManager.servers.isEmpty {
+                        serverManager.addServer(ServerConfig(url: "https://demo.navidrome.org", username: "demo",
+                                                             password: "demo", friendlyName: "demo.navidrome.org"))
+                    }
+                    #endif
+                    guard serverManager.currentServer != nil else { return }
+                    await serverManager.testConnection()
+                    LibraryIndex.shared.refreshIfNeeded()
+                }
+        }
+    }
+}
+
+/// Starting playback from any page: the queue handed to the player, and Now Playing brought up
+/// over everything, as the TV's own music app does.
+@MainActor
+@Observable
+final class TVPlayback {
+    static let shared = TVPlayback()
+    var showNowPlaying = false
+
+    func play(_ songs: [Song], from index: Int = 0, source: PlaybackSource, shuffled: Bool = false) {
+        guard !songs.isEmpty else { return }
+        let player = AudioPlayer.shared
+        let list = shuffled ? songs.shuffled() : songs
+        let start = shuffled ? 0 : min(index, list.count - 1)
+        player.playSong(list[start], fromQueue: list, startIndex: start, source: source)
+        showNowPlaying = true
+    }
+}
+
+struct TVRootView: View {
+    @State private var serverManager = ServerManager.shared
+    @State private var player = AudioPlayer.shared
+    @State private var playback = TVPlayback.shared
+
+    var body: some View {
+        Group {
+            if serverManager.currentServer == nil {
+                TVSetupView()
+            } else {
+                tabs
+            }
+        }
+        .background(TVBackground())
+        .fullScreenCover(isPresented: $playback.showNowPlaying) {
+            TVNowPlayingView()
+        }
+    }
+
+    private var tabs: some View {
+        TabView {
+            Tab("Home", systemImage: "house") {
+                NavigationStack { TVHomeView().tvDestinations() }
+            }
+            Tab("Library", systemImage: "square.stack") {
+                NavigationStack { TVLibraryView().tvDestinations() }
+            }
+            Tab(role: .search) {
+                NavigationStack { TVSearchView().tvDestinations() }
+            }
+            if player.currentSong != nil {
+                Tab("Now Playing", systemImage: "waveform") {
+                    TVNowPlayingTab()
+                }
+            }
+            Tab("Settings", systemImage: "gearshape") {
+                NavigationStack { TVSettingsView() }
+            }
+        }
+    }
+}
+
+/// The phone's tab-root ground: #121212 with the time-of-day glow across the top.
+struct TVBackground: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.canvas
+            TimelineView(.animation(minimumInterval: 1.0 / 30)) { context in
+                GlowField(hue: DayHue.hue(at: Date()),
+                          time: context.date.timeIntervalSinceReferenceDate,
+                          isDark: true)
+            }
+            .frame(height: 620)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+/// The Now Playing tab: a door back into the full-screen player.
+struct TVNowPlayingTab: View {
+    @State private var player = AudioPlayer.shared
+
+    var body: some View {
+        VStack(spacing: 40) {
+            if let song = player.currentSong {
+                Button { TVPlayback.shared.showNowPlaying = true } label: {
+                    CoverArtImage(coverArt: song.displayCoverArt, size: 520, cornerRadius: 12,
+                                  placeholderName: song.album ?? song.title)
+                }
+                .buttonStyle(.card)
+                VStack(spacing: 8) {
+                    Text(song.title).font(.title2.weight(.semibold))
+                    Text(song.artist ?? "").foregroundStyle(.secondary)
+                }
+                .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}

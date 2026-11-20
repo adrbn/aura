@@ -20,6 +20,7 @@ struct ListenTogether: GroupActivity {
     }
 }
 
+#if !os(tvOS)
 /// What the share sheet offers: SharePlay with whoever is picked.
 struct ListenTogetherInvite: Transferable {
     static var transferRepresentation: some TransferRepresentation {
@@ -28,6 +29,7 @@ struct ListenTogetherInvite: Transferable {
         }
     }
 }
+#endif
 
 @MainActor
 @Observable

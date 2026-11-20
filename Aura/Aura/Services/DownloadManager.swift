@@ -151,10 +151,15 @@ final class DownloadManager: NSObject {
     private static let minimumFreeDiskSpace: Int64 = 200_000_000
 
     private func hasSufficientDiskSpace() -> Bool {
+        #if os(tvOS)
+        // No downloads on the Apple TV, and no volume capacity key to ask.
+        return true
+        #else
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         guard let values = try? docs.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]),
               let available = values.volumeAvailableCapacityForImportantUsage else { return true }
         return available > Self.minimumFreeDiskSpace
+        #endif
     }
 
     private func resumeDataURL(for songId: String) -> URL {

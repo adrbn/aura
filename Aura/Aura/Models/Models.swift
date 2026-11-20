@@ -584,7 +584,7 @@ extension Color {
 
     static let canvas: Color = {
         #if canImport(UIKit)
-        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCanvas : .systemBackground })
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCanvas : .auraSystemBackground })
         #else
         return Color(nsColor: NSColor(name: nil) {
             $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
@@ -601,7 +601,7 @@ extension Color {
 
     private static let card: Color = {
         #if canImport(UIKit)
-        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCard : .secondarySystemBackground })
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCard : .auraSecondarySystemBackground })
         #else
         return .platformSecondaryBackground
         #endif
@@ -609,7 +609,7 @@ extension Color {
 
     private static let groupedCard: Color = {
         #if canImport(UIKit)
-        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCard : .secondarySystemGroupedBackground })
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCard : .auraSecondarySystemGroupedBackground })
         #else
         return .platformGroupedBackground
         #endif
@@ -623,7 +623,7 @@ extension Color {
 
     private static let groupedCanvas: Color = {
         #if canImport(UIKit)
-        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCanvas : .systemGroupedBackground })
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? darkCanvas : .auraSystemGroupedBackground })
         #else
         return .platformGroupedPageBackground
         #endif
@@ -640,7 +640,7 @@ extension Color {
 
     static var platformBackground: Color {
         #if canImport(UIKit)
-        Color(.systemBackground)
+        Color(.auraSystemBackground)
         #else
         Color(nsColor: .windowBackgroundColor)
         #endif
@@ -648,7 +648,7 @@ extension Color {
 
     static var platformSecondaryBackground: Color {
         #if canImport(UIKit)
-        Color(.secondarySystemBackground)
+        Color(.auraSecondarySystemBackground)
         #else
         Color(nsColor: .underPageBackgroundColor)
         #endif
@@ -656,7 +656,7 @@ extension Color {
 
     static var platformGroupedBackground: Color {
         #if canImport(UIKit)
-        Color(.secondarySystemGroupedBackground)
+        Color(.auraSecondarySystemGroupedBackground)
         #else
         Color(nsColor: .controlBackgroundColor)
         #endif
@@ -664,7 +664,7 @@ extension Color {
 
     static var platformGroupedPageBackground: Color {
         #if canImport(UIKit)
-        Color(.systemGroupedBackground)
+        Color(.auraSystemGroupedBackground)
         #else
         Color(nsColor: .underPageBackgroundColor)
         #endif
