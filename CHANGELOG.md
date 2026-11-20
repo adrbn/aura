@@ -4,6 +4,13 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] — 2026-11-20
+
+- AirPlay goes straight to speakers such as a HomePod stereo pair, without waking the Apple TV they are linked to.
+- A stream broken by a seek or a tap on a lyric line picks the song up again instead of skipping to the next one.
+- The first song after a relaunch crossfades and plays gapless like any other.
+- Downloads are handed to iOS before Aura leaves the screen, so they keep going in the background.
+
 ## [1.7.0] — 2026-11-20
 
 - CarPlay: albums show as cover grids on Home, Library and artist pages, every artist is listed from A to Z with a letter index, the Library tab plays your server's internet radio stations, and the playlists saved for offline are there when the server is out of reach.
