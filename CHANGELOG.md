@@ -4,6 +4,15 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] — 2026-11-20
+
+- CarPlay: albums show as cover grids on Home, Library and artist pages, every artist is listed from A to Z with a letter index, the Library tab plays your server's internet radio stations, and the playlists saved for offline are there when the server is out of reach.
+- Songs lists filter by the language of the music, told on the iPhone from a downloaded song's lyrics or else its title.
+- Search: paste a song link from another service and Aura looks for that song in your library, with its title and artist to copy.
+- Offline, the Playlists tab is the online page fed from the saved playlists, and adding, removing or reordering songs waits in a queue sent to your server once it is back.
+- Downloads go one song at a time with a ring that follows the real download, the download card names the album or playlist being saved, and downloaded songs keep the lyrics found online.
+- Fixed: playlist covers are kept for offline while online, the Settings server tile says offline while Offline Mode is on, a song without its own cover shows its album's in the mini player and on the Lock Screen, and a relaunched device no longer leaves the play-elsewhere button doing nothing.
+
 ## [1.6.5] — 2026-11-18
 
 - About: a Supporters card thanks Greg and DummyHead, whose coffees on Ko-fi keep Aura going.
