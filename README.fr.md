@@ -33,7 +33,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 
 <sub><a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github">Sur l'App Store</a> sous le nom <b>Aura: Self-Hosted Music</b> · Gratuit et libre · Apportez votre serveur</sub>
 
-[English](README.md) · Français
+[English](README.md) · Français · [Español](README.es.md) · [Deutsch](README.de.md) · [Italiano](README.it.md) · [Português (Brasil)](README.pt-BR.md) · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) · [Русский](README.ru.md)
 
 </div>
 
