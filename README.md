@@ -80,9 +80,9 @@ download still there with no signal.
 
 **Your library**
 
-- **One search** across songs, albums, artists and playlists that forgives typos, run on the iPhone over your whole library, with `artist:`, `album:`, `genre:` and `year:` one tap away.
+- **One search** across songs, albums, artists and playlists that forgives typos, run on the iPhone over your whole library, with `artist:`, `album:`, `genre:` and `year:` one tap away. Paste a song link from another service to find it there, and filter the song lists by the language of the music.
 - **Playlists your way**: a grid or a list, filters, covers from your photos, folders named `Folder/Name`, a Suggestions section and Add Songs, Undo, and Remove Duplicates, which keeps the first copy of each song. Save any radio as a playlist; changes go to your server.
-- **Ratings and scrobbling** go to your server, and wait on the iPhone while you're offline, favourites too. Keep a playlist downloaded: its new songs download on their own.
+- **Ratings, scrobbling and playlist edits** go to your server, and wait on the iPhone while you're offline, favourites too. Keep a playlist downloaded: its new songs download on their own.
 - **Several servers**, each with an optional home-network address and custom headers, and several music folders at once.
 - **Pages in the colour of their artwork**, animated covers, multi-disc albums, sort tags, and sorts that stay put.
 
@@ -110,8 +110,9 @@ download still there with no signal.
   <img src="docs/assets/shots-watch.webp" width="64%" alt="The Apple Watch app: Now Playing, lyrics, Up Next and the Library" />
 </p>
 
-**CarPlay** (App Store build): Home with the mixes and the Radar, your playlists, the newest albums, your artists, a
-Downloaded tab that plays without a connection, and a Radio button that follows the song with similar music.
+**CarPlay** (App Store build): Home with the mixes and the Radar, albums as cover grids, your playlists, every artist
+from A to Z, your server's internet radio stations, a Downloaded tab and your offline playlists that play without a
+connection, and a Radio button that follows the song with similar music.
 
 **Mac** (preview, macOS 26): from the same code as the iPhone app. The whole library in one window with a sidebar;
 Up Next as a side pane you drag to reorder, with a right-click for Play Next, Start Radio, rating and download; lyrics

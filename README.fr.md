@@ -81,9 +81,9 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
 
 **Votre bibliothèque**
 
-- **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe, faite sur l'iPhone dans toute votre bibliothèque, avec `artist:`, `album:`, `genre:` et `year:` à portée de doigt.
+- **Une seule recherche** dans les morceaux, albums, artistes et playlists, qui pardonne les fautes de frappe, faite sur l'iPhone dans toute votre bibliothèque, avec `artist:`, `album:`, `genre:` et `year:` à portée de doigt. Collez le lien d'un morceau venu d'un autre service pour le retrouver, et filtrez les listes de morceaux par la langue de la musique.
 - **Des playlists à votre façon** : en grille ou en liste, des filtres, des pochettes tirées de vos photos, des dossiers nommés `Dossier/Nom`, une section Suggestions et Ajouter des morceaux, Annuler, et Retirer les doublons, qui garde la première copie de chaque morceau. Enregistrez n'importe quelle radio comme playlist ; les changements partent sur votre serveur.
-- **Les notes et le scrobbling** partent sur votre serveur, et attendent sur l'iPhone quand vous êtes hors ligne, les favoris aussi. Une playlist gardée téléchargée télécharge ses nouveaux morceaux toute seule.
+- **Les notes, le scrobbling et les modifications de playlists** partent sur votre serveur, et attendent sur l'iPhone quand vous êtes hors ligne, les favoris aussi. Une playlist gardée téléchargée télécharge ses nouveaux morceaux toute seule.
 - **Plusieurs serveurs**, chacun avec une adresse de la maison et des en-têtes personnalisés en option, et plusieurs dossiers de musique à la fois.
 - **Des pages aux couleurs de leur pochette**, des pochettes animées, les albums à plusieurs disques, les tags de tri, et des tris qui restent.
 
@@ -111,8 +111,9 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
   <img src="docs/assets/shots-watch.webp" width="64%" alt="L'app Apple Watch : En cours de lecture, les paroles, la file d'attente et la bibliothèque" />
 </p>
 
-**CarPlay** (version App Store) : l'accueil avec les mix et le Radar, vos playlists, les derniers albums, vos artistes,
-un onglet Téléchargé qui joue sans connexion, et un bouton Radio qui enchaîne une musique proche du morceau.
+**CarPlay** (version App Store) : l'accueil avec les mix et le Radar, les albums en grilles de pochettes, vos playlists,
+tous vos artistes de A à Z, les radios internet de votre serveur, un onglet Téléchargé et vos playlists hors ligne qui
+jouent sans connexion, et un bouton Radio qui enchaîne une musique proche du morceau.
 
 **Mac** (aperçu, macOS 26) : fait du même code que l'app iPhone. Toute la bibliothèque dans une fenêtre avec une barre
 latérale ; À suivre dans un panneau latéral à réordonner en glissant, avec un clic droit pour Lire ensuite, Lancer la
