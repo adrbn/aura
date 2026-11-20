@@ -39,6 +39,11 @@ struct MacWindowChrome: NSViewRepresentable {
 
     final class Coordinator {
         private weak var window: NSWindow?
+        /// Watches every container above the buttons. SwiftUI drops them to alpha 0 at
+        /// moments that raise no window notification (a search, a page change), so the
+        /// buttons vanished until the next resize; this puts them back the moment it happens.
+        private var watchers: [NSKeyValueObservation] = []
+        private var watched: [ObjectIdentifier] = []
 
         /// Re-applied on the window's own events, not only on SwiftUI updates.
         ///
@@ -92,11 +97,27 @@ struct MacWindowChrome: NSViewRepresentable {
                 // covers AppKit adding another layer in some later release.
                 var node: NSView? = view
                 while let current = node, current !== window.contentView?.superview {
-                    current.isHidden = false
-                    current.alphaValue = 1
+                    if current.isHidden { current.isHidden = false }
+                    if current.alphaValue != 1 { current.alphaValue = 1 }
+                    watch(current)
                     node = current.superview
                 }
             }
+        }
+
+        private func watch(_ view: NSView) {
+            let id = ObjectIdentifier(view)
+            guard !watched.contains(id) else { return }
+            watched.append(id)
+            let restore: () -> Void = { [weak self] in
+                DispatchQueue.main.async { MainActor.assumeIsolated { self?.apply() } }
+            }
+            watchers.append(view.observe(\.alphaValue, options: [.new]) { v, _ in
+                if v.alphaValue != 1 { restore() }
+            })
+            watchers.append(view.observe(\.isHidden, options: [.new]) { v, _ in
+                if v.isHidden { restore() }
+            })
         }
     }
 }
