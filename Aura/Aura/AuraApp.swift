@@ -88,13 +88,16 @@ struct AuraApp: App {
                         // iOS may terminate a backgrounded app with no further callback.
                         if newPhase == .inactive || newPhase == .background {
                             audioPlayer.persistPlaybackState()
+                            // On the way out, while the app still counts as in front: a
+                            // transfer started once it is in the background is left to
+                            // iOS's discretion and can wait for hours.
+                            DownloadManager.shared.handOffQueueForBackground()
                         }
                         // Back in the app: online or offline is decided again, from the
                         // connection as it is now, not as it was when the app was left.
                         if newPhase == .background {
                             wasInBackground = true
                             audioPlayer.saveQueueOnServer()
-                            DownloadManager.shared.handOffQueueForBackground()
                         } else if newPhase == .active && wasInBackground {
                             wasInBackground = false
                             Task {

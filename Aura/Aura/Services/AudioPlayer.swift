@@ -141,8 +141,22 @@ final class AudioPlayer {
     private var player: AVPlayer? {
         // A player made again for the same song (a retry, a quality change) starts at 1×:
         // it keeps the pitch still shown instead of dropping it until the next song.
-        didSet { if pitchSemitones != 0 { player?.currentItem?.audioTimePitchAlgorithm = .varispeed; player?.defaultRate = pitchRate } }
+        didSet {
+            if pitchSemitones != 0 { player?.currentItem?.audioTimePitchAlgorithm = .varispeed; player?.defaultRate = pitchRate }
+            #if os(macOS)
+            // Each song gets a new player: the output picked in the player bar goes with it.
+            if let chosen = oldValue?.audioOutputDeviceUniqueID { macOutputDevice = chosen }
+            if let device = macOutputDevice, player?.audioOutputDeviceUniqueID != device {
+                player?.audioOutputDeviceUniqueID = device
+            }
+            #endif
+        }
     }
+    #if os(macOS)
+    private var macOutputDevice: String?
+    /// The player the Mac's output picker routes; it follows each new one.
+    var outputPlayer: AVPlayer? { player }
+    #endif
     /// The song fading out under the next one during a crossfade, on a player of its own.
     private var fadingPlayer: AVPlayer?
     private var crossfadeTask: Task<Void, Never>?
@@ -285,7 +299,7 @@ final class AudioPlayer {
         // no interruption to arbitrate with a phone call, and no route to be yanked out.
         #if os(iOS)
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, policy: .longFormAudio)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             AppLogger.shared.log("❌ Audio session setup failed: \(error.localizedDescription)")
@@ -712,32 +726,10 @@ final class AudioPlayer {
         resetScrobbleProgress()
         player?.pause()
 
-        timeObserver = player?.addPeriodicTimeObserver(
-            forInterval: CMTime(seconds: 0.1, preferredTimescale: 600),
-            queue: .main
-        ) { [weak self] time in
-            guard let self = self, !self.isSeeking else { return }
-            self.currentTime = self.streamOffset + time.seconds
-            // A stream begun partway is only the rest of the song: its length isn't the song's.
-            if self.streamOffset == 0, let d = self.player?.currentItem?.duration.seconds, !d.isNaN {
-                self.duration = d
-            }
-            self.updateNowPlayingInfo()
-            self.scrobbleIfDue()
-        }
-
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(playerDidFinish),
-            name: .AVPlayerItemDidPlayToEndTime, object: playerItem
-        )
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(playerItemFailedToPlayToEnd(_:)),
-            name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem
-        )
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(playerItemNewErrorLogEntry(_:)),
-            name: .AVPlayerItemNewErrorLogEntry, object: playerItem
-        )
+        // The same watch as a song begun by a tap: this one had its own, without the
+        // prefetch, the gapless lining-up or the crossfade, so the first song after a
+        // relaunch always ended in a cut.
+        watchPlayback(of: playerItem)
 
         if let songDuration = song.duration, songDuration > 0 {
             duration = Double(songDuration)
@@ -1616,10 +1608,40 @@ final class AudioPlayer {
     /// same way, forever.
     private func handleStreamEndedEarly() {
         if isEffectivelyOffline { handleOfflinePlaybackError(); return }
+        // Far from the end, the song isn't over: a seek (a tap on a lyric line, the bar)
+        // broke the stream. Pick it up again where it was rather than skip the song.
+        if let song = currentSong, duration > 0, duration - currentTime > 10,
+           resumedAfterBreak[song.id, default: 0] < 2 {
+            resumedAfterBreak[song.id, default: 0] += 1
+            resumeAfterBreak(song, at: currentTime)
+            return
+        }
         guard !playbackErrorHandled else { return }
         playbackErrorHandled = true
         AppLogger.shared.log("⚠️ Stream ended early at \(Int(currentTime))s/\(Int(duration))s — treating as end of track")
         if repeatMode == .one { next() } else { handlePlayerDidFinish() }
+    }
+
+    /// How many times a song's broken stream was picked up again, so a song that keeps
+    /// breaking ends after two tries instead of looping.
+    private var resumedAfterBreak: [String: Int] = [:]
+
+    /// The song again from the server, held on `time` until it is ready and seeks there.
+    private func resumeAfterBreak(_ song: Song, at time: TimeInterval) {
+        guard let server = ServerManager.shared.currentServer else { return }
+        AppLogger.shared.log("🔁 Stream broke at \(Int(time))s of \(song.title): picking it up again")
+        let item = makePlayerItem(for: song, server: server, bitRate: AppSettings.shared.effectiveStreamingQuality.bitRate)
+        streamOffset = 0
+        isSeeking = true
+        pendingSeekTime = time
+        currentTime = time
+        observePlayerItem(item, song: song)
+        observeBuffer(item, songId: song.id)
+        EqualizerManager.shared.attachToPlayerItem(item)
+        watchEnd(of: item)
+        player?.replaceCurrentItem(with: item)
+        applyPitch()
+        if isPlaying { player?.play() }
     }
 
     #if os(iOS)
@@ -1842,7 +1864,7 @@ final class AudioPlayer {
         // Once more from scratch: a session a call walked over sometimes only comes back
         // after its category is stated again.
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, policy: .longFormAudio)
             try AVAudioSession.sharedInstance().setActive(true)
             return true
         } catch {

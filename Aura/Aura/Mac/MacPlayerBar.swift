@@ -1,4 +1,5 @@
 import SwiftUI
+import AVKit
 
 /// The window's transport, across the full width at the bottom.
 ///
@@ -224,6 +225,9 @@ struct MacPlayerBar: View {
             iconButton("slider.horizontal.3", active: EqualizerManager.shared.isEnabled,
                        help: "Equaliser") { showEqualizer.toggle() }
             iconButton("list.bullet", active: MacQueuePanel.shared.isShown, help: "Queue") { MacQueuePanel.shared.isShown.toggle() }
+            MacOutputPicker(player: player.outputPlayer)
+                .frame(width: 30, height: 30)
+                .help("Audio Output")
             devicePicker
 
             HStack(spacing: 6) {
@@ -496,5 +500,25 @@ struct MacRightClick: NSViewRepresentable {
             let top = room < height ? (isFlipped ? at.y - height : at.y + height) : at.y
             menu.popUp(positioning: nil, at: NSPoint(x: at.x, y: top), in: self)
         }
+    }
+}
+
+/// Speakers, headphones and AirPlay devices for the music, in the system's own picker.
+/// ponytail: routes the current AVPlayer; a player made later (next song, retry) may start on
+/// the default output again on some macOS versions; carry the route over in AudioPlayer if so.
+private struct MacOutputPicker: NSViewRepresentable {
+    var player: AVPlayer?
+
+    func makeNSView(context: Context) -> AVRoutePickerView {
+        let picker = AVRoutePickerView()
+        picker.isRoutePickerButtonBordered = false
+        picker.setRoutePickerButtonColor(.secondaryLabelColor, for: .normal)
+        picker.setRoutePickerButtonColor(NSColor(Color.appAccent), for: .active)
+        picker.player = player
+        return picker
+    }
+
+    func updateNSView(_ picker: AVRoutePickerView, context: Context) {
+        if picker.player !== player { picker.player = player }
     }
 }
