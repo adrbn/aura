@@ -144,4 +144,24 @@ enum WatchCommand: Codable, Equatable {
     /// A mix, a playlist, an album or an artist's top songs, from the song at `index`, or
     /// shuffled; a song on its own, as the phone plays a search result.
     case playItem(WatchItem, index: Int, shuffled: Bool)
+    /// The songs of a mix, a playlist, an album or an artist, sent as files to keep on the
+    /// watch — at most `WatchOffline.songLimit`, as the watch lists them.
+    case sendToWatch(WatchItem)
+}
+
+/// What the watch keeps to play on its own, without the phone.
+enum WatchOffline {
+    /// As many songs of a collection as the watch lists.
+    static let songLimit = 100
+    /// A transferred file's metadata: which song it is, and the extension it plays by.
+    static let songKey = "songId"
+    static let extensionKey = "ext"
+
+    /// A collection kept on the watch: the songs it listed when it was kept, and which of
+    /// them have arrived.
+    struct Collection: Codable, Identifiable, Sendable {
+        let item: WatchItem
+        let songs: [WatchItem]
+        var id: WatchItem { item }
+    }
 }

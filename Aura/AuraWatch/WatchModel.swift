@@ -1,3 +1,4 @@
+import AVFoundation
 import OSLog
 import SwiftUI
 import UIKit
@@ -12,13 +13,14 @@ private let log = Logger(subsystem: "com.adrbn.aura.watchkitapp", category: "lin
 @MainActor
 @Observable
 final class WatchModel: NSObject {
-    private(set) var state: WatchNowPlaying?
-    private(set) var artwork: UIImage?
+    // Set here from the phone's snapshots, and in WatchOffline from the watch's own player.
+    var state: WatchNowPlaying?
+    var artwork: UIImage?
     private(set) var isReachable = false
     private(set) var tone = WatchTone()
     /// Which way the last song change went: 1 forward, -1 back. A new song slides in from
     /// that side, as it does on the phone.
-    private(set) var songDirection = 1
+    var songDirection = 1
     private var pendingDirection = 1
 
     /// The pages pushed over Now Playing. Emptied when something starts playing from the
@@ -30,10 +32,19 @@ final class WatchModel: NSObject {
     private(set) var shelf: WatchShelf?
     private(set) var listings: [WatchItem: WatchListing] = [:]
     private(set) var searches: [String: WatchSearchResults] = [:]
-    private(set) var covers: [String: UIImage] = [:]
+    var covers: [String: UIImage] = [:]
     private var coversAsked: Set<String> = []
     private var coverBatch: [String] = []
     private var isCoverBatchScheduled = false
+
+    // Songs kept on the watch, and its own player for them (WatchOffline).
+    var offline: [WatchOffline.Collection] = []
+    var offlineFiles: [String: String] = [:]
+    @ObservationIgnored var localPlayer: AVPlayer?
+    @ObservationIgnored var localObservers: [any NSObjectProtocol] = []
+    @ObservationIgnored var localQueue: [WatchItem] = []
+    @ObservationIgnored var localIndex = 0
+    @ObservationIgnored var localDuration: TimeInterval = 0
 
     var accent: Color {
         let rgb = state?.accent ?? [1, 1, 1]
@@ -42,12 +53,18 @@ final class WatchModel: NSObject {
     }
 
     func start() {
+        loadOffline()
         guard WCSession.isSupported() else { return }
         WCSession.default.delegate = self
         WCSession.default.activate()
     }
 
     func send(_ command: WatchCommand) {
+        if handleLocal(command) { return }
+        sendToPhone(command)
+    }
+
+    func sendToPhone(_ command: WatchCommand) {
         if case .previous = command { pendingDirection = -1 }
         anticipate(command)
         guard let data = try? JSONEncoder().encode(command) else { return }
@@ -167,6 +184,8 @@ final class WatchModel: NSObject {
     }
 
     fileprivate func apply(_ message: [String: Any]) {
+        // The watch's own player is what Now Playing shows while it plays.
+        guard !isLocal else { return }
         if let data = message[WatchLinkKey.state] as? Data,
            let state = try? JSONDecoder().decode(WatchNowPlaying.self, from: data) {
             if state.artworkId != self.state?.artworkId {
@@ -217,6 +236,11 @@ extension WatchModel: WCSessionDelegate {
     nonisolated func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
         let box = UncheckedMessage(content: message)
         Task { @MainActor in self.apply(box.content) }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceive file: WCSessionFile) {
+        guard let kept = WatchModel.store(file) else { return }
+        Task { @MainActor in self.arrived(songId: kept.songId, name: kept.name) }
     }
 }
 

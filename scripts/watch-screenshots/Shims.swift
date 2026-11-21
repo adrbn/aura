@@ -69,6 +69,17 @@ final class WatchModel {
     func open(_ item: WatchItem) async -> Bool { true }
     func search(_ query: String) async -> Bool { true }
     func wantCover(_ id: String) {}
+    var offline: [WatchOffline.Collection] = []
+    var offlineFiles: [String: String] = [:]
+    var isLocal: Bool { false }
+    func collection(_ item: WatchItem) -> WatchOffline.Collection? { offline.first { $0.item == item } }
+    func arrived(_ collection: WatchOffline.Collection) -> Int {
+        collection.songs.filter { offlineFiles[$0.id] != nil }.count
+    }
+    func isOnWatch(_ song: WatchItem) -> Bool { offlineFiles[song.id] != nil }
+    func keep(_ item: WatchItem, songs: [WatchItem]) {}
+    func remove(_ item: WatchItem) {}
+    func playOffline(_ item: WatchItem, index: Int = 0, shuffled: Bool = false) {}
 
     var accent: Color {
         let rgb = state?.accent ?? [1, 1, 1]
@@ -100,7 +111,7 @@ extension View {
     }
 
     /// A toolbar item, drawn by the screen frame in main.swift beside the clock.
-    func volumeCorner(_ shown: Bool, tint: Color) -> some View { self }
+    func volumeCorner(_ shown: Bool, tint: Color, local: Bool = false) -> some View { self }
 
     /// Also a toolbar item, drawn by the screen frame.
     func libraryCorner(_ shown: Bool, open: @escaping () -> Void) -> some View { self }

@@ -192,6 +192,51 @@ final class WatchLink: NSObject {
         case .play(let upcoming): play(upcoming)
         case .playItem(let item, let index, let shuffled):
             Task { await LibraryCatalog.play(item, index: index, shuffled: shuffled) }
+        case .sendToWatch(let item): Task { await sendToWatch(item) }
+        }
+    }
+
+    // MARK: - Songs kept on the watch
+
+    /// Where songs converted for the watch wait until they've been sent.
+    private static let transfers = FileManager.default.temporaryDirectory
+        .appendingPathComponent("WatchTransfers", isDirectory: true)
+    private static let lossy: Set<String> = ["mp3", "m4a", "aac"]
+
+    /// Sends the songs as files, one after another: a downloaded lossy file as it is, any
+    /// other converted to a 128 kbps MP3 — small enough for the watch's storage, and sent by
+    /// the phone because the watch can't reach a server behind a VPN.
+    private func sendToWatch(_ item: WatchItem) async {
+        let songs = await LibraryCatalog.songs(of: item).filter { !$0.isPreview }.prefix(WatchOffline.songLimit)
+        let session = WCSession.default
+        let sending = Set(session.outstandingFileTransfers.compactMap {
+            $0.file.metadata?[WatchOffline.songKey] as? String
+        })
+        AppLogger.shared.log("⌚️ Sending \(songs.count) songs of \(item.title) to the watch")
+        for song in songs where !sending.contains(song.id) {
+            guard let file = await watchFile(for: song) else { continue }
+            session.transferFile(file, metadata: [WatchOffline.songKey: song.id,
+                                                  WatchOffline.extensionKey: file.pathExtension])
+        }
+    }
+
+    private func watchFile(for song: Song) async -> URL? {
+        if let local = DownloadManager.shared.localURL(for: song.id),
+           Self.lossy.contains(local.pathExtension.lowercased()), (song.bitRate ?? 0) <= 320 {
+            return local
+        }
+        guard let server = ServerManager.shared.currentServer,
+              let url = URL(string: "\(server.baseURL)/rest/stream?\(SubsonicClient.authQuery(for: server))"
+                            + "&id=\(song.id)&format=mp3&maxBitRate=128") else { return nil }
+        do {
+            let (temp, _) = try await URLSession.shared.download(for: ServerHeaders.request(url))
+            try FileManager.default.createDirectory(at: Self.transfers, withIntermediateDirectories: true)
+            let file = Self.transfers.appendingPathComponent("\(UUID().uuidString).mp3")
+            try FileManager.default.moveItem(at: temp, to: file)
+            return file
+        } catch {
+            AppLogger.shared.log("⌚️ \(song.title) not converted for the watch: \(error.localizedDescription)")
+            return nil
         }
     }
 
@@ -214,6 +259,13 @@ extension WatchLink: WCSessionDelegate {
     }
 
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
+
+    /// A converted song is thrown away once sent; a downloaded one stays where it is.
+    nonisolated func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer, error: Error?) {
+        if let error { AppLogger.shared.log("⌚️ Song not sent to the watch: \(error.localizedDescription)") }
+        let url = fileTransfer.file.fileURL
+        if url.path.contains("/WatchTransfers/") { try? FileManager.default.removeItem(at: url) }
+    }
 
     /// Another watch was switched to: the session has to be started again for it.
     nonisolated func sessionDidDeactivate(_ session: WCSession) {

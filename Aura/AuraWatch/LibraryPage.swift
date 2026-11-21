@@ -7,6 +7,7 @@ enum WatchRoute: Hashable {
     case library
     case search(String)
     case item(WatchItem)
+    case offline(WatchItem)
 
     @ViewBuilder var page: some View {
         switch self {
@@ -14,6 +15,7 @@ enum WatchRoute: Hashable {
         case .library: LibraryPage()
         case .search(let query): SearchPage(query: query)
         case .item(let item): ItemPage(item: item)
+        case .offline(let item): OfflinePage(item: item)
         }
     }
 }
@@ -32,6 +34,12 @@ struct LibraryPage: View {
                 SearchField { query in model.path.append(.search(query)) }
                     .padding(.horizontal, 8)
                     .padding(.bottom, 8)
+                if !model.offline.isEmpty {
+                    SectionTitle(text: "On This Watch")
+                    ForEach(model.offline) { kept in
+                        ItemRow(item: kept.item) { model.path.append(.offline(kept.item)) }
+                    }
+                }
                 if let shelf = model.shelf {
                     if !shelf.mixes.isEmpty {
                         SectionTitle(text: "Made For You")
@@ -174,6 +182,9 @@ struct ItemPage: View {
                 }
                 .buttonStyle(.glass)
                 .accessibilityLabel("Shuffle")
+                if item.kind != .song {
+                    KeepButton(item: item, songs: model.listings[item]?.songs ?? [])
+                }
             }
             .disabled(model.listings[item]?.songs.isEmpty ?? true)
         }
@@ -187,7 +198,123 @@ struct ItemPage: View {
     }
 }
 
+/// A collection kept on the watch, played by the watch itself — with the phone left behind,
+/// to Bluetooth headphones. Songs still on their way from the phone are dimmed.
+struct OfflinePage: View {
+    let item: WatchItem
+    @Environment(WatchModel.self) private var model
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                if let kept = model.collection(item) {
+                    header(kept)
+                    ForEach(Array(kept.songs.enumerated()), id: \.offset) { index, song in
+                        SongRow(song: song, number: item.kind == .album ? index + 1 : nil) {
+                            model.playOffline(item, index: index)
+                        }
+                        .disabled(!model.isOnWatch(song))
+                        .opacity(model.isOnWatch(song) ? 1 : 0.4)
+                    }
+                    Button(role: .destructive) {
+                        model.path.removeLast()
+                        model.remove(item)
+                    } label: {
+                        Text("Remove from Watch")
+                            .font(.system(size: 15, weight: .semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.glass)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 12)
+                }
+            }
+            .padding(.bottom, 28)
+        }
+        .screenBackdrop()
+    }
+
+    private func header(_ kept: WatchOffline.Collection) -> some View {
+        let arrived = model.arrived(kept)
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                CoverThumb(item: item, side: 56)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.title)
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                    Text(arrived < kept.songs.count ? "\(arrived)/\(kept.songs.count)" : item.subtitle)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .monospacedDigit()
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: 8) {
+                Button { model.playOffline(item) } label: {
+                    Label("Play", systemImage: "play.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glassProminent)
+                .tint(model.accent)
+                Button { model.playOffline(item, shuffled: true) } label: {
+                    Image(systemName: "shuffle")
+                        .font(.system(size: 15, weight: .semibold))
+                        .frame(width: 22)
+                }
+                .buttonStyle(.glass)
+                .accessibilityLabel("Shuffle")
+            }
+            .disabled(arrived == 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+    }
+}
+
 // MARK: - Pieces
+
+/// Keeps a collection on the watch; then shows how many of its songs have arrived, and once
+/// they all have, opens it as kept.
+private struct KeepButton: View {
+    let item: WatchItem
+    let songs: [WatchItem]
+    @Environment(WatchModel.self) private var model
+
+    var body: some View {
+        Button {
+            if model.collection(item) == nil {
+                model.keep(item, songs: songs)
+            } else {
+                model.path.append(.offline(item))
+            }
+        } label: {
+            Group {
+                if let kept = model.collection(item) {
+                    let arrived = model.arrived(kept)
+                    if arrived < kept.songs.count {
+                        ProgressView(value: Double(arrived), total: Double(max(kept.songs.count, 1)))
+                            .progressViewStyle(.circular)
+                            .tint(model.accent)
+                    } else {
+                        Image(systemName: "checkmark")
+                    }
+                } else {
+                    Image(systemName: "arrow.down")
+                }
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .frame(width: 22, height: 22)
+        }
+        .buttonStyle(.glass)
+        .accessibilityLabel("Download to Watch")
+    }
+}
 
 /// A page's name, set in the phone's display face as its page titles are.
 private struct PageTitle: View {
@@ -219,11 +346,14 @@ private struct SectionTitle: View {
 /// A mix, a playlist, an album or an artist opens its page; a song plays.
 private struct ItemRow: View {
     let item: WatchItem
+    var open: (() -> Void)?
     @Environment(WatchModel.self) private var model
 
     var body: some View {
         Button {
-            if item.kind == .song {
+            if let open {
+                open()
+            } else if item.kind == .song {
                 model.play(item)
             } else {
                 model.path.append(.item(item))

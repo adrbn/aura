@@ -349,6 +349,7 @@
 		EEB81E7387698FE3B237C4D2 /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
 		EEC4D774C90B5E63999134FC /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
 		EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
+		F26F166466BF8DD82ED63955 /* WatchOffline.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF3F4F29D9124042D5D4BBF /* WatchOffline.swift */; };
 		F4367F560164A20E2291171A /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000089 /* KeychainHelper.swift */; };
 		F4DFCA6D8B67546CD1643706 /* AuraTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCA42F3CE0CB1D913AB4225 /* AuraTVApp.swift */; };
 		F61BC3BBC71CDE612D34FED8 /* RadarCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000A001 /* RadarCatalog.swift */; };
@@ -506,6 +507,7 @@
 		BC935E192C9737FFC79738ED /* MacSongRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacSongRow.swift; sourceTree = "<group>"; };
 		BD0BA949F9603C6E217BAA2D /* MacRadarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRadarView.swift; sourceTree = "<group>"; };
 		BEB587064D721AA775E21C53 /* SlskdClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlskdClient.swift; sourceTree = "<group>"; };
+		BFF3F4F29D9124042D5D4BBF /* WatchOffline.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchOffline.swift; sourceTree = "<group>"; };
 		C29B621CC4AF2D3304AEB48D /* MacAlbumsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacAlbumsView.swift; sourceTree = "<group>"; };
 		CCAA00020000000000000001 /* MusicBrainzService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicBrainzService.swift; sourceTree = "<group>"; };
 		D433233E999F9BDF5E9082FE /* MacDownloads.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacDownloads.swift; sourceTree = "<group>"; };
@@ -725,6 +727,7 @@
 				84C2DD223260297B0A1DE6EA /* Backdrop.swift */,
 				35045E0AAD1E88D70B5D26E9 /* WatchChrome.swift */,
 				DEA1BF8EC267E322EA33E1E4 /* LibraryPage.swift */,
+				BFF3F4F29D9124042D5D4BBF /* WatchOffline.swift */,
 			);
 			name = AuraWatch;
 			path = AuraWatch;
@@ -1803,6 +1806,7 @@
 				21863410D59DC530364F711A /* WatchChrome.swift in Sources */,
 				5763435ECEB5A36E2B551C1F /* DayGlow.swift in Sources */,
 				DF00AD8E1B03C8CD52B09E3B /* LibraryPage.swift in Sources */,
+				F26F166466BF8DD82ED63955 /* WatchOffline.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1965,6 +1969,7 @@
 				CURRENT_PROJECT_VERSION = 523;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AuraWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aura;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(AURA_BUNDLE_BASE)";
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
@@ -2025,6 +2030,7 @@
 				CURRENT_PROJECT_VERSION = 523;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AuraWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aura;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(AURA_BUNDLE_BASE)";
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
@@ -2074,6 +2080,7 @@
 				CURRENT_PROJECT_VERSION = 523;
 				DEVELOPMENT_TEAM = 2TWQF4T93E;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AuraWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Aura;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(AURA_BUNDLE_BASE)";
 				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;

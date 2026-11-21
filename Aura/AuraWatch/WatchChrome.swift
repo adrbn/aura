@@ -13,12 +13,14 @@ extension View {
     }
 
     /// The phone's volume in the top trailing corner, beside the clock — which moves to the
-    /// middle, as in the watch's own Now Playing — with the Crown on it, while `shown`.
-    func volumeCorner(_ shown: Bool, tint: Color) -> some View {
+    /// middle, as in the watch's own Now Playing — with the Crown on it, while `shown`; the
+    /// watch's own while it plays a kept song (`local`).
+    func volumeCorner(_ shown: Bool, tint: Color, local: Bool = false) -> some View {
         toolbar {
             if shown {
                 ToolbarItem(placement: .topBarTrailing) {
-                    CompanionVolume(tint: tint, isFocused: true)
+                    CompanionVolume(tint: tint, isFocused: true, local: local)
+                        .id(local)
                         .frame(width: 30, height: 30)
                 }
             }
@@ -102,9 +104,10 @@ struct SearchField: View {
 struct CompanionVolume: WKInterfaceObjectRepresentable {
     let tint: Color
     let isFocused: Bool
+    var local = false
 
     func makeWKInterfaceObject(context: Context) -> WKInterfaceVolumeControl {
-        WKInterfaceVolumeControl(origin: .companion)
+        WKInterfaceVolumeControl(origin: local ? .local : .companion)
     }
 
     func updateWKInterfaceObject(_ control: WKInterfaceVolumeControl, context: Context) {

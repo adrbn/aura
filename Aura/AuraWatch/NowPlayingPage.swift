@@ -67,7 +67,7 @@ struct NowPlayingPage: View {
         }
         .ignoresSafeArea()
         .animation(Self.modeChange, value: lyrics)
-        .volumeCorner(!lyrics, tint: model.accent)
+        .volumeCorner(!lyrics, tint: model.accent, local: model.isLocal)
     }
 
     /// The display's two bottom corners, and between them — in the lyrics — the play button.
