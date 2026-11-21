@@ -226,6 +226,10 @@ final class AudioPlayer {
     /// stream the server converts as it sends has asked for it again from there (see
     /// `reopen(at:)`): the player's own clock then counts from that point.
     private var streamOffset: TimeInterval = 0
+    /// Set when a stream is asked for again from `streamOffset`, until the player's first
+    /// report of where that stream starts. Some servers' streams don't start their clock at
+    /// zero: 43 s in, one reported 43,307 s, the bar jumped past the end and the song skipped.
+    private var streamClockUnchecked = false
     /// Playback position used to sync lyrics.
     ///
     /// No automatic output-latency compensation, deliberately. Subtracting
@@ -703,6 +707,7 @@ final class AudioPlayer {
         dropQueuedNext()
         player?.replaceCurrentItem(with: nil)
         streamOffset = 0
+        streamClockUnchecked = false
         isSeeking = false
 
         if let observer = timeObserver {
@@ -1167,6 +1172,7 @@ final class AudioPlayer {
         resetScrobbleProgress()
         isSeeking = false
         streamOffset = 0
+        streamClockUnchecked = false
         bufferProgress = 0
         let playerItem = makePlayerItem(for: song, server: server, bitRate: bitRate)
         observePlayerItem(playerItem, song: song)
@@ -1206,6 +1212,11 @@ final class AudioPlayer {
             queue: .main
         ) { [weak self] time in
             guard let self = self, !self.isSeeking else { return }
+            // A reopened stream counts from its own start, wherever its clock begins.
+            if self.streamClockUnchecked, time.seconds.isFinite {
+                self.streamClockUnchecked = false
+                if time.seconds > 2 { self.streamOffset -= time.seconds }
+            }
             self.currentTime = self.streamOffset + time.seconds
             // A stream begun partway is only the rest of the song: its length isn't the song's.
             if self.streamOffset == 0, let d = self.player?.currentItem?.duration.seconds, !d.isNaN {
@@ -1365,6 +1376,7 @@ final class AudioPlayer {
         resetScrobbleProgress()
         isSeeking = false
         streamOffset = 0
+        streamClockUnchecked = false
         bufferProgress = 0
         currentTime = 0
         duration = Double(max(song.duration ?? 0, 0))
@@ -1635,6 +1647,7 @@ final class AudioPlayer {
         AppLogger.shared.log("🔁 Stream broke at \(Int(time))s of \(song.title): picking it up again")
         let item = makePlayerItem(for: song, server: server, bitRate: AppSettings.shared.effectiveStreamingQuality.bitRate)
         streamOffset = 0
+        streamClockUnchecked = false
         isSeeking = true
         pendingSeekTime = time
         currentTime = time
@@ -2071,10 +2084,12 @@ final class AudioPlayer {
             songContentType: song.contentType, from: offset) {
             item = stream
             streamOffset = TimeInterval(offset)
+            streamClockUnchecked = true
             isSeeking = false
         } else {
             item = makePlayerItem(for: song, server: server, bitRate: bitRate)
             streamOffset = 0
+            streamClockUnchecked = false
             // Held on the moment wanted until the item is ready and seeks there.
             isSeeking = true
             pendingSeekTime = time
@@ -2854,6 +2869,7 @@ final class AudioPlayer {
         resetScrobbleProgress()
         isSeeking = false
         streamOffset = 0
+        streamClockUnchecked = false
         bufferProgress = 0
         incoming.automaticallyWaitsToMinimizeStalling = true
         player = incoming
