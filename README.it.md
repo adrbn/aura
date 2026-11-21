@@ -11,7 +11,7 @@ streaming lossless, testi che si accendono parola per parola, mix creati da ciò
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="Sostienimi su Ko-fi" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Scarica l'IPA" height="40"></a>&nbsp;
-<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.6.4-build.519"><img src="docs/assets/btn-mac.svg" alt="Scarica per Mac" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523"><img src="docs/assets/btn-mac.svg" alt="Scarica per Mac" height="40"></a>
 <br>
 <a href="#cosa-fa"><img src="docs/assets/btn-features.svg" alt="Funzioni" height="40"></a>&nbsp;
 <a href="#compilare-dai-sorgenti"><img src="docs/assets/btn-source.svg" alt="Compilare dai sorgenti" height="40"></a>
@@ -143,7 +143,7 @@ Tutto gratuito, senza account e senza acquisti in-app.
 | CarPlay | Sì | No: rifirmare toglie l'autorizzazione CarPlay di Apple | – |
 | Get It (Soulseek tramite il tuo [slskd](https://github.com/slskd/slskd)) | No | Facoltativo, Impostazioni → Developer Options | Facoltativo, Impostazioni → Developer |
 | Controllo NetEase dei tempi dei testi | No | Sì | Sì |
-| Download | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Ultimo IPA](https://github.com/adrbn/aura/releases/latest) | [DMG per Mac](https://github.com/adrbn/aura/releases/download/mac-v1.6.4-build.519/Aura-mac-1.6.4-build.519.dmg) |
+| Download | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Ultimo IPA](https://github.com/adrbn/aura/releases/latest) | [DMG per Mac](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) |
 
 Ogni versione richiede un server [Navidrome](https://www.navidrome.org), o qualsiasi server che parli l'API Subsonic
 1.16.1 (le estensioni OpenSubsonic vengono usate quando offerte). Non hai ancora un server? Prova la demo pubblica di
@@ -166,7 +166,7 @@ gratuito la firma scade dopo 7 giorni e lo strumento di sideload deve rinnovarla
 <details>
 <summary><b>Installare l'app per Mac</b></summary>
 
-1. Scarica [`Aura-mac-1.6.4-build.519.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.6.4-build.519/Aura-mac-1.6.4-build.519.dmg) dalla [release per Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.6.4-build.519), che indica il suo checksum SHA-256, e aprilo.
+1. Scarica [`Aura-mac-1.7.1-build.523.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) dalla [release per Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523), che indica il suo checksum SHA-256, e aprilo.
 2. Trascina **Aura** su **Applicazioni**.
 3. Apri Aura. L'app è firmata con un Developer ID e autenticata da Apple, quindi si apre come qualsiasi altra app.
 4. Inserisci l'indirizzo del tuo server, il nome utente e la password.

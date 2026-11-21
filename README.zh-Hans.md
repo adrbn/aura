@@ -11,7 +11,7 @@
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="在 Ko-fi 上支持我" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="下载 IPA" height="40"></a>&nbsp;
-<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.6.4-build.519"><img src="docs/assets/btn-mac.svg" alt="下载 Mac 版" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523"><img src="docs/assets/btn-mac.svg" alt="下载 Mac 版" height="40"></a>
 <br>
 <a href="#功能"><img src="docs/assets/btn-features.svg" alt="功能" height="40"></a>&nbsp;
 <a href="#从源代码构建"><img src="docs/assets/btn-source.svg" alt="从源代码构建" height="40"></a>
@@ -139,7 +139,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 | CarPlay | 有 | 无：重新签名会丢失 Apple 的 CarPlay 授权 | – |
 | Get It（通过你自己的 [slskd](https://github.com/slskd/slskd) 使用 Soulseek） | 无 | 需手动开启，设置 → Developer Options | 需手动开启，设置 → Developer |
 | NetEase 歌词时间轴检查 | 无 | 有 | 有 |
-| 下载 | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [最新 IPA](https://github.com/adrbn/aura/releases/latest) | [Mac DMG](https://github.com/adrbn/aura/releases/download/mac-v1.6.4-build.519/Aura-mac-1.6.4-build.519.dmg) |
+| 下载 | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [最新 IPA](https://github.com/adrbn/aura/releases/latest) | [Mac DMG](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) |
 
 每个版本都需要一台 [Navidrome](https://www.navidrome.org) 服务器，或任何支持 Subsonic API 1.16.1 的服务器
 （服务器提供 OpenSubsonic 扩展时会使用）。还没有服务器？可以试试 Navidrome 的公开演示：
@@ -162,7 +162,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 <details>
 <summary><b>安装 Mac 应用</b></summary>
 
-1. 从 [Mac 版发布](https://github.com/adrbn/aura/releases/tag/mac-v1.6.4-build.519)（列有 SHA-256 校验和）下载 [`Aura-mac-1.6.4-build.519.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.6.4-build.519/Aura-mac-1.6.4-build.519.dmg) 并打开。
+1. 从 [Mac 版发布](https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523)（列有 SHA-256 校验和）下载 [`Aura-mac-1.7.1-build.523.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) 并打开。
 2. 把 **Aura** 拖到 **应用程序**。
 3. 打开 Aura。应用使用 Developer ID 签名并经过 Apple 公证，所以和其他应用一样可以直接打开。
 4. 输入服务器地址、用户名和密码。
