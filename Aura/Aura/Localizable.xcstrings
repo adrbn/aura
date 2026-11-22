@@ -174216,6 +174216,154 @@
           }
         }
       }
+    },
+    "Offline, only a downloaded song can be listened to. Download it, or sync once you’re back online.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sense connexió, només es pot escoltar una cançó baixada. Baixa-la o sincronitza quan tornis a estar en línia."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline lze poslouchat jen staženou skladbu. Stáhni ji, nebo synchronizuj, až budeš zase online."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline kan kun en downloadet sang lyttes til. Download den, eller synkroniser, når du er online igen."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline kann nur ein geladener Song angehört werden. Lade ihn, oder synchronisiere, sobald du wieder online bist."
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Εκτός σύνδεσης ακούγεται μόνο τραγούδι που έχει ληφθεί. Κατέβασέ το ή συγχρόνισε όταν συνδεθείς ξανά."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin conexión, solo se puede escuchar una canción descargada. Descárgala o sincroniza cuando vuelvas a estar en línea."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline-tilassa voi kuunnella vain ladattua kappaletta. Lataa se tai synkronoi, kun olet taas verkossa."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hors ligne, seul un morceau téléchargé peut être écouté. Télécharge-le, ou synchronise quand tu seras de nouveau en ligne."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline si può ascoltare solo un brano scaricato. Scaricalo, o sincronizza quando torni online."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オフラインではダウンロード済みの曲しか聴き取れません。ダウンロードするか、オンラインに戻ってから同期してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오프라인에서는 다운로드한 곡만 들을 수 있습니다. 다운로드하거나 다시 온라인일 때 동기화하세요."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frakoblet kan bare en nedlastet sang lyttes til. Last den ned, eller synkroniser når du er på nett igjen."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline kan alleen een gedownload nummer beluisterd worden. Download het, of synchroniseer zodra je weer online bent."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline da się odsłuchać tylko pobrany utwór. Pobierz go albo zsynchronizuj po powrocie do sieci."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline, só uma música baixada pode ser ouvida. Baixe-a ou sincronize quando voltar a ficar online."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline, só uma música descarregada pode ser ouvida. Descarrega-a ou sincroniza quando voltares a estar online."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline poate fi ascultată doar o melodie descărcată. Descarc-o sau sincronizează când ești din nou online."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Офлайн можно прослушать только скачанную песню. Скачайте её или синхронизируйте, когда снова будете онлайн."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline kan bara en nedladdad låt lyssnas på. Ladda ner den, eller synka när du är online igen."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เมื่อออฟไลน์ ฟังได้เฉพาะเพลงที่ดาวน์โหลดแล้ว ดาวน์โหลดเพลงนี้ หรือซิงค์เมื่อกลับมาออนไลน์"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çevrimdışıyken yalnızca indirilmiş bir şarkı dinlenebilir. İndir ya da tekrar çevrimiçi olduğunda eşitle."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Офлайн можна прослухати лише завантажену пісню. Завантажте її або синхронізуйте, коли знову будете онлайн."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "离线时只能聆听已下载的歌曲。请下载它，或在重新联网后同步。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "離線時只能聆聽已下載的歌曲。請下載它，或在重新連線後同步。"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

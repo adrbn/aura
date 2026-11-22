@@ -177,7 +177,7 @@ struct LyricsSyncView: View {
                 LazyVStack(alignment: .leading, spacing: 18) {
                     ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
                         row(line, index: index, isSung: index == sung,
-                            words: index == sung ? retiming.times[index].flatMap { words(of: index, at: $0) } : nil)
+                            words: index == sung ? shownWords(of: index, times: retiming.times) : nil)
                             .id(index)
                     }
                 }
@@ -492,6 +492,15 @@ struct LyricsSyncView: View {
         }
     }
 
+    /// The words lit on screen: timed ones, else spread over the line as Now Playing does, so
+    /// the preview shows the same word-by-word light. Only timed ones are ever saved.
+    private func shownWords(of index: Int, times: [TimeInterval?]) -> [LyricWord]? {
+        if let time = times[index], let timed = words(of: index, at: time) { return timed }
+        guard AppSettings.shared.betaKaraokeLyrics else { return nil }
+        let placed = lines.indices.map { LyricsLine(time: times[$0], text: lines[$0].text) }
+        return LyricWordTiming.timedWords(lines: placed, index: index)
+    }
+
     /// A line's words where they now fall: as heard, or as the lyrics had them, moved with it.
     /// A word not made out takes its share of the time between the ones heard around it.
     private func words(of index: Int, at time: TimeInterval) -> [LyricWord]? {
@@ -637,7 +646,9 @@ enum LyricsAutoSync {
         var errorDescription: String? {
             switch self {
             case .language: String(localized: "Aura can’t listen to songs in this language yet.")
-            case .noAudio: String(localized: "The song couldn’t be read from your server.")
+            case .noAudio: AppSettings.shared.offlineMode || !ServerManager.shared.hasNetwork
+                ? String(localized: "Offline, only a downloaded song can be listened to. Download it, or sync once you’re back online.")
+                : String(localized: "The song couldn’t be read from your server.")
             case .tooFew: String(localized: "Too little of the singing could be made out to place the lines. Time them by hand instead.")
             }
         }
@@ -680,7 +691,7 @@ enum LyricsAutoSync {
             guard granted else { throw error }
             heard = try await transcribe(url, locale: locale, hints: hints)
         }
-        AppLogger.shared.log("🎵 Auto sync heard \(heard.count) words of \(song.title)")
+        AppLogger.shared.log("🎵 Auto sync heard \(heard.count) words of \(song.title) in \(locale.identifier): \(heard.prefix(40).map(\.word).joined(separator: " "))")
         // Everything in the song's own time, the lyrics offset taken out and put back after.
         let offset = AppSettings.shared.lyricsOffset
         let times = lines.map { $0.time.map { $0 - offset } }
