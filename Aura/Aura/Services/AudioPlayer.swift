@@ -472,12 +472,98 @@ final class AudioPlayer {
             await MainActor.run { self.play() }
             return
         }
-        guard let server = ServerManager.shared.currentServer,
-              let songs = try? await SubsonicClient.shared.getRandomSongs(server: server, size: 50),
-              !songs.isEmpty else { return }
-        await MainActor.run {
-            self.playSong(songs[0], fromQueue: songs, startIndex: 0, source: .songs)
+        await startNonstop()
+    }
+
+    // MARK: - Nonstop
+
+    static let nonstopName = String(localized: "Nonstop")
+    /// Playing Nonstop: the endless mix of liked songs, songs near them and songs not heard.
+    var isNonstop: Bool { isRadioMode && radioPlaylistName == Self.nonstopName }
+    /// Artists skipped in the first half minute during this Nonstop; twice and they're left out.
+    private var nonstopSkips: [String: Int] = [:]
+
+    /// Starts Nonstop: an endless queue built from what you like, refilled as it runs out.
+    func startNonstop() async {
+        guard let server = ServerManager.shared.currentServer else { return }
+        let generation = await MainActor.run { () -> Int in
+            beginNewRadio()
+            nonstopSkips = [:]
+            return radioGeneration
         }
+        let batch = await nonstopBatch(server: server, played: [], skipped: [])
+        await MainActor.run {
+            guard radioGeneration == generation, let first = batch.first else { return }
+            radioPlaylistName = Self.nonstopName
+            radioPlaylistSongs = batch
+            radioPlaylistCoverArt = first.coverArt
+            radioPlayedIds = Set(batch.map(\.id))
+            playRadioPlaylistFromIndex(0)
+        }
+    }
+
+    /// Thirty more for Nonstop, claimed like a radio fetch so only one runs at a time.
+    private func refillNonstop() {
+        guard !isFetchingRadioSongs, let server = ServerManager.shared.currentServer else { return }
+        isFetchingRadioSongs = true
+        let generation = radioGeneration
+        let played = radioPlayedIds
+        let skipped = Set(nonstopSkips.filter { $0.value >= 2 }.keys)
+        Task {
+            let batch = await nonstopBatch(server: server, played: played, skipped: skipped)
+            await MainActor.run {
+                defer { endRadioFetch(generation) }
+                guard radioGeneration == generation, isNonstop else { return }
+                radioPlaylistSongs += batch
+                radioPlayedIds.formUnion(batch.map(\.id))
+                queue += batch
+                originalQueue += batch
+            }
+        }
+    }
+
+    /// Four liked songs, four near them, two not heard, in turn; no more than two songs
+    /// by one artist, nothing already played, no artist skipped twice, no genre left out
+    /// of the mixes.
+    private func nonstopBatch(server: ServerConfig, played: Set<String>, skipped: Set<String>) async -> [Song] {
+        async let starredFetch = try? SubsonicClient.shared.getStarred2(server: server)
+        async let randomFetch = try? SubsonicClient.shared.getRandomSongs(server: server, size: 50)
+        let liked = ((await starredFetch)?.song ?? []).shuffled()
+        let random = (await randomFetch) ?? []
+        var near: [Song] = []
+        for seed in (liked.isEmpty ? random : liked).prefix(2) {
+            near += await buildSimilarTail(for: seed, server: server, limit: 60)
+        }
+        let excluded = MixPreferences.excludedGenres
+        var taken = played
+        var perArtist: [String: Int] = [:]
+        func fits(_ song: Song) -> Bool {
+            let artist = song.artist ?? ""
+            guard !taken.contains(song.id), !skipped.contains(artist), perArtist[artist, default: 0] < 2,
+                  MixPreferences.allows(song, excluded: excluded) else { return false }
+            taken.insert(song.id)
+            perArtist[artist, default: 0] += 1
+            return true
+        }
+        var pools = [liked, near.shuffled(), random].map { $0.makeIterator() }
+        let pattern = [0, 1, 0, 1, 2, 0, 1, 0, 1, 2]
+        var batch: [Song] = []
+        var dry = 0
+        while batch.count < 30, dry < pattern.count {
+            dry = 0
+            for slot in pattern where batch.count < 30 {
+                // A pool that runs dry hands its turn to the next one.
+                var found: Song?
+                for offset in 0..<3 {
+                    while let song = pools[(slot + offset) % 3].next() {
+                        if fits(song) { found = song; break }
+                    }
+                    if found != nil { break }
+                }
+                if let found { batch.append(found) } else { dry += 1 }
+            }
+        }
+        return batch
     }
 
     private struct LastPlayback: Codable {
@@ -1450,7 +1536,9 @@ final class AudioPlayer {
         updateNowPlayingInfo()
         startLiveActivity(for: song)
 
-        if isRadioMode && queueIndex >= queue.count - 2 {
+        if isNonstop && queueIndex >= queue.count - 5 {
+            refillNonstop()
+        } else if isRadioMode && queueIndex >= queue.count - 2 {
             // Evolving seed: use the current song as the new seed, not the original
             startSmartRadioFetch(seed: song)
         }
@@ -1987,6 +2075,9 @@ final class AudioPlayer {
 
     func next() {
         if let remote { remote(.next); return }
+        if isNonstop, currentTime < 30, let artist = currentSong?.artist {
+            nonstopSkips[artist, default: 0] += 1
+        }
         AppLogger.shared.log("⏭ next() request | queueCount: \(queue.count) | queueIdx: \(queueIndex) | current: \(currentSong?.title ?? "nil")")
 
         // Play from user queue first (songs added via "Add to Queue" / "Play Next")

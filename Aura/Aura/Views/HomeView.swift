@@ -354,8 +354,8 @@ struct HomeView: View {
                         .scrollEnter()
                 }
 
-                // Made For You — auto-generated mixes
-                if !shelf.isEmpty {
+                // Made For You — Nonstop, then the auto-generated mixes
+                if !appSettings.offlineMode {
                     madeForYouSection
                         .scrollEnter()
                 }
@@ -427,6 +427,12 @@ struct HomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 12) {
+                    Button { Task { await player.startNonstop() } } label: {
+                        NonstopCover(size: coverSize, cornerRadius: Self.coverRadius)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Nonstop"))
+                    .accessibilityHint(Text("Plays songs you like, songs near them and songs you haven't heard, without end"))
                     ForEach(shelf) { mix in
                         // The cover already prints the mix's name, so no caption beneath it:
                         // the shelf reads as a row of covers, not covers plus their labels.

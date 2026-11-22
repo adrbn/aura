@@ -174512,6 +174512,302 @@
           }
         }
       }
+    },
+    "Nonstop": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sense parar"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nonstop"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nonstop"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nonstop"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non-stop"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin parar"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tauotta"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non-stop"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non stop"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノンストップ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "논스톱"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nonstop"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nonstop"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bez przerwy"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sem parar"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sem parar"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Non-stop"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нон-стоп"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nonstop"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เล่นต่อเนื่อง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durmadan"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нон-стоп"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不停播"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不停播"
+          }
+        }
+      }
+    },
+    "Plays songs you like, songs near them and songs you haven't heard, without end": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reprodueix cançons que t'agraden, cançons properes i cançons que no has escoltat, sense fi"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Přehrává skladby, které máte rádi, skladby jim blízké a skladby, které jste neslyšeli, bez konce"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afspiller sange, du kan lide, sange tæt på dem og sange, du ikke har hørt, uden ende"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spielt Songs, die du magst, ähnliche Songs und Songs, die du noch nicht gehört hast, ohne Ende"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Παίζει τραγούδια που σας αρέσουν, κοντινά τους και τραγούδια που δεν έχετε ακούσει, χωρίς τέλος"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reproduce canciones que te gustan, canciones cercanas y canciones que no has escuchado, sin fin"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soittaa pitämiäsi kappaleita, niiden kaltaisia ja kappaleita, joita et ole kuullut, loputtomasti"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joue des morceaux que vous aimez, des morceaux proches et des morceaux jamais écoutés, sans fin"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Riproduce brani che ti piacciono, brani simili e brani mai ascoltati, senza fine"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好きな曲、それに近い曲、まだ聴いていない曲を終わりなく再生します"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "좋아하는 노래, 비슷한 노래, 아직 듣지 않은 노래를 끝없이 재생합니다"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spiller sanger du liker, sanger nær dem og sanger du ikke har hørt, uten stopp"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speelt nummers die je leuk vindt, nummers die erop lijken en nummers die je nog niet hebt gehoord, zonder einde"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odtwarza lubiane utwory, utwory do nich podobne i utwory, których nie słyszałeś, bez końca"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca músicas que você curte, músicas parecidas e músicas que você não ouviu, sem fim"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toca músicas de que gosta, músicas próximas e músicas que não ouviu, sem fim"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redă melodii care îți plac, melodii apropiate și melodii pe care nu le-ai ascultat, fără sfârșit"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Играет песни, которые вам нравятся, похожие на них и те, что вы не слышали, без конца"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spelar låtar du gillar, låtar nära dem och låtar du inte har hört, utan slut"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เล่นเพลงที่คุณชอบ เพลงที่ใกล้เคียง และเพลงที่คุณยังไม่เคยฟัง ไม่มีที่สิ้นสุด"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sevdiğiniz şarkıları, onlara yakın şarkıları ve hiç dinlemediğiniz şarkıları durmadan çalar"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Грає пісні, які вам подобаються, схожі на них і ті, що ви не чули, без кінця"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无限播放你喜欢的歌曲、相近的歌曲和你没听过的歌曲"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無限播放你喜愛的歌曲、相近的歌曲和你沒聽過的歌曲"
+          }
+        }
+      }
     }
   },
   "version": "1.1"
