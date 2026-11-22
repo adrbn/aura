@@ -276,7 +276,18 @@ struct PlaylistCoverView: View {
     @Environment(\.appAccentColor) private var accentColor
 
     var body: some View {
-        if let period = WrappedCovers.period(for: playlistId) {
+        if playlistId == Playlist.favoritesId {
+            // The songs liked in Aura, under the heart they wear everywhere else.
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(LinearGradient(colors: [accentColor, accentColor.opacity(0.7)],
+                                     startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: size, height: size)
+                .overlay {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: size * 0.38))
+                        .foregroundStyle(.white)
+                }
+        } else if let period = WrappedCovers.period(for: playlistId) {
             GeneratedCoverView(nature: .retrospective(period.coverLabel),
                                size: size, cornerRadius: cornerRadius)
         } else {
@@ -284,5 +295,14 @@ struct PlaylistCoverView: View {
                           cornerRadius: cornerRadius, cacheToken: cacheToken,
                           placeholderName: placeholderName, placeholderKind: .playlist)
         }
+    }
+}
+
+extension Playlist {
+    /// Favorite Songs drawn as a playlist, to lead the Playlists tab; it opens the stars.
+    static let favoritesId = "aura.favorites"
+    static var favorites: Playlist {
+        Playlist(id: favoritesId, name: String(localized: "Favorite Songs"), songCount: nil, duration: nil,
+                 coverArt: nil, owner: nil, created: nil, changed: nil, comment: nil, public: nil)
     }
 }

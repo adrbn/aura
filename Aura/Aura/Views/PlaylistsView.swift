@@ -281,12 +281,13 @@ struct PlaylistsView: View {
                             if !folder.isEmpty {
                                 folderBackRow
                             } else if !pinnedPlaylists.isEmpty {
-                                playlistCollection(pinnedPlaylists, reorderable: true)
+                                playlistCollection(pinnedPlaylists, reorderable: true, leadsWithFavorites: showsFavorites)
                             }
                             if !folders.isEmpty {
                                 folderList
                             }
-                            playlistCollection(unpinnedPlaylists)
+                            playlistCollection(unpinnedPlaylists,
+                                               leadsWithFavorites: showsFavorites && pinnedPlaylists.isEmpty && folder.isEmpty)
                         }
                         .padding(.top, 8)
                         // A folder slides in like a pushed page and back out the way it came.
@@ -360,6 +361,9 @@ struct PlaylistsView: View {
             .tabRootGlass(scrollY: $scrollY)
             .refreshable { await refreshTabContent { await loadPlaylists() } }
             .navigationDestination(for: Playlist.self) { detail(for: $0.id) }
+            .navigationDestination(for: DeepLinkFavorites.self) { _ in
+                SongsListView(title: "Favorite Songs", fetchType: .starred)
+            }
             .navigationDestination(for: PlaylistDeepLink.self) { detail(for: $0.id) }
             .offlineDestinations()
             .onChange(of: downloadSignature, initial: true) {
@@ -491,10 +495,14 @@ struct PlaylistsView: View {
 
     /// The playlists as a grid of covers or a list of rows, as chosen in the filter bar.
     @ViewBuilder
-    private func playlistCollection(_ list: [Playlist], reorderable: Bool = false) -> some View {
+    /// Favorite Songs leads the playlists, first of the pinned ones, where the whole list shows.
+    private var showsFavorites: Bool { !offline && filter == .all && folder.isEmpty }
+
+    @ViewBuilder private func playlistCollection(_ list: [Playlist], reorderable: Bool = false, leadsWithFavorites: Bool = false) -> some View {
         switch layout {
         case .grid:
             LazyVGrid(columns: columns, spacing: 16) {
+                if leadsWithFavorites { favoritesCell }
                 ForEach(list) { playlist in
                     playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
                         .modifier(PinDragModifier(id: playlist.id, enabled: reorderable && !isSelecting,
@@ -505,6 +513,7 @@ struct PlaylistsView: View {
             .padding(.horizontal)
         case .list:
             LazyVStack(spacing: 0) {
+                if leadsWithFavorites { favoritesCell }
                 ForEach(list) { playlist in
                     playlistCell(playlist, isPinned: appSettings.isPinned(playlist.id))
                         .modifier(PinDragModifier(id: playlist.id, enabled: reorderable && !isSelecting,
@@ -673,6 +682,24 @@ struct PlaylistsView: View {
             .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
             .scrollEnter()
         }
+    }
+
+    @ViewBuilder private var favoritesCell: some View {
+        let favorites = Playlist.favorites
+        Group {
+            switch layout {
+            case .grid:
+                PlaylistCardView(playlist: favorites, title: favorites.name, isPinned: false, showSongCount: false)
+            case .list:
+                PlaylistRowView(playlist: favorites, title: favorites.name)
+                    .padding(.vertical, appSettings.listDensity.verticalPadding + 2)
+                    .scrollEnter()
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { if !isSelecting { navPath.append(DeepLinkFavorites()) } }
+        .opacity(isSelecting ? 0.4 : 1)
+        .id(Playlist.favoritesId)
     }
 
     private func playlistCell(_ playlist: Playlist, isPinned: Bool) -> some View {
