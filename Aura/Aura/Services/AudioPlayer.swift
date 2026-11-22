@@ -1002,6 +1002,30 @@ final class AudioPlayer {
     /// While effectively offline, advance to the next offline-playable song in the
     /// queue (user queue first, then a single bounded pass over the main queue).
     /// Pauses with a toast when nothing in the queue is playable.
+    /// Offline, when nothing ahead in the queue is on the device (an autoplay tail or an
+    /// album fetched online), the rest is replaced by downloaded songs, the same artist
+    /// first. Called on Next and as soon as offline mode turns on, so the queue on screen
+    /// is the one that will play.
+    func refillWithDownloadsIfNothingAhead() {
+        #if !os(tvOS)
+        guard isEffectivelyOffline else { return }
+        if !queue.dropFirst(queueIndex + 1).contains(where: isPlayableOffline),
+           repeatMode != .all, let current = currentSong {
+            let heard = Set(queue.prefix(queueIndex + 1).map(\.id))
+            let pool = MainActor.assumeIsolated { OfflineLibrary.shared.songs }.filter { !heard.contains($0.id) && isPlayableOffline($0) }
+            let sameArtist = pool.filter { $0.artist == current.artist }.shuffled().prefix(10)
+            let taken = Set(sameArtist.map(\.id))
+            let tail = Array((Array(sameArtist) + pool.filter { !taken.contains($0.id) }.shuffled()).prefix(50))
+            if !tail.isEmpty {
+                queue = Array(queue.prefix(queueIndex + 1)) + tail
+                originalQueue = queue
+                autoplayFromIndex = queueIndex + 1
+                AppLogger.shared.log("🎵 Offline autoplay: \(tail.count) downloaded songs behind \(current.title)")
+            }
+        }
+        #endif
+    }
+
     private func skipToNextPlayableOffline() {
         // User queue first — mirrors next()'s priority.
         while !userQueue.isEmpty {
@@ -1019,22 +1043,7 @@ final class AudioPlayer {
         // Forward only: wrapping round to the start replayed songs already heard (an
         // autoplay tail fetched online, none of it on the device, sent Next back to the
         // song before). Only repeat-all goes round.
-        #if !os(tvOS)
-        if !queue.dropFirst(queueIndex + 1).contains(where: isPlayableOffline),
-           repeatMode != .all, let current = currentSong {
-            let heard = Set(queue.prefix(queueIndex + 1).map(\.id))
-            let pool = MainActor.assumeIsolated { OfflineLibrary.shared.songs }.filter { !heard.contains($0.id) && isPlayableOffline($0) }
-            let sameArtist = pool.filter { $0.artist == current.artist }.shuffled().prefix(10)
-            let taken = Set(sameArtist.map(\.id))
-            let tail = Array((Array(sameArtist) + pool.filter { !taken.contains($0.id) }.shuffled()).prefix(50))
-            if !tail.isEmpty {
-                queue = Array(queue.prefix(queueIndex + 1)) + tail
-                originalQueue = queue
-                autoplayFromIndex = queueIndex + 1
-                AppLogger.shared.log("🎵 Offline autoplay: \(tail.count) downloaded songs behind \(current.title)")
-            }
-        }
-        #endif
+        refillWithDownloadsIfNothingAhead()
         let count = queue.count
         if count > 1 {
             for offset in 1..<count {

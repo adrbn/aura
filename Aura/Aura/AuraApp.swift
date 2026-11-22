@@ -107,6 +107,9 @@ struct AuraApp: App {
                             }
                         }
                     }
+                    .onChange(of: appSettings.offlineMode) { _, offline in
+                        if offline { audioPlayer.refillWithDownloadsIfNothingAhead() }
+                    }
                     .onChange(of: appSettings.activeTheme) { _, _ in
                         applyThemeAppearance()
                         forceUIKitRefresh()
