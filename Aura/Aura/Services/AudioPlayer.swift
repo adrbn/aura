@@ -1016,9 +1016,29 @@ final class AudioPlayer {
                 return
             }
         }
+        // Forward only: wrapping round to the start replayed songs already heard (an
+        // autoplay tail fetched online, none of it on the device, sent Next back to the
+        // song before). Only repeat-all goes round.
+        #if !os(tvOS)
+        if !queue.dropFirst(queueIndex + 1).contains(where: isPlayableOffline),
+           repeatMode != .all, let current = currentSong {
+            let heard = Set(queue.prefix(queueIndex + 1).map(\.id))
+            let pool = MainActor.assumeIsolated { OfflineLibrary.shared.songs }.filter { !heard.contains($0.id) && isPlayableOffline($0) }
+            let sameArtist = pool.filter { $0.artist == current.artist }.shuffled().prefix(10)
+            let taken = Set(sameArtist.map(\.id))
+            let tail = Array((Array(sameArtist) + pool.filter { !taken.contains($0.id) }.shuffled()).prefix(50))
+            if !tail.isEmpty {
+                queue = Array(queue.prefix(queueIndex + 1)) + tail
+                originalQueue = queue
+                autoplayFromIndex = queueIndex + 1
+                AppLogger.shared.log("🎵 Offline autoplay: \(tail.count) downloaded songs behind \(current.title)")
+            }
+        }
+        #endif
         let count = queue.count
         if count > 1 {
             for offset in 1..<count {
+                guard queueIndex + offset < count || repeatMode == .all else { break }
                 let idx = (queueIndex + offset) % count
                 if isPlayableOffline(queue[idx]) {
                     queueIndex = idx
