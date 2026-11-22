@@ -87,6 +87,28 @@ enum LyricsOnServer {
         }
     }
 
+    private static let backfilledKey = "lyrics_on_server_backfilled"
+
+    /// The timings made before the server could take them — with the option off, or before
+    /// File Browser was set up — written once, the first time the sign-in works.
+    static func sendKeptOnce() async {
+        guard isEnabled, !UserDefaults.standard.bool(forKey: backfilledKey),
+              let server = ServerManager.shared.currentServer else { return }
+        var failed = 0
+        for id in LyricsOverrides.songIds {
+            guard let lrc = LyricsOverrides.lrc(for: id) else { continue }
+            do {
+                let song = try await SubsonicClient.shared.getSong(server: server, id: id)
+                try await save(lrc, for: song)
+            } catch {
+                failed += 1
+                AppLogger.shared.log("🎵 Kept lyrics timing not written (\(id)): \(error.localizedDescription)")
+            }
+        }
+        // Tried again next time while any failed: written files are simply overwritten.
+        if failed == 0 { UserDefaults.standard.set(true, forKey: backfilledKey) }
+    }
+
     private static var pending: [String: Song] {
         UserDefaults.standard.data(forKey: pendingKey)
             .flatMap { try? JSONDecoder().decode([String: Song].self, from: $0) } ?? [:]

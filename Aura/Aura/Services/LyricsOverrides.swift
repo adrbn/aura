@@ -28,6 +28,13 @@ enum LyricsOverrides {
         file(songId).flatMap { try? String(contentsOf: $0, encoding: .utf8) }
     }
 
+    /// Every song with a timing kept on this device.
+    static var songIds: [String] {
+        guard let folder, let names = try? FileManager.default.contentsOfDirectory(atPath: folder.path) else { return [] }
+        return names.filter { $0.hasSuffix(".lrc") }
+            .compactMap { ($0 as NSString).deletingPathExtension.removingPercentEncoding }
+    }
+
     static func has(_ songId: String) -> Bool {
         file(songId).map { FileManager.default.fileExists(atPath: $0.path) } ?? false
     }

@@ -181,6 +181,7 @@ struct SettingsView: View {
                 playbackSection
                 equalizerSection
                 lastfmSection
+                listenbrainzSection
                 madeForYouSection
                 wrappedSection
                 radarSection
@@ -551,6 +552,18 @@ struct SettingsView: View {
             guard !lfDraftLoaded else { return }
             lfUser = appSettings.lastfmUsername
             lfDraftLoaded = true
+        }
+    }
+
+    private var listenbrainzSection: some View {
+        Section {
+            TextField("Username", text: $appSettings.listenbrainzUsername)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+        } header: {
+            Text("ListenBrainz")
+        } footer: {
+            Text("No key needed: your Wrapped reads your ListenBrainz listens when Last.fm isn't connected. Your Last.fm history can be imported on listenbrainz.org.")
         }
     }
 
@@ -1230,7 +1243,36 @@ private struct LyricsOnServerRows: View {
                 fields
             }
             .onAppear { showsSignIn = !address.isEmpty || !user.isEmpty }
+            // Tried as soon as it's on, so the server's own sign-in needs nothing typed;
+            // the fields open only when it's refused.
+            .task(id: isOn) { if testResult == nil { await test() } }
+            result
         }
+    }
+
+    @ViewBuilder
+    private var result: some View {
+        switch testResult {
+        case .success:
+            Label("File Browser accepted the sign-in.", systemImage: "checkmark.circle.fill")
+                .font(.caption)
+                .foregroundStyle(.green)
+        case .failure(let error):
+            Label(error.localizedDescription, systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+        case nil:
+            EmptyView()
+        }
+    }
+
+    private func test() async {
+        isTesting = true
+        testResult = nil
+        do { try await LyricsOnServer.testSignIn(); testResult = .success(()) }
+        catch { testResult = .failure(error); showsSignIn = true }
+        isTesting = false
+        if case .success = testResult { await LyricsOnServer.sendKeptOnce() }
     }
 
     @ViewBuilder
@@ -1253,13 +1295,7 @@ private struct LyricsOnServerRows: View {
                 }
             }
         Button {
-            isTesting = true
-            testResult = nil
-            Task {
-                do { try await LyricsOnServer.testSignIn(); testResult = .success(()) }
-                catch { testResult = .failure(error) }
-                isTesting = false
-            }
+            Task { await test() }
         } label: {
             HStack {
                 Text("Test Sign-In")
@@ -1268,18 +1304,6 @@ private struct LyricsOnServerRows: View {
             }
         }
         .disabled(isTesting)
-        switch testResult {
-        case .success:
-            Label("File Browser accepted the sign-in.", systemImage: "checkmark.circle.fill")
-                .font(.caption)
-                .foregroundStyle(.green)
-        case .failure(let error):
-            Label(error.localizedDescription, systemImage: "exclamationmark.triangle.fill")
-                .font(.caption)
-                .foregroundStyle(.orange)
-        case nil:
-            EmptyView()
-        }
     }
 }
 #endif
