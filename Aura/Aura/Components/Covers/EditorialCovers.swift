@@ -66,6 +66,8 @@ struct MixCoverSpec {
     let seed: String
     /// The lead artist's album cover, for when the catalogue has no photo of anyone.
     let fallbackCoverArt: String?
+    /// Nonstop's infinity in place of the play mark.
+    var symbol: String? { seed == "aura.nonstop" ? "infinity" : nil }
 
     /// Artists tried for the photo before settling for an album cover.
     private static let photoCandidates = 3
@@ -224,7 +226,8 @@ struct EditorialMixCover: View {
         case .mix(let kicker, let title):
             MixCoverTemplate(portrait: art?.portrait, kicker: kicker, title: title,
                              artists: spec.artists.map(\.name).filter { !$0.isEmpty },
-                             band: art?.portrait.band ?? CoverPalette.hashed(spec.seed), s: size)
+                             band: art?.portrait.band ?? CoverPalette.hashed(spec.seed), s: size,
+                             symbol: spec.symbol)
         case .genre(let words):
             let pair = CoverPalette.duotone(for: spec.seed)
             GenreCoverTemplate(portrait: art?.portrait, duotone: art?.duotone, words: words,

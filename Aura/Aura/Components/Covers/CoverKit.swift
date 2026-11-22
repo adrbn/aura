@@ -99,12 +99,21 @@ struct CoverLockup: View {
     let s: CGFloat
     var color: Color = .white
     var mark: Color = coverRed
+    /// A symbol drawn in place of the play mark, as Nonstop's infinity.
+    var symbol: String? = nil
 
     var body: some View {
         let size = Self.size(s)
         let cap = CoverMetrics(CoverFont.label, size).cap
         HStack(alignment: .center, spacing: cap * 0.6) {
-            PlayMark().fill(mark).frame(width: cap * 1.15, height: cap * 1.3)
+            if let symbol {
+                Image(systemName: symbol)
+                    .font(.system(size: cap * 1.5, weight: .heavy))
+                    .foregroundStyle(mark)
+                    .frame(height: cap * 1.3)
+            } else {
+                PlayMark().fill(mark).frame(width: cap * 1.15, height: cap * 1.3)
+            }
             if !label.isEmpty {
                 CapText(text: label.uppercased(), font: CoverFont.wide, size: size, color: color,
                         tracking: size * 0.06)

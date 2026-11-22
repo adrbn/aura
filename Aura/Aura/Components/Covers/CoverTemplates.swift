@@ -20,6 +20,7 @@ struct MixCoverTemplate: View {
     let artists: [String]
     let band: UIColor
     let s: CGFloat
+    var symbol: String? = nil
 
     private static let artistsSize: CGFloat = 0.032
 
@@ -41,7 +42,7 @@ struct MixCoverTemplate: View {
                 bandColor
             }
             CoverLockup(label: kicker, s: s, color: portrait == nil ? fieldInk : .white,
-                        mark: portrait == nil ? fieldInk : coverRed)
+                        mark: portrait == nil ? fieldInk : coverRed, symbol: symbol)
                 .padding(g.margin)
             VStack(alignment: .leading, spacing: 0) {
                 CapText(text: title.uppercased(), font: CoverFont.title, size: size,
