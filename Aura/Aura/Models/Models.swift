@@ -239,6 +239,13 @@ final class AppSettings {
     var lastfmConfigured: Bool {
         !lastfmUsername.trimmingCharacters(in: .whitespaces).isEmpty && !lastfmApiKey.isEmpty
     }
+    /// ListenBrainz — the same Wrapped from its public stats, no key needed. Used when
+    /// Last.fm isn't connected (a Last.fm key needs Last.fm Pro from 1 December 2026).
+    var listenbrainzUsername: String = ""
+    /// Wrapped has an online scrobble history to read, from either service.
+    var scrobblesConfigured: Bool {
+        lastfmConfigured || !listenbrainzUsername.trimmingCharacters(in: .whitespaces).isEmpty
+    }
     /// Whether the Wrapped retrospective surfaces on the Home tab. Off by default —
     /// Wrapped is reached from its explicit entry in Settings, and (when this is on)
     /// only during its seasonal windows. Configuring Last.fm no longer force-shows it.
@@ -324,6 +331,7 @@ final class AppSettings {
             lyricsOffset = decoded.lyricsOffset ?? 0
             alphaAutoHideToolbar = decoded.alphaAutoHideToolbar ?? false
             lastfmUsername = decoded.lastfmUsername ?? ""
+            listenbrainzUsername = decoded.listenbrainzUsername ?? ""
             lastfmApiKey = KeychainHelper.loadPassword(for: Self.lastfmKeychainAccount) ?? ""
             wrappedShowOnHome = decoded.wrappedShowOnHome ?? false
             radarEnabled = decoded.radarEnabled ?? true
@@ -382,7 +390,8 @@ final class AppSettings {
             radarInLibraryOffered: radarInLibraryOffered,
             translateLyrics: translateLyrics,
             customAccentRGB: customAccentRGB,
-            crossfadeSeconds: crossfadeSeconds
+            crossfadeSeconds: crossfadeSeconds,
+            listenbrainzUsername: listenbrainzUsername
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: settingsKey)
@@ -475,6 +484,7 @@ struct SettingsData: Codable {
     var translateLyrics: Bool?
     var customAccentRGB: [Double]?
     var crossfadeSeconds: Double?
+    var listenbrainzUsername: String?
 }
 
 enum AppAccentColor: String, Codable, CaseIterable {

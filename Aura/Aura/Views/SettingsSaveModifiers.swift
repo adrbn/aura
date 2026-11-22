@@ -25,6 +25,7 @@ private struct SettingsSaveModifier2: ViewModifier {
             .onChange(of: s.downloadQuality) { _, _ in s.save() }
             .onChange(of: s.offlineMode) { _, _ in s.save() }
             .onChange(of: s.betaFeaturesEnabled) { _, _ in s.save() }
+            .onChange(of: s.listenbrainzUsername) { _, _ in s.save() }
     }
 }
 

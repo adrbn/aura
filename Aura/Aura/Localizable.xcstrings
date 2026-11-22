@@ -173476,6 +173476,450 @@
           }
         }
       }
+    },
+    "ListenBrainz": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz"
+          }
+        }
+      }
+    },
+    "Powered by your ListenBrainz listens": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basat en les teves escoltes de ListenBrainz"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Na základě tvých poslechů na ListenBrainz"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baseret på dine lytninger på ListenBrainz"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basierend auf deinen ListenBrainz-Wiedergaben"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Με βάση τις ακροάσεις σου στο ListenBrainz"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basado en tus escuchas de ListenBrainz"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perustuu ListenBrainz-kuunteluihisi"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basé sur tes écoutes ListenBrainz"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basato sui tuoi ascolti su ListenBrainz"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainzの再生履歴から"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz 청취 기록 기반"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basert på lyttingene dine på ListenBrainz"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gebaseerd op je ListenBrainz-luisterbeurten"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Na podstawie Twoich odsłuchań w ListenBrainz"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Com base nas suas audições no ListenBrainz"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Com base nas tuas audições no ListenBrainz"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pe baza ascultărilor tale de pe ListenBrainz"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На основе твоих прослушиваний в ListenBrainz"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baserat på dina lyssningar på ListenBrainz"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "จากการฟังของคุณบน ListenBrainz"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ListenBrainz dinlemelerine göre"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На основі твоїх прослуховувань у ListenBrainz"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基于你在 ListenBrainz 上的收听记录"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "根據你在 ListenBrainz 上的收聽紀錄"
+          }
+        }
+      }
+    },
+    "No key needed: your Wrapped reads your ListenBrainz listens when Last.fm isn't connected. Your Last.fm history can be imported on listenbrainz.org.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No cal cap clau: el teu Wrapped llegeix les teves escoltes de ListenBrainz quan Last.fm no està connectat. Pots importar el teu historial de Last.fm a listenbrainz.org."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klíč není potřeba: tvůj Wrapped čte poslechy z ListenBrainz, když Last.fm není připojený. Historii z Last.fm můžeš importovat na listenbrainz.org."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen nøgle nødvendig: din Wrapped læser dine lytninger på ListenBrainz, når Last.fm ikke er forbundet. Din Last.fm-historik kan importeres på listenbrainz.org."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Schlüssel nötig: Dein Wrapped liest deine ListenBrainz-Wiedergaben, wenn Last.fm nicht verbunden ist. Deinen Last.fm-Verlauf kannst du auf listenbrainz.org importieren."
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Δεν χρειάζεται κλειδί: το Wrapped σου διαβάζει τις ακροάσεις σου στο ListenBrainz όταν το Last.fm δεν είναι συνδεδεμένο. Το ιστορικό σου στο Last.fm μπορεί να εισαχθεί στο listenbrainz.org."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hace falta clave: tu Wrapped lee tus escuchas de ListenBrainz cuando Last.fm no está conectado. Puedes importar tu historial de Last.fm en listenbrainz.org."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avainta ei tarvita: Wrapped lukee ListenBrainz-kuuntelusi, kun Last.fm ei ole yhdistetty. Last.fm-historiasi voi tuoda osoitteessa listenbrainz.org."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune clé nécessaire : ton Wrapped lit tes écoutes ListenBrainz quand Last.fm n'est pas connecté. Ton historique Last.fm peut être importé sur listenbrainz.org."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessuna chiave necessaria: il tuo Wrapped legge i tuoi ascolti su ListenBrainz quando Last.fm non è collegato. Puoi importare la cronologia di Last.fm su listenbrainz.org."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キーは不要です。Last.fmに接続していないとき、WrappedはListenBrainzの再生履歴を使います。Last.fmの履歴はlistenbrainz.orgで取り込めます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "키가 필요 없습니다. Last.fm이 연결되어 있지 않으면 Wrapped가 ListenBrainz 청취 기록을 읽습니다. Last.fm 기록은 listenbrainz.org에서 가져올 수 있습니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen nøkkel nødvendig: Wrapped leser lyttingene dine på ListenBrainz når Last.fm ikke er koblet til. Last.fm-historikken kan importeres på listenbrainz.org."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geen sleutel nodig: je Wrapped leest je ListenBrainz-luisterbeurten als Last.fm niet is gekoppeld. Je Last.fm-geschiedenis kun je importeren op listenbrainz.org."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klucz nie jest potrzebny: Twój Wrapped czyta odsłuchania z ListenBrainz, gdy Last.fm nie jest połączony. Historię z Last.fm możesz zaimportować na listenbrainz.org."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não precisa de chave: seu Wrapped lê suas audições no ListenBrainz quando o Last.fm não está conectado. Seu histórico do Last.fm pode ser importado em listenbrainz.org."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não é precisa chave: o teu Wrapped lê as tuas audições no ListenBrainz quando o Last.fm não está ligado. O teu histórico do Last.fm pode ser importado em listenbrainz.org."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nu e nevoie de cheie: Wrapped citește ascultările tale de pe ListenBrainz când Last.fm nu e conectat. Istoricul Last.fm poate fi importat pe listenbrainz.org."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ключ не нужен: твой Wrapped читает прослушивания из ListenBrainz, когда Last.fm не подключён. Историю Last.fm можно импортировать на listenbrainz.org."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ingen nyckel behövs: din Wrapped läser dina lyssningar på ListenBrainz när Last.fm inte är anslutet. Din Last.fm-historik kan importeras på listenbrainz.org."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ไม่ต้องใช้คีย์: Wrapped จะอ่านการฟังของคุณจาก ListenBrainz เมื่อไม่ได้เชื่อมต่อ Last.fm นำเข้าประวัติ Last.fm ได้ที่ listenbrainz.org"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anahtar gerekmez: Last.fm bağlı değilken Wrapped, ListenBrainz dinlemelerini okur. Last.fm geçmişin listenbrainz.org'da içe aktarılabilir."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ключ не потрібен: твій Wrapped читає прослуховування з ListenBrainz, коли Last.fm не підключено. Історію Last.fm можна імпортувати на listenbrainz.org."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需密钥：未连接 Last.fm 时，Wrapped 会读取你在 ListenBrainz 上的收听记录。你的 Last.fm 历史可在 listenbrainz.org 导入。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無需金鑰：未連接 Last.fm 時，Wrapped 會讀取你在 ListenBrainz 上的收聽紀錄。你的 Last.fm 紀錄可在 listenbrainz.org 匯入。"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

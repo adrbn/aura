@@ -34,10 +34,10 @@ struct WrappedView: View {
 
     init(initialPeriod: WrappedPeriod = .currentYear) {
         _period = State(initialValue: initialPeriod)
-        _source = State(initialValue: AppSettings.shared.lastfmConfigured ? .lastfm : .device)
+        _source = State(initialValue: AppSettings.shared.scrobblesConfigured ? .lastfm : .device)
     }
 
-    private var lastfmAvailable: Bool { AppSettings.shared.lastfmConfigured }
+    private var lastfmAvailable: Bool { AppSettings.shared.scrobblesConfigured }
     private var offeredPeriods: [WrappedPeriod] {
         let p = WrappedAvailability.offeredPeriods()
         return p.isEmpty ? [.currentYear] : p
@@ -74,7 +74,8 @@ struct WrappedView: View {
                 Menu {
                     if lastfmAvailable {
                         Picker("Source", selection: $source) {
-                            Label("Last.fm", systemImage: "waveform").tag(ListeningStats.Source.lastfm)
+                            Label(AppSettings.shared.lastfmConfigured ? "Last.fm" : "ListenBrainz",
+                                  systemImage: "waveform").tag(ListeningStats.Source.lastfm)
                             Label("This Device", systemImage: "iphone").tag(ListeningStats.Source.device)
                         }
                     }
@@ -668,7 +669,7 @@ struct WrappedView: View {
     private func sourceFootnote(_ stats: ListeningStats) -> some View {
         if stats.source == .lastfm {
             VStack(spacing: 2) {
-                Text("Powered by your Last.fm scrobbles")
+                Text(AppSettings.shared.lastfmConfigured ? "Powered by your Last.fm scrobbles" : "Powered by your ListenBrainz listens")
                 if let year = stats.scrobblingSinceYear {
                     Text("Scrobbling since \(String(year))")
                 }

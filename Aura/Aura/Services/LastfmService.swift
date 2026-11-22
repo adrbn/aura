@@ -52,7 +52,7 @@ final class LastfmService: @unchecked Sendable {
 
     private init() {}
 
-    var isConfigured: Bool { AppSettings.shared.lastfmConfigured }
+    var isConfigured: Bool { AppSettings.shared.scrobblesConfigured }
 
     /// Map a retrospective window to a Last.fm `period` value.
     static func period(for period: WrappedPeriod) -> String {
@@ -98,6 +98,7 @@ final class LastfmService: @unchecked Sendable {
 
     func fetchWrapped(period: WrappedPeriod, limit: Int = 200) async throws -> LastfmWrapped {
         guard isConfigured else { throw LastfmError.notConfigured }
+        guard AppSettings.shared.lastfmConfigured else { return try await ListenBrainz.fetchWrapped(period: period) }
         let p = Self.period(for: period)
 
         async let tracksT = topTracks(period: p, limit: limit)
@@ -327,4 +328,73 @@ private struct TopTagsResponse: Decodable {
     struct Container: Decodable { let tag: [Tag]? }
     struct Tag: Decodable { let name: String; let count: LFInt? }
     let toptags: Container?
+}
+
+/// ListenBrainz's public stats, shaped as Last.fm's: no key, just the username.
+enum ListenBrainz {
+    private struct Stats: Decodable {
+        struct Payload: Decodable {
+            struct Item: Decodable {
+                let track_name: String?
+                let release_name: String?
+                let artist_name: String
+                let listen_count: Int
+            }
+            let recordings: [Item]?
+            let artists: [Item]?
+            let releases: [Item]?
+            let total_recording_count: Int?
+            let total_artist_count: Int?
+        }
+        let payload: Payload
+    }
+
+    private struct Count: Decodable {
+        struct Payload: Decodable { let count: Int }
+        let payload: Payload
+    }
+
+    static func fetchWrapped(period: WrappedPeriod) async throws -> LastfmWrapped {
+        let user = AppSettings.shared.listenbrainzUsername.trimmingCharacters(in: .whitespaces)
+        guard !user.isEmpty else { throw LastfmError.notConfigured }
+        // The period as it stands, as the Last.fm windows are.
+        let range: String
+        switch period { case .year: range = "this_year"; case .month: range = "this_month" }
+        async let tracks = stats(user, "recordings", range)
+        async let artists = stats(user, "artists", range)
+        async let albums = stats(user, "releases", range)
+        let total = try? await get(user, "listen-count", stats: false, as: Count.self)?.payload.count
+        let t = try await tracks, a = try await artists, r = try await albums
+        return LastfmWrapped(
+            topTracks: (t?.recordings ?? []).map {
+                LastfmTrack(name: $0.track_name ?? "", artist: $0.artist_name, playcount: $0.listen_count,
+                            imageURL: nil, durationSeconds: nil)
+            },
+            topArtists: (a?.artists ?? []).map { LastfmArtist(name: $0.artist_name, playcount: $0.listen_count, imageURL: nil) },
+            topAlbums: (r?.releases ?? []).map {
+                LastfmAlbum(name: $0.release_name ?? "", artist: $0.artist_name, playcount: $0.listen_count, imageURL: nil)
+            },
+            topTags: [],
+            allTimeScrobbles: total,
+            scrobblingSinceYear: nil,
+            totalTrackCount: t?.total_recording_count,
+            totalArtistCount: a?.total_artist_count
+        )
+    }
+
+    private static func stats(_ user: String, _ kind: String, _ range: String) async throws -> Stats.Payload? {
+        try await get(user, "\(kind)?range=\(range)&count=100", stats: true, as: Stats.self)?.payload
+    }
+
+    /// Nil when ListenBrainz has nothing yet for the period (it answers 204).
+    private static func get<T: Decodable>(_ user: String, _ path: String, stats: Bool, as: T.Type) async throws -> T? {
+        let name = user.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? user
+        let base = stats ? "https://api.listenbrainz.org/1/stats/user/\(name)/" : "https://api.listenbrainz.org/1/user/\(name)/"
+        guard let url = URL(string: base + path) else { throw LastfmError.decode }
+        let (data, response) = try await URLSession.shared.data(from: url)
+        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if code == 204 { return nil }
+        guard code == 200 else { throw LastfmError.http(code) }
+        do { return try JSONDecoder().decode(T.self, from: data) } catch { throw LastfmError.decode }
+    }
 }
