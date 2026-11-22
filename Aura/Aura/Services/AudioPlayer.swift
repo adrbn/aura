@@ -1766,7 +1766,7 @@ final class AudioPlayer {
         #endif
     }
 
-    /// The rating prompt (App Store build, from the twentieth song, once per version), else
+    /// The rating prompt (App Store build, from the fifth song, once per version), else
     /// the Ko-fi card when it is due, never both in one launch, never on the demo server, and
     /// only while the app is on screen. Most listening happens in the background, so
     /// ContentView also calls this when the app comes back to the front: a prompt that came
@@ -1780,7 +1780,7 @@ final class AudioPlayer {
         #if APPSTORE_BUILD
         let defaults = UserDefaults.standard
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        if defaults.integer(forKey: "reviewPromptPlays") >= 20,
+        if defaults.integer(forKey: "reviewPromptPlays") >= 5,
            defaults.string(forKey: "reviewPromptVersion") != version {
             defaults.set(version, forKey: "reviewPromptVersion")
             SupportPrompt.shared.askedThisLaunch = true
