@@ -480,6 +480,8 @@ final class AudioPlayer {
     static let nonstopName = String(localized: "Nonstop")
     /// Playing Nonstop: the endless mix of liked songs, songs near them and songs not heard.
     var isNonstop: Bool { isRadioMode && radioPlaylistName == Self.nonstopName }
+    /// Who Nonstop's cover shows, as Home drew it, so its page wears the same face.
+    var nonstopCoverArtists: [ArtistRef]?
     /// Artists skipped in the first half minute during this Nonstop; twice and they're left out.
     private var nonstopSkips: [String: Int] = [:]
 
@@ -2651,6 +2653,7 @@ final class AudioPlayer {
     func refreshRadioQueue() {
         AppLogger.shared.log("📻 refreshRadioQueue called | radioMode=\(isRadioMode) | fetching=\(isFetchingRadioSongs)")
         guard isRadioMode else { return }
+        if isNonstop { refillNonstop(); return }
         // Use the last song in the radio playlist as the new seed (evolving taste)
         let seed = radioPlaylistSongs.last ?? currentSong
         guard let seed else {

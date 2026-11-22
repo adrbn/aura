@@ -26,17 +26,33 @@ struct RadioPlaylistView: View {
             // Header — cover/name/desc sit at the top; the song list follows directly
             // below the buttons (no vertical centering that would shift on save).
             DetailHeader {
-                EditorialRadioCover(songs: player.radioPlaylistSongs,
-                                    fallbackName: player.radioPlaylistName
-                                        .replacingOccurrences(of: "Radio: ", with: ""),
-                                    size: 200,
-                                    isLoading: player.isFetchingRadioSongs)
-                    .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
+                Group {
+                    if player.isNonstop {
+                        EditorialMixCover(mix: Mix(id: "aura.nonstop", title: AudioPlayer.nonstopName, subtitle: "",
+                                                   songs: player.radioPlaylistSongs,
+                                                   coverArtists: player.nonstopCoverArtists),
+                                          size: 200)
+                    } else {
+                        EditorialRadioCover(songs: player.radioPlaylistSongs,
+                                            fallbackName: player.radioPlaylistName
+                                                .replacingOccurrences(of: "Radio: ", with: ""),
+                                            size: 200,
+                                            isLoading: player.isFetchingRadioSongs)
+                    }
+                }
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
             } titles: { wide in
                 // The count closes the list, as it does an album's.
                 Text(player.radioPlaylistName)
                     .font(wide ? .title.bold() : .title2.bold())
                     .lineLimit(2)
+                if player.isNonstop {
+                    Text("An endless mix: songs you like, songs near them and songs you haven’t heard, in turn. More arrive as you listen, and an artist you skip twice early on is left out.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             } controls: {
                 // Play/Shuffle and Save share one spaced stack so Save never
                 // overlaps the buttons above it.
@@ -55,6 +71,7 @@ struct RadioPlaylistView: View {
                         }
                         .buttonStyle(.borderless)
                         .disabled(player.radioPlaylistSongs.isEmpty)
+                        if !player.isNonstop {
                         Button {
                             guard !player.radioPlaylistSongs.isEmpty else { return }
                             player.playShuffled(player.radioPlaylistSongs, source: .radio(name: player.radioPlaylistName))
@@ -69,6 +86,7 @@ struct RadioPlaylistView: View {
                         }
                         .buttonStyle(.borderless)
                         .disabled(player.radioPlaylistSongs.isEmpty)
+                        }
                     }
 
                     SaveAsPlaylistButton(isSaving: isSaving, isSaved: isSaved, accent: accentColor) {

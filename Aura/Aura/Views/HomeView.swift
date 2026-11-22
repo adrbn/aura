@@ -434,11 +434,33 @@ struct HomeView: View {
                 LazyHStack(spacing: 12) {
                     ForEach(shelf) { mix in
                         if mix.id == Self.nonstopId {
-                            Button { Task { await player.startNonstop() } } label: {
+                            Button {
+                                // Already playing: a tap opens it rather than starting over.
+                                if player.isNonstop {
+                                    player.isShowingNowPlaying = true
+                                } else {
+                                    player.nonstopCoverArtists = mix.coverArtists ?? CoverArtists.ranked(mix.songs)
+                                    Task { await player.startNonstop() }
+                                }
+                            } label: {
                                 EditorialMixCover(mix: mix, size: coverSize, cornerRadius: Self.coverRadius)
+                                    .overlay(alignment: .topTrailing) {
+                                        if player.isNonstop {
+                                            Image(systemName: "waveform")
+                                                .font(.system(size: coverSize * 0.09, weight: .bold))
+                                                .foregroundStyle(.white)
+                                                .symbolEffect(.variableColor.iterative, isActive: player.isPlaying)
+                                                .padding(coverSize * 0.045)
+                                                .background(.black.opacity(0.55), in: Circle())
+                                                .padding(coverSize * 0.05)
+                                                .transition(.opacity)
+                                        }
+                                    }
+                                    .animation(.easeOut(duration: 0.25), value: player.isNonstop)
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel(Text("Nonstop"))
+                            .accessibilityValue(player.isNonstop ? Text("Now Playing") : Text(""))
                             .accessibilityHint(Text("Plays songs you like, songs near them and songs you haven't heard, without end"))
                         } else {
                         // The cover already prints the mix's name, so no caption beneath it:
