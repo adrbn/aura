@@ -649,7 +649,7 @@ enum LyricsAutoSync {
             case .noAudio: AppSettings.shared.offlineMode || !ServerManager.shared.hasNetwork
                 ? String(localized: "Offline, only a downloaded song can be listened to. Download it, or sync once you’re back online.")
                 : String(localized: "The song couldn’t be read from your server.")
-            case .tooFew: String(localized: "Too little of the singing could be made out to place the lines. Time them by hand instead.")
+            case .tooFew: String(localized: "Apple’s speech recognition made out too little of the singing in this song: it hears speech better than singing, and some languages only get its older model. Time the lines by hand instead.")
             }
         }
     }

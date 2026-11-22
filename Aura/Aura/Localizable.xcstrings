@@ -174364,6 +174364,154 @@
           }
         }
       }
+    },
+    "Apple’s speech recognition made out too little of the singing in this song: it hears speech better than singing, and some languages only get its older model. Time the lines by hand instead.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El reconeixement de veu d’Apple ha entès massa poc del cant d’aquesta cançó: entén millor la veu parlada que el cant, i algunes llengües només tenen el seu model antic. Sincronitza les línies a mà."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rozpoznávání řeči od Applu v této skladbě zachytilo příliš málo zpěvu: mluvené slovo slyší lépe než zpěv a některé jazyky mají jen jeho starší model. Načasuj řádky ručně."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apples talegenkendelse opfangede for lidt af sangen her: den hører tale bedre end sang, og nogle sprog har kun dens ældre model. Tidsæt linjerne manuelt i stedet."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apples Spracherkennung hat in diesem Song zu wenig vom Gesang verstanden: Sie hört Sprache besser als Gesang, und manche Sprachen haben nur ihr älteres Modell. Setze die Zeilen stattdessen von Hand."
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Η αναγνώριση ομιλίας της Apple κατάλαβε πολύ λίγο από το τραγούδι: ακούει καλύτερα την ομιλία από το τραγούδι, και κάποιες γλώσσες έχουν μόνο το παλαιότερο μοντέλο της. Συγχρόνισε τις γραμμές με το χέρι."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El reconocimiento de voz de Apple entendió muy poco del canto de esta canción: oye mejor el habla que el canto, y algunos idiomas solo tienen su modelo antiguo. Sincroniza las líneas a mano."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applen puheentunnistus erotti tästä kappaleesta liian vähän laulua: se kuulee puhetta paremmin kuin laulua, ja joillekin kielille on vain sen vanhempi malli. Ajoita rivit käsin."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La reconnaissance vocale d’Apple a trop peu compris le chant de ce morceau : elle entend mieux la parole que le chant, et certaines langues n’ont que son ancien modèle. Cale les lignes à la main."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il riconoscimento vocale di Apple ha capito troppo poco del canto in questo brano: sente meglio il parlato del canto, e alcune lingue hanno solo il suo modello più vecchio. Sincronizza le righe a mano."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appleの音声認識はこの曲の歌声をほとんど聞き取れませんでした。話し声に比べて歌声は苦手で、一部の言語では古いモデルしか使えません。行のタイミングは手動で合わせてください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 음성 인식이 이 곡의 노래를 거의 알아듣지 못했습니다. 노래보다 말소리를 더 잘 듣고, 일부 언어는 이전 모델만 지원합니다. 줄 타이밍은 직접 맞춰 주세요."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apples talegjenkjenning fikk med seg for lite av sangen her: den hører tale bedre enn sang, og noen språk har bare den eldre modellen. Tidfest linjene for hånd i stedet."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apples spraakherkenning verstond te weinig van de zang in dit nummer: spraak hoort ze beter dan zang, en sommige talen hebben alleen haar oudere model. Zet de regels met de hand."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rozpoznawanie mowy Apple wychwyciło za mało śpiewu w tym utworze: mowę słyszy lepiej niż śpiew, a niektóre języki mają tylko jego starszy model. Ustaw wersy ręcznie."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O reconhecimento de voz da Apple entendeu muito pouco do canto desta música: ele ouve melhor a fala que o canto, e alguns idiomas só têm o modelo antigo. Sincronize as linhas manualmente."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O reconhecimento de voz da Apple percebeu muito pouco do canto desta música: ouve melhor a fala do que o canto, e algumas línguas só têm o modelo antigo. Sincroniza as linhas à mão."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recunoașterea vocală Apple a înțeles prea puțin din cântecul acesta: aude vorbirea mai bine decât cântatul, iar unele limbi au doar modelul ei mai vechi. Sincronizează versurile manual."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Распознавание речи Apple разобрало слишком мало пения в этой песне: речь оно слышит лучше, чем пение, а для некоторых языков есть только его старая модель. Расставьте строки вручную."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apples taligenkänning uppfattade för lite av sången här: den hör tal bättre än sång, och vissa språk har bara dess äldre modell. Tidsätt raderna för hand i stället."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ระบบจดจำเสียงของ Apple ฟังเสียงร้องในเพลงนี้ได้น้อยเกินไป เพราะฟังเสียงพูดได้ดีกว่าเสียงร้อง และบางภาษามีเพียงโมเดลรุ่นเก่า โปรดตั้งเวลาบรรทัดด้วยตนเอง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple’ın konuşma tanıma özelliği bu şarkıdaki vokalin çok azını anlayabildi: konuşmayı şarkıdan daha iyi duyar ve bazı dillerde yalnızca eski modeli vardır. Satırları elle zamanla."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Розпізнавання мовлення Apple розібрало надто мало співу в цій пісні: мовлення воно чує краще, ніж спів, а для деяких мов є лише його стара модель. Розставте рядки вручну."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 的语音识别在这首歌里听出的歌声太少：它听说话比听唱歌更准，有些语言只有旧版模型。请手动对齐歌词行。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple 的語音辨識在這首歌裡聽出的歌聲太少：它聽說話比聽唱歌更準，有些語言只有舊版模型。請手動對齊歌詞行。"
+          }
+        }
+      }
     }
   },
   "version": "1.1"
