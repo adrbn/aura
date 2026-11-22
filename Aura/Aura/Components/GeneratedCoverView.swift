@@ -306,29 +306,3 @@ extension Playlist {
                  coverArt: nil, owner: nil, created: nil, changed: nil, comment: nil, public: nil)
     }
 }
-
-/// Nonstop's tile: the endless mix, in the app's accent colour, as Favorite Songs is.
-struct NonstopCover: View {
-    var size: CGFloat
-    var cornerRadius: CGFloat
-    @Environment(\.appAccentColor) private var accentColor
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(LinearGradient(colors: [accentColor, accentColor.opacity(0.7)],
-                                 startPoint: .topLeading, endPoint: .bottomTrailing))
-            .frame(width: size, height: size)
-            .overlay {
-                Image(systemName: "infinity")
-                    .font(.system(size: size * 0.3, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .overlay(alignment: .bottomLeading) {
-                Text("Nonstop")
-                    .font(.system(size: size * 0.13, weight: .heavy))
-                    .foregroundStyle(.white)
-                    .lineLimit(1).minimumScaleFactor(0.8)
-                    .padding(size * 0.08)
-            }
-    }
-}

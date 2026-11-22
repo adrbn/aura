@@ -406,12 +406,17 @@ struct HomeView: View {
     /// The generated mixes, led by the radar once it has found something — no two covers on
     /// the same artist's face.
     private var shelf: [Mix] {
-        let mixes = mixGenerator.mixes
+        let nonstop = Mix(id: Self.nonstopId, title: AudioPlayer.nonstopName, subtitle: "", songs: starredSongs)
+        let mixes = [nonstop] + mixGenerator.mixes
         guard appSettings.radarEnabled, let radar = radarService.current, !radar.releases.isEmpty else {
             return CoverArtists.distinctLeads(mixes)
         }
-        return CoverArtists.distinctLeads([radar.mix] + mixes)
+        return CoverArtists.distinctLeads([nonstop, radar.mix] + mixGenerator.mixes)
     }
+
+    /// Nonstop sits on the shelf as a mix, its cover led by an artist you like, but plays
+    /// at a tap instead of opening a page.
+    private static let nonstopId = "aura.nonstop"
 
     private var madeForYouSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -427,13 +432,15 @@ struct HomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 12) {
-                    Button { Task { await player.startNonstop() } } label: {
-                        NonstopCover(size: coverSize, cornerRadius: Self.coverRadius)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("Nonstop"))
-                    .accessibilityHint(Text("Plays songs you like, songs near them and songs you haven't heard, without end"))
                     ForEach(shelf) { mix in
+                        if mix.id == Self.nonstopId {
+                            Button { Task { await player.startNonstop() } } label: {
+                                EditorialMixCover(mix: mix, size: coverSize, cornerRadius: Self.coverRadius)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text("Nonstop"))
+                            .accessibilityHint(Text("Plays songs you like, songs near them and songs you haven't heard, without end"))
+                        } else {
                         // The cover already prints the mix's name, so no caption beneath it:
                         // the shelf reads as a row of covers, not covers plus their labels.
                         NavigationLink(value: mix) {
@@ -442,6 +449,7 @@ struct HomeView: View {
                         .buttonStyle(.plain)
                         .contextMenu { mixMenu(mix) }
                         .accessibilityLabel(Text("\(mix.title), \(mix.subtitle)"))
+                        }
                     }
                 }
                 .padding(.horizontal)
