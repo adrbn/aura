@@ -174809,150 +174809,150 @@
         }
       }
     },
-    "An endless mix: songs you like, songs near them and songs you haven’t heard, in turn. More arrive as you listen, and an artist you skip twice early on is left out.": {
+    "What you like, and more around it. Without end.": {
       "localizations": {
         "ca": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un mix sense fi: cançons que t’agraden, cançons properes i cançons que no has escoltat, per torns. N’arriben més mentre escoltes, i un artista que saltes dues vegades al principi queda fora."
+            "value": "El que t’agrada, i més al voltant. Sense fi."
           }
         },
         "cs": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nekonečný mix: skladby, které máte rádi, skladby jim blízké a skladby, které jste neslyšeli, střídavě. Další přibývají, jak posloucháte, a interpret, kterého dvakrát brzy přeskočíte, vypadne."
+            "value": "Co máte rádi, a víc kolem toho. Bez konce."
           }
         },
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Et uendeligt mix: sange, du kan lide, sange tæt på dem og sange, du ikke har hørt, på skift. Der kommer flere, mens du lytter, og en kunstner, du springer over to gange tidligt, udelades."
+            "value": "Det, du kan lide, og mere omkring det. Uden ende."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ein endloser Mix: Songs, die du magst, ähnliche Songs und Songs, die du noch nicht gehört hast, im Wechsel. Beim Hören kommen weitere dazu, und ein Künstler, den du zweimal früh überspringst, fällt raus."
+            "value": "Was du magst, und mehr drumherum. Ohne Ende."
           }
         },
         "el": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ένα ατελείωτο μιξ: τραγούδια που σας αρέσουν, κοντινά τους και τραγούδια που δεν έχετε ακούσει, εναλλάξ. Έρχονται κι άλλα όσο ακούτε, και ένας καλλιτέχνης που προσπερνάτε δύο φορές νωρίς αφαιρείται."
+            "value": "Ό,τι σας αρέσει, και περισσότερα γύρω του. Χωρίς τέλος."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un mix sin fin: canciones que te gustan, canciones cercanas y canciones que no has escuchado, por turnos. Llegan más mientras escuchas, y un artista que saltas dos veces al principio queda fuera."
+            "value": "Lo que te gusta, y más a su alrededor. Sin fin."
           }
         },
         "fi": {
           "stringUnit": {
             "state": "translated",
-            "value": "Loputon miksi: pitämiäsi kappaleita, niiden kaltaisia ja kappaleita, joita et ole kuullut, vuorotellen. Lisää tulee kuunnellessasi, ja artisti, jonka ohitat kahdesti heti alussa, jätetään pois."
+            "value": "Mistä pidät, ja lisää sen ympäriltä. Loputtomasti."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un mix sans fin : des morceaux que vous aimez, des morceaux proches et des morceaux jamais écoutés, à tour de rôle. D’autres arrivent pendant l’écoute, et un artiste passé deux fois dès le début est écarté."
+            "value": "Ce que vous aimez, et plus encore autour. Sans fin."
           }
         },
         "it": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un mix senza fine: brani che ti piacciono, brani simili e brani mai ascoltati, a turno. Ne arrivano altri mentre ascolti, e un artista che salti due volte all’inizio viene escluso."
+            "value": "Ciò che ti piace, e altro intorno. Senza fine."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "終わりのないミックス。好きな曲、それに近い曲、まだ聴いていない曲を順番に。聴くほど曲が追加され、序盤で2回スキップしたアーティストは外されます。"
+            "value": "好きな曲と、その周りの曲を。終わりなく。"
           }
         },
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "끝없는 믹스: 좋아하는 노래, 비슷한 노래, 아직 듣지 않은 노래가 번갈아 나옵니다. 듣는 동안 계속 추가되며, 초반에 두 번 건너뛴 아티스트는 제외됩니다."
+            "value": "좋아하는 음악과 그 주변의 음악을. 끝없이."
           }
         },
         "nb": {
           "stringUnit": {
             "state": "translated",
-            "value": "En endeløs miks: sanger du liker, sanger nær dem og sanger du ikke har hørt, etter tur. Flere kommer mens du lytter, og en artist du hopper over to ganger tidlig, utelates."
+            "value": "Det du liker, og mer rundt det. Uten stopp."
           }
         },
         "nl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Een eindeloze mix: nummers die je leuk vindt, nummers die erop lijken en nummers die je nog niet hebt gehoord, om de beurt. Er komen er meer bij terwijl je luistert, en een artiest die je twee keer vroeg overslaat, valt af."
+            "value": "Wat je leuk vindt, en meer eromheen. Zonder einde."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Niekończący się miks: lubiane utwory, utwory do nich podobne i utwory, których nie słyszałeś, na zmianę. Kolejne dochodzą w trakcie słuchania, a wykonawca pominięty dwa razy na początku odpada."
+            "value": "To, co lubisz, i więcej wokół tego. Bez końca."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Um mix sem fim: músicas que você curte, músicas parecidas e músicas que você não ouviu, alternadas. Chegam mais enquanto você ouve, e um artista pulado duas vezes logo no início fica de fora."
+            "value": "O que você curte, e mais ao redor. Sem fim."
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Um mix sem fim: músicas de que gosta, músicas próximas e músicas que não ouviu, alternadas. Chegam mais enquanto ouve, e um artista que salta duas vezes logo no início fica de fora."
+            "value": "O que gosta, e mais à volta. Sem fim."
           }
         },
         "ro": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un mix fără sfârșit: melodii care îți plac, melodii apropiate și melodii pe care nu le-ai ascultat, pe rând. Apar altele cât asculți, iar un artist sărit de două ori de la început e scos."
+            "value": "Ce îți place, și mai mult în jurul lui. Fără sfârșit."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Бесконечный микс: песни, которые вам нравятся, похожие на них и те, что вы не слышали, по очереди. Новые добавляются по ходу, а исполнитель, которого вы дважды пропустили в начале, исключается."
+            "value": "То, что вам нравится, и больше вокруг. Без конца."
           }
         },
         "sv": {
           "stringUnit": {
             "state": "translated",
-            "value": "En oändlig mix: låtar du gillar, låtar nära dem och låtar du inte har hört, i tur och ordning. Fler kommer medan du lyssnar, och en artist du hoppar över två gånger tidigt tas bort."
+            "value": "Det du gillar, och mer runt omkring. Utan slut."
           }
         },
         "th": {
           "stringUnit": {
             "state": "translated",
-            "value": "มิกซ์ที่ไม่มีวันจบ: เพลงที่คุณชอบ เพลงที่ใกล้เคียง และเพลงที่คุณยังไม่เคยฟัง สลับกันไป มีเพลงเพิ่มเข้ามาระหว่างฟัง และศิลปินที่คุณข้ามสองครั้งตั้งแต่ต้นเพลงจะถูกตัดออก"
+            "value": "เพลงที่คุณชอบ และเพลงรอบ ๆ นั้น ไม่มีที่สิ้นสุด"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bitmeyen bir miks: sevdiğiniz şarkılar, onlara yakın şarkılar ve hiç dinlemediğiniz şarkılar sırayla. Dinledikçe yenileri gelir ve başında iki kez geçtiğiniz bir sanatçı çıkarılır."
+            "value": "Sevdikleriniz ve çevresindekiler. Durmadan."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Нескінченний мікс: пісні, які вам подобаються, схожі на них і ті, що ви не чули, по черзі. Нові додаються під час слухання, а виконавця, якого ви двічі пропустили на початку, вилучено."
+            "value": "Те, що вам подобається, і більше довкола. Без кінця."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无尽的混音：你喜欢的歌曲、相近的歌曲和你没听过的歌曲轮流播放。边听边添加新歌，开头就跳过两次的艺人会被排除。"
+            "value": "你喜欢的，以及更多相近的。永不停歇。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "無盡的混音：你喜愛的歌曲、相近的歌曲和你沒聽過的歌曲輪流播放。邊聽邊加入新歌，開頭就跳過兩次的藝人會被排除。"
+            "value": "你喜愛的，以及更多相近的。永不停歇。"
           }
         }
       }

@@ -22,37 +22,25 @@ struct RadioPlaylistView: View {
     }
 
     var body: some View {
+        if player.isNonstop { NonstopView() } else { radio }
+    }
+
+    private var radio: some View {
         List {
             // Header — cover/name/desc sit at the top; the song list follows directly
             // below the buttons (no vertical centering that would shift on save).
             DetailHeader {
-                Group {
-                    if player.isNonstop {
-                        EditorialMixCover(mix: Mix(id: "aura.nonstop", title: AudioPlayer.nonstopName, subtitle: "",
-                                                   songs: player.radioPlaylistSongs,
-                                                   coverArtists: player.nonstopCoverArtists),
-                                          size: 200)
-                    } else {
-                        EditorialRadioCover(songs: player.radioPlaylistSongs,
-                                            fallbackName: player.radioPlaylistName
-                                                .replacingOccurrences(of: "Radio: ", with: ""),
-                                            size: 200,
-                                            isLoading: player.isFetchingRadioSongs)
-                    }
-                }
-                .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
+                EditorialRadioCover(songs: player.radioPlaylistSongs,
+                                    fallbackName: player.radioPlaylistName
+                                        .replacingOccurrences(of: "Radio: ", with: ""),
+                                    size: 200,
+                                    isLoading: player.isFetchingRadioSongs)
+                    .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
             } titles: { wide in
                 // The count closes the list, as it does an album's.
                 Text(player.radioPlaylistName)
                     .font(wide ? .title.bold() : .title2.bold())
                     .lineLimit(2)
-                if player.isNonstop {
-                    Text("An endless mix: songs you like, songs near them and songs you haven’t heard, in turn. More arrive as you listen, and an artist you skip twice early on is left out.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
             } controls: {
                 // Play/Shuffle and Save share one spaced stack so Save never
                 // overlaps the buttons above it.
@@ -71,7 +59,6 @@ struct RadioPlaylistView: View {
                         }
                         .buttonStyle(.borderless)
                         .disabled(player.radioPlaylistSongs.isEmpty)
-                        if !player.isNonstop {
                         Button {
                             guard !player.radioPlaylistSongs.isEmpty else { return }
                             player.playShuffled(player.radioPlaylistSongs, source: .radio(name: player.radioPlaylistName))
@@ -86,7 +73,6 @@ struct RadioPlaylistView: View {
                         }
                         .buttonStyle(.borderless)
                         .disabled(player.radioPlaylistSongs.isEmpty)
-                        }
                     }
 
                     SaveAsPlaylistButton(isSaving: isSaving, isSaved: isSaved, accent: accentColor) {
@@ -184,6 +170,62 @@ struct RadioPlaylistView: View {
                                   fallbackName: player.radioPlaylistName.replacingOccurrences(of: "Radio: ", with: ""))
         guard let cover = await spec.jpeg(), let server = ServerManager.shared.currentServer else { return }
         await PlaylistCovers.upload(cover, playlistId: playlistId, server: server)
+    }
+}
+#endif
+
+#if os(iOS)
+/// Nonstop is a station, not a list to manage: its page shows what it is and what comes
+/// next, with no Play, Shuffle or Save — it is already playing, and it never ends.
+struct NonstopView: View {
+    @Environment(AudioPlayer.self) private var player
+    @State private var tint: UIColor?
+
+    var body: some View {
+        let songs = player.radioPlaylistSongs
+        let from = min(player.queueIndex, songs.count)
+        List {
+            DetailHeader {
+                EditorialMixCover(mix: Mix(id: "aura.nonstop", title: AudioPlayer.nonstopName, subtitle: "",
+                                           songs: songs, coverArtists: player.nonstopCoverArtists),
+                                  size: 200)
+                    .shadow(color: .black.opacity(0.25), radius: 12, y: 6)
+            } titles: { wide in
+                Text(AudioPlayer.nonstopName)
+                    .font(wide ? .title.bold() : .title2.bold())
+                Text("What you like, and more around it. Without end.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } controls: {
+                EmptyView()
+            }
+            .padding(.top, 12)
+            .padding(.bottom, DetailListLayout.gap)
+            .frame(maxWidth: .infinity)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+
+            // What's playing and what follows; what was heard is behind it.
+            ForEach(Array(songs.enumerated().dropFirst(from)), id: \.element.id) { index, song in
+                SongRowView(song: song) { player.playRadioPlaylistFromIndex(index) }
+                    .listRowInsets(EdgeInsets(top: AppSettings.shared.listDensity.verticalPadding, leading: 16,
+                                              bottom: AppSettings.shared.listDensity.verticalPadding, trailing: 16))
+            }
+            ListEndSpacer(height: 80)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(TintedCanvas(tint: tint))
+        .task(id: player.nonstopCoverArtists?.first?.id) {
+            guard let lead = player.nonstopCoverArtists?.first ?? songs.first.flatMap(CoverArtists.lead(of:)) else { return }
+            let portrait = await CoverPortraits.load(lead, subject: false)
+            if !Task.isCancelled { tint = PageTint.tone(portrait?.band ?? CoverPalette.hashed(lead.name)) }
+        }
+        .scrollIndicators(.hidden)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 #endif

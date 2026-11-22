@@ -96,7 +96,8 @@ struct MixCoverSpec {
         case .retrospective:
             template = .year(period: mix.templateSeed ?? mix.title)
         case .generic:
-            template = .mix(kicker: String(localized: "Mix"), title: mix.title)
+            // Nonstop isn't a mix: its infinity stands alone where the label would be.
+            template = .mix(kicker: mix.id == "aura.nonstop" ? "" : String(localized: "Mix"), title: mix.title)
         }
     }
 

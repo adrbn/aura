@@ -444,19 +444,6 @@ struct HomeView: View {
                                 }
                             } label: {
                                 EditorialMixCover(mix: mix, size: coverSize, cornerRadius: Self.coverRadius)
-                                    .overlay(alignment: .topTrailing) {
-                                        if player.isNonstop {
-                                            Image(systemName: "waveform")
-                                                .font(.system(size: coverSize * 0.09, weight: .bold))
-                                                .foregroundStyle(.white)
-                                                .symbolEffect(.variableColor.iterative, isActive: player.isPlaying)
-                                                .padding(coverSize * 0.045)
-                                                .background(.black.opacity(0.55), in: Circle())
-                                                .padding(coverSize * 0.05)
-                                                .transition(.opacity)
-                                        }
-                                    }
-                                    .animation(.easeOut(duration: 0.25), value: player.isNonstop)
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel(Text("Nonstop"))

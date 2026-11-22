@@ -108,7 +108,7 @@ struct CoverLockup: View {
         HStack(alignment: .center, spacing: cap * 0.6) {
             if let symbol {
                 Image(systemName: symbol)
-                    .font(.system(size: cap * 1.5, weight: .heavy))
+                    .font(.system(size: cap * (label.isEmpty ? 2.4 : 1.5), weight: .heavy))
                     .foregroundStyle(mark)
                     .frame(height: cap * 1.3)
             } else {
