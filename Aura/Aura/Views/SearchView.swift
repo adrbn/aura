@@ -134,7 +134,7 @@ struct SearchResultsContainer: View {
         .environment(\.defaultMinListRowHeight, 0)
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.never)
+        .scrollDismissesKeyboard(.immediately)
         // No page colour of its own: the host paints it, with the tab-root glow at its top
         // (`tabRootCanvas`), which an opaque background here would hide.
         .task { SearchIndex.shared.prefetchIfNeeded() }

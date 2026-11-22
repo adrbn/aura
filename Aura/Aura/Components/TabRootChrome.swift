@@ -380,45 +380,65 @@ struct SearchFieldBar: View {
     @ScaledMetric(relativeTo: .body) private var height: CGFloat = 46
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-            TextField(prompt, text: $text)
-                .focused($isFocused)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .submitLabel(.search)
-            if !text.isEmpty {
-                // A word, not the 16pt system ⓧ. That glyph is a ~22pt target inside a
-                // 44pt row — small enough to miss, and repeatedly — where a label reads
-                // at a glance, translates with the rest of the UI and is twice as wide.
-                // Clearing keeps the keyboard up: emptying the field is the start of the
-                // next search, not the end of this one.
+        HStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField(prompt, text: $text)
+                    .focused($isFocused)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .submitLabel(.search)
+                if !text.isEmpty {
+                    // A word, not the 16pt system ⓧ. That glyph is a ~22pt target inside a
+                    // 44pt row — small enough to miss, and repeatedly — where a label reads
+                    // at a glance, translates with the rest of the UI and is twice as wide.
+                    // Clearing keeps the keyboard up: emptying the field is the start of the
+                    // next search, not the end of this one.
+                    Button {
+                        text = ""
+                        isFocused = true
+                    } label: {
+                        Text("Clear")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(accentColor)
+                            .padding(.leading, 10)
+                            // The box's full height is its target, without making the box taller.
+                            .frame(maxHeight: .infinity)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear search")
+                }
+            }
+            .padding(.horizontal, 12)
+            .frame(height: height)
+            .background(Color.themeSecondaryBg, in: RoundedRectangle(cornerRadius: 12))
+            // Only the text itself used to take a tap: the magnifier, the padding and every
+            // gap between them were dead, so aiming at the box could leave the keyboard shut.
+            // The whole box is one target, focused or not, and it clears 44pt tall.
+            .contentShape(RoundedRectangle(cornerRadius: 12))
+            .onTapGesture { isFocused = true }
+
+            if isFocused {
                 Button {
                     text = ""
-                    isFocused = true
+                    isFocused = false
                 } label: {
-                    Text("Clear")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(accentColor)
-                        .padding(.leading, 10)
-                        // The box's full height is its target, without making the box taller.
-                        .frame(maxHeight: .infinity)
-                        .contentShape(Rectangle())
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .frame(width: height, height: height)
+                        .background(Color.themeSecondaryBg, in: Circle())
+                        .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Clear search")
+                .accessibilityLabel("Cancel")
+                .transition(.scale(scale: 0.8).combined(with: .opacity))
             }
         }
-        .padding(.horizontal, 12)
-        .frame(height: height)
-        .background(Color.themeSecondaryBg, in: RoundedRectangle(cornerRadius: 12))
-        // Only the text itself used to take a tap: the magnifier, the padding and every
-        // gap between them were dead, so aiming at the box could leave the keyboard shut.
-        // The whole box is one target, focused or not, and it clears 44pt tall.
-        .contentShape(RoundedRectangle(cornerRadius: 12))
-        .onTapGesture { isFocused = true }
         .padding(.horizontal, 16)
+        .animation(.snappy(duration: 0.2), value: isFocused)
     }
 }
 

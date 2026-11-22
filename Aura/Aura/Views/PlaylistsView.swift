@@ -298,6 +298,7 @@ struct PlaylistsView: View {
                     ListEndSpacer()
                 }
                 .scrollIndicators(.hidden)
+                .scrollDismissesKeyboard(.immediately)
                 // Swipe right inside a folder to go back up, as the back gesture does elsewhere.
                 .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { value in
                     guard !folder.isEmpty, !isSelecting,
