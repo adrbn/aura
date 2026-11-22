@@ -71,12 +71,10 @@ struct PlaylistsView: View {
     }
 
     var pinnedPlaylists: [Playlist] {
-        // Without a pinned row, Liked Songs leads the grid instead of sitting alone in one.
         guard pinnedOnTop else { return [] }
-        let liked = filteredPlaylists.filter(\.isLikedSongs)
-        let pinned = filteredPlaylists.filter { appSettings.isPinned($0.id) && !$0.isLikedSongs }
+        let pinned = filteredPlaylists.filter { appSettings.isPinned($0.id) }
         let order = appSettings.pinnedPlaylistOrder
-        return liked + pinned.sorted { a, b in
+        return pinned.sorted { a, b in
             let ia = order.firstIndex(of: a.id) ?? Int.max
             let ib = order.firstIndex(of: b.id) ?? Int.max
             return ia < ib
@@ -89,8 +87,7 @@ struct PlaylistsView: View {
             ($0.comment ?? "").localizedCaseInsensitiveContains(searchText)
         }
         let unpinned = filtered.filter { !isOnTop($0) }
-        let liked = !pinnedOnTop && searchText.isEmpty && folder.isEmpty ? filtered.filter(\.isLikedSongs) : []
-        return liked + sortPlaylists(searchText.isEmpty ? folderLevel(unpinned).loose : unpinned)
+        return sortPlaylists(searchText.isEmpty ? folderLevel(unpinned).loose : unpinned)
     }
 
     /// The folders at this level, from playlists named "Folder/Name", as other apps do.
@@ -99,7 +96,7 @@ struct PlaylistsView: View {
     }
 
     private func isOnTop(_ playlist: Playlist) -> Bool {
-        playlist.isLikedSongs || (pinnedOnTop && appSettings.isPinned(playlist.id))
+        pinnedOnTop && appSettings.isPinned(playlist.id)
     }
 
     /// Splits the playlists under `folder` into its subfolders and the playlists right in it.
