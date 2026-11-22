@@ -173920,6 +173920,302 @@
           }
         }
       }
+    },
+    "Listening History": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historial d'escolta"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historie poslechu"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyttehistorik"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hörverlauf"
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ιστορικό ακρόασης"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historial de escucha"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kuunteluhistoria"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historique d'écoute"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cronologia ascolti"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再生履歴"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "청취 기록"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyttehistorikk"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luistergeschiedenis"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Historia słuchania"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histórico de audição"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Histórico de audição"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Istoric ascultări"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "История прослушиваний"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyssningshistorik"
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ประวัติการฟัง"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dinleme geçmişi"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Історія прослуховувань"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收听记录"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收聽記錄"
+          }
+        }
+      }
+    },
+    "Your server sends your scrobbles itself; these accounts only feed your Wrapped. ListenBrainz is free and the better choice: from 1 December 2026, a Last.fm API key only works with a Last.fm Pro subscription, paid to Last.fm.": {
+      "localizations": {
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El teu servidor envia els scrobbles ell mateix; aquests comptes només alimenten el teu Wrapped. ListenBrainz és gratuït i la millor opció: des de l'1 de desembre de 2026, una clau d'API de Last.fm només funciona amb una subscripció Last.fm Pro, pagada a Last.fm."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrobbly odesílá sám tvůj server; tyto účty slouží jen pro Wrapped. ListenBrainz je zdarma a lepší volba: od 1. prosince 2026 funguje klíč API Last.fm jen s předplatným Last.fm Pro, placeným Last.fm."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Din server sender selv dine scrobbles; disse konti bruges kun til din Wrapped. ListenBrainz er gratis og det bedste valg: fra 1. december 2026 virker en Last.fm-API-nøgle kun med et Last.fm Pro-abonnement, betalt til Last.fm."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Server sendet deine Scrobbles selbst; diese Konten speisen nur deinen Wrapped. ListenBrainz ist kostenlos und die bessere Wahl: Ab dem 1. Dezember 2026 funktioniert ein Last.fm-API-Schlüssel nur mit einem Last.fm-Pro-Abo, bezahlt an Last.fm."
+          }
+        },
+        "el": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ο διακομιστής σου στέλνει μόνος του τα scrobbles· αυτοί οι λογαριασμοί τροφοδοτούν μόνο το Wrapped σου. Το ListenBrainz είναι δωρεάν και η καλύτερη επιλογή: από την 1η Δεκεμβρίου 2026, ένα κλειδί API του Last.fm λειτουργεί μόνο με συνδρομή Last.fm Pro, που πληρώνεται στο Last.fm."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu servidor envía los scrobbles por sí mismo; estas cuentas solo alimentan tu Wrapped. ListenBrainz es gratis y la mejor opción: desde el 1 de diciembre de 2026, una clave de API de Last.fm solo funciona con una suscripción Last.fm Pro, pagada a Last.fm."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Palvelimesi lähettää scrobblet itse; nämä tilit ovat vain Wrappedia varten. ListenBrainz on ilmainen ja parempi valinta: 1.12.2026 alkaen Last.fm-API-avain toimii vain Last.fm Pro -tilauksella, joka maksetaan Last.fm:lle."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton serveur envoie lui-même tes scrobbles ; ces comptes ne servent qu'à ton Wrapped. ListenBrainz est gratuit et le meilleur choix : à partir du 1er décembre 2026, une clé API Last.fm ne fonctionne qu'avec un abonnement Last.fm Pro, payé à Last.fm."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Il tuo server invia gli scrobble da sé; questi account servono solo al tuo Wrapped. ListenBrainz è gratuito e la scelta migliore: dal 1° dicembre 2026 una chiave API di Last.fm funziona solo con un abbonamento Last.fm Pro, pagato a Last.fm."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrobbleはサーバーが自分で送信します。これらのアカウントはWrappedにのみ使われます。ListenBrainzは無料でおすすめです。2026年12月1日から、Last.fmのAPIキーはLast.fmに支払うLast.fm Proの購読がないと使えません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "스크로블은 서버가 직접 보냅니다. 이 계정들은 Wrapped에만 쓰입니다. ListenBrainz는 무료이며 더 나은 선택입니다. 2026년 12월 1일부터 Last.fm API 키는 Last.fm에 결제하는 Last.fm Pro 구독이 있어야만 작동합니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serveren din sender scrobblene selv; disse kontoene brukes bare til Wrapped. ListenBrainz er gratis og det beste valget: fra 1. desember 2026 virker en Last.fm-API-nøkkel bare med et Last.fm Pro-abonnement, betalt til Last.fm."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je server verstuurt je scrobbles zelf; deze accounts voeden alleen je Wrapped. ListenBrainz is gratis en de betere keuze: vanaf 1 december 2026 werkt een Last.fm-API-sleutel alleen met een Last.fm Pro-abonnement, betaald aan Last.fm."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrobble wysyła sam twój serwer; te konta służą tylko do Wrapped. ListenBrainz jest darmowy i to lepszy wybór: od 1 grudnia 2026 klucz API Last.fm działa tylko z subskrypcją Last.fm Pro, opłacaną w Last.fm."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seu servidor envia os scrobbles sozinho; estas contas só alimentam seu Wrapped. ListenBrainz é grátis e a melhor escolha: a partir de 1º de dezembro de 2026, uma chave de API do Last.fm só funciona com uma assinatura Last.fm Pro, paga ao Last.fm."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O teu servidor envia os scrobbles sozinho; estas contas só alimentam o teu Wrapped. O ListenBrainz é gratuito e a melhor escolha: a partir de 1 de dezembro de 2026, uma chave de API do Last.fm só funciona com uma subscrição Last.fm Pro, paga ao Last.fm."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serverul tău trimite singur scrobble-urile; aceste conturi servesc doar pentru Wrapped. ListenBrainz este gratuit și alegerea mai bună: din 1 decembrie 2026, o cheie API Last.fm funcționează doar cu un abonament Last.fm Pro, plătit către Last.fm."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скробблы отправляет сам сервер; эти аккаунты нужны только для Wrapped. ListenBrainz бесплатен и лучше: с 1 декабря 2026 года ключ API Last.fm работает только с подпиской Last.fm Pro, оплачиваемой Last.fm."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Din server skickar dina scrobbles själv; de här kontona används bara till din Wrapped. ListenBrainz är gratis och det bättre valet: från 1 december 2026 fungerar en Last.fm-API-nyckel bara med ett Last.fm Pro-abonnemang, betalt till Last.fm."
+          }
+        },
+        "th": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "เซิร์ฟเวอร์ของคุณส่ง scrobble เอง บัญชีเหล่านี้ใช้สำหรับ Wrapped เท่านั้น ListenBrainz ฟรีและเป็นตัวเลือกที่ดีกว่า: ตั้งแต่ 1 ธันวาคม 2026 คีย์ API ของ Last.fm จะใช้ได้เฉพาะกับการสมัคร Last.fm Pro ที่ชำระให้ Last.fm"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrobble'larını sunucun kendisi gönderir; bu hesaplar yalnızca Wrapped için kullanılır. ListenBrainz ücretsiz ve daha iyi seçenek: 1 Aralık 2026'dan itibaren bir Last.fm API anahtarı yalnızca Last.fm'e ödenen bir Last.fm Pro aboneliğiyle çalışır."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скроблі надсилає сам сервер; ці акаунти потрібні лише для Wrapped. ListenBrainz безкоштовний і кращий вибір: з 1 грудня 2026 року ключ API Last.fm працює лише з підпискою Last.fm Pro, яку оплачують Last.fm."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的服务器会自己发送 scrobble；这些账户只用于你的 Wrapped。ListenBrainz 免费，是更好的选择：自 2026 年 12 月 1 日起，Last.fm API 密钥仅在付费给 Last.fm 的 Last.fm Pro 订阅下可用。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的伺服器會自己傳送 scrobble；這些帳號只用於你的 Wrapped。ListenBrainz 免費，是更好的選擇：自 2026 年 12 月 1 日起，Last.fm API 金鑰僅在付費給 Last.fm 的 Last.fm Pro 訂閱下可用。"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

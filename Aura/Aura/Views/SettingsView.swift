@@ -180,8 +180,7 @@ struct SettingsView: View {
                 lyricsSection
                 playbackSection
                 equalizerSection
-                lastfmSection
-                listenbrainzSection
+                listeningHistorySection
                 madeForYouSection
                 wrappedSection
                 radarSection
@@ -473,6 +472,45 @@ struct SettingsView: View {
     /// Connected and not being changed: one line saying so, instead of the form.
     private var lastfmShowsAccount: Bool { appSettings.lastfmConfigured && !lfEditing }
 
+    /// Both services on one level, each set on its own page, so the forms don't sit among
+    /// the rows of this list.
+    private var listeningHistorySection: some View {
+        Section {
+            NavigationLink {
+                Form { lastfmSection }
+                    .navigationTitle("Last.fm")
+                    .navigationBarTitleDisplayMode(.inline)
+            } label: {
+                LabeledContent("Last.fm") {
+                    if appSettings.lastfmConfigured {
+                        Label(appSettings.lastfmUsername, systemImage: "checkmark.seal.fill")
+                            .labelStyle(SealLabelStyle())
+                    } else {
+                        Text("Off")
+                    }
+                }
+            }
+            NavigationLink {
+                Form { listenbrainzSection }
+                    .navigationTitle("ListenBrainz")
+                    .navigationBarTitleDisplayMode(.inline)
+            } label: {
+                LabeledContent("ListenBrainz") {
+                    if appSettings.listenbrainzUsername.isEmpty {
+                        Text("Off")
+                    } else {
+                        Label(appSettings.listenbrainzUsername, systemImage: "checkmark.seal.fill")
+                            .labelStyle(SealLabelStyle())
+                    }
+                }
+            }
+        } header: {
+            Text("Listening History")
+        } footer: {
+            Text("Your server sends your scrobbles itself; these accounts only feed your Wrapped. ListenBrainz is free and the better choice: from 1 December 2026, a Last.fm API key only works with a Last.fm Pro subscription, paid to Last.fm.")
+        }
+    }
+
     private var lastfmSection: some View {
         Section {
             if lastfmShowsAccount {
@@ -676,14 +714,18 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder
     private var downloadsSection: some View {
-        Section("Downloads") {
+        Section {
             NavigationLink {
                 DownloadManagerView()
             } label: {
                 Label("Download Manager", systemImage: "arrow.down.circle")
             }
-
+        } header: {
+            Text("Downloads")
+        }
+        Section {
             Picker("Download Quality", selection: $appSettings.downloadQuality) {
                 ForEach(DownloadQuality.allCases, id: \.self) { q in
                     Text(LocalizedStringKey(q.rawValue)).tag(q)
@@ -1225,7 +1267,6 @@ private struct LyricsOnServerRows: View {
     @AppStorage(LyricsOnServer.userKey) private var user = ""
     @State private var password = KeychainHelper.loadPassword(for: LyricsOnServer.passwordAccount) ?? ""
 
-    @State private var showsSignIn = false
     /// The last Test Sign-In: nil while untested or under way, then whether it worked.
     @State private var testResult: Result<Void, Error>?
     @State private var isTesting = false
@@ -1236,17 +1277,29 @@ private struct LyricsOnServerRows: View {
             // Navidrome only reads the music: the .lrc is written by File Browser, which runs
             // beside it. Its address and sign-in default to the server's, so there's nothing to
             // type when they match; the fields stay one tap away for when they don't.
-            Text("Navidrome can't write files, so the lyrics go through File Browser on the same machine. Aura uses your server's address and sign-in unless you set others.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            DisclosureGroup("File Browser Sign-In", isExpanded: $showsSignIn) {
-                fields
+            NavigationLink {
+                Form {
+                    Section {
+                        fields
+                    } footer: {
+                        Text("Navidrome can't write files, so the lyrics go through File Browser on the same machine. Aura uses your server's address and sign-in unless you set others.")
+                    }
+                    Section { result }
+                }
+                .navigationTitle("File Browser Sign-In")
+                .navigationBarTitleDisplayMode(.inline)
+            } label: {
+                LabeledContent("File Browser Sign-In") {
+                    switch testResult {
+                    case .success: Image(systemName: "checkmark.seal.fill").foregroundStyle(.green)
+                    case .failure: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                    case nil: if isTesting { ProgressView() }
+                    }
+                }
             }
-            .onAppear { showsSignIn = !address.isEmpty || !user.isEmpty }
             // Tried as soon as it's on, so the server's own sign-in needs nothing typed;
-            // the fields open only when it's refused.
+            // a refusal shows on the row, and the fields are one tap away.
             .task(id: isOn) { if testResult == nil { await test() } }
-            result
         }
     }
 
@@ -1270,7 +1323,7 @@ private struct LyricsOnServerRows: View {
         isTesting = true
         testResult = nil
         do { try await LyricsOnServer.testSignIn(); testResult = .success(()) }
-        catch { testResult = .failure(error); showsSignIn = true }
+        catch { testResult = .failure(error) }
         isTesting = false
         if case .success = testResult { await LyricsOnServer.sendKeptOnce() }
     }
@@ -1307,6 +1360,16 @@ private struct LyricsOnServerRows: View {
     }
 }
 #endif
+
+/// The account name with the green seal of a working connection after it.
+private struct SealLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 6) {
+            configuration.title
+            configuration.icon.foregroundStyle(.green)
+        }
+    }
+}
 
 /// Each row of the sections it holds slides and fades in at the screen's edges, as the rows of
 /// the other tabs do. Rebuilt section by section: wrapped whole, a section stops being one.
