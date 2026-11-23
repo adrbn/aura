@@ -9,9 +9,11 @@ struct TVNowPlayingView: View {
     /// Left alone, the screen keeps only the cover, the song and the lyrics: a picture for the room.
     @State private var idle = false
     @State private var lastInput = Date()
+    @State private var showQueue = false
     private static let idleDelay: TimeInterval = 5
+    private static let queueWidth: CGFloat = 760
 
-    private enum Control: Hashable { case like, shuffle, previous, playPause, next, repeatMode, lyrics
+    private enum Control: Hashable { case like, shuffle, previous, playPause, next, repeatMode, lyrics, queue
         /// The whole screen, focused while the controls are away so a press brings them back.
         case surface }
 
@@ -21,11 +23,27 @@ struct TVNowPlayingView: View {
             // Cover and lyrics as one centred group, the same room on either side of the screen.
             HStack(alignment: .center, spacing: 120) {
                 controls
-                if hasLyrics {
+                if hasLyrics && !showQueue {
                     TVLyricsView().frame(width: 820, height: 640)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // The queue pushes the cover aside instead of covering it.
+            .padding(.trailing, showQueue ? Self.queueWidth : 0)
+            .disabled(showQueue)
+
+            // Up Next slides in from the right edge, over the lyrics, as on the Mac.
+            if showQueue {
+                TVUpNextView { showQueue = false }
+                    .frame(width: Self.queueWidth)
+                    .frame(maxHeight: .infinity)
+                    .background(.black.opacity(0.6))
+                    .background(.ultraThinMaterial)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .transition(.move(edge: .trailing))
+                    .focusSection()
+                    .onExitCommand { showQueue = false }
+            }
         }
         .focusable(idle)
         .focused($focus, equals: .surface)
@@ -33,12 +51,18 @@ struct TVNowPlayingView: View {
         .onTapGesture { poke() }
         .onMoveCommand { _ in poke() }
         .onPlayPauseCommand { poke(); player.togglePlayPause() }
-        .onAppear { focus = .playPause }
+        .onAppear {
+            focus = .playPause
+            #if DEBUG
+            // `-tvQueue` opens Up Next, for screenshots in the simulator.
+            if CommandLine.arguments.contains("-tvQueue") { showQueue = true }
+            #endif
+        }
         .onChange(of: focus) { _, new in if new != .surface { poke() } }
         .task {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
-                if !idle, Date().timeIntervalSince(lastInput) > Self.idleDelay {
+                if !idle, !showQueue, Date().timeIntervalSince(lastInput) > Self.idleDelay {
                     idle = true
                     focus = .surface
                 }
@@ -46,6 +70,8 @@ struct TVNowPlayingView: View {
         }
         .animation(.easeInOut(duration: 0.6), value: idle)
         .animation(.easeInOut(duration: 0.4), value: hasLyrics)
+        .animation(.easeInOut(duration: 0.35), value: showQueue)
+        .onChange(of: showQueue) { _, open in if !open { lastInput = Date(); focus = .queue } }
     }
 
     private var lyricsAvailable: Bool { !player.lyrics.isEmpty && !player.lyricsAreInstrumental }
@@ -77,17 +103,23 @@ struct TVNowPlayingView: View {
                 TVProgress(time: player.currentTime, duration: player.duration).frame(width: 560)
                     .transition(.opacity)
 
-                HStack(spacing: 14) {
-                    transport(player.currentSong?.isStarred == true ? "heart.fill" : "heart", .like) { player.toggleFavorite() }
+                // Three either side of play/pause, so it stands at the centre. The heart is a
+                // long press on play/pause, as the TV's own music app keeps it off the row.
+                HStack(spacing: 6) {
+                    transport("quote.bubble", .lyrics, on: showLyrics && lyricsAvailable) { showLyrics.toggle() }
                     transport("shuffle", .shuffle, on: player.isShuffled) { player.toggleShuffle() }
                     transport("backward.fill", .previous) { player.previous() }
                     transport(player.isPlaying ? "pause.fill" : "play.fill", .playPause) { player.togglePlayPause() }
+                        .contextMenu {
+                            Button(player.currentSong?.isStarred == true ? "Unfavorite" : "Favorite",
+                                   systemImage: player.currentSong?.isStarred == true ? "heart.slash" : "heart") {
+                                player.toggleFavorite()
+                            }
+                        }
                     transport("forward.fill", .next) { player.next() }
                     transport(player.repeatMode.systemImage, .repeatMode, on: player.repeatMode != .off) { player.cycleRepeat() }
-                    // Always there, dimmed when the song has none, so the row stays centred under the bar.
-                    transport("quote.bubble", .lyrics, on: showLyrics && lyricsAvailable) { showLyrics.toggle() }
+                    transport("list.bullet", .queue) { showQueue = true }
                 }
-                .frame(width: 560)
                 .transition(.opacity)
             }
         }
@@ -99,11 +131,63 @@ struct TVNowPlayingView: View {
         } label: {
             Image(systemName: symbol)
                 .font(.system(size: control == .playPause ? 34 : 24, weight: .semibold))
-                .frame(width: control == .playPause ? 80 : 64, height: control == .playPause ? 80 : 64)
+                .frame(width: control == .playPause ? 80 : 60, height: control == .playPause ? 80 : 60)
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(TVQuietButtonStyle(dimmed: on == false))
         .focused($focus, equals: control)
+    }
+}
+
+/// What plays next: tap a song to jump to it, hold it to take it out of the queue.
+private struct TVUpNextView: View {
+    let close: () -> Void
+    @State private var player = AudioPlayer.shared
+    @FocusState private var focused: Int?
+
+    private var upcoming: [(index: Int, song: Song)] {
+        let start = player.queueIndex + 1
+        guard start < player.queue.count else { return [] }
+        return (start..<player.queue.count).map { ($0, player.queue[$0]) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 30) {
+            HStack {
+                Text("Up Next").font(.system(size: 48, weight: .bold))
+                Spacer()
+                if !upcoming.isEmpty { Button("Clear") { player.clearUpNext() } }
+            }
+            if upcoming.isEmpty {
+                Text("Nothing queued").font(.system(size: 30)).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(upcoming, id: \.index) { item in
+                            TVSongRow(song: item.song, showsArtwork: true) {
+                                player.playSong(item.song, fromQueue: player.queue, startIndex: item.index, source: .queue)
+                                close()
+                            }
+                            .focused($focused, equals: item.index)
+                            .contextMenu {
+                                Button("Remove", systemImage: "minus.circle", role: .destructive) {
+                                    player.removeFromQueue(at: item.index)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.vertical, 20)
+                }
+                // Songs fade out at the bottom edge, where the list carries on.
+                .mask(LinearGradient(stops: [.init(color: .black, location: 0.92), .init(color: .clear, location: 1)],
+                                     startPoint: .top, endPoint: .bottom))
+            }
+        }
+        .padding(.horizontal, 60)
+        .padding(.vertical, 70)
+        // Opens on the next song rather than on Clear.
+        .onAppear { focused = upcoming.first?.index }
     }
 }
 

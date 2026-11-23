@@ -89,10 +89,23 @@ struct TVSongRow: View {
                 Spacer(minLength: 20)
                 Text(song.durationFormatted).font(.system(size: 22).monospacedDigit()).foregroundStyle(.secondary)
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 20)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TVRowButtonStyle())
+    }
+}
+
+/// A list row under focus: a soft light band behind it, the text staying white, instead of
+/// the system's white platter that turns the row into a bright block.
+struct TVRowButtonStyle: ButtonStyle {
+    @Environment(\.isFocused) private var focused
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(focused ? 0.16 : 0)))
+            .scaleEffect(configuration.isPressed ? 0.98 : focused ? 1.02 : 1)
+            .animation(.easeOut(duration: 0.2), value: focused)
     }
 }
 
