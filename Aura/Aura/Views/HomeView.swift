@@ -330,6 +330,7 @@ struct HomeView: View {
                             part
                         }
                     }
+                    .lineLimit(1).minimumScaleFactor(0.8)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal)

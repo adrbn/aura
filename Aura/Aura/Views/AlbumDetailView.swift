@@ -88,9 +88,14 @@ struct AlbumDetailView: View {
                                     player.playSong(songs[0], fromQueue: songs, source: .album(id: album.id, name: album.name))
                                 }
                             } label: {
-                                Label("Play", systemImage: "play.fill")
-                                    .lineLimit(1).minimumScaleFactor(0.8)
+                                // Icon and word held close, the word alone shrinking: a Label kept its wide
+                                // icon gap and cut "Reproducir" and "Abspielen" off at the pill's end.
+                                HStack(spacing: 6) {
+                                    Image(systemName: "play.fill")
+                                    Text("Play").lineLimit(1).minimumScaleFactor(0.6)
+                                }
                                     .font(.headline)
+                                    .padding(.horizontal, 8)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 40)
                                     .background(accentColor)

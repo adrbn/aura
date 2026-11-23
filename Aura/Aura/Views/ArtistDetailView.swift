@@ -57,7 +57,9 @@ struct ArtistDetailView: View {
                         }
                     } label: {
                         Label("Instant Mix", systemImage: "wand.and.stars")
+                            .lineLimit(1).minimumScaleFactor(0.75)
                             .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 8)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
                             .background(accentColor)

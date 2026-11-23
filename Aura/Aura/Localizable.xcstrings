@@ -8405,13 +8405,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld lista de reproducción"
+                  "value": "%lld lista"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld listas de reproducción"
+                  "value": "%lld listas"
                 }
               }
             }
@@ -8795,13 +8795,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld λίστα αναπαραγωγής"
+                  "value": "%lld λίστα"
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "%lld λίστες αναπαραγωγής"
+                  "value": "%lld λίστες"
                 }
               }
             }
@@ -33362,7 +33362,7 @@
         "ca": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mix instantani"
+            "value": "Mix ràpid"
           }
         },
         "de": {
@@ -33374,7 +33374,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mix instantáneo"
+            "value": "Mix rápido"
           }
         },
         "fr": {
@@ -33404,7 +33404,7 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Мгновенный микс"
+            "value": "Быстрый микс"
           }
         },
         "sv": {
@@ -33416,13 +33416,13 @@
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mistura instantânea"
+            "value": "Mix rápido"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mix instantâneo"
+            "value": "Mix rápido"
           }
         },
         "pl": {
@@ -33464,7 +33464,7 @@
         "da": {
           "stringUnit": {
             "state": "translated",
-            "value": "Øjeblikkeligt mix"
+            "value": "Hurtigmix"
           }
         },
         "fi": {
