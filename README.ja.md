@@ -4,7 +4,7 @@
 
 # Aura
 
-**あなたの音楽サーバを、iPhone、iPad、Apple Watch、Mac で。** Navidrome と Subsonic のためのネイティブプレーヤーです。
+**あなたの音楽サーバを、iPhone、iPad、Apple Watch、Mac、Apple TV で。** Navidrome と Subsonic のためのネイティブプレーヤーです。
 ロスレスのストリーミング、一語ずつ光る歌詞、実際に聴いている曲から作るミックス、そしてライブラリ全体をオフラインで。
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="App Store からダウンロード" height="48"></a>&nbsp;&nbsp;
@@ -25,6 +25,7 @@
 [![iOS / iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-を入手)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20%E3%83%97%E3%83%AC%E3%83%93%E3%83%A5%E3%83%BC-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-を入手)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-を入手)
+[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
 [![Navidrome / Subsonic](https://img.shields.io/badge/%E3%82%B5%E3%83%BC%E3%83%90-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#aura-を入手)
 [![navidrome.org に掲載](https://img.shields.io/badge/%E6%8E%B2%E8%BC%89-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![トラッキングなし](https://img.shields.io/badge/%E3%83%88%E3%83%A9%E3%83%83%E3%82%AD%E3%83%B3%E3%82%B0-%E3%81%AA%E3%81%97-EB534D?style=flat-square&labelColor=121212)](#プライバシー)
@@ -123,6 +124,15 @@ Aura はあなた自身のサーバにある音楽を再生します。Navidrome
   <img src="docs/assets/mac-2-album.webp" width="49%" alt="Navidrome のデモサーバで動く Mac 版 Aura：曲と評価が並ぶアルバムページと、右側のパネルに開いた次はこちら" />
 </p>
 <p align="center"><sub>Mac の画面は Navidrome の公開デモサーバを使っています。</sub></p>
+
+**Apple TV**（[TestFlight](https://testflight.apple.com/join/pEUEBUbm) で公開ベータ、tvOS 26）：ミックスのあるホーム、並べ替えとフィルタのあるライブラリ、検索、そしてぼかしたジャケットの上に全画面で表示される再生中画面。歌詞は曲に合わせて進みます。リモコンに5秒触れないとコントロールが消え、ジャケット、曲名、歌詞だけが残ります。iPhone や Mac から再生して操作できます。
+
+<p align="center">
+  <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Apple TV の Aura：同期歌詞つきの再生中画面、コントロールは非表示" />
+  <img src="docs/assets/tv-2-ambient.webp" width="49%" alt="Apple TV の Aura：歌詞なし、ジャケットと曲名を中央に" /><br>
+  <img src="docs/assets/tv-3-home.webp" width="49%" alt="Apple TV の Aura：ミックスのあるホーム" />
+  <img src="docs/assets/tv-4-library.webp" width="49%" alt="Apple TV の Aura：ライブラリ" />
+</p>
 
 **iPhone Duo**：開くと、再生中はプレーヤーを左に置き、その横に歌詞か再生待ちを表示します。
 

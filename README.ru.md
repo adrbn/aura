@@ -4,7 +4,7 @@
 
 # Aura
 
-**Ваш музыкальный сервер на iPhone, iPad, Apple Watch и Mac.** Нативный плеер для Navidrome и Subsonic:
+**Ваш музыкальный сервер на iPhone, iPad, Apple Watch, Mac и Apple TV.** Нативный плеер для Navidrome и Subsonic:
 стриминг без потерь, тексты, которые загораются слово за словом, миксы из того, что вы действительно слушаете, и вся медиатека офлайн.
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Загрузите в App Store" height="48"></a>&nbsp;&nbsp;
@@ -25,6 +25,7 @@
 [![iOS и iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#где-взять-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20%D0%BF%D1%80%D0%B5%D0%B4%D0%B2%D0%B0%D1%80%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D0%BD%D0%B0%D1%8F%20%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#где-взять-aura)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#где-взять-aura)
+[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
 [![Navidrome / Subsonic](https://img.shields.io/badge/%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#где-взять-aura)
 [![В каталоге navidrome.org](https://img.shields.io/badge/%D0%B2%20%D0%BA%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%D0%B5-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![Без слежки](https://img.shields.io/badge/%D1%81%D0%BB%D0%B5%D0%B6%D0%BA%D0%B0-%D0%BD%D0%B5%D1%82-EB534D?style=flat-square&labelColor=121212)](#конфиденциальность)
@@ -126,6 +127,15 @@ A до Z, интернет-радиостанции вашего сервера,
   <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura для Mac на демо-сервере Navidrome: страница альбома с песнями и оценками, справа открыта панель Далее" />
 </p>
 <p align="center"><sub>Снимки Mac сделаны на публичном демо-сервере Navidrome.</sub></p>
+
+**Apple TV** (публичная бета в [TestFlight](https://testflight.apple.com/join/pEUEBUbm), tvOS 26): «Главная» с миксами, «Медиатека» с сортировкой и фильтрами, поиск и «Исполняется» на весь экран поверх размытой обложки, с текстом, который идёт вместе с песней. Через пять секунд без пульта элементы управления исчезают, и на экране остаются только обложка, песня и текст. iPhone или Mac могут включать на ней музыку и управлять ею.
+
+<p align="center">
+  <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura на Apple TV: «Исполняется» с синхронным текстом, без элементов управления" />
+  <img src="docs/assets/tv-2-ambient.webp" width="49%" alt="Aura на Apple TV: без текста, обложка и песня по центру" /><br>
+  <img src="docs/assets/tv-3-home.webp" width="49%" alt="Aura на Apple TV: «Главная» с миксами" />
+  <img src="docs/assets/tv-4-library.webp" width="49%" alt="Aura на Apple TV: «Медиатека»" />
+</p>
 
 **iPhone Duo**: в раскрытом виде «Исполняется» держит плеер слева, а текст или очередь рядом.
 

@@ -4,7 +4,7 @@
 
 # Aura
 
-**내 음악 서버를 iPhone, iPad, Apple Watch, Mac에서.** Navidrome과 Subsonic을 위한 네이티브 플레이어예요.
+**내 음악 서버를 iPhone, iPad, Apple Watch, Mac, Apple TV에서.** Navidrome과 Subsonic을 위한 네이티브 플레이어예요.
 무손실 스트리밍, 단어마다 밝아지는 가사, 실제로 듣는 음악으로 만드는 믹스, 그리고 보관함 전체를 오프라인으로.
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="App Store에서 다운로드" height="48"></a>&nbsp;&nbsp;
@@ -25,6 +25,7 @@
 [![iOS / iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-받기)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20%EB%AF%B8%EB%A6%AC%20%EB%B3%B4%EA%B8%B0-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-받기)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-받기)
+[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
 [![Navidrome / Subsonic](https://img.shields.io/badge/%EC%84%9C%EB%B2%84-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#aura-받기)
 [![navidrome.org 등재](https://img.shields.io/badge/%EB%93%B1%EC%9E%AC-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![추적 없음](https://img.shields.io/badge/%EC%B6%94%EC%A0%81-%EC%97%86%EC%9D%8C-EB534D?style=flat-square&labelColor=121212)](#개인정보-보호)
@@ -123,6 +124,15 @@ Apple Watch, CarPlay, Mac에 들어와요. 원래 음질 그대로 스트리밍�
   <img src="docs/assets/mac-2-album.webp" width="49%" alt="Navidrome 데모 서버에서 실행 중인 Mac용 Aura: 곡과 평점이 있는 앨범 페이지와 오른쪽 패널에 열린 다음 재생" />
 </p>
 <p align="center"><sub>Mac 캡처는 Navidrome의 공개 데모 서버를 사용했어요.</sub></p>
+
+**Apple TV**([TestFlight](https://testflight.apple.com/join/pEUEBUbm) 공개 베타, tvOS 26): 믹스가 있는 홈, 정렬과 필터가 있는 보관함, 검색, 그리고 흐린 앨범 커버 위에 전체 화면으로 뜨는 지금 재생 중. 가사는 노래에 맞춰 흘러가요. 리모컨을 5초 동안 만지지 않으면 컨트롤이 사라지고 커버, 노래, 가사만 남아요. iPhone이나 Mac에서 재생하고 제어할 수 있어요.
+
+<p align="center">
+  <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Apple TV의 Aura: 동기화된 가사와 지금 재생 중, 컨트롤 숨김" />
+  <img src="docs/assets/tv-2-ambient.webp" width="49%" alt="Apple TV의 Aura: 가사 없이 커버와 노래를 가운데에" /><br>
+  <img src="docs/assets/tv-3-home.webp" width="49%" alt="Apple TV의 Aura: 믹스가 있는 홈" />
+  <img src="docs/assets/tv-4-library.webp" width="49%" alt="Apple TV의 Aura: 보관함" />
+</p>
 
 **iPhone Duo**: 펼치면 지금 재생 중이 플레이어를 왼쪽에 두고 옆에 가사나 대기열을 보여 줘요.
 

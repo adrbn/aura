@@ -4,7 +4,7 @@
 
 # Aura
 
-**Il tuo server musicale, sul tuo iPhone, iPad, Apple Watch e Mac.** Un player nativo per Navidrome e Subsonic:
+**Il tuo server musicale, sul tuo iPhone, iPad, Apple Watch, Mac e Apple TV.** Un player nativo per Navidrome e Subsonic:
 streaming lossless, testi che si accendono parola per parola, mix creati da ciò che ascolti davvero e tutta la tua libreria offline.
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Scarica su App Store" height="48"></a>&nbsp;&nbsp;
@@ -25,6 +25,7 @@ streaming lossless, testi che si accendono parola per parola, mix creati da ciò
 [![iOS e iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#scarica-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20anteprima-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#scarica-aura)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#scarica-aura)
+[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
 [![Navidrome / Subsonic](https://img.shields.io/badge/server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#scarica-aura)
 [![Elencata su navidrome.org](https://img.shields.io/badge/elencata%20su-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![Nessun tracciamento](https://img.shields.io/badge/tracciamento-nessuno-EB534D?style=flat-square&labelColor=121212)](#privacy)
@@ -125,6 +126,15 @@ tuoi AirPods restano con il dispositivo che suona.
   <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura per Mac sul server demo di Navidrome: la pagina di un album con i suoi brani e le valutazioni, e A seguire aperto come pannello a destra" />
 </p>
 <p align="center"><sub>Le schermate del Mac usano il server demo pubblico di Navidrome.</sub></p>
+
+**Apple TV** (beta pubblica su [TestFlight](https://testflight.apple.com/join/pEUEBUbm), tvOS 26): Home con i mix, la Libreria con ordinamenti e filtri, la Ricerca e In riproduzione a schermo intero sulla copertina sfocata, con il testo che segue il brano. Dopo cinque secondi senza telecomando i controlli svaniscono e restano solo copertina, brano e testo. Il tuo iPhone o il tuo Mac possono riprodurre su di essa e controllarla.
+
+<p align="center">
+  <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura su Apple TV: In riproduzione con il testo sincronizzato, controlli nascosti" />
+  <img src="docs/assets/tv-2-ambient.webp" width="49%" alt="Aura su Apple TV: senza testo, copertina e brano al centro" /><br>
+  <img src="docs/assets/tv-3-home.webp" width="49%" alt="Aura su Apple TV: Home con i mix" />
+  <img src="docs/assets/tv-4-library.webp" width="49%" alt="Aura su Apple TV: la Libreria" />
+</p>
 
 **iPhone Duo**: aperto, In riproduzione tiene il player a sinistra con il testo o la coda accanto.
 

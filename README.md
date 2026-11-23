@@ -4,7 +4,7 @@
 
 # Aura
 
-**Your music server, on your iPhone, iPad, Apple Watch and Mac.** A native player for Navidrome and Subsonic:
+**Your music server, on your iPhone, iPad, Apple Watch, Mac and Apple TV.** A native player for Navidrome and Subsonic:
 lossless streaming, lyrics that light up word by word, mixes built from your own listening, and your whole library offline.
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="Download on the App Store" height="48"></a>&nbsp;&nbsp;
@@ -25,6 +25,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 [![iOS and iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20preview-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
+[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
 [![Navidrome / Subsonic](https://img.shields.io/badge/server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#get-aura)
 [![Listed on navidrome.org](https://img.shields.io/badge/listed%20on-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![No tracking](https://img.shields.io/badge/tracking-none-EB534D?style=flat-square&labelColor=121212)](#privacy)
@@ -124,6 +125,15 @@ over the same Wi-Fi: transport, queue and volume go across, and your AirPods sta
   <img src="docs/assets/mac-2-album.webp" width="49%" alt="Aura for Mac on Navidrome's demo server: an album page with its songs and ratings, and Up Next open as a pane on the right" />
 </p>
 <p align="center"><sub>The Mac captures use Navidrome's public demo server.</sub></p>
+
+**Apple TV** (public beta on [TestFlight](https://testflight.apple.com/join/pEUEBUbm), tvOS 26): Home with the mixes, the Library with its sorts and filters, Search, and Now Playing full screen over the blurred cover, with the lyrics following the song. Left alone for five seconds, the controls fade and the screen keeps only the cover, the song and the lyrics. Your iPhone or your Mac can play on it and control it.
+
+<p align="center">
+  <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura on Apple TV: Now Playing with synced lyrics, the controls faded" />
+  <img src="docs/assets/tv-2-ambient.webp" width="49%" alt="Aura on Apple TV: Now Playing without lyrics, the cover and song centred" /><br>
+  <img src="docs/assets/tv-3-home.webp" width="49%" alt="Aura on Apple TV: Home with the mixes" />
+  <img src="docs/assets/tv-4-library.webp" width="49%" alt="Aura on Apple TV: the Library" />
+</p>
 
 **iPhone Duo**: open, Now Playing keeps the player on the left with the lyrics or the queue beside it.
 

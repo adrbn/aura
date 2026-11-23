@@ -4,7 +4,7 @@
 
 # Aura
 
-**你的音乐服务器，装进你的 iPhone、iPad、Apple Watch 和 Mac。** 一款为 Navidrome 和 Subsonic 打造的原生播放器：
+**你的音乐服务器，装进你的 iPhone、iPad、Apple Watch、Mac 和 Apple TV。** 一款为 Navidrome 和 Subsonic 打造的原生播放器：
 无损串流，逐字点亮的歌词，根据你真实收听生成的混音，以及完整的离线资料库。
 
 <a href="https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github"><img src="docs/assets/badge-appstore-en.svg" alt="在 App Store 下载" height="48"></a>&nbsp;&nbsp;
@@ -25,6 +25,7 @@
 [![iOS / iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#获取-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20%E9%A2%84%E8%A7%88%E7%89%88-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#获取-aura)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#获取-aura)
+[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
 [![Navidrome / Subsonic](https://img.shields.io/badge/%E6%9C%8D%E5%8A%A1%E5%99%A8-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#获取-aura)
 [![已收录于 navidrome.org](https://img.shields.io/badge/%E6%94%B6%E5%BD%95%E4%BA%8E-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![无追踪](https://img.shields.io/badge/%E8%BF%BD%E8%B8%AA-%E6%97%A0-EB534D?style=flat-square&labelColor=121212)](#隐私)
@@ -121,6 +122,15 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
   <img src="docs/assets/mac-2-album.webp" width="49%" alt="在 Navidrome 演示服务器上运行的 Mac 版 Aura：显示歌曲和评分的专辑页面，右侧打开了待播面板" />
 </p>
 <p align="center"><sub>Mac 截图使用的是 Navidrome 的公开演示服务器。</sub></p>
+
+**Apple TV**（[TestFlight](https://testflight.apple.com/join/pEUEBUbm) 公开测试版，tvOS 26）：带混音的首页、可排序和筛选的资料库、搜索，以及铺在模糊封面上的全屏正在播放，歌词随歌曲滚动。五秒不碰遥控器，控制按钮就会淡出，屏幕上只留下封面、歌曲和歌词。你的 iPhone 或 Mac 可以在它上面播放并控制它。
+
+<p align="center">
+  <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Apple TV 上的 Aura：带同步歌词的正在播放，控制按钮已隐藏" />
+  <img src="docs/assets/tv-2-ambient.webp" width="49%" alt="Apple TV 上的 Aura：无歌词，封面和歌曲居中" /><br>
+  <img src="docs/assets/tv-3-home.webp" width="49%" alt="Apple TV 上的 Aura：带混音的首页" />
+  <img src="docs/assets/tv-4-library.webp" width="49%" alt="Apple TV 上的 Aura：资料库" />
+</p>
 
 **iPhone Duo**：展开时，正在播放把播放器放在左侧，旁边显示歌词或待播清单。
 
