@@ -983,8 +983,16 @@ final class DownloadManager: NSObject {
     }
 
     /// Keeps the lyrics found for a downloaded or cached song, so they show with the network off.
+    /// Drops the lyrics kept next to the song, so the next play looks them up again.
+    func forgetLyrics(for songId: String) {
+        try? FileManager.default.removeItem(at: downloadsDirectory.appendingPathComponent("\(songId).lrc"))
+    }
+
     func keepLyrics(_ lines: [LyricsLine], for songId: String) {
-        guard !lines.isEmpty, localLyrics(for: songId) == nil,
+        // A copy kept without timing gives way to a timed one.
+        let kept = localLyrics(for: songId)
+        guard !lines.isEmpty, kept == nil || (kept?.range(of: #"(?m)^\[\d"#, options: .regularExpression) == nil
+                                   && lines.contains(where: { $0.time != nil })),
               isDownloaded(songId) || AudioCacheManager.shared.getCachedSongs().contains(where: { $0.id == songId })
         else { return }
         let text = lines.map { line in

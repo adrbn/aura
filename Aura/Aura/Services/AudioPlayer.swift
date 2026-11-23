@@ -3180,13 +3180,35 @@ final class AudioPlayer {
             // A verdict that can't be shown would otherwise stop the song from being checked again.
             LyricsVersion.forget(song.id)
         }
-        guard await findLyrics(for: song, generation: generation) else { return false }
+        var found = await findLyrics(for: song, generation: generation)
+        if !found { found = await tryLocalLyrics(for: song, generation: generation, plainToo: true) }
+        guard found else { return false }
+        await preferWrittenOutRepeats(for: song, generation: generation)
         await checkVersionIfNeeded(of: song, generation: generation)
         await MainActor.run {
             let lines = generation == self.lyricsGeneration ? self.lyrics : self.aheadLyrics?.lines
             DownloadManager.shared.keepLyrics(lines ?? [], for: song.id)
         }
         return true
+    }
+
+    /// A sheet that sums a repeat up as "x4" can only guess where the later passes fall:
+    /// LRCLIB's, when it writes every pass out with its own time, is shown instead.
+    private func preferWrittenOutRepeats(for song: Song, generation: Int) async {
+        let lines = await MainActor.run {
+            generation == self.lyricsGeneration ? self.lyrics : (self.aheadLyrics?.lines ?? [])
+        }
+        guard !isEffectivelyOffline, lines.contains(where: { LyricWordTiming.repeated($0.text) != nil }),
+              let artist = song.artist, !artist.isEmpty,
+              let result = await lrclibExactMatch(artist: artist, title: song.title, album: song.album ?? "",
+                                                  duration: song.duration ?? 0),
+              let synced = result["syncedLyrics"] as? String, !synced.isEmpty,
+              !synced.split(separator: "\n").contains(where: { LyricWordTiming.repeated(String($0)) != nil })
+        else { return }
+        AppLogger.shared.log("🎵 Lyrics: \(song.title) — the sheet found sums a repeat up; LRCLIB's writes it out")
+        guard await applyLRCLIBResult(result, generation: generation) else { return }
+        // The kept copy is the summed-up sheet: it gives way, so the one shown now is kept instead.
+        await MainActor.run { DownloadManager.shared.forgetLyrics(for: song.id) }
     }
 
     /// Checks the version once a song, when its title names one and the network is there.
@@ -3313,6 +3335,8 @@ final class AudioPlayer {
     /// Back to the lyrics as found.
     func restoreFoundLyrics(for song: Song) {
         LyricsOverrides.remove(song.id)
+        // The copy kept with a download would otherwise come straight back as "found".
+        DownloadManager.shared.forgetLyrics(for: song.id)
         guard LyricsOnServer.isEnabled else {
             if currentSong?.id == song.id { refetchLyrics() }
             return
@@ -3329,11 +3353,13 @@ final class AudioPlayer {
     }
 
     /// Reads the `.lrc` saved next to a downloaded song.
-    private func tryLocalLyrics(for song: Song, generation: Int) async -> Bool {
+    private func tryLocalLyrics(for song: Song, generation: Int, plainToo: Bool = false) async -> Bool {
         guard let text = await MainActor.run(body: { DownloadManager.shared.localLyrics(for: song.id) })
         else { return false }
         let parsed = parseLRC(text)
         guard !parsed.isEmpty else { return false }
+        // A copy kept without timing waits behind the sources that may have the timed sheet.
+        guard plainToo || isEffectivelyOffline || parsed.contains(where: { $0.time != nil }) else { return false }
         AppLogger.shared.log("🎵 Lyrics from the downloaded copy: \(parsed.count) lines")
         // A `.lrc` carrying timestamps follows the song; one without them is a plain
         // sheet, and `legacy` is what this app calls that.

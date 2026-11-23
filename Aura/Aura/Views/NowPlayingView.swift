@@ -916,7 +916,8 @@ struct NowPlayingView: View {
 
     private func lyricLineText(line: LyricsLine, index: Int, isCurrent: Bool) -> Text {
         guard let words = karaokeWords(line: line, index: index, isCurrent: isCurrent) else {
-            return Text(line.text)
+            guard let marked = LyricWordTiming.repeated(line.text) else { return Text(line.text) }
+            return Text(marked.phrase + " ") + Self.repeatMarker(marked.marker)
         }
         // A switch per word, deliberately, and not a fill travelling through the glyphs.
         // That was built — a TextRenderer sweeping a soft gradient front across each word —
@@ -924,8 +925,14 @@ struct NowPlayingView: View {
         // of it is only the last moment: a word still *arrives* rather than snapping on.
         // The rest stay dimmed but legible, so the eye can read ahead.
         return words.reduce(Text("")) { partial, word in
-            partial + Text(word.text).foregroundColor(.white.opacity(wordBrightness(word)))
+            let text = word.marker ? Self.repeatMarker(word.text) : Text(word.text)
+            return partial + text.foregroundColor(.white.opacity(wordBrightness(word)))
         }
+    }
+
+    /// "x4" after a repeated line, kept but small: it says how often, it isn't sung.
+    private static func repeatMarker(_ marker: String) -> Text {
+        Text(marker).font(.system(.subheadline, design: .rounded, weight: .semibold))
     }
 
     /// How lit a word is, from `unsungWord` to full.
@@ -937,7 +944,7 @@ struct NowPlayingView: View {
     private static let unsungWord: Double = 0.35
 
     private func wordBrightness(_ word: LyricWord) -> Double {
-        let elapsed = player.liveLyricsTime - word.start
+        let elapsed = word.elapsed(at: player.liveLyricsTime)
         guard elapsed > 0 else { return Self.unsungWord }
         let progress = min(1, elapsed / Self.wordFade)
         return Self.unsungWord + (1 - Self.unsungWord) * progress

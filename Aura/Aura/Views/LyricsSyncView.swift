@@ -35,6 +35,7 @@ struct LyricsSyncView: View {
     @State private var earResult: LyricsAutoSync.Placement?
     /// Each line's words as listening heard them, seconds after the line starts.
     @State private var heardWords: [Int: [TimeInterval?]] = [:]
+    @State private var heardPasses: [Int: [TimeInterval]] = [:]
     @State private var earFailure: String?
 
     private static let step: TimeInterval = 0.05
@@ -417,6 +418,7 @@ struct LyricsSyncView: View {
                 retiming.anchors = placement.anchors
                 retiming.offset = 0
                 heardWords = placement.words
+                heardPasses = placement.passes
                 tapped = placement.anchors.keys.sorted()
                 armed = nil
                 earResult = placement
@@ -517,6 +519,9 @@ struct LyricsSyncView: View {
                     word += 1
                 }
                 return LyricWord(id: id, text: id == pieces.count - 1 ? String(piece) : piece + " ", start: time + last)
+            } + (heardPasses[index] ?? []).enumerated().map { n, offset in
+                // A later pass of a "x4" line, as heard: a word with no text, kept in the file.
+                LyricWord(id: pieces.count + n, text: "", start: time + offset)
             }
         }
         guard let was = line.time, let words = line.words else { return nil }
@@ -667,6 +672,8 @@ enum LyricsAutoSync {
         let heard: Int
         /// How far timed lyrics were off: the shift most lines agree on.
         let shift: TimeInterval?
+        /// For a "x4" line, where its later passes were heard, in seconds after its start.
+        var passes: [Int: [TimeInterval]] = [:]
     }
 
     /// Where the lines start in the audio, and their words.
@@ -700,12 +707,42 @@ enum LyricsAutoSync {
         guard found.count >= 3, Double(found.count) >= Double(worded) * 0.15 else { throw Failure.tooFew }
         let starts = found.mapValues(\.time)
         let wordTimes = found.mapValues(\.words)
+        let passes = repeats(lines, starts: starts, found: times, in: heard)
         guard times.allSatisfy({ $0 != nil }) else {
-            return Placement(anchors: starts.mapValues { $0 + offset }, words: wordTimes, heard: found.count, shift: nil)
+            return Placement(anchors: starts.mapValues { $0 + offset }, words: wordTimes, heard: found.count,
+                             shift: nil, passes: passes)
         }
         let settled = settle(starts, found: times)
         return Placement(anchors: settled.anchors.mapValues { $0 + offset }, words: wordTimes,
-                         heard: found.count, shift: settled.shift)
+                         heard: found.count, shift: settled.shift, passes: passes)
+    }
+
+    /// Where a "x4" line's phrase is heard again before the next line: each later pass's
+    /// start, after the line's own, at most one fewer than the marker says.
+    static func repeats(_ lines: [LyricsLine], starts: [Int: TimeInterval], found: [TimeInterval?],
+                        in heard: [Heard]) -> [Int: [TimeInterval]] {
+        var passes: [Int: [TimeInterval]] = [:]
+        for (index, start) in starts {
+            guard let marked = LyricWordTiming.repeated(lines[index].text) else { continue }
+            let phrase = words(in: marked.phrase)
+            guard phrase.count >= 2 else { continue }
+            // The next line as heard, else as the lyrics time it, moved as this one was.
+            let shift = found[index].map { start - $0 } ?? 0
+            let end = starts.filter { $0.key > index }.min { $0.key < $1.key }?.value
+                ?? found.dropFirst(index + 1).lazy.compactMap { $0 }.first.map { $0 + shift }
+                ?? start + 90
+            let needed = min(3, phrase.count)
+            var at: [TimeInterval] = []
+            var last = start
+            for (i, word) in heard.enumerated() where word.time > last + 2 && word.time < end - 0.5 {
+                guard at.count < marked.passes - 1, same(word.word, phrase[0]),
+                      matched(Array(phrase.prefix(6)), from: i, in: heard) >= needed else { continue }
+                at.append(word.time - start)
+                last = word.time
+            }
+            if !at.isEmpty { passes[index] = at }
+        }
+        return passes
     }
 
     /// Timed lyrics are mostly right, or off by one shift: the transcriber's own wobble, a few

@@ -316,7 +316,7 @@ struct MacLyricsSheet: View {
         else { return Text(line.text) }
         let time = player.liveLyricsTime
         return words.reduce(Text("")) { partial, word in
-            let elapsed = time - word.start
+            let elapsed = word.elapsed(at: time)
             let lit = elapsed <= 0 ? 0 : min(1, elapsed / 0.09)
             return partial + Text(word.text)
                 .foregroundColor(.white.opacity(0.35 + 0.65 * lit))
