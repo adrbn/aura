@@ -34,6 +34,12 @@ struct AuraTVApp: App {
                        let songs = try? await SubsonicClient.shared.getRandomSongs(server: server, size: 20) {
                         TVPlayback.shared.play(songs, source: .search(query: ""))
                     }
+                    // `-tvSeek N` jumps N seconds in, so the lyrics show mid-song (the simulator plays no audio).
+                    let args = CommandLine.arguments
+                    if let i = args.firstIndex(of: "-tvSeek"), i + 1 < args.count, let t = TimeInterval(args[i + 1]) {
+                        try? await Task.sleep(for: .seconds(5))
+                        player.seek(to: t)
+                    }
                     #endif
                 }
         }
