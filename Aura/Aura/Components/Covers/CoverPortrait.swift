@@ -104,6 +104,9 @@ enum CoverPortraits {
     private static func analyse(_ image: UIImage, artistId: String, subject wantsSubject: Bool) -> CoverPortrait? {
         guard let cg = FaceFraming.upright(image) else { return nil }
         let face = FaceFraming.faces(in: cg)
+        // An artist "photo" with no face and lines of text is a notice, not a picture (one
+        // artist's Deezer image was defaced with a hacker's message): the next artist leads.
+        if face == nil, !artistId.hasPrefix("album:"), isMostlyText(cg) { return nil }
         let cut = wantsSubject ? cutout(cg) : nil
         // Without a cut-out, the head starts roughly half a face above the face box.
         let estimatedTop = face.map { max(0, $0.minY - $0.height * 0.45) } ?? 0.1
@@ -114,6 +117,15 @@ enum CoverPortraits {
                              headTop: cut?.headTop ?? estimatedTop,
                              topColor: CoverImaging.average(of: cg, from: 0, to: 0.04),
                              band: CoverPalette.band(in: cg))
+    }
+
+    private static func isMostlyText(_ cg: CGImage) -> Bool {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .fast
+        try? VNImageRequestHandler(cgImage: cg, orientation: .up).perform([request])
+        let lines = request.results ?? []
+        let area = lines.reduce(0) { $0 + $1.boundingBox.width * $1.boundingBox.height }
+        return lines.count >= 2 && area > 0.04
     }
 
     /// The person cut out of the photo, and the row where the top of their head is.

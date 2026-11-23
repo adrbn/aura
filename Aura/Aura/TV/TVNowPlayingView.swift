@@ -5,27 +5,58 @@ import SwiftUI
 struct TVNowPlayingView: View {
     @State private var player = AudioPlayer.shared
     @FocusState private var focus: Control?
+    @AppStorage(RemoteLink.tvLyricsKey) private var showLyrics = true
+    /// Left alone, the screen keeps only the cover, the song and the lyrics: a picture for the room.
+    @State private var idle = false
+    @State private var lastInput = Date()
+    private static let idleDelay: TimeInterval = 5
 
-    private enum Control: Hashable { case previous, playPause, next }
+    private enum Control: Hashable { case like, shuffle, previous, playPause, next, repeatMode, lyrics
+        /// The whole screen, focused while the controls are away so a press brings them back.
+        case surface }
 
     var body: some View {
         ZStack {
             TVArtworkBackdrop(coverArt: player.currentSong?.displayCoverArt)
-            HStack(alignment: .center, spacing: 90) {
+            // Cover and lyrics as one centred group, the same room on either side of the screen.
+            HStack(alignment: .center, spacing: 120) {
                 controls
                 if hasLyrics {
-                    TVLyricsView().frame(maxWidth: .infinity)
+                    TVLyricsView().frame(width: 820, height: 640)
                 }
             }
-            .padding(.horizontal, 110)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: hasLyrics ? .leading : .center)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .onPlayPauseCommand { player.togglePlayPause() }
+        .focusable(idle)
+        .focused($focus, equals: .surface)
+        .focusEffectDisabled()
+        .onTapGesture { poke() }
+        .onMoveCommand { _ in poke() }
+        .onPlayPauseCommand { poke(); player.togglePlayPause() }
         .onAppear { focus = .playPause }
+        .onChange(of: focus) { _, new in if new != .surface { poke() } }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                if !idle, Date().timeIntervalSince(lastInput) > Self.idleDelay {
+                    idle = true
+                    focus = .surface
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.6), value: idle)
         .animation(.easeInOut(duration: 0.4), value: hasLyrics)
     }
 
-    private var hasLyrics: Bool { !player.lyrics.isEmpty && !player.lyricsAreInstrumental }
+    private var lyricsAvailable: Bool { !player.lyrics.isEmpty && !player.lyricsAreInstrumental }
+    private var hasLyrics: Bool { showLyrics && lyricsAvailable }
+
+    private func poke() {
+        lastInput = Date()
+        guard idle else { return }
+        idle = false
+        focus = .playPause
+    }
 
     private var controls: some View {
         VStack(alignment: .leading, spacing: 34) {
@@ -35,34 +66,59 @@ struct TVNowPlayingView: View {
                 .id(player.currentSong?.id)
                 .transition(.opacity)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(spacing: 6) {
                 Text(player.currentSong?.title ?? "").font(.system(size: 40, weight: .bold))
                 Text(player.currentSong?.artist ?? "").font(.system(size: 30)).foregroundStyle(.white.opacity(0.7))
             }
             .lineLimit(1)
-            .frame(width: 560, alignment: .leading)
-
-            TVProgress(time: player.currentTime, duration: player.duration).frame(width: 560)
-
-            HStack(spacing: 40) {
-                transport("backward.fill", .previous) { player.previous() }
-                transport(player.isPlaying ? "pause.fill" : "play.fill", .playPause) { player.togglePlayPause() }
-                transport("forward.fill", .next) { player.next() }
-            }
             .frame(width: 560)
+
+            if !idle {
+                TVProgress(time: player.currentTime, duration: player.duration).frame(width: 560)
+                    .transition(.opacity)
+
+                HStack(spacing: 14) {
+                    transport(player.currentSong?.isStarred == true ? "heart.fill" : "heart", .like) { player.toggleFavorite() }
+                    transport("shuffle", .shuffle, on: player.isShuffled) { player.toggleShuffle() }
+                    transport("backward.fill", .previous) { player.previous() }
+                    transport(player.isPlaying ? "pause.fill" : "play.fill", .playPause) { player.togglePlayPause() }
+                    transport("forward.fill", .next) { player.next() }
+                    transport(player.repeatMode.systemImage, .repeatMode, on: player.repeatMode != .off) { player.cycleRepeat() }
+                    // Always there, dimmed when the song has none, so the row stays centred under the bar.
+                    transport("quote.bubble", .lyrics, on: showLyrics && lyricsAvailable) { showLyrics.toggle() }
+                }
+                .frame(width: 560)
+                .transition(.opacity)
+            }
         }
     }
 
-    private func transport(_ symbol: String, _ control: Control, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    private func transport(_ symbol: String, _ control: Control, on: Bool? = nil, action: @escaping () -> Void) -> some View {
+        Button {
+            poke(); action()
+        } label: {
             Image(systemName: symbol)
-                .font(.system(size: control == .playPause ? 44 : 34, weight: .semibold))
-                .frame(width: control == .playPause ? 110 : 90, height: control == .playPause ? 110 : 90)
+                .font(.system(size: control == .playPause ? 34 : 24, weight: .semibold))
+                .frame(width: control == .playPause ? 80 : 64, height: control == .playPause ? 80 : 64)
                 .contentTransition(.symbolEffect(.replace))
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.circle)
+        .buttonStyle(TVQuietButtonStyle(dimmed: on == false))
         .focused($focus, equals: control)
+    }
+}
+
+/// A transport button that stays out of the picture: a bare glyph, its circle only showing under focus,
+/// so the screen reads as the cover and the lyrics when no one is holding the remote.
+private struct TVQuietButtonStyle: ButtonStyle {
+    var dimmed = false
+    @Environment(\.isFocused) private var focused
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(.white.opacity(focused ? 1 : dimmed ? 0.3 : 0.6))
+            .background(Circle().fill(.white.opacity(focused ? 0.18 : 0)))
+            .scaleEffect(configuration.isPressed ? 0.94 : focused ? 1.1 : 1)
+            .animation(.easeOut(duration: 0.2), value: focused)
     }
 }
 
@@ -137,20 +193,20 @@ struct TVLyricsView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 34) {
-                    Spacer().frame(height: 420)
+                VStack(alignment: .leading, spacing: 30) {
+                    Spacer().frame(height: 320)
                     ForEach(Array(player.lyrics.enumerated()), id: \.element.id) { index, line in
                         lineView(line, index: index).id(index)
                     }
-                    Spacer().frame(height: 520)
+                    Spacer().frame(height: 360)
                 }
             }
             .scrollDisabled(true)
             .mask(
                 VStack(spacing: 0) {
-                    LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom).frame(height: 160)
+                    LinearGradient(colors: [.clear, .white], startPoint: .top, endPoint: .bottom).frame(height: 120)
                     Color.white
-                    LinearGradient(colors: [.white, .clear], startPoint: .top, endPoint: .bottom).frame(height: 160)
+                    LinearGradient(colors: [.white, .clear], startPoint: .top, endPoint: .bottom).frame(height: 120)
                 }
             )
             .onChange(of: player.currentTime) { _, _ in track(proxy) }
@@ -165,9 +221,10 @@ struct TVLyricsView: View {
         let focus = currentIndex ?? 0
         let distance = abs(index - focus)
         return Text(line.text)
-            .font(.system(size: 58, weight: .bold))
-            .foregroundStyle(.white.opacity(synced ? (distance == 0 ? 1 : distance == 1 ? 0.35 : 0.14) : 0.85))
-            .scaleEffect(!synced || distance == 0 ? 1 : 0.8, anchor: .leading)
+            .font(.system(size: 64, weight: .bold))
+            // The line sung large and white, two either side of it, the rest gone.
+            .foregroundStyle(.white.opacity(synced ? (distance == 0 ? 1 : distance == 1 ? 0.32 : distance == 2 ? 0.12 : 0) : 0.85))
+            .scaleEffect(!synced || distance == 0 ? 1 : 0.7, anchor: .leading)
             .frame(maxWidth: .infinity, alignment: .leading)
             .animation(Self.lineChange, value: distance)
     }

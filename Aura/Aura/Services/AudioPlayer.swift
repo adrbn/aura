@@ -44,9 +44,11 @@ final class AudioPlayer {
     /// Desktop music apps are expected to have their own fader — you set the app against
     /// everything else once and leave the system volume alone. Persisted, because a level
     /// that resets on every launch is worse than none at all.
-    var volume: Double = UserDefaults.standard.object(forKey: "aura_volume") as? Double ?? 1 {
+    // A silent fader is never kept: one saved at 0 left the app mute with nothing to raise it.
+    var volume: Double = (UserDefaults.standard.object(forKey: "aura_volume") as? Double).flatMap { $0 > 0 ? $0 : nil } ?? 1 {
         didSet {
-            if let remote, !isMirroring { remote(.volume(volume)); return }
+            // Remote, the other device's volume is shown here, never applied or kept here.
+            if let remote { if !isMirroring { remote(.volume(volume)) }; return }
             applyOutputVolume()
             UserDefaults.standard.set(volume, forKey: "aura_volume")
         }
@@ -485,22 +487,75 @@ final class AudioPlayer {
     /// Artists skipped in the first half minute during this Nonstop; twice and they're left out.
     private var nonstopSkips: [String: Int] = [:]
 
+    /// Songs said "not for me" in this Nonstop, not played in it again, and how many times
+    /// each artist was: twice and the artist is left out of it. A new Nonstop starts clean.
+    private var nonstopDislikedSongs: Set<String> = []
+    private var nonstopDislikedArtists: [String: Int] = [:]
+    private var nonstopBannedArtists: Set<String> {
+        Set(nonstopDislikedArtists.filter { $0.value >= 2 }.keys)
+    }
+
+    /// "Not for me": the song goes, and so do the artist's songs still to come once the
+    /// artist has been turned down twice, for this Nonstop only.
+    func dislikeNonstopSong() {
+        if let remote { remote(.dislikeNonstop); return }
+        guard isNonstop, let song = currentSong else { return }
+        nonstopDislikedSongs.insert(song.id)
+        if let artist = song.artist {
+            nonstopDislikedArtists[artist, default: 0] += 1
+            if nonstopDislikedArtists[artist, default: 0] >= 2 {
+                let upcoming = queue.indices.dropFirst(queueIndex + 1).filter { queue[$0].artist == artist }
+                for index in upcoming.reversed() { removeFromQueue(at: index) }
+            }
+        }
+        next()
+    }
+
+    /// Nonstop carried over from another device: its songs, from the one playing there,
+    /// still refilling here as it runs out.
+    func continueNonstop(_ songs: [Song], at index: Int) {
+        beginNewRadio()
+        nonstopSkips = [:]
+        nonstopDislikedSongs = []
+        nonstopDislikedArtists = [:]
+        radioPlaylistName = Self.nonstopName
+        radioPlaylistSongs = songs
+        radioPlayedIds = Set(songs.map(\.id))
+        playRadioPlaylistFromIndex(index)
+    }
+
     /// Starts Nonstop: an endless queue built from what you like, refilled as it runs out.
-    func startNonstop() async {
+    /// `liked`: the liked songs already on screen, so the first one plays at once; the rest
+    /// of the batch, which waits on songs near them, follows behind it.
+    func startNonstop(liked: [Song] = []) async {
         guard let server = ServerManager.shared.currentServer else { return }
         let generation = await MainActor.run { () -> Int in
             beginNewRadio()
             nonstopSkips = [:]
+            nonstopDislikedSongs = []
+            nonstopDislikedArtists = [:]
             return radioGeneration
         }
-        let batch = await nonstopBatch(server: server, played: [], skipped: [])
+        let excluded = MixPreferences.excludedGenres
+        var pool = liked
+        if pool.isEmpty { pool = (try? await SubsonicClient.shared.getStarred2(server: server))?.song ?? [] }
+        if pool.isEmpty { pool = (try? await SubsonicClient.shared.getRandomSongs(server: server, size: 20)) ?? [] }
+        // A few liked songs by different artists, not one alone: a lone song gets the
+        // random autoplay fill behind it, which showed in the queue until the batch came.
+        var opening: [Song] = []
+        for song in pool.shuffled() where opening.count < 4 && MixPreferences.allows(song, excluded: excluded)
+            && !opening.contains(where: { $0.artist == song.artist }) {
+            opening.append(song)
+        }
+        if opening.isEmpty { opening = Array(pool.prefix(4)) }
         await MainActor.run {
-            guard radioGeneration == generation, let first = batch.first else { return }
+            guard radioGeneration == generation, let first = opening.first else { return }
             radioPlaylistName = Self.nonstopName
-            radioPlaylistSongs = batch
+            radioPlaylistSongs = opening
             radioPlaylistCoverArt = first.coverArt
-            radioPlayedIds = Set(batch.map(\.id))
+            radioPlayedIds = Set(opening.map(\.id))
             playRadioPlaylistFromIndex(0)
+            refillNonstop()
         }
     }
 
@@ -537,7 +592,8 @@ final class AudioPlayer {
             near += await buildSimilarTail(for: seed, server: server, limit: 60)
         }
         let excluded = MixPreferences.excludedGenres
-        var taken = played
+        var taken = played.union(nonstopDislikedSongs)
+        let skipped = skipped.union(nonstopBannedArtists)
         var perArtist: [String: Int] = [:]
         func fits(_ song: Song) -> Bool {
             let artist = song.artist ?? ""
@@ -720,6 +776,13 @@ final class AudioPlayer {
         // Restore radioPlaylistName from persisted source
         if case .radio(let name) = state.playbackSource {
             radioPlaylistName = name
+            // Nonstop comes back as it was, the same songs ahead, still refilling as it runs
+            // out: tapping its tile then plays on instead of starting a new one.
+            if name == Self.nonstopName {
+                isRadioMode = true
+                radioPlaylistSongs = state.queue
+                radioPlayedIds = Set(state.queue.map(\.id))
+            }
         }
         // Resume at the saved position: show it right away, and stash it so the seek fires
         // once the player item is ready (see the readyToPlay handler in observePlayerItem).

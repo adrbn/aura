@@ -248,6 +248,10 @@ struct TabRootGlow: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isOnScreen = false
+    /// Time spent paused, taken off the clock so the field resumes where it stopped
+    /// instead of jumping ahead when Now Playing closes.
+    @State private var pausedAt: Date?
+    @State private var lost: TimeInterval = 0
 
     private var player: AudioPlayer { AudioPlayer.shared }
 
@@ -257,13 +261,17 @@ struct TabRootGlow: View {
             // Paused, the timeline hands back the moment it stopped; the hour is read afresh.
             let now = paused ? Date() : context.date
             GlowField(hue: DayHue.hue(at: now),
-                      time: reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate,
+                      time: reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate - lost,
                       isDark: scheme == .dark)
         }
         .frame(height: Self.height)
         .offset(y: -scrolled)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+        .onChange(of: paused, initial: true) { _, isPaused in
+            if isPaused { pausedAt = pausedAt ?? Date() }
+            else if let start = pausedAt { lost += Date().timeIntervalSince(start); pausedAt = nil }
+        }
         .onAppear { isOnScreen = true }
         .onDisappear { isOnScreen = false }
     }

@@ -514,20 +514,6 @@ struct GenreSongsView: View {
 
 // MARK: - Artists Full List
 
-enum ArtistSortOrder: String, CaseIterable {
-    case name = "Name"
-    case mostPlayed = "Most Played"
-    case albumCount = "Album Count"
-
-    var icon: String {
-        switch self {
-        case .name: return "textformat.abc"
-        case .mostPlayed: return "chart.bar.fill"
-        case .albumCount: return "square.stack.fill"
-        }
-    }
-}
-
 struct ArtistsFullListView: View {
     @Environment(ServerManager.self) private var serverManager
     @State private var artists: [Artist] = []

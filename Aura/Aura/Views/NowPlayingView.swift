@@ -497,7 +497,17 @@ struct NowPlayingView: View {
             }
 
             // Playing from source indicator (above cover art)
-            if player.playbackSource != .unknown {
+            if player.isNonstop {
+                // Nonstop has no page of its own: its sign alone, and a tap shows what comes next.
+                Button { showQueue() } label: {
+                    Image(systemName: "infinity")
+                        .font(.footnote.weight(.regular))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .frame(minWidth: 44, minHeight: 20)
+                }
+                .accessibilityLabel(Text("Nonstop"))
+                .padding(.bottom, duo ? 0 : 4)
+            } else if player.playbackSource != .unknown {
                 Button {
                     handlePlaybackSourceTap(player.playbackSource)
                 } label: {
@@ -2073,6 +2083,20 @@ struct SongActionsRow: View, Equatable {
 
     private var actions: some View {
         HStack(spacing: 2) {
+            if player.isNonstop {
+                Button {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    player.dislikeNonstopSong()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.title3)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .frame(width: 36, height: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Not for me"))
+            }
             favoriteButton
             Menu {
                 ControlGroup {

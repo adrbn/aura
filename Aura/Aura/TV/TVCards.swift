@@ -55,6 +55,7 @@ struct TVShelf<Item: Identifiable, Card: View>: View {
                 }
                 .scrollClipDisabled()
             }
+            .transition(.opacity.combined(with: .offset(y: 30)))
         }
     }
 }
@@ -66,6 +67,7 @@ extension View {
             .navigationDestination(for: Artist.self) { TVArtistView(artist: $0) }
             .navigationDestination(for: Playlist.self) { TVPlaylistView(playlist: $0) }
             .navigationDestination(for: Mix.self) { TVMixView(mix: $0) }
+            .navigationDestination(for: TVGenre.self) { TVGenreView(genre: $0) }
     }
 }
 

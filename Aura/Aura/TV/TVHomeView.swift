@@ -4,6 +4,7 @@ import SwiftUI
 struct TVHomeView: View {
     @State private var serverManager = ServerManager.shared
     @State private var generator = MixGenerator.shared
+    @State private var player = AudioPlayer.shared
 
     @State private var recent: [Album] = []
     @State private var newest: [Album] = []
@@ -16,13 +17,31 @@ struct TVHomeView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 50) {
-                TVShelf(title: "Made For You", items: generator.mixes) { mix in
-                    NavigationLink(value: mix) {
-                        TVCoverCard(title: mix.title, subtitle: mix.subtitle) {
-                            EditorialMixCover(mix: mix, size: 300, cornerRadius: 0)
+                TVShelf(title: "Made For You", items: shelf) { mix in
+                    if mix.id == Self.nonstopId {
+                        Button {
+                            // Already playing: a press opens it rather than starting over.
+                            if !player.isNonstop {
+                                player.nonstopCoverArtists = mix.coverArtists ?? CoverArtists.ranked(mix.songs)
+                                Task { await player.startNonstop(liked: mix.songs) }
+                            } else if !player.isPlaying {
+                                player.play()
+                            }
+                            TVPlayback.shared.showNowPlaying = true
+                        } label: {
+                            TVCoverCard(title: mix.title, subtitle: player.isNonstop ? String(localized: "Now Playing") : "") {
+                                EditorialMixCover(mix: mix, size: 300, cornerRadius: 0)
+                            }
                         }
+                        .buttonStyle(.borderless)
+                    } else {
+                        NavigationLink(value: mix) {
+                            TVCoverCard(title: mix.title, subtitle: mix.subtitle) {
+                                EditorialMixCover(mix: mix, size: 300, cornerRadius: 0)
+                            }
+                        }
+                        .buttonStyle(.borderless)
                     }
-                    .buttonStyle(.borderless)
                 }
                 TVShelf(title: "Recently Played", items: recent) { TVAlbumLink(album: $0) }
                 TVShelf(title: "Recently Added", items: newest) { TVAlbumLink(album: $0) }
@@ -33,10 +52,20 @@ struct TVHomeView: View {
                 if isLoading && recent.isEmpty && newest.isEmpty { TVStatus(loading: true) }
             }
             .padding(.vertical, 40)
+            .animation(.easeOut(duration: 0.5), value: generator.mixes.isEmpty)
         }
         .scrollClipDisabled()
         .task { await load() }
     }
+
+    /// Nonstop first, as on the phone, once the mixes are there to stand beside it.
+    private var shelf: [Mix] {
+        guard !generator.mixes.isEmpty else { return [] }
+        let nonstop = Mix(id: Self.nonstopId, title: AudioPlayer.nonstopName, subtitle: "", songs: starred.song ?? [])
+        return CoverArtists.distinctLeads([nonstop] + generator.mixes)
+    }
+
+    private static let nonstopId = "aura.nonstop"
 
     private func load() async {
         guard let server = serverManager.currentServer else { return }
@@ -54,6 +83,11 @@ struct TVHomeView: View {
         random = await randomCall ?? []
         playlists = await playlistCall ?? []
         if let found = await starredCall { starred = found }
+        // Every row's covers start now, not as each card comes into view.
+        let albums = (recent + newest + frequent + random).compactMap(\.coverArt)
+        ArtworkCache.shared.prefetch(coverArtIds: albums + playlists.compactMap(\.coverArt), pointSize: 300)
+        ArtworkCache.shared.prefetch(coverArtIds: (starred.artist ?? []).compactMap(\.coverArt), pointSize: 260)
         await generator.generateIfNeeded()
+        for mix in generator.mixes { Task { _ = await MixCoverArt.load(MixCoverSpec(mix)) } }
     }
 }

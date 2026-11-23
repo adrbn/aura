@@ -26,8 +26,13 @@ final class RemoteLink: NSObject {
         case setQueue(Queue)
         case removeFromQueue(Int)
         case pitch(Int)
+        /// Nonstop moves over as Nonstop, not as a plain queue that stops at its end.
+        case nonstop(queue: [Song], index: Int, at: Double)
+        case dislikeNonstop
         /// The controller's accent, so both ends show the same colour.
         case accent(red: Double, green: Double, blue: Double)
+        /// An Apple TV's lyrics, shown beside the cover or hidden for a quieter screen.
+        case lyrics(Bool)
     }
 
     struct State: Codable {
@@ -40,8 +45,12 @@ final class RemoteLink: NSObject {
         var volume: Double = 1
         /// Optional so a device from before it still reads the state.
         var pitch: Int?
+        /// What plays there, so the controller shows Nonstop as Nonstop. Optional for older devices.
+        var source: PlaybackSource?
         /// Sent only when it changed since the last state: a queue can be hundreds of songs.
         var queue: Queue?
+        /// Sent by an Apple TV only: whether its lyrics show.
+        var lyrics: Bool?
     }
 
     struct Queue: Codable {
@@ -73,16 +82,19 @@ final class RemoteLink: NSObject {
     private(set) var controllers: [MCPeerID] = []
     /// The band's colour: the controller's accent, on both ends.
     private(set) var accent: Color?
+    /// The connected Apple TV's lyrics switch, nil when no TV is played on.
+    private(set) var tvLyrics: Bool?
+    static let tvLyricsKey = "tv_show_lyrics"
 
     #if os(macOS)
     static let kind = "mac"
     private let peer = MCPeerID(displayName: Host.current().localizedName ?? "Mac")
     #else
-    static let kind = UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
+    static let kind = switch UIDevice.current.userInterfaceIdiom { case .pad: "ipad"; case .tv: "tv"; default: "iphone" }
     private let peer = MCPeerID(displayName: UIDevice.current.name)
     #endif
     nonisolated static func symbol(for kind: String) -> String {
-        switch kind { case "mac": "macbook"; case "ipad": "ipad"; default: "iphone" }
+        switch kind { case "mac": "macbook"; case "ipad": "ipad"; case "tv": "appletv"; default: "iphone" }
     }
 
     /// Where this device plays on another.
@@ -95,7 +107,8 @@ final class RemoteLink: NSObject {
     private var volumeWatch: NSKeyValueObservation?
     private var invited: MCPeerID?
     /// What this device was on before it took control of another, given back after.
-    private var local = (song: Song?.none, queue: Queue(songs: [], upNext: [], index: 0), volume: 1.0)
+    private var local = (song: Song?.none, queue: Queue(songs: [], upNext: [], index: 0), volume: 1.0,
+                         source: PlaybackSource.unknown, radio: false, radioName: "")
     /// The queue as last sent, to send it again only once it changes.
     private var sentQueue: [String]?
     private var bringing = true
@@ -228,7 +241,8 @@ final class RemoteLink: NSObject {
         var now = State(song: player.currentSong, isPlaying: player.isPlaying,
                         currentTime: player.currentTime, duration: player.duration,
                         isShuffled: player.isShuffled, repeatMode: player.repeatMode, volume: player.volume,
-                        pitch: player.pitchSemitones)
+                        pitch: player.pitchSemitones, source: player.playbackSource)
+        if Self.kind == "tv" { now.lyrics = UserDefaults.standard.object(forKey: Self.tvLyricsKey) as? Bool ?? true }
         #if os(iOS)
         now.volume = Double(AVAudioSession.sharedInstance().outputVolume)
         #endif
@@ -269,10 +283,16 @@ final class RemoteLink: NSObject {
             player.userQueue = queue.upNext
             player.queueIndex = min(queue.index, max(queue.songs.count - 1, 0))
         case .pitch(let semitones): player.pitchSemitones = semitones
+        case .nonstop(let queue, let index, let time):
+            player.continueNonstop(queue, at: index)
+            if time > 1 { player.pendingSeekTime = time }
+        case .dislikeNonstop: player.dislikeNonstopSong()
         case .removeFromQueue(let index):
             if player.queue.indices.contains(index) { player.removeFromQueue(at: index) }
         case .accent(let red, let green, let blue):
             accent = Color(.sRGB, red: red, green: green, blue: blue)
+        case .lyrics(let on):
+            UserDefaults.standard.set(on, forKey: Self.tvLyricsKey)
         }
         broadcast()
     }
@@ -323,7 +343,9 @@ final class RemoteLink: NSObject {
     private func takeControl(of peerID: MCPeerID) {
         let device = devices.first { $0.peer == peerID } ?? Device(peer: peerID, kind: "mac")
         let player = AudioPlayer.shared
-        local = (player.currentSong, Queue(songs: player.queue, upNext: player.userQueue, index: player.queueIndex), player.volume)
+        local = (player.currentSong, Queue(songs: player.queue, upNext: player.userQueue, index: player.queueIndex), player.volume,
+                 player.playbackSource, player.isRadioMode, player.radioPlaylistName)
+        let wasNonstop = player.isNonstop
         let wasPlaying = player.isPlaying, time = player.currentTime
         player.pause()
         player.remote = { command in MainActor.assumeIsolated { RemoteLink.shared.send(command) } }
@@ -332,8 +354,11 @@ final class RemoteLink: NSObject {
         accent = Color.appAccent
         send(.accent(red: Double(tone.red), green: Double(tone.green), blue: Double(tone.blue)))
         // What this device was playing moves over, from the same moment.
-        if bringing, wasPlaying, let song = local.song {
-            send(.playSong(song, queue: local.queue.songs, index: local.queue.index, source: .unknown, at: time))
+        // Paused, it comes over paused, so play there resumes it and not what that device last had.
+        if bringing, let song = local.song {
+            send(wasNonstop ? .nonstop(queue: local.queue.songs, index: local.queue.index, at: time)
+                            : .playSong(song, queue: local.queue.songs, index: local.queue.index, source: local.source, at: time))
+            if !wasPlaying { send(.pause) }
         }
     }
 
@@ -348,6 +373,7 @@ final class RemoteLink: NSObject {
     private func letGo() {
         guard connected != nil else { return }
         connected = nil
+        tvLyrics = nil
         if controllers.isEmpty { accent = nil }
         let player = AudioPlayer.shared
         player.remote = nil
@@ -360,6 +386,9 @@ final class RemoteLink: NSObject {
         player.userQueue = local.queue.upNext
         player.queueIndex = local.queue.index
         player.volume = local.volume
+        player.playbackSource = local.source
+        player.isRadioMode = local.radio
+        player.radioPlaylistName = local.radioName
         player.isMirroring = false
         if let song = local.song { player.loadLyrics(for: song) }
         player.updateNowPlayingInfo()
@@ -386,6 +415,16 @@ final class RemoteLink: NSObject {
         player.repeatMode = state.repeatMode
         player.volume = state.volume
         if let pitch = state.pitch { player.pitchSemitones = pitch }
+        tvLyrics = state.lyrics
+        if let source = state.source {
+            player.playbackSource = source
+            if case .radio(let name) = source {
+                player.isRadioMode = true
+                player.radioPlaylistName = name
+            } else {
+                player.isRadioMode = false
+            }
+        }
         if let queue = state.queue {
             player.queue = queue.songs
             player.userQueue = queue.upNext
@@ -512,6 +551,20 @@ struct RemoteBand: View {
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(light ? .black : .white)
             .frame(maxWidth: .infinity)
+            // On an Apple TV, its lyrics switch at the band's end.
+            .overlay(alignment: .trailing) {
+                if let on = RemoteLink.shared.tvLyrics {
+                    Button { RemoteLink.shared.send(.lyrics(!on)) } label: {
+                        Image(systemName: on ? "quote.bubble.fill" : "quote.bubble")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(light ? .black : .white)
+                            .padding(.horizontal, 16)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Lyrics on TV"))
+                }
+            }
             .padding(.top, 5)
             // The text sits just above the home indicator, not a whole safe area higher.
             .padding(.bottom, max(5, bottomInset - 14))

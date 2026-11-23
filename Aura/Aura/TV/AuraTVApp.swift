@@ -23,6 +23,8 @@ struct AuraTVApp: App {
                     // Silent playback, so screenshots of Now Playing make no sound on the Mac.
                     if CommandLine.arguments.contains("-tvMute") { player.volume = 0 }
                     #endif
+                    // The iPhone finds this TV and plays on it, as it does on the Mac.
+                    RemoteLink.shared.start()
                     guard let server = serverManager.currentServer else { return }
                     await serverManager.testConnection()
                     LibraryIndex.shared.refreshIfNeeded()
@@ -92,8 +94,11 @@ struct TVRootView: View {
                     TVNowPlayingTab()
                 }
             }
-            Tab("Settings", systemImage: "gearshape", value: 4) {
+            // The icon alone, like Search: with five named tabs the bar ran past its edge.
+            Tab(value: 4) {
                 NavigationStack { TVSettingsView() }
+            } label: {
+                Image(systemName: "gearshape").accessibilityLabel("Settings")
             }
         }
     }

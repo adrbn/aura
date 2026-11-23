@@ -192,13 +192,31 @@ struct EditorialMixCover: View {
 
     /// Tagged with the spec it was loaded for, so a regenerated mix never shows the old one.
     @State private var loaded: (key: String, art: MixCoverArt)?
+    /// The spec whose first try at a photo is over: past it, last launch's cover gives way.
+    @State private var tried: String?
 
-    var body: some View {
+    var body: some View { editorial }
+
+    private var editorial: some View {
         let spec = MixCoverSpec(mix)
         let art = loaded?.key == spec.taskKey ? loaded?.art : MixCoverArt.cached(spec)
-        cover(spec, art)
+        // Last launch's cover for this mix while today's photo comes; without one, the
+        // cover drawn without its photo, as before.
+        let nonstop = mix.id == "aura.nonstop"
+        let last = !nonstop && art == nil && tried != spec.taskKey ? MixCoverSnapshots.image(mix.id) : nil
+        let waiting = last != nil
+        return ZStack {
+            if nonstop {
+                NonstopCover(s: size, photo: art?.portrait.image, radius: cornerRadius)
+            } else if let last {
+                Image(uiImage: last).resizable()
+            } else {
+                cover(spec, art)
+            }
+        }
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .animation(.easeOut(duration: 0.35), value: waiting)
             .animation(.easeOut(duration: 0.3), value: art?.portrait.artistId)
             .task(id: "\(spec.taskKey)#\(ArtworkRetry.shared.generation)") {
                 guard loaded?.key != spec.taskKey else { return }
@@ -210,8 +228,12 @@ struct EditorialMixCover: View {
                     guard !Task.isCancelled else { return }
                     if let result = await MixCoverArt.load(spec), !Task.isCancelled {
                         loaded = (spec.taskKey, result)
+                        if !nonstop {
+                            MixCoverSnapshots.save(Self.template(spec, result, size: size), size: size, id: mix.id)
+                        }
                         return
                     }
+                    if !Task.isCancelled { tried = spec.taskKey }
                 }
             }
             .accessibilityHidden(true)
@@ -246,6 +268,72 @@ struct EditorialMixCover: View {
         let spec = MixCoverSpec(mix)
         let art = await MixCoverArt.load(spec)
         return CoverRendering.jpeg(template(spec, art, size: CoverRendering.side))
+    }
+}
+
+/// Nonstop's cover: frosted glass in the app's accent colour over its lead artist's photo,
+/// a large infinity sign and the name beneath it.
+struct NonstopCover: View {
+    let s: CGFloat
+    var photo: UIImage?
+    var radius: CGFloat = 12
+    @Environment(\.appAccentColor) private var accent
+
+    var body: some View {
+        ZStack {
+            Color(white: 0.1)
+            if let photo {
+                Image(uiImage: photo).resizable().scaledToFill()
+                    .frame(width: s, height: s).blur(radius: s * 0.06).opacity(0.85)
+            }
+            accent.opacity(photo == nil ? 0.55 : 0.45)
+            LinearGradient(colors: [.white.opacity(0.22), .clear], startPoint: .top, endPoint: .center)
+            Image(systemName: "infinity")
+                .font(.system(size: s * 0.48, weight: .black))
+                .foregroundStyle(.white)
+                .offset(y: -s * 0.05)
+            CapText(text: "NONSTOP", font: CoverFont.wide, size: s * 0.058, color: .white)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, s * 0.09)
+        }
+        .frame(width: s, height: s)
+        .clipped()
+        .overlay {
+            RoundedRectangle(cornerRadius: radius)
+                .strokeBorder(LinearGradient(colors: [.white.opacity(0.45), .white.opacity(0.1)],
+                                             startPoint: .top, endPoint: .bottom), lineWidth: max(1, s * 0.006))
+        }
+    }
+}
+
+/// Each mix's cover as last drawn, kept on disk: shown at launch while the photos load again.
+@MainActor
+enum MixCoverSnapshots {
+    private static let folder = URL.cachesDirectory.appendingPathComponent("MixCovers", isDirectory: true)
+    private static let memory = NSCache<NSString, UIImage>()
+    private static var saved: Set<String> = []
+
+    private static func url(_ id: String) -> URL {
+        folder.appendingPathComponent(id.replacingOccurrences(of: "/", with: "_") + ".jpg")
+    }
+
+    static func image(_ id: String) -> UIImage? {
+        if let hit = memory.object(forKey: id as NSString) { return hit }
+        guard let image = UIImage(contentsOfFile: url(id).path) else { return nil }
+        memory.setObject(image, forKey: id as NSString)
+        return image
+    }
+
+    /// Once per mix per launch: the cover changes at most when the mixes are made again.
+    static func save(_ cover: some View, size: CGFloat, id: String) {
+        guard saved.insert(id).inserted else { return }
+        let renderer = ImageRenderer(content: cover.frame(width: size, height: size))
+        renderer.scale = 2
+        renderer.isOpaque = true
+        guard let image = renderer.uiImage, let data = image.auraJPEGData(quality: 0.85) else { return }
+        memory.setObject(image, forKey: id as NSString)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try? data.write(to: url(id), options: .atomic)
     }
 }
 

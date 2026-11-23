@@ -437,10 +437,12 @@ struct HomeView: View {
                             Button {
                                 // Already playing: a tap opens it rather than starting over.
                                 if player.isNonstop {
+                                    // Paused, or brought back after a relaunch: it plays on.
+                                    if !player.isPlaying { player.play() }
                                     player.isShowingNowPlaying = true
                                 } else {
                                     player.nonstopCoverArtists = mix.coverArtists ?? CoverArtists.ranked(mix.songs)
-                                    Task { await player.startNonstop() }
+                                    Task { await player.startNonstop(liked: mix.songs) }
                                 }
                             } label: {
                                 EditorialMixCover(mix: mix, size: coverSize, cornerRadius: Self.coverRadius)
