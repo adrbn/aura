@@ -56,6 +56,7 @@ struct AlbumDetailView: View {
                             foregroundStyle: AnyShapeStyle(.secondary),
                             tappableStyle: AnyShapeStyle(accentColor)
                         )
+                        albumFacts(album)
                         }
 
                         // Play controls
@@ -240,6 +241,31 @@ struct AlbumDetailView: View {
         // Songs got for it join the list as soon as the server has them.
         .onChange(of: arrivals) { _, _ in Task { await loadAlbum() } }
         #endif
+    }
+
+    /// Genre, year and, when every file on it is, "Lossless": the line a sleeve's spine carries.
+    private func albumFacts(_ album: AlbumWithSongs) -> some View {
+        let songs = album.song ?? []
+        let lossless = !songs.isEmpty && songs.allSatisfy(Self.isLossless)
+        let words = [album.genre ?? songs.first?.genre, (album.year ?? songs.first?.year).map(String.init)]
+            .compactMap { $0 }.filter { !$0.isEmpty }
+        return HStack(spacing: 4) {
+            Text(words.joined(separator: " · "))
+            if lossless {
+                if !words.isEmpty { Text(verbatim: "·") }
+                Image(systemName: "waveform")
+                Text(verbatim: "Lossless")
+            }
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+    }
+
+    private static let losslessSuffixes: Set<String> = ["flac", "alac", "wav", "aiff", "aif", "ape", "wv", "dsf", "dff"]
+    static func isLossless(_ song: Song) -> Bool {
+        if let s = song.suffix?.lowercased(), losslessSuffixes.contains(s) { return true }
+        return song.contentType?.lowercased().contains("alac") == true
     }
 
     #if !APPSTORE_BUILD

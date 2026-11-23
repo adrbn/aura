@@ -72,14 +72,14 @@ struct TVSetupView: View {
 
     private func connect() async {
         guard canConnect, !isTesting else { return }
-        guard let host = URL(string: normalisedURL)?.host() else {
+        guard URL(string: normalisedURL)?.host() != nil else {
             failure = String(localized: "That address doesn't look right")
             return
         }
         isTesting = true
         failure = nil
         defer { isTesting = false }
-        let candidate = ServerConfig(url: normalisedURL, username: username, password: password, friendlyName: host)
+        let candidate = ServerConfig(url: normalisedURL, username: username, password: password, friendlyName: "Home")
         do {
             guard try await SubsonicClient.shared.ping(server: candidate) else {
                 failure = String(localized: "The server said no")

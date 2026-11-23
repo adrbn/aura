@@ -229,7 +229,7 @@ struct MacServerSetupView: View {
         return withScheme.hasSuffix("/") ? String(withScheme.dropLast()) : withScheme
     }
 
-    /// The host, so an unnamed server still gets a label worth reading in the sidebar.
+    /// The host, named in the diagnosis when nothing answers there.
     private var derivedName: String {
         URL(string: normalisedURL)?.host() ?? ""
     }
@@ -262,7 +262,7 @@ struct MacServerSetupView: View {
             url: normalisedURL,
             username: username,
             password: password,
-            friendlyName: derivedName.isEmpty ? String(localized: "Server") : derivedName
+            friendlyName: "Home"
         )
         candidate.headers = ServerHeaders.parse(headers)
 

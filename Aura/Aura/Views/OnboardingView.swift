@@ -304,6 +304,9 @@ struct OnboardingView: View {
     // MARK: - Server Setup Page
 
     private var serverSetupPage: some View {
+        // Scrolls, so the last field stays reachable once the keyboard and the Connect button
+        // have taken the bottom half of the screen.
+        ScrollView {
         VStack(spacing: 0) {
             Spacer().frame(height: 60)
 
@@ -347,9 +350,11 @@ struct OnboardingView: View {
                 .padding(.horizontal, 32)
                 .padding(.top, 16)
             }
-
-            Spacer()
         }
+        .padding(.bottom, 24)
+        }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
     }
 
     private func serverField(placeholder: LocalizedStringKey, text: Binding<String>, icon: String, keyboard: UIKeyboardType) -> some View {
@@ -477,7 +482,8 @@ struct OnboardingView: View {
             url = "https://\(url)"
         }
         let typedName = friendlyName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let name = typedName.isEmpty ? (URL(string: url)?.host ?? String(localized: "My Server")) : typedName
+        // Unnamed, a server is "Home", not an IP address nobody wants to read in the header.
+        let name = typedName.isEmpty ? "Home" : typedName
         let server = ServerConfig(url: url, username: username, password: password, friendlyName: name)
 
         do {

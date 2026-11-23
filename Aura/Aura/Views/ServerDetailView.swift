@@ -69,27 +69,6 @@ struct ServerDetailView: View {
                 }
                 .foregroundStyle(accentColor)
             }
-
-            Section {
-                Button("Save Changes") {
-                    if let idx = serverManager.servers.firstIndex(where: { $0.id == server.id }) {
-                        let local = Self.cleanLocalURL(editedLocalURL)
-                        let headers = ServerHeaders.parse(editedHeaders)
-                        serverManager.servers[idx].friendlyName = editedName
-                        serverManager.servers[idx].localURL = local
-                        serverManager.servers[idx].headers = headers
-                        serverManager.saveServers()
-                        if serverManager.currentServer?.id == server.id {
-                            serverManager.currentServer?.friendlyName = editedName
-                            serverManager.currentServer?.localURL = local
-                            serverManager.currentServer?.headers = headers
-                            serverManager.saveCurrentServer()
-                            Task { await serverManager.testConnection() }
-                        }
-                    }
-                }
-                .foregroundStyle(accentColor)
-            }
         }
         .endsAboveBottomChrome()
         .scrollIndicators(.hidden)
@@ -100,7 +79,43 @@ struct ServerDetailView: View {
             editedURL = server.url
             editedLocalURL = server.localURL ?? ""
             editedHeaders = ServerHeaders.text(server.headers)
+            loaded = true
         }
+        // Saved as it's typed: no button to find at the bottom of the page.
+        .onChange(of: editedName) { _, _ in save() }
+        .onChange(of: editedLocalURL) { _, _ in save() }
+        .onChange(of: editedHeaders) { _, _ in save() }
+        // The address and headers are tried once, on leaving, not at every keystroke.
+        .onDisappear {
+            if changed, serverManager.currentServer?.id == server.id {
+                Task { await serverManager.testConnection() }
+            }
+        }
+    }
+
+    @State private var loaded = false
+    @State private var changed = false
+
+    private func save() {
+        guard loaded, let idx = serverManager.servers.firstIndex(where: { $0.id == server.id }) else { return }
+        let name = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let friendly = name.isEmpty ? "Home" : name
+        let local = Self.cleanLocalURL(editedLocalURL)
+        let headers = ServerHeaders.parse(editedHeaders)
+        let current = serverManager.servers[idx]
+        guard current.friendlyName != friendly || current.localURL != local
+              || ServerHeaders.text(current.headers) != ServerHeaders.text(headers) else { return }
+        serverManager.servers[idx].friendlyName = friendly
+        serverManager.servers[idx].localURL = local
+        serverManager.servers[idx].headers = headers
+        serverManager.saveServers()
+        if serverManager.currentServer?.id == server.id {
+            serverManager.currentServer?.friendlyName = friendly
+            serverManager.currentServer?.localURL = local
+            serverManager.currentServer?.headers = headers
+            serverManager.saveCurrentServer()
+        }
+        changed = true
     }
 
     /// An http(s) address with a host, or nil to clear it; a bare host gets http://, as
