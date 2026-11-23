@@ -42,6 +42,11 @@ struct AlbumsFullListView: View {
 
     private func loadAlbums() async {
         guard let server = serverManager.currentServer else { return }
+        // The first page drawn from the phone at once; the server's page below replaces it.
+        if listType != "random", let local = LibraryIndex.shared.albums(sortedBy: listType), !local.isEmpty {
+            albums = Array(local.prefix(pageSize))
+            isLoading = false
+        }
         do {
             let result = try await SubsonicClient.shared.getAlbumList2(server: server, type: listType, size: pageSize, offset: 0)
             await MainActor.run {
@@ -116,6 +121,11 @@ struct ArtistsListView: View {
 
     private func loadArtists() async {
         guard let server = serverManager.currentServer else { return }
+        // The favourites the phone holds show at once; the server's list replaces them.
+        if artists.isEmpty, let local = LibraryIndex.shared.artists?.filter({ $0.starred != nil }), !local.isEmpty {
+            artists = local
+            isLoading = false
+        }
         do {
             let starred = try await SubsonicClient.shared.getStarred2(server: server)
             await MainActor.run {

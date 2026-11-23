@@ -118,7 +118,7 @@ struct SearchResultsContainer: View {
     @State private var linkCopied = false
 
     private let collapsedLimit = 4
-    private static let top = "search-top"
+    @State private var scrollPosition = ScrollPosition(edge: .top)
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespaces) }
 
     var body: some View {
@@ -126,15 +126,7 @@ struct SearchResultsContainer: View {
         // separate List views on the first keystroke (empty → results); that teardown
         // dropped the search field's keyboard focus, closing the keyboard after one letter.
         // A single List keeps the scroll view (and the field's focus) alive.
-        ScrollViewReader { proxy in
         List {
-            // Where a changed query goes back to: the rows scrolled past were the old query's.
-            Color.clear
-                .frame(height: 0)
-                .id(Self.top)
-                .listRowInsets(EdgeInsets())
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
             operatorChips
             if trimmedQuery.isEmpty {
                 recentsRows
@@ -154,8 +146,11 @@ struct SearchResultsContainer: View {
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.immediately)
-        .onChange(of: trimmedQuery) { proxy.scrollTo(Self.top, anchor: .top) }
-        }
+        // A changed query goes back to the first results: the rows scrolled past were the old
+        // query's. To the top edge, which keeps the room under the title and field; scrolling to
+        // a row put that row at the screen's top, under the field, with the title pushed away.
+        .scrollPosition($scrollPosition)
+        .onChange(of: trimmedQuery) { scrollPosition.scrollTo(edge: .top) }
         // No page colour of its own: the host paints it, with the tab-root glow at its top
         // (`tabRootCanvas`), which an opaque background here would hide.
         .task { SearchIndex.shared.prefetchIfNeeded() }

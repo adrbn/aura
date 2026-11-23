@@ -99,8 +99,9 @@ struct ArtistDetailView: View {
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.borderless)
-                    .opacity(isLoading ? 0.4 : 1)
-                    .disabled(isLoading)
+                    // Live once the page has its artist, from the phone or the server.
+                    .opacity(artist == nil ? 0.4 : 1)
+                    .disabled(artist == nil)
                 }
                 .lineLimit(1)
                 // In the 16-point column the name, Top Songs and the rows share: the row has
@@ -276,8 +277,31 @@ struct ArtistDetailView: View {
         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
     }
 
+    /// What this session last showed of each artist, photo and heart included, so a
+    /// reopened page comes back whole at once while the server is asked again.
+    private struct Shown {
+        var artist: ArtistWithAlbums, topSongs: [Song], albums: [Album], isStarred: Bool, imageURL: URL?
+    }
+    @MainActor private static var shown: [String: Shown] = [:]
+
     private func loadArtist() async {
         guard let server = serverManager.currentServer else { return }
+        if artist == nil, let last = Self.shown[artistId] {
+            artist = last.artist
+            topSongs = last.topSongs
+            albums = last.albums
+            isStarred = last.isStarred
+            artistImageURL = last.imageURL
+            isLoading = false
+        }
+        // Drawn from the phone at once; the server's answers below replace it.
+        if artist == nil, let local = LibraryIndex.shared.artist(artistId) {
+            artist = local.artist
+            albums = local.albums
+            topSongs = local.songs
+            isStarred = local.isStarred
+            if let url = local.artist.artistImageUrl, !url.isEmpty { artistImageURL = URL(string: url) }
+        }
         do {
             // Fetch artist first — immediately show basic info
             let result = try await SubsonicClient.shared.getArtist(server: server, id: artistId)
@@ -351,6 +375,8 @@ struct ArtistDetailView: View {
                 albums = allAlbums.sorted { ($0.year ?? 0) > ($1.year ?? 0) }
                 artistImageURL = imageURL
                 isLoading = false
+                Self.shown[artistId] = Shown(artist: result, topSongs: topSongs, albums: albums,
+                                             isStarred: artistStarred, imageURL: imageURL)
             }
         } catch {
             AppLogger.shared.log("❌ Artist load error: \(error.localizedDescription)")
@@ -386,7 +412,10 @@ struct ArtistDetailView: View {
             } else {
                 try? await SubsonicClient.shared.star(server: server, id: artistId)
             }
-            await MainActor.run { isStarred.toggle() }
+            await MainActor.run {
+                isStarred.toggle()
+                Self.shown[artistId]?.isStarred = isStarred
+            }
         }
     }
 }

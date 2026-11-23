@@ -189,6 +189,11 @@ private struct ArtistNameButton: View {
     }
 
     private func searchAndNavigate() {
+        // The library already read at launch knows the name: open it at once.
+        if let local = LibraryIndex.shared.artists?.first(where: { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }) {
+            navigateToArtist(local.id)
+            return
+        }
         guard let server = ServerManager.shared.currentServer else {
             if let fallbackId { navigateToArtist(fallbackId) }
             return

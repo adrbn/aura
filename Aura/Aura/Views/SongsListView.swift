@@ -119,6 +119,10 @@ struct SongsListView: View {
         if !cached.isEmpty {
             _songs = State(initialValue: cached)
             _isLoading = State(initialValue: false)
+        } else if let local = Self.local(fetchType), !local.isEmpty {
+            // First visit of the session: what the phone holds of the library.
+            _songs = State(initialValue: local)
+            _isLoading = State(initialValue: false)
         }
 
         let defaultOrder: SongSortOrder
@@ -130,6 +134,15 @@ struct SongsListView: View {
         }
         _sortOrder = AppStorage(wrappedValue: defaultOrder, "songs_sort_\(fetchType)")
         _sortAscending = AppStorage(wrappedValue: true, "songs_sort_ascending_\(fetchType)")
+    }
+
+    /// The list from the library held on the phone, for the lists it can answer.
+    private static func local(_ type: SongFetchType) -> [Song]? {
+        switch type {
+        case .all: LibraryIndex.shared.songs
+        case .starred: LibraryIndex.shared.songs?.filter { $0.starred != nil }
+        default: nil
+        }
     }
 
     private func resort() {
@@ -590,6 +603,14 @@ struct SongsListView: View {
                 }
                 return
             }
+        }
+
+        // The whole library is on the phone: no paging through it again.
+        if fetchType == .all, let local = Self.local(.all), !local.isEmpty {
+            SongsCache.shared.store(local, for: .all)
+            if songs.count != local.count { songs = local }
+            isLoading = false
+            return
         }
 
         do {

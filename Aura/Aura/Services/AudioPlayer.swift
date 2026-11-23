@@ -427,6 +427,16 @@ final class AudioPlayer {
         center.nextTrackCommand.isEnabled = true
         center.previousTrackCommand.isEnabled = true
 
+        // The Lock Screen's heart (#23). Under test: if the system trades ⏮ for a "…" menu to
+        // show it, this goes.
+        center.likeCommand.isEnabled = true
+        center.likeCommand.localizedTitle = String(localized: "Favourite")
+        center.likeCommand.addTarget { [weak self] _ in
+            guard let self, self.currentSong != nil else { return .noActionableNowPlayingItem }
+            self.toggleFavorite()
+            return .success
+        }
+
         center.stopCommand.addTarget { [weak self] _ in
             self?.pause()
             return .success
@@ -2517,6 +2527,8 @@ final class AudioPlayer {
                     if let idx = self.originalQueue.firstIndex(where: { $0.id == song.id }) {
                         self.originalQueue[idx] = song
                     }
+                    // The widget's heart follows, whichever side it was tapped from.
+                    self.updateWidget(song: song, artwork: nil)
                 }
             } catch { AppLogger.shared.log("❌ Toggle favorite failed: \(error.localizedDescription)") }
         }
@@ -3812,9 +3824,11 @@ final class AudioPlayer {
     /// play/pause, or the cover arriving. A new song without its cover yet drops the old
     /// one, so the widget never pairs a title with the previous song's cover.
     private func updateWidget(song: Song, artwork: PlatformImage?) {
+        MPRemoteCommandCenter.shared().likeCommand.isActive = song.isStarred
         #if os(iOS)
         let snapshot = NowPlayingSnapshot(songId: song.id, title: song.title,
-                                          artist: song.artist ?? "", isPlaying: isPlaying)
+                                          artist: song.artist ?? "", isPlaying: isPlaying,
+                                          isFavorite: song.isStarred)
         let coverArrived = artwork != nil && widgetCoverSongId != song.id
         guard snapshot != lastWidgetSnapshot || coverArrived else { return }
         lastWidgetSnapshot = snapshot

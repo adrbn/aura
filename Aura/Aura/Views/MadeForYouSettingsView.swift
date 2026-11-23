@@ -157,8 +157,14 @@ struct MadeForYouSettingsView: View {
     /// The server's genres, biggest first, so the ones worth a mix are at the top; every
     /// genre, A to Z, to leave out.
     private func loadGenres() async {
+        // The library read at launch lists them at once; the server then has the last word.
+        if allGenres.isEmpty, let local = LibraryIndex.shared.genres { show(local) }
         guard let server = serverManager.currentServer,
               let genres = try? await SubsonicClient.shared.getGenres(server: server) else { return }
+        show(genres)
+    }
+
+    private func show(_ genres: [GenreEntry]) {
         allGenres = genres.map(\.value).filter { !$0.isEmpty }
             .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
         serverGenres = genres

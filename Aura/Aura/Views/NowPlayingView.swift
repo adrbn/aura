@@ -1240,36 +1240,18 @@ struct NowPlayingView: View {
 
     // MARK: - Radio Duplicate Check
 
-    /// Check server-side playlists for an existing saved radio matching this song
+    /// A radio already saved for this song is offered first; otherwise the radio opens at
+    /// once. Asked of the playlists kept on the phone: waiting on the server here held the
+    /// player on screen before anything happened.
     private func checkForSavedRadio(song: Song) async {
-        guard let server = ServerManager.shared.currentServer else {
+        let radioName = "Radio: \(song.title)"
+        if let existing = OfflinePlaylistsStore.shared.playlists.first(where: { $0.name == radioName }) {
+            existingRadioPlaylistId = existing.id
+            existingRadioPlaylistName = existing.name
+            showRadioExistsDialog = true
+        } else {
             player.startRadioFromSong(song)
             player.isShowingNowPlaying = false
-            return
-        }
-        let radioName = "Radio: \(song.title)"
-        do {
-            let playlists = try await SubsonicClient.shared.getPlaylists(server: server)
-            if let existing = playlists.first(where: { $0.name == radioName }) {
-                // Found a saved radio playlist for this song
-                await MainActor.run {
-                    existingRadioPlaylistId = existing.id
-                    existingRadioPlaylistName = existing.name
-                    showRadioExistsDialog = true
-                }
-            } else {
-                // No saved radio — create a new one
-                await MainActor.run {
-                    player.startRadioFromSong(song)
-                    player.isShowingNowPlaying = false
-                }
-            }
-        } catch {
-            // Network error — just create the radio
-            await MainActor.run {
-                player.startRadioFromSong(song)
-                player.isShowingNowPlaying = false
-            }
         }
     }
 
@@ -1788,19 +1770,30 @@ struct NowPlayingView: View {
             }
     }
 
+    /// Each cover's veil and tint, worked out once a session: a reopened player shows its
+    /// backdrop at once rather than after the pixels are read again.
+    @MainActor private static var tones: [String: BackdropTone] = [:]
+
+    /// The image straight away, with its tone if already known; the tone otherwise follows.
+    private func showBackground(_ image: UIImage, coverArt: String) async {
+        backgroundImage = image
+        if let tone = Self.tones[coverArt] {
+            backdropTone = tone
+            return
+        }
+        let tone = await Self.backdropTone(of: image)
+        Self.tones[coverArt] = tone
+        backdropTone = tone
+    }
+
     private func loadBackgroundImage(for song: Song) async {
         guard let coverArt = song.coverArt, ServerManager.shared.currentServer != nil else {
             backgroundImage = nil
             backdropTone = .plain
             return
         }
-        let key = "\(coverArt)_bg"
-        if let cached = ArtworkCache.shared.image(for: key) {
-            let tone = await Self.backdropTone(of: cached)
-            await MainActor.run {
-                backgroundImage = cached
-                backdropTone = tone
-            }
+        if let cached = ArtworkCache.shared.image(for: "\(coverArt)_bg") {
+            await showBackground(cached, coverArt: coverArt)
             return
         }
         // Show ANY already-cached size of this cover immediately (it's heavily blurred
@@ -1808,28 +1801,14 @@ struct NowPlayingView: View {
         // the same progressive trick the foreground cover uses.
         if let anySize = ArtworkCache.shared.cachedImageAnySize(forCoverArt: coverArt)
             ?? song.albumId.flatMap({ ArtworkCache.shared.cachedImageAnySize(forCoverArt: $0) }) {
-            let tone = await Self.backdropTone(of: anySize)
-            await MainActor.run {
-                backgroundImage = anySize
-                backdropTone = tone
-            }
+            await showBackground(anySize, coverArt: coverArt)
         }
-        // Reuse the ordinary thumbnail rather than downloading a second bitmap.
-        //
-        // This used to fetch its own copy at the same size, through URLSession.shared — so
-        // outside the artwork throttle — on every single song change. The image is blurred
-        // beyond recognition behind the artwork, so a dedicated download bought nothing and
-        // cost a round-trip each time. Going through ArtworkCache means it is usually
-        // already in memory (the row thumbnail and this share a bucket), and when it isn't,
-        // the fetch is throttled and cached like every other cover.
+        // Reuse the ordinary thumbnail rather than downloading a second bitmap: it is
+        // blurred beyond recognition, and ArtworkCache throttles and caches the fetch.
         let thumbKey = "\(coverArt)_\(ArtworkCache.thumbSize)"
         guard let img = await ArtworkCache.shared.fetchImage(
             coverArt: coverArt, requestSize: ArtworkCache.thumbSize, key: thumbKey) else { return }
-        let tone = await Self.backdropTone(of: img)
-        await MainActor.run {
-            backgroundImage = img
-            backdropTone = tone
-        }
+        if img !== backgroundImage { await showBackground(img, coverArt: coverArt) }
     }
 
     /// Runs the pixel analysis off the main thread.

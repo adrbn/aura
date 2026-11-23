@@ -68,7 +68,11 @@ struct NowPlayingWidgetView: View {
 
     private var small: some View {
         VStack(alignment: .leading, spacing: 8) {
-            coverView(size: 64)
+            HStack(alignment: .top) {
+                coverView(size: 64)
+                Spacer(minLength: 0)
+                heart.font(.title3)
+            }
             Spacer(minLength: 0)
             titles
         }
@@ -115,10 +119,22 @@ struct NowPlayingWidgetView: View {
             Button(intent: NextTrackIntent()) {
                 Image(systemName: "forward.fill").font(.title3)
             }
+            heart.font(.title3)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
         .disabled(entry.snapshot == nil)
+    }
+
+    private var heart: some View {
+        let on = entry.snapshot?.isFavorite == true
+        return Button(intent: FavoriteIntent()) {
+            Image(systemName: on ? "heart.fill" : "heart")
+                .foregroundStyle(on ? NowPlayingSnapshot.accent : .white)
+        }
+        .buttonStyle(.plain)
+        .disabled(entry.snapshot == nil)
+        .accessibilityLabel("Favourite")
     }
 
     @ViewBuilder

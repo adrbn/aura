@@ -245,6 +245,14 @@ struct PlaylistsView: View {
         return AlphabetIndex.titles(for: unpinnedPlaylists.map(\.name))
     }
 
+    /// No push animation: under the player sliding away, the radio is already in place
+    /// rather than sliding in over the list it lands on.
+    private func pushRadio() {
+        var t = Transaction()
+        t.disablesAnimations = true
+        withTransaction(t) { navPath.append(RadioNavLink()) }
+    }
+
     var body: some View {
         NavigationStack(path: $navPath) {
             ZStack(alignment: .bottom) {
@@ -374,7 +382,7 @@ struct PlaylistsView: View {
                 // Pick up pending values set BEFORE this view mounted (e.g. tab switch)
                 if player.isShowingRadioPlaylist {
                     player.isShowingRadioPlaylist = false
-                    navPath.append(RadioNavLink())
+                    pushRadio()
                 }
                 if let id = player.pendingPlaylistId {
                     player.pendingPlaylistId = nil
@@ -403,7 +411,7 @@ struct PlaylistsView: View {
                 if newValue {
                     player.isShowingRadioPlaylist = false
                     // Push onto current navPath so back returns to wherever the user was
-                    navPath.append(RadioNavLink())
+                    pushRadio()
                 }
             }
             .sheet(isPresented: $showReorderPinned) {
@@ -459,11 +467,14 @@ struct PlaylistsView: View {
                     guard let server = serverManager.currentServer,
                           let created = try? await SubsonicClient.shared.createPlaylist(server: server, name: name, songIds: [])
                     else { return false }
-                    if !comment.isEmpty {
-                        try? await SubsonicClient.shared.updatePlaylist(server: server, id: created.id, comment: comment)
-                    }
-                    await loadPlaylists()
+                    // Open it right away; the description and the list catch up behind.
                     navPath.append(created)
+                    Task {
+                        if !comment.isEmpty {
+                            try? await SubsonicClient.shared.updatePlaylist(server: server, id: created.id, comment: comment)
+                        }
+                        await loadPlaylists()
+                    }
                     return true
                 }
             }
@@ -957,6 +968,14 @@ struct PlaylistsView: View {
                 isLoading = false
             }
             return
+        }
+        // The playlists saved on the device show at once; the server's list replaces them.
+        if playlists.isEmpty {
+            let saved = OfflinePlaylistsStore.shared.playlists.map(\.asPlaylist)
+            if !saved.isEmpty {
+                playlists = saved
+                isLoading = false
+            }
         }
         guard let server = serverManager.currentServer else { return }
         do {

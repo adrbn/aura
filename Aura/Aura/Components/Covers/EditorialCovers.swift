@@ -385,6 +385,19 @@ struct RadioCoverSpec {
         return (found, names.isEmpty ? others.prefix(2).map(\.name) : names)
     }
 
+    /// `sides()` answered from portraits already read this session, so a cover seen before
+    /// comes back whole at once. nil while any it would try isn't read yet.
+    func cachedSides() -> (portraits: [CoverPortrait], names: [String])? {
+        var found: [CoverPortrait] = []
+        var names: [String] = []
+        for artist in others where found.count < 2 {
+            guard let portrait = CoverPortraits.cached(artist.id, subject: false) else { return nil }
+            found.append(portrait)
+            names.append(artist.name)
+        }
+        return found.isEmpty ? nil : (found, names)
+    }
+
     func template(lead: CoverPortrait?, sides: [CoverPortrait], names: [String], isLoading: Bool,
                   size: CGFloat) -> RadioCoverTemplate {
         RadioCoverTemplate(lead: lead, left: sides.first, right: sides.dropFirst().first, name: name,
@@ -424,8 +437,9 @@ struct EditorialRadioCover: View {
         let sidesKey = spec.sidesKey
         let current = lead?.key == seedKey ? lead?.portrait
             : spec.seed.flatMap { CoverPortraits.cached($0.id, subject: false) }
-        let shownSides = sides.key == sidesKey ? sides.portraits : []
-        spec.template(lead: current, sides: shownSides, names: sides.key == sidesKey ? sides.names : [],
+        let kept = sides.key == sidesKey ? (portraits: sides.portraits, names: sides.names) : spec.cachedSides()
+        let shownSides = kept?.portraits ?? []
+        spec.template(lead: current, sides: shownSides, names: kept?.names ?? [],
                       isLoading: isLoading, size: size)
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius))

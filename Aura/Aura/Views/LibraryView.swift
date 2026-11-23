@@ -313,6 +313,11 @@ struct AlbumsGridView: View {
 
     private func loadAlbums() async {
         guard let server = serverManager.currentServer else { return }
+        // Drawn from the phone at once; the server's list below replaces it.
+        if let local = LibraryIndex.shared.albums(sortedBy: sortType), !local.isEmpty {
+            albums = local
+            isLoading = false
+        }
         do {
             // Page by 500, the most a server sends at once, so a large library isn't cut
             // off at its first 500 albums. Random is one page: more of it is just more random.
@@ -394,6 +399,10 @@ struct GenresListView: View {
 
     private func loadGenres() async {
         guard let server = serverManager.currentServer else { return }
+        if let local = LibraryIndex.shared.genres, !local.isEmpty {
+            genres = local.sorted { ($0.songCount ?? 0) > ($1.songCount ?? 0) }
+            isLoading = false
+        }
         if let result = try? await SubsonicClient.shared.getGenres(server: server) {
             await MainActor.run {
                 genres = result.sorted { ($0.songCount ?? 0) > ($1.songCount ?? 0) }
@@ -484,6 +493,13 @@ struct GenreSongsView: View {
 
     private func loadSongs() async {
         guard let server = serverManager.currentServer else { return }
+        // The whole genre is on the phone: no pages to fetch.
+        if let local = LibraryIndex.shared.songs(genre: genre.value), !local.isEmpty {
+            songs = local
+            hasMore = false
+            isLoading = false
+            return
+        }
         do {
             let result = try await SubsonicClient.shared.getSongsByGenre(server: server, genre: genre.value, count: pageSize, offset: 0)
             await MainActor.run {
@@ -606,6 +622,10 @@ struct ArtistsFullListView: View {
 
     private func loadArtists() async {
         guard let server = serverManager.currentServer else { return }
+        if allArtists.isEmpty, let local = LibraryIndex.shared.artists, !local.isEmpty {
+            allArtists = albumArtistsOnly ? local.filter { ($0.albumCount ?? 0) > 0 } : local
+            isLoading = false
+        }
         if let result = try? await SubsonicClient.shared.getArtists(server: server) {
             await MainActor.run {
                 var fetched = result

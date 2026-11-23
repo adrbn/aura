@@ -50,6 +50,12 @@ struct RecentlyPlayedSongsView: View {
     private func loadSongs() async {
         guard let server = serverManager.currentServer else { return }
         let ids = PlayHistory.shared.recentSongIds(limit: 100)
+        // What the phone holds shows at once; the rest joins it below.
+        let local = LibraryIndex.shared.songs(ids: ids)
+        if !local.isEmpty {
+            songs = ids.compactMap { local[$0] }
+            isLoading = false
+        }
         let fetched = await HomeView.fetchSongs(ids: ids, server: server)
         await MainActor.run {
             songs = fetched

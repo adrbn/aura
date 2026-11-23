@@ -294,8 +294,22 @@ struct AlbumDetailView: View {
         .background(Color.themeBg)
     }
 
+    /// What this session last showed of each album, heart included.
+    @MainActor private static var shown: [String: (album: AlbumWithSongs, isStarred: Bool)] = [:]
+
     private func loadAlbum() async {
-        await MainActor.run { isLoading = true }
+        if album == nil, let last = Self.shown[albumId] {
+            album = last.album
+            isStarred = last.isStarred
+            isLoading = false
+        }
+        // Drawn from the phone at once; the server's answer below replaces it.
+        if album == nil, let local = LibraryIndex.shared.album(albumId) {
+            album = local.album
+            isStarred = local.isStarred
+            isLoading = false
+        }
+        if album == nil { isLoading = true }
         guard let server = serverManager.currentServer else {
             await MainActor.run { isLoading = false }
             return
@@ -309,6 +323,7 @@ struct AlbumDetailView: View {
                 album = result
                 isStarred = albumStarred
                 isLoading = false
+                Self.shown[albumId] = (result, albumStarred)
             }
         } catch {
             AppLogger.shared.log("❌ Album load error: \(error.localizedDescription)")
@@ -320,6 +335,7 @@ struct AlbumDetailView: View {
         guard let server = serverManager.currentServer else { return }
         let wasStarred = isStarred
         isStarred.toggle()
+        Self.shown[albumId]?.isStarred = isStarred
         Task {
             do {
                 if wasStarred {
@@ -328,7 +344,10 @@ struct AlbumDetailView: View {
                     try await SubsonicClient.shared.star(server: server, id: albumId, type: .album)
                 }
             } catch {
-                await MainActor.run { isStarred = wasStarred }
+                await MainActor.run {
+                    isStarred = wasStarred
+                    Self.shown[albumId]?.isStarred = wasStarred
+                }
             }
         }
     }

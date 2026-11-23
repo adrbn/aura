@@ -130,12 +130,21 @@ struct RadioPlaylistView: View {
         .background(TintedCanvas(tint: tint?.seed == radioSeed?.id ? tint?.color : nil))
         .task(id: radioSeed?.id) {
             guard let seed = radioSeed else { return }
+            // A portrait read before gives the colour at once.
+            if let band = CoverPortraits.cached(seed.id, subject: false)?.band { tint = (seed.id, PageTint.tone(band)) }
             let portrait = await CoverPortraits.load(seed, subject: false)
             let base = portrait?.band ?? CoverPalette.hashed(seed.name)
             if !Task.isCancelled { tint = (seed.id, PageTint.tone(base)) }
         }
         .scrollIndicators(.hidden)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Saved before, same songs: keep showing it saved when the page comes back.
+            let ids = player.radioPlaylistSongs.map(\.id)
+            isSaved = !ids.isEmpty && OfflinePlaylistsStore.shared.playlists.contains {
+                $0.name == player.radioPlaylistName && $0.songs.map(\.id) == ids
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -221,6 +230,7 @@ struct NonstopView: View {
         .background(TintedCanvas(tint: tint))
         .task(id: player.nonstopCoverArtists?.first?.id) {
             guard let lead = player.nonstopCoverArtists?.first ?? songs.first.flatMap(CoverArtists.lead(of:)) else { return }
+            if tint == nil, let band = CoverPortraits.cached(lead.id, subject: false)?.band { tint = PageTint.tone(band) }
             let portrait = await CoverPortraits.load(lead, subject: false)
             if !Task.isCancelled { tint = PageTint.tone(portrait?.band ?? CoverPalette.hashed(lead.name)) }
         }

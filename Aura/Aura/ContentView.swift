@@ -381,13 +381,10 @@ struct ContentView: View {
         if audioPlayer.pendingRadioOpen {
             audioPlayer.pendingRadioOpen = false
             switchToPlaylistsTab()
-            // Delay so the new PlaylistsView instance has time to mount
-            // before we trigger the navigation via isShowingRadioPlaylist
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(300))
-                guard !Task.isCancelled else { return }
-                audioPlayer.isShowingRadioPlaylist = true
-            }
+            // At once, under the player as it slides away: a wait here let the slide uncover
+            // the playlists list before the radio was pushed over it. PlaylistsView takes the
+            // flag in onAppear if it mounts now, in onChange if it was already there.
+            audioPlayer.isShowingRadioPlaylist = true
         }
         if audioPlayer.pendingFavoritesOpen {
             switchToLibraryTab()

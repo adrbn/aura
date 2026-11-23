@@ -106,6 +106,7 @@ struct RadarReleaseView: View {
         .task { await load() }
         .task {
             guard let cover = release.largeCover else { return }
+            if tint == nil { tint = PageTint.cached(cover) }
             tint = await PageTint.load(cover)
         }
     }
@@ -253,6 +254,8 @@ struct RadarReleaseView: View {
     }
 
     private func load() async {
+        // The list already held shows at once, however old; the fresh one replaces it.
+        if tracks == nil, let kept = radarService.trackLists[release.id] { tracks = kept.tracks }
         let loaded = await radarService.tracks(of: release)
         if let loaded { tracks = loaded }
         unreachable = loaded == nil && tracks == nil

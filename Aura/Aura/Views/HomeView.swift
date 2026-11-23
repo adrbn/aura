@@ -900,6 +900,16 @@ struct HomeView: View {
 
     /// Fetches songs by id, keeping input order, with at most 5 requests in flight.
     static func fetchSongs(ids: [String], server: ServerConfig, maxConcurrent: Int = 10) async -> [Song] {
+        // What the phone holds needs no request; only the rest goes to the server.
+        let local = await MainActor.run { LibraryIndex.shared.songs(ids: ids) }
+        let missing = ids.filter { local[$0] == nil }
+        guard !missing.isEmpty else { return ids.compactMap { local[$0] } }
+        let fetched = await fetchFromServer(ids: missing, server: server, maxConcurrent: maxConcurrent)
+        let byId = local.merging(Dictionary(fetched.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })) { a, _ in a }
+        return ids.compactMap { byId[$0] }
+    }
+
+    private static func fetchFromServer(ids: [String], server: ServerConfig, maxConcurrent: Int) async -> [Song] {
         await withTaskGroup(of: (Int, Song?).self) { group in
             var iterator = ids.enumerated().makeIterator()
             for _ in 0..<maxConcurrent {

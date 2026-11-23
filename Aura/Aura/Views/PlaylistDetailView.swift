@@ -257,6 +257,8 @@ struct PlaylistDetailView: View {
             isStarred = AppSettings.shared.isPinned(playlistId)
             await loadPlaylist()
         }
+        // Edits made here are what a reopen shows first.
+        .onDisappear { if let playlist { Self.shown[playlistId] = (playlist, suggestions) } }
         .sheet(isPresented: $showAddSongs) {
             AddSongsSheet(playlistSongs: playlist?.entry ?? []) { song in
                 await add(song)
@@ -399,16 +401,24 @@ struct PlaylistDetailView: View {
         .background(Color.themeBg)
     }
 
+    /// What this session last showed of each playlist, suggestions included, so a reopened
+    /// one comes back whole at once while the server is asked again.
+    @MainActor private static var shown: [String: (playlist: PlaylistWithSongs, suggestions: [Song])] = [:]
+
     private func loadPlaylist() async {
         // The copy saved for offline shows at once, so a slow mobile network only delays the
         // refresh, not the page.
         await MainActor.run {
+            if playlist == nil, let last = Self.shown[playlistId] {
+                playlist = last.playlist
+                suggestions = last.suggestions
+            }
             if playlist == nil,
                let saved = OfflinePlaylistsStore.shared.playlists.first(where: { $0.id == playlistId }) {
                 playlist = PlaylistWithSongs(id: saved.id, name: saved.name, songCount: saved.songCount,
                                              duration: saved.songs.compactMap(\.duration).reduce(0, +),
                                              coverArt: saved.coverArt, owner: nil, entry: saved.songs,
-                                             comment: nil, public: nil)
+                                             comment: saved.comment, public: nil)
             }
             isLoading = playlist == nil
         }
@@ -425,9 +435,13 @@ struct PlaylistDetailView: View {
             }
             // Warm song thumbnails so rows don't pop in while scrolling.
             // Capped: huge playlists shouldn't trigger hundreds of fetches at once.
+            await MainActor.run { Self.shown[playlistId] = (result, suggestions) }
             if suggestions.isEmpty {
                 let picked = await PlaylistSuggester.suggest(server: server, for: result.entry ?? [])
-                await MainActor.run { withAnimation { suggestions = picked } }
+                await MainActor.run {
+                    withAnimation { suggestions = picked }
+                    Self.shown[playlistId] = (result, picked)
+                }
             }
             let thumbIds = (result.entry ?? []).prefix(300).compactMap(\.displayCoverArt)
             ArtworkCache.shared.prefetch(coverArtIds: Array(thumbIds), pointSize: 50)

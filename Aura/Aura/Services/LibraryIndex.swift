@@ -22,6 +22,8 @@ final class LibraryIndex {
         let songs: [Song], albums: [Album], artists: [Artist]
         let songDocs: [LocalSearch.Doc], albumDocs: [LocalSearch.Doc], artistDocs: [LocalSearch.Doc]
         let vocabulary: LocalSearch.Vocabulary
+        /// Song id → its place in `songs`, for lookups by id.
+        let songIndex: [String: Int]
         /// Most used first, for the operator suggestions.
         let genres: [String], years: [Int]
 
@@ -38,6 +40,7 @@ final class LibraryIndex {
             }
             artistDocs = artists.map { LocalSearch.Doc(artist: $0.name, popularity: $0.albumCount ?? 0) }
             vocabulary = LocalSearch.Vocabulary(songDocs + albumDocs + artistDocs)
+            songIndex = Dictionary(songs.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { a, _ in a })
             var genreCounts: [String: Int] = [:]
             for song in songs { if let g = song.genre, !g.isEmpty { genreCounts[g, default: 0] += 1 } }
             genres = genreCounts.sorted { $0.value > $1.value }.map(\.key)
@@ -75,6 +78,77 @@ final class LibraryIndex {
             .appendingPathComponent("LibraryIndex", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("\(name).json")
+    }
+
+    // MARK: Lookups
+
+    /// What a page can draw at once from the phone, before the server answers: no skeleton
+    /// for what is already here. The server's answer then replaces it. nil when the index
+    /// isn't built for this server.
+    private var ready: Corpus? { isReady ? corpus : nil }
+
+    /// An album's songs in disc and track order.
+    func album(_ id: String) -> (album: AlbumWithSongs, isStarred: Bool)? {
+        guard let corpus = ready, let album = corpus.albums.first(where: { $0.id == id }) else { return nil }
+        let songs = corpus.songs.filter { $0.albumId == id }
+            .sorted { ($0.discNumber ?? 1, $0.track ?? 0) < ($1.discNumber ?? 1, $1.track ?? 0) }
+        guard !songs.isEmpty else { return nil }
+        return (AlbumWithSongs(id: album.id, name: album.name, artist: album.artist, artistId: album.artistId,
+                               coverArt: album.coverArt, songCount: album.songCount, duration: album.duration,
+                               year: album.year, genre: album.genre, song: songs),
+                album.starred != nil)
+    }
+
+    /// An artist with their albums, newest first, and their songs, most played first.
+    func artist(_ id: String) -> (artist: ArtistWithAlbums, albums: [Album], songs: [Song], isStarred: Bool)? {
+        guard let corpus = ready, let artist = corpus.artists.first(where: { $0.id == id }) else { return nil }
+        let albums = corpus.albums.filter { $0.artistId == id }.sorted { ($0.year ?? 0) > ($1.year ?? 0) }
+        let songs = corpus.songs.filter { $0.artistId == id }.sorted { ($0.playCount ?? 0) > ($1.playCount ?? 0) }
+        return (ArtistWithAlbums(id: artist.id, name: artist.name, coverArt: artist.coverArt,
+                                 albumCount: artist.albumCount, artistImageUrl: artist.artistImageUrl, album: albums),
+                albums, songs, artist.starred != nil)
+    }
+
+    var artists: [Artist]? { ready?.artists }
+    var songs: [Song]? { ready?.songs }
+
+    /// The songs with these ids that the phone holds, keyed by id.
+    func songs(ids: [String]) -> [String: Song] {
+        guard let corpus = ready else { return [:] }
+        var found: [String: Song] = [:]
+        for id in ids { if let i = corpus.songIndex[id] { found[id] = corpus.songs[i] } }
+        return found
+    }
+
+    /// Every album in one of the server's list orders.
+    func albums(sortedBy type: String) -> [Album]? {
+        guard let albums = ready?.albums else { return nil }
+        let name: (Album, Album) -> Bool = { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        switch type {
+        case "alphabeticalByArtist":
+            return albums.sorted {
+                let order = ($0.artist ?? "").localizedStandardCompare($1.artist ?? "")
+                return order == .orderedSame ? name($0, $1) : order == .orderedAscending
+            }
+        case "newest": return albums.sorted { ($0.created ?? "") > ($1.created ?? "") }
+        case "frequent": return albums.filter { ($0.playCount ?? 0) > 0 }.sorted { ($0.playCount ?? 0) > ($1.playCount ?? 0) }
+        case "recent": return albums.filter { $0.played != nil }.sorted { ($0.played ?? "") > ($1.played ?? "") }
+        case "random": return albums.shuffled()
+        default: return albums.sorted(by: name)
+        }
+    }
+
+    /// The genres with their song and album counts, as the server lists them.
+    var genres: [GenreEntry]? {
+        guard let corpus = ready else { return nil }
+        var songs: [String: Int] = [:], albums: [String: Int] = [:]
+        for song in corpus.songs { if let g = song.genre, !g.isEmpty { songs[g, default: 0] += 1 } }
+        for album in corpus.albums { if let g = album.genre, !g.isEmpty { albums[g, default: 0] += 1 } }
+        return songs.map { GenreEntry(songCount: $0.value, albumCount: albums[$0.key] ?? 0, value: $0.key) }
+    }
+
+    func songs(genre: String) -> [Song]? {
+        ready?.songs.filter { $0.genre == genre }
     }
 
     // MARK: Building

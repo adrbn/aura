@@ -23,6 +23,8 @@ struct NowPlayingSnapshot: Codable, Equatable {
     var title: String
     var artist: String
     var isPlaying: Bool
+    /// Optional so a snapshot saved by an older build still decodes.
+    var isFavorite: Bool? = nil
 
     static let widgetKind = "NowPlayingWidget"
 

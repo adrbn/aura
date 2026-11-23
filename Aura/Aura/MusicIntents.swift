@@ -43,6 +43,20 @@ struct PreviousTrackIntent: LiveActivityIntent {
         return .result()
     }
 }
+
+/// The widget's heart. Runs in the app, like the transport above.
+struct FavoriteIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Favourite Current Song"
+    static var openAppWhenRun: Bool = false
+    static var isDiscoverable: Bool = false
+
+    func perform() async throws -> some IntentResult {
+        #if !WIDGET_EXTENSION
+        await MainActor.run { AudioPlayer.shared.toggleFavorite() }
+        #endif
+        return .result()
+    }
+}
 #endif
 
 // MARK: - Siri App Shortcuts (app target only)

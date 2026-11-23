@@ -12,10 +12,12 @@ struct OfflinePlaylistSnapshot: Codable, Identifiable {
     /// The server's last-modified stamp: a playlist whose stamp hasn't moved isn't fetched again.
     var changed: String? = nil
     var created: String? = nil
+    /// The description, so a reopened playlist shows it with the rest, not a beat later.
+    var comment: String? = nil
 
     var asPlaylist: Playlist {
         Playlist(id: id, name: name, songCount: songCount, duration: nil, coverArt: coverArt, owner: nil,
-                 created: created, changed: changed, comment: nil, public: nil)
+                 created: created, changed: changed, comment: comment, public: nil)
     }
 }
 
@@ -93,7 +95,7 @@ final class OfflinePlaylistsStore {
         let songs = edit(old.songs)
         playlists[i] = OfflinePlaylistSnapshot(id: old.id, name: old.name, songCount: songs.count,
                                                coverArt: old.coverArt, songs: songs,
-                                               changed: nil, created: old.created)
+                                               changed: nil, created: old.created, comment: old.comment)
         persist()
     }
 
@@ -142,14 +144,23 @@ final class OfflinePlaylistsStore {
                             let songs = detail.entry ?? []
                             return OfflinePlaylistSnapshot(id: playlist.id, name: playlist.name, songCount: songs.count,
                                                            coverArt: playlist.coverArt, songs: songs,
-                                                           changed: playlist.changed, created: playlist.created)
+                                                           changed: playlist.changed, created: playlist.created,
+                                                           comment: playlist.comment ?? detail.comment)
                         }
                     }
                     for await snapshot in group { if let snapshot { fetched[snapshot.id] = snapshot } }
                 }
             }
             // A playlist that failed to load keeps its saved copy rather than vanishing.
-            let snapshots = serverPlaylists.compactMap { fetched[$0.id] ?? saved[$0.id] }
+            // A kept copy takes the list's description: saved before descriptions were kept,
+            // or changed without the songs moving.
+            let snapshots = serverPlaylists.compactMap { p in
+                fetched[p.id] ?? saved[p.id].map { kept in
+                    var kept = kept
+                    kept.comment = p.comment ?? kept.comment
+                    return kept
+                }
+            }
             guard !snapshots.isEmpty else { return }
             playlists = snapshots
             lastRefresh = Date()
