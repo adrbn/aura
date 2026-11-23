@@ -42,6 +42,16 @@ struct SearchView: View {
                     }
                     .padding(.horizontal, Pad.side)
                     .padding(.top, TabChrome.contentTop + titleRoom)
+                    // Once the title has gone, the rows fade into the page as they rise to the
+                    // glass field, rather than showing sharp all round it.
+                    .background {
+                        LinearGradient(stops: [.init(color: .themeBg, location: 0),
+                                               .init(color: .themeBg, location: 0.45),
+                                               .init(color: .themeBg.opacity(0), location: 1)],
+                                       startPoint: .top, endPoint: .bottom)
+                            .opacity(1 - titleOpacity)
+                            .allowsHitTesting(false)
+                    }
                     .offset(y: headerOffset)
                     .ignoresSafeArea(.container, edges: .top)
                 }
@@ -108,6 +118,7 @@ struct SearchResultsContainer: View {
     @State private var linkCopied = false
 
     private let collapsedLimit = 4
+    private static let top = "search-top"
     private var trimmedQuery: String { query.trimmingCharacters(in: .whitespaces) }
 
     var body: some View {
@@ -115,7 +126,15 @@ struct SearchResultsContainer: View {
         // separate List views on the first keystroke (empty → results); that teardown
         // dropped the search field's keyboard focus, closing the keyboard after one letter.
         // A single List keeps the scroll view (and the field's focus) alive.
+        ScrollViewReader { proxy in
         List {
+            // Where a changed query goes back to: the rows scrolled past were the old query's.
+            Color.clear
+                .frame(height: 0)
+                .id(Self.top)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             operatorChips
             if trimmedQuery.isEmpty {
                 recentsRows
@@ -134,7 +153,9 @@ struct SearchResultsContainer: View {
         .environment(\.defaultMinListRowHeight, 0)
         .scrollContentBackground(.hidden)
         .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.never)
+        .scrollDismissesKeyboard(.immediately)
+        .onChange(of: trimmedQuery) { proxy.scrollTo(Self.top, anchor: .top) }
+        }
         // No page colour of its own: the host paints it, with the tab-root glow at its top
         // (`tabRootCanvas`), which an opaque background here would hide.
         .task { SearchIndex.shared.prefetchIfNeeded() }
