@@ -203,7 +203,7 @@ struct MacSongMenuItems: View {
             Label(starred ? "Unfavourite" : "Favourite", systemImage: starred ? "heart.slash" : "heart")
         }
         .disabled(songs.isEmpty)
-        MacRatingMenu(songs: songs)
+        SongRatingMenu(songs: songs)
         Menu {
             Button("New Playlist…") { actions.newPlaylistSongs = songs }
             if !actions.playlists.isEmpty { Divider() }

@@ -2,6 +2,8 @@ import SwiftUI
 
 // MARK: - Song Credits Sheet
 
+/// Song Info, laid out like Add to Playlist: the song at the top, then rounded cards on the
+/// page colour — rating, the song, its credits, the release and the file.
 struct SongCreditsSheet: View {
     let song: Song
     @Environment(\.dismiss) private var dismiss
@@ -11,219 +13,30 @@ struct SongCreditsSheet: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                // Header with cover art
-                Section {
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 8) {
-                            CoverArtImage(coverArt: song.coverArt, size: 120, cornerRadius: 12,
-                              fallbackCoverArt: song.albumId)
-                            Text(song.title)
-                                .font(.headline)
-                                .multilineTextAlignment(.center)
-                            if let artist = song.artist {
-                                Text(artist)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            if let album = song.album {
-                                Text(album)
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
-                            }
-                        }
-                        Spacer()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    header
+                    if !song.isPreview { ratingCard }
+                    card("Song", rows: songRows)
+                    credits
+                    ForEach(Array(SongFileSections.groups(for: song).enumerated()), id: \.offset) { _, group in
+                        card(group.title, rows: group.rows)
                     }
-                    .listRowBackground(Color.clear)
+                    Text("Credits data from MusicBrainz")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity)
                 }
-
-                SongRatingSection(song: song)
-
-                // Song info from local metadata
-                Section("Song") {
-                    if let artist = song.artist {
-                        creditRow("Artist", artist)
-                    }
-                    if let album = song.album {
-                        creditRow("Album", album)
-                    }
-                    if let genre = song.genre {
-                        creditRow("Genre", genre)
-                    }
-                    if let year = song.year {
-                        creditRow("Year", "\(year)")
-                    }
-                    if let track = song.track {
-                        creditRow("Track", "\(track)")
-                    }
-                    creditRow("Duration", song.durationFormatted)
-                }
-
-                // MusicBrainz credits
-                if isLoadingCredits {
-                    Section("Credits") {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .padding(.vertical, 8)
-                            Text("Looking up credits…")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .padding(.leading, 8)
-                            Spacer()
-                        }
-                    }
-                } else if let credits = mbCredits, credits.hasAnyCredits {
-                    // Writers
-                    if !credits.writers.isEmpty {
-                        Section("Written By") {
-                            ForEach(credits.writers, id: \.self) { writer in
-                                creditPersonRow(writer, role: String(localized: "Writer"))
-                            }
-                        }
-                    }
-
-                    // Composers
-                    if !credits.composers.isEmpty {
-                        Section("Composed By") {
-                            ForEach(credits.composers, id: \.self) { composer in
-                                creditPersonRow(composer, role: String(localized: "Composer"))
-                            }
-                        }
-                    }
-
-                    // Lyricists
-                    if !credits.lyricists.isEmpty {
-                        Section("Lyrics By") {
-                            ForEach(credits.lyricists, id: \.self) { lyricist in
-                                creditPersonRow(lyricist, role: String(localized: "Lyricist"))
-                            }
-                        }
-                    }
-
-                    // Producers
-                    if !credits.producers.isEmpty {
-                        Section("Produced By") {
-                            ForEach(credits.producers, id: \.self) { producer in
-                                creditPersonRow(producer, role: String(localized: "Producer"))
-                            }
-                        }
-                    }
-
-                    // Performers
-                    if !credits.performers.isEmpty {
-                        Section("Performers") {
-                            ForEach(Array(credits.performers.enumerated()), id: \.offset) { _, performer in
-                                creditPersonRow(performer.name, role: performer.role)
-                            }
-                        }
-                    }
-
-                    // Mixing
-                    if !credits.mixers.isEmpty {
-                        Section("Mixed By") {
-                            ForEach(credits.mixers, id: \.self) { mixer in
-                                creditPersonRow(mixer, role: String(localized: "Mixing"))
-                            }
-                        }
-                    }
-
-                    // Engineers
-                    if !credits.engineers.isEmpty {
-                        Section("Engineering") {
-                            ForEach(credits.engineers, id: \.self) { engineer in
-                                creditPersonRow(engineer, role: String(localized: "Engineer"))
-                            }
-                        }
-                    }
-
-                    // Arrangers
-                    if !credits.arrangers.isEmpty {
-                        Section("Arranged By") {
-                            ForEach(credits.arrangers, id: \.self) { arranger in
-                                creditPersonRow(arranger, role: String(localized: "Arranger"))
-                            }
-                        }
-                    }
-
-                    // Remixers
-                    if !credits.remixers.isEmpty {
-                        Section("Remixed By") {
-                            ForEach(credits.remixers, id: \.self) { remixer in
-                                creditPersonRow(remixer, role: String(localized: "Remixer"))
-                            }
-                        }
-                    }
-
-                    // Release info
-                    Section("Release Info") {
-                        if let label = credits.label {
-                            creditRow("Label", label)
-                        }
-                        if let date = credits.releaseDate {
-                            creditRow("Release Date", date)
-                        }
-                        if let country = credits.releaseCountry {
-                            creditRow("Country", country)
-                        }
-                        if let catalog = credits.catalogNumber {
-                            creditRow("Catalog #", catalog)
-                        }
-                        if let isrc = credits.isrc {
-                            creditRow("ISRC", isrc)
-                        }
-                    }
-
-                    // Tags
-                    if !credits.tags.isEmpty {
-                        Section("Tags") {
-                            FlowLayout(spacing: 6) {
-                                ForEach(credits.tags, id: \.self) { tag in
-                                    Text(tag)
-                                        .font(.caption)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(accentColor.opacity(0.15))
-                                        .foregroundStyle(accentColor)
-                                        .clipShape(Capsule())
-                                }
-                            }
-                            .listRowBackground(Color.clear)
-                        }
-                    }
-                } else {
-                    Section("Credits") {
-                        Text("No additional credits found")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                SongFileSections(song: song)
-
-                // Source attribution
-                Section {
-                    HStack {
-                        Spacer()
-                        Text("Credits data from MusicBrainz")
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                        Spacer()
-                    }
-                    .listRowBackground(Color.clear)
-                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
             }
             .scrollIndicators(.hidden)
-            .auraSheet()
-            .navigationTitle("")
+            .background(Color.themeBg)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Song Info").font(.headline)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { dismiss() } label: { Image(systemName: "xmark") }
+                        .accessibilityLabel(Text("Done"))
                 }
             }
             .task {
@@ -233,29 +46,186 @@ struct SongCreditsSheet: View {
                 isLoadingCredits = false
             }
         }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationContentInteraction(.scrolls)
+        .presentationBackground(Color.themeBg)
     }
 
-    private func creditRow(_ label: String, _ value: String) -> some View {
-        HStack {
-            Text(LocalizedStringKey(label))
-            Spacer()
-            Text(value)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.trailing)
-                .textSelection(.enabled)
+    // MARK: - Pieces
+
+    private var header: some View {
+        HStack(spacing: 14) {
+            CoverArtImage(coverArt: song.displayCoverArt, size: 60, cornerRadius: 10,
+                          fallbackCoverArt: song.albumId,
+                          placeholderName: song.title, placeholderKind: .song)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Song Info")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(song.title)
+                    .font(.title3.weight(.bold))
+                    .lineLimit(2)
+                if let artist = song.artist {
+                    Text(artist)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 8)
+    }
+
+    private var ratingCard: some View {
+        let ratings = SongRatings.shared
+        let rating = ratings.rating(for: song)
+        return HStack(spacing: 0) {
+            ForEach(1...5, id: \.self) { star in
+                Button {
+                    ratings.set(rating == star ? 0 : star, for: song)
+                } label: {
+                    Image(systemName: star <= rating ? "star.fill" : "star")
+                        .font(.title2)
+                        .foregroundStyle(star <= rating ? accentColor : Color.primary.opacity(0.3))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.vertical, 6)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color.primary.opacity(0.08)))
+        .sensoryFeedback(.selection, trigger: rating)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Rating")
+        .accessibilityValue("\(rating) of 5")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: ratings.set(min(rating + 1, 5), for: song)
+            case .decrement: ratings.set(max(rating - 1, 0), for: song)
+            @unknown default: break
+            }
         }
     }
 
-    private func creditPersonRow(_ name: String, role: String) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name)
-                    .font(.subheadline)
-                Text(role)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+    private var songRows: [(label: String, value: String)] {
+        var rows: [(String, String)] = []
+        if let album = song.album { rows.append(("Album", album)) }
+        if let genre = song.genre { rows.append(("Genre", genre)) }
+        if let year = song.year { rows.append(("Year", "\(year)")) }
+        if let track = song.track { rows.append(("Track", "\(track)")) }
+        rows.append(("Duration", song.durationFormatted))
+        if let plays = song.playCount { rows.append(("Play Count", "\(plays)")) }
+        return rows
+    }
+
+    @ViewBuilder
+    private var credits: some View {
+        if isLoadingCredits {
+            HStack(spacing: 10) {
+                ProgressView()
+                Text("Looking up credits…").font(.subheadline).foregroundStyle(.secondary)
             }
-            Spacer()
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+        } else if let c = mbCredits, c.hasAnyCredits {
+            let people: [(LocalizedStringKey, [(String, String)])] = [
+                ("Written By", c.writers.map { ($0, String(localized: "Writer")) }),
+                ("Composed By", c.composers.map { ($0, String(localized: "Composer")) }),
+                ("Lyrics By", c.lyricists.map { ($0, String(localized: "Lyricist")) }),
+                ("Produced By", c.producers.map { ($0, String(localized: "Producer")) }),
+                ("Performers", c.performers.map { ($0.name, $0.role) }),
+                ("Mixed By", c.mixers.map { ($0, String(localized: "Mixing")) }),
+                ("Engineering", c.engineers.map { ($0, String(localized: "Engineer")) }),
+                ("Arranged By", c.arrangers.map { ($0, String(localized: "Arranger")) }),
+                ("Remixed By", c.remixers.map { ($0, String(localized: "Remixer")) }),
+            ]
+            ForEach(Array(people.enumerated()), id: \.offset) { _, group in
+                if !group.1.isEmpty { peopleCard(group.0, group.1) }
+            }
+            var release: [(label: String, value: String)] {
+                var rows: [(String, String)] = []
+                if let v = c.label { rows.append(("Label", v)) }
+                if let v = c.releaseDate { rows.append(("Release Date", v)) }
+                if let v = c.releaseCountry { rows.append(("Country", v)) }
+                if let v = c.catalogNumber { rows.append(("Catalog #", v)) }
+                if let v = c.isrc { rows.append(("ISRC", v)) }
+                return rows
+            }
+            if !release.isEmpty { card("Release Info", rows: release) }
+            if !c.tags.isEmpty {
+                section("Tags") {
+                    FlowLayout(spacing: 6) {
+                        ForEach(c.tags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption.weight(.medium))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(accentColor.opacity(0.15))
+                                .foregroundStyle(accentColor)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+        } else {
+            Text("No additional credits found")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// A title over its content, the way the sheet groups everything.
+    private func section<Content: View>(_ title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .padding(.leading, 4)
+            content()
+        }
+    }
+
+    private func card(_ title: LocalizedStringKey, rows: [(label: String, value: String)]) -> some View {
+        section(title) {
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
+                    if i > 0 { Divider().padding(.leading, 16) }
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text(LocalizedStringKey(row.label))
+                        Spacer(minLength: 8)
+                        Text(row.value)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                            .textSelection(.enabled)
+                    }
+                    .font(.subheadline)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
+            }
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.primary.opacity(0.08)))
+        }
+    }
+
+    private func peopleCard(_ title: LocalizedStringKey, _ people: [(String, String)]) -> some View {
+        section(title) {
+            VStack(spacing: 0) {
+                ForEach(Array(people.enumerated()), id: \.offset) { i, person in
+                    if i > 0 { Divider().padding(.leading, 16) }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(person.0).font(.subheadline.weight(.semibold))
+                        Text(person.1).font(.caption).foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                }
+            }
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.primary.opacity(0.08)))
         }
     }
 }

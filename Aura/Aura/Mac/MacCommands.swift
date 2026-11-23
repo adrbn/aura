@@ -85,7 +85,7 @@ struct MacCommands: Commands {
             }
             .keyboardShortcut("l", modifiers: .command)
             .disabled(player.currentSong == nil)
-            MacRatingMenu(songs: player.currentSong.map { [$0] } ?? [])
+            SongRatingMenu(songs: player.currentSong.map { [$0] } ?? [])
 
             Divider()
 

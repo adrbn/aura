@@ -1078,23 +1078,3 @@ private struct MacAboutSettings: View {
     }
 }
 
-/// Stars for one or several songs, in any song's context menu.
-struct MacRatingMenu: View {
-    let songs: [Song]
-
-    var body: some View {
-        let ratings = SongRatings.shared
-        let current = songs.count == 1 ? ratings.rating(for: songs[0]) : -1
-        Menu("Rating") {
-            ForEach(0...5, id: \.self) { stars in
-                Button {
-                    songs.forEach { ratings.set(stars, for: $0) }
-                } label: {
-                    let label = stars == 0 ? String(localized: "No Rating") : String(repeating: "★", count: stars)
-                    if stars == current { Label(label, systemImage: "checkmark") } else { Text(label) }
-                }
-            }
-        }
-        .disabled(songs.isEmpty)
-    }
-}

@@ -55,47 +55,36 @@ struct SongInfoSheet: View {
 /// Playing sheet, which shows it under the credits.
 struct SongFileSections: View {
     let song: Song
-    @State private var appSettings = AppSettings.shared
 
-    private var playbackFormat: String {
+    /// The rows, grouped, for this sheet's List and for the card layout of Song Info.
+    static func groups(for song: Song) -> [(title: LocalizedStringKey, rows: [(label: String, value: String)])] {
+        let settings = AppSettings.shared
         let suffix = song.suffix?.lowercased() ?? ""
-        let needsTranscode = suffix == "ogg" || suffix == "opus" || suffix == "wma"
-        if needsTranscode {
-            return String(localized: "MP3 (Auto-transcoded from \(suffix.uppercased()))")
-        } else if let br = appSettings.effectiveStreamingQuality.bitRate, suffix == "flac" || suffix == "alac" {
-            return String(localized: "MP3 \(br) kbps (Transcoded from \(suffix.uppercased()))")
-        } else {
-            return String(localized: "\(suffix.uppercased()) (Original)")
-        }
-    }
-
-    private var playbackBitrate: String {
-        let suffix = song.suffix?.lowercased() ?? ""
+        let format: String
         if suffix == "ogg" || suffix == "opus" || suffix == "wma" {
-            let br = appSettings.effectiveStreamingQuality.bitRate ?? 320
-            return "\(br) kbps"
-        } else if let br = appSettings.effectiveStreamingQuality.bitRate {
-            return String(localized: "\(br) kbps (max)")
+            format = String(localized: "MP3 (Auto-transcoded from \(suffix.uppercased()))")
+        } else if let br = settings.effectiveStreamingQuality.bitRate, suffix == "flac" || suffix == "alac" {
+            format = String(localized: "MP3 \(br) kbps (Transcoded from \(suffix.uppercased()))")
         } else {
-            return String(localized: "Original")
+            format = String(localized: "\(suffix.uppercased()) (Original)")
         }
+        var file: [(String, String)] = []
+        if let bitRate = song.bitRate { file.append(("Bitrate", "\(bitRate) kbps")) }
+        if let s = song.suffix { file.append(("Format", s.uppercased())) }
+        if let contentType = song.contentType { file.append(("Content Type", contentType)) }
+        file.append(("File Size", song.fileSizeFormatted))
+        if let path = song.path { file.append(("Path", path)) }
+        var ids: [(String, String)] = [("Song ID", song.id)]
+        if let albumId = song.albumId { ids.append(("Album ID", albumId)) }
+        if let artistId = song.artistId { ids.append(("Artist ID", artistId)) }
+        return [("Currently Playing As", [("Format", format)]), ("Original File", file), ("IDs", ids)]
     }
 
     var body: some View {
-        Section("Currently Playing As") {
-            infoRow("Format", playbackFormat)
-        }
-        Section("Original File") {
-            if let bitRate = song.bitRate { infoRow("Bitrate", "\(bitRate) kbps") }
-            if let suffix = song.suffix { infoRow("Format", suffix.uppercased()) }
-            if let contentType = song.contentType { infoRow("Content Type", contentType) }
-            infoRow("File Size", song.fileSizeFormatted)
-            if let path = song.path { infoRow("Path", path) }
-        }
-        Section("IDs") {
-            infoRow("Song ID", song.id)
-            if let albumId = song.albumId { infoRow("Album ID", albumId) }
-            if let artistId = song.artistId { infoRow("Artist ID", artistId) }
+        ForEach(Array(Self.groups(for: song).enumerated()), id: \.offset) { _, group in
+            Section(group.title) {
+                ForEach(Array(group.rows.enumerated()), id: \.offset) { _, row in infoRow(row.label, row.value) }
+            }
         }
     }
 
@@ -113,6 +102,49 @@ struct SongFileSections: View {
 }
 
 // MARK: - Rating
+
+/// Stars for one or several songs, in any song's context menu.
+struct SongRatingMenu: View {
+    let songs: [Song]
+
+    var body: some View {
+        let ratings = SongRatings.shared
+        let current = songs.count == 1 ? ratings.rating(for: songs[0]) : -1
+        #if os(iOS)
+        // Stars in a row inside the menu: a submenu closed itself whenever the menu redrew.
+        // Tapping the current rating clears it.
+        ControlGroup {
+            ForEach(1...5, id: \.self) { stars in
+                Button {
+                    songs.forEach { ratings.set(stars == current ? 0 : stars, for: $0) }
+                } label: {
+                    // Small, so the first and last stars keep inside the other rows' icon margins.
+                    Image(systemName: stars <= current ? "star.fill" : "star")
+                        .imageScale(.small)
+                        .accessibilityLabel(String(repeating: "★", count: stars))
+                }
+            }
+        }
+        .controlGroupStyle(.palette)
+        .disabled(songs.isEmpty)
+        #else
+        Menu {
+            ForEach(0...5, id: \.self) { stars in
+                Button {
+                    songs.forEach { ratings.set(stars, for: $0) }
+                } label: {
+                    let label = stars == 0 ? String(localized: "No Rating") : String(repeating: "★", count: stars)
+                    if stars == current { Label(label, systemImage: "checkmark") } else { Text(label) }
+                }
+            }
+        } label: {
+            Label("Rating", systemImage: "star")
+        }
+        .disabled(songs.isEmpty)
+        #endif
+    }
+}
+
 
 /// Five stars to rate a song on the server. Tapping the current rating clears it.
 struct SongRatingSection: View {

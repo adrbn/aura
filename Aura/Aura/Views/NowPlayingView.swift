@@ -2083,22 +2083,17 @@ struct SongActionsRow: View, Equatable {
 
     private var actions: some View {
         HStack(spacing: 2) {
-            if player.isNonstop {
-                Button {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    player.dislikeNonstopSong()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.title3)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .frame(width: 36, height: 36)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("Not for me"))
-            }
             favoriteButton
             Menu {
+                // In the menu rather than beside the heart, where it weighed on the row.
+                if player.isNonstop {
+                    Button(role: .destructive) {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        player.dislikeNonstopSong()
+                    } label: {
+                        Label("Not for me", systemImage: "hand.thumbsdown")
+                    }
+                }
                 ControlGroup {
                     Button { player.playNext(song) } label: {
                         Label("Play Next", systemImage: "text.insert")
@@ -2132,6 +2127,7 @@ struct SongActionsRow: View, Equatable {
                         Label("Refetch Lyrics", systemImage: "arrow.clockwise")
                     }
                 }
+                if !song.isPreview { SongRatingMenu(songs: [song]) }
                 Button { showCredits = true } label: {
                     Label("Song Info", systemImage: "info.circle")
                 }
