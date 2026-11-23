@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var keyboardVisible = false
     /// The fetch card's height, measured, for the room the pages leave under them.
     @State private var fetchCardHeight: CGFloat = 0
+    @State private var elsewhereHeight: CGFloat = 0
 
     var body: some View {
         Group {
@@ -75,7 +76,10 @@ struct ContentView: View {
                 }
             }
             .tint(appSettings.activeTheme.accentColor)
-            .onChange(of: fetchCardInset, initial: true) { BottomChrome.shared.cardInset = $1 }
+            // Eased, with a little give, so lists ride up and down with the cards instead of jumping.
+            .onChange(of: fetchCardInset, initial: true) { _, inset in
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.75)) { BottomChrome.shared.cardInset = inset }
+            }
             .onGeometryChange(for: Bool.self) { $0.safeAreaInsets.leading > 0 || $0.safeAreaInsets.trailing > 0 } action: {
                 tabBarBeside = $0
             }
@@ -96,7 +100,9 @@ struct ContentView: View {
                     .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ReleaseFetcher.shared.fetches.map(\.id))
                 #endif
 
-                PlayingElsewhereRow()
+                // Measured in a stack, which is zero tall once the row has gone.
+                VStack(spacing: 0) { PlayingElsewhereRow() }
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { elsewhereHeight = $0 }
                     .padding(.bottom, audioPlayer.hasQueue || RemoteLink.shared.connected != nil ? 0 : tabBarGap)
                     .animation(.smooth(duration: 0.35), value: RemoteLink.shared.playingElsewhere?.playing)
 
@@ -274,11 +280,13 @@ struct ContentView: View {
 
     /// Room the fetch card takes above the mini player, so the pages behind it end above it
     /// (`ListEndSpacer`).
+    /// The other device's pill counts too, as the mini player does.
     private var fetchCardInset: CGFloat {
+        let elsewhere = elsewhereHeight > 0 ? elsewhereHeight + 6 : 0
         #if APPSTORE_BUILD
-        return 0
+        return elsewhere
         #else
-        return ReleaseFetcher.shared.visible.isEmpty ? 0 : fetchCardHeight + 6
+        return elsewhere + (ReleaseFetcher.shared.visible.isEmpty ? 0 : fetchCardHeight + 6)
         #endif
     }
 

@@ -1058,7 +1058,9 @@ final class AudioPlayer {
 
         // Artists the server calls close come first; the genre pool is what keeps the
         // queue long enough to be worth having.
-        var tail = Self.deduplicated(nearby.shuffled() + genre, excluding: song.id)
+        // Two songs an artist at most, as Nonstop does: when one near artist is all the
+        // library holds, its two albums otherwise made the whole tail.
+        var tail = Self.capped(Self.deduplicated(nearby.shuffled() + genre, excluding: song.id), perArtist: 2)
         if tail.count < 10 {
             // No artist match and no genre — a library with bare tags. Rather than
             // leave the queue empty, fall back to whatever the server offers.
@@ -1095,6 +1097,15 @@ final class AudioPlayer {
             var all: [Song] = []
             for await songs in group { all += songs }
             return all
+        }
+    }
+
+    private static func capped(_ songs: [Song], perArtist cap: Int) -> [Song] {
+        var counts: [String: Int] = [:]
+        return songs.filter { song in
+            let key = song.artistId ?? song.artist ?? ""
+            counts[key, default: 0] += 1
+            return key.isEmpty || counts[key]! <= cap
         }
     }
 

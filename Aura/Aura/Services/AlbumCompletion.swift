@@ -47,11 +47,18 @@ enum AlbumCompletion {
     /// the library's songs are on both, the deluxe when a bonus track is among them.
     private static func lookUp(_ album: AlbumWithSongs) async -> Lookup {
         guard let songs = album.song, !songs.isEmpty, let artist = album.artist, !artist.isEmpty else { return .none }
-        guard let found = await RadarCatalog.search("\(artist) \(album.name)") else { return .failed }
         let title = baseTitle(album.name)
-        let hits = found.albums.filter { hit in
-            baseTitle(hit.title) == title
-                && (RadarRules.credits(hit.artist.name, artist) || RadarRules.credits(artist, hit.artist.name))
+        // Deezer finds nothing for "A • B • C Title (Original Motion Picture Soundtrack)":
+        // the first credited artist with the bare title next, then the bare title alone.
+        let bare = album.name.replacingOccurrences(of: #"\s*[\(\[][^\)\]]*[\)\]]"#, with: "", options: .regularExpression)
+        let lead = SongQuery.creditedNames(artist).dropFirst().first ?? artist
+        var hits: [DeezerAlbumHit] = []
+        for query in ["\(artist) \(album.name)", "\(lead) \(bare)", bare] where hits.isEmpty {
+            guard let found = await RadarCatalog.search(query) else { return .failed }
+            hits = found.albums.filter { hit in
+                baseTitle(hit.title) == title
+                    && (RadarRules.credits(hit.artist.name, artist) || RadarRules.credits(artist, hit.artist.name))
+            }
         }
         var best: (score: Int, edition: Edition)?
         for hit in hits.prefix(editionLimit) {

@@ -26,7 +26,9 @@ struct AlbumDetailView: View {
                     // Header. On an iPhone Duo's wide screen the cover stands at the left and
                     // the name and buttons sit beside it, at its foot, as on a playlist page.
                     headerLayout {
-                        CoverArtAsyncImage(coverArt: album.coverArt, size: wide ? 220 * Pad.scale : 260)
+                        // A song's own art when the album's has none (its art taken from a track without any).
+                        CoverArtAsyncImage(coverArt: album.coverArt, size: wide ? 220 * Pad.scale : 260,
+                                           fallbackCoverArt: album.song?.lazy.compactMap(\.coverArt).first { $0 != album.coverArt })
                             .overlay {
                                 AnimatedCoverOverlay(coverArt: album.coverArt)
                                     .clipShape(RoundedRectangle(cornerRadius: 12))

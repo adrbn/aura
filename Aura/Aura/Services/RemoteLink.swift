@@ -314,14 +314,18 @@ final class RemoteLink: NSObject {
         guard connected != nil else { return }
         let player = AudioPlayer.shared
         let song = player.currentSong, queue = player.queue, index = player.queueIndex
-        let time = player.currentTime, wasPlaying = player.isPlaying
+        let time = player.currentTime, wasPlaying = player.isPlaying, source = player.playbackSource
+        let radio = player.isRadioMode, radioName = player.radioPlaylistName
         send(.pause)
         // A moment for the pause to arrive before the line drops.
         let session = outgoing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { session.disconnect() }
         letGo()
         guard wasPlaying, let song else { return }
-        player.playSong(song, fromQueue: queue, startIndex: index)
+        // Carries the source over too, or Now Playing loses the line above the cover.
+        player.playSong(song, fromQueue: queue, startIndex: index, source: source)
+        player.isRadioMode = radio
+        player.radioPlaylistName = radioName
         if time > 1 { player.pendingSeekTime = time }
     }
 
@@ -586,7 +590,10 @@ struct PlayingElsewhereRow: View {
 
     var body: some View {
         let link = RemoteLink.shared
-        if let device = link.playingElsewhere, let playing = device.playing, dismissed != "\(device.name)|\(playing)" {
+        // Closed, it stays closed for that device while it plays on, song after song, and
+        // comes back once the device has stopped and starts again.
+        Group {
+        if let device = link.playingElsewhere, let playing = device.playing, dismissed != device.name {
             // The mini player's own shape, over it: a second player, the other device's. Left
             // alone, this device goes on playing its own music.
             HStack(spacing: 12) {
@@ -612,7 +619,7 @@ struct PlayingElsewhereRow: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Control")
                 Button {
-                    withAnimation(.smooth(duration: 0.3)) { dismissed = "\(device.name)|\(playing)" }
+                    withAnimation(.smooth(duration: 0.3)) { dismissed = device.name }
                 } label: {
                     Image(systemName: "xmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
                         .frame(width: 26, height: 36)
@@ -634,6 +641,10 @@ struct PlayingElsewhereRow: View {
             .frame(width: 340)
             .transition(.move(edge: .trailing).combined(with: .opacity))
             #endif
+        }
+        }
+        .onChange(of: link.playingElsewhere?.name) { _, name in
+            if name != dismissed { dismissed = nil }
         }
     }
 }
