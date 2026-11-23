@@ -4,6 +4,15 @@ All notable changes to Aura are documented here.
 
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] — 2026-11-23
+
+- Apple TV: Aura on the big screen, with Home, Library, Search, album and artist pages, and a quiet Now Playing whose controls fade after a few seconds; larger synced lyrics can be switched on from the TV, the iPhone or the Mac.
+- Nonstop, an endless mix at the head of Made for You: liked songs, songs near them and songs you haven't heard, in turn, two per artist at most. Skip an artist twice in the first half minute and Nonstop leaves them out; Not for Me in the Now Playing menu drops a song.
+- Now Playing: rate the song with five stars in the menu, and Song Info is regrouped.
+- The playing-elsewhere card makes room in lists like the mini player, and once closed stays closed until that device plays again.
+- Autoplay takes at most two songs per artist.
+- Fixed: an album without its own cover shows one of its songs' covers, and Play Here keeps where the queue came from.
+
 ## [1.7.1] — 2026-11-20
 
 - AirPlay goes straight to speakers such as a HomePod stereo pair, without waking the Apple TV they are linked to.
