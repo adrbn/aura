@@ -96,8 +96,9 @@ struct TVRootView: View {
                 NavigationStack { TVSearchView().tvDestinations() }
             }
             if player.currentSong != nil {
+                // The full player itself, lyrics and controls, not a cover to press a second time.
                 Tab("Now Playing", systemImage: "waveform", value: 3) {
-                    TVNowPlayingTab()
+                    TVNowPlayingView(inTab: true)
                 }
             }
             // The icon alone, like Search: with five named tabs the bar ran past its edge.
@@ -132,28 +133,5 @@ struct TVBackground: View {
             .frame(height: 620)
         }
         .ignoresSafeArea()
-    }
-}
-
-/// The Now Playing tab: a door back into the full-screen player.
-struct TVNowPlayingTab: View {
-    @State private var player = AudioPlayer.shared
-
-    var body: some View {
-        VStack(spacing: 40) {
-            if let song = player.currentSong {
-                Button { TVPlayback.shared.showNowPlaying = true } label: {
-                    CoverArtImage(coverArt: song.displayCoverArt, size: 520, cornerRadius: 12,
-                                  placeholderName: song.album ?? song.title)
-                }
-                .buttonStyle(.card)
-                VStack(spacing: 8) {
-                    Text(song.title).font(.title2.weight(.semibold))
-                    Text(song.artist ?? "").foregroundStyle(.secondary)
-                }
-                .lineLimit(1)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

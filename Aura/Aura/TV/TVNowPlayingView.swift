@@ -3,6 +3,9 @@ import SwiftUI
 /// Now Playing, full screen: the cover blurred across the whole screen as on the iPhone, the
 /// cover and controls on the left, the lyrics following the song on the right.
 struct TVNowPlayingView: View {
+    /// Shown as the Now Playing tab: focus stays in the tab bar until the remote moves down,
+    /// so passing over the tab on the way to another doesn't pull focus into the player.
+    var inTab = false
     @State private var player = AudioPlayer.shared
     @FocusState private var focus: Control?
     @AppStorage(RemoteLink.tvLyricsKey) private var showLyrics = true
@@ -52,7 +55,7 @@ struct TVNowPlayingView: View {
         .onMoveCommand { _ in poke() }
         .onPlayPauseCommand { poke(); player.togglePlayPause() }
         .onAppear {
-            focus = .playPause
+            if !inTab { focus = .playPause }
             #if DEBUG
             // `-tvQueue` opens Up Next, for screenshots in the simulator.
             if CommandLine.arguments.contains("-tvQueue") { showQueue = true }
@@ -314,9 +317,17 @@ struct TVLyricsView: View {
     }
 
     private func track(_ proxy: ScrollViewProxy) {
-        guard synced else { return }
-        let time = player.lyricsTime
-        let index = player.lyrics.lastIndex { ($0.time ?? .infinity) <= time }
+        let index: Int?
+        if synced {
+            let time = player.lyricsTime
+            index = player.lyrics.lastIndex { ($0.time ?? .infinity) <= time }
+        } else {
+            // No timing: the sheet moves through at the song's pace, so the words stay roughly
+            // where the singer is instead of sitting on the first lines all song long.
+            guard player.duration > 0, !player.lyrics.isEmpty else { return }
+            let progress = min(max(player.currentTime / player.duration, 0), 1)
+            index = min(player.lyrics.count - 1, Int(progress * Double(player.lyrics.count)))
+        }
         guard index != currentIndex else { return }
         currentIndex = index
         guard let index else { return }

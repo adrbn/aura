@@ -13,42 +13,22 @@ struct TVHomeView: View {
     @State private var playlists: [Playlist] = []
     @State private var starred = Starred2(artist: nil, album: nil, song: nil)
     @State private var isLoading = true
+    @AppStorage(TVHomeView.mixesPlacementKey) private var mixesPlacement = MixesPlacement.first.rawValue
+
+    enum MixesPlacement: String, CaseIterable { case first, last, off }
+    static let mixesPlacementKey = "tv.home.mixesPlacement"
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 50) {
-                TVShelf(title: "Made For You", items: shelf) { mix in
-                    if mix.id == Self.nonstopId {
-                        Button {
-                            // Already playing: a press opens it rather than starting over.
-                            if !player.isNonstop {
-                                player.nonstopCoverArtists = mix.coverArtists ?? CoverArtists.ranked(mix.songs)
-                                Task { await player.startNonstop(liked: mix.songs) }
-                            } else if !player.isPlaying {
-                                player.play()
-                            }
-                            TVPlayback.shared.showNowPlaying = true
-                        } label: {
-                            TVCoverCard(title: mix.title, subtitle: player.isNonstop ? String(localized: "Now Playing") : "") {
-                                EditorialMixCover(mix: mix, size: 300, cornerRadius: 0)
-                            }
-                        }
-                        .buttonStyle(.borderless)
-                    } else {
-                        NavigationLink(value: mix) {
-                            TVCoverCard(title: mix.title, subtitle: mix.subtitle) {
-                                EditorialMixCover(mix: mix, size: 300, cornerRadius: 0)
-                            }
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                }
+                if mixesPlacement == MixesPlacement.first.rawValue { madeForYou }
                 TVShelf(title: "Recently Played", items: recent) { TVAlbumLink(album: $0) }
                 TVShelf(title: "Recently Added", items: newest) { TVAlbumLink(album: $0) }
                 TVShelf(title: "On Repeat", items: frequent) { TVAlbumLink(album: $0) }
                 TVShelf(title: "Your Playlists", items: playlists) { TVPlaylistLink(playlist: $0) }
                 TVShelf(title: "Favorite Artists", items: starred.artist ?? []) { TVArtistLink(artist: $0) }
                 TVShelf(title: "Random Albums", items: random) { TVAlbumLink(album: $0) }
+                if mixesPlacement == MixesPlacement.last.rawValue { madeForYou }
                 if isLoading && recent.isEmpty && newest.isEmpty { TVStatus(loading: true) }
             }
             .padding(.vertical, 40)
@@ -56,6 +36,35 @@ struct TVHomeView: View {
         }
         .scrollClipDisabled()
         .task { await load() }
+    }
+
+    private var madeForYou: some View {
+        TVShelf(title: "Made For You", items: shelf) { mix in
+            if mix.id == Self.nonstopId {
+                Button {
+                    // Already playing: a press opens it rather than starting over.
+                    if !player.isNonstop {
+                        player.nonstopCoverArtists = mix.coverArtists ?? CoverArtists.ranked(mix.songs)
+                        Task { await player.startNonstop(liked: mix.songs) }
+                    } else if !player.isPlaying {
+                        player.play()
+                    }
+                    TVPlayback.shared.showNowPlaying = true
+                } label: {
+                    TVCoverCard(title: mix.title, subtitle: player.isNonstop ? String(localized: "Now Playing") : "") {
+                        EditorialMixCover(mix: mix, size: 300, cornerRadius: 0)
+                    }
+                }
+                .buttonStyle(.borderless)
+            } else {
+                NavigationLink(value: mix) {
+                    TVCoverCard(title: mix.title, subtitle: mix.subtitle) {
+                        EditorialMixCover(mix: mix, size: 300, cornerRadius: 0)
+                    }
+                }
+                .buttonStyle(.borderless)
+            }
+        }
     }
 
     /// Nonstop first, as on the phone, once the mixes are there to stand beside it.
@@ -87,6 +96,7 @@ struct TVHomeView: View {
         let albums = (recent + newest + frequent + random).compactMap(\.coverArt)
         ArtworkCache.shared.prefetch(coverArtIds: albums + playlists.compactMap(\.coverArt), pointSize: 300)
         ArtworkCache.shared.prefetch(coverArtIds: (starred.artist ?? []).compactMap(\.coverArt), pointSize: 260)
+        guard mixesPlacement != MixesPlacement.off.rawValue else { return }
         await generator.generateIfNeeded()
         for mix in generator.mixes { Task { _ = await MixCoverArt.load(MixCoverSpec(mix)) } }
     }

@@ -102,6 +102,7 @@ struct TVSetupView: View {
 struct TVSettingsView: View {
     @State private var manager = ServerManager.shared
     @State private var adding = false
+    @AppStorage(TVHomeView.mixesPlacementKey) private var mixesPlacement = TVHomeView.MixesPlacement.first.rawValue
 
     var body: some View {
         List {
@@ -124,6 +125,13 @@ struct TVSettingsView: View {
                     }
                 }
                 Button { adding = true } label: { Label("Add Server", systemImage: "plus") }
+            }
+            Section("Home") {
+                Picker("Made For You", selection: $mixesPlacement) {
+                    Text("First").tag(TVHomeView.MixesPlacement.first.rawValue)
+                    Text("Last").tag(TVHomeView.MixesPlacement.last.rawValue)
+                    Text("Off").tag(TVHomeView.MixesPlacement.off.rawValue)
+                }
             }
             Section {
                 LabeledContent("Version", value: Bundle.main.shortVersion)
