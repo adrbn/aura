@@ -11,6 +11,7 @@ Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 - Now Playing: rate the song with five stars in the menu, and Song Info is regrouped.
 - The playing-elsewhere card makes room in lists like the mini player, and once closed stays closed until that device plays again.
 - Autoplay takes at most two songs per artist.
+- Search: the field turns to glass, with a round button that clears the words or puts the keyboard away; scrolling the results or playlists puts the keyboard away too.
 - Fixed: an album without its own cover shows one of its songs' covers, and Play Here keeps where the queue came from.
 
 ## [1.7.1] — 2026-11-20
