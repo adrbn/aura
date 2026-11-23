@@ -18,7 +18,7 @@
 <br><br>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Mac、iPad、Apple Watch、開いた iPhone Duo、iPhone で動く Aura のアプリ画面：ホーム、プレイリスト、再生中、同期歌詞、アルバム" width="600">
+  <img src="docs/assets/aura-hero.svg" alt="Apple TV、Mac、iPad、Apple Watch、開いた iPhone Duo、iPhone で動く Aura のアプリ画面：ホーム、プレイリスト、再生中、同期歌詞、アルバム" width="600">
 </picture>
 <br><br>
 

@@ -262,16 +262,24 @@ BLOBS = [(0.2, 0.18, 0.55, 0.3, "#5B2A86"), (0.85, 0.3, 0.45, 0.28, "#FF6FB5"),
          (0.3, 0.75, 0.6, 0.3, "#1A1150"), (0.9, 0.85, 0.5, 0.25, ACCENT)]
 
 
+RIM = [(0, "#C9CACF"), (.18, "#75767C"), (.5, "#4C4D52"), (.82, "#7C7D83"), (1, "#B4B5BA")]
+
+
 def shell(uid, x, y, w, h, r, bezel, light, inner):
-    """A device body around a screen of (w, h)."""
-    top, bot, edge = ("#F1F1F3", "#C9C9CE", "#B8B8BE") if light else ("#3A3A3D", "#141416", "#4A4A4E")
-    return (f'<linearGradient id="{uid}sh" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stop-color="{top}"/>'
-            f'<stop offset="1" stop-color="{bot}"/></linearGradient>'
-            f'<rect x="{x}" y="{y}" width="{w + 2 * bezel}" height="{h + 2 * bezel}" rx="{r + bezel}" fill="url(#{uid}sh)" '
-            f'stroke="{edge}"/>'
-            f'<rect x="{x + bezel - 3}" y="{y + bezel - 3}" width="{w + 6}" height="{h + 6}" rx="{r + 3}" fill="#000"/>'
+    """A device around a screen of (w, h): a lit metal band, black glass, a faint reflection on top."""
+    W, H, R, t = w + 2 * bezel, h + 2 * bezel, r + bezel, 2.6
+    stops = "".join(f'<stop offset="{o}" stop-color="{c}"/>' for o, c in RIM)
+    return (f'<linearGradient id="{uid}rim" x1="0" y1="0" x2=".35" y2="1">{stops}</linearGradient>'
+            f'<linearGradient id="{uid}gl" x1="0" y1="0" x2=".6" y2="1"><stop offset="0" stop-color="#fff" '
+            f'stop-opacity=".07"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+            f'<rect x="{x}" y="{y}" width="{W}" height="{H}" rx="{R}" fill="url(#{uid}rim)"/>'
+            f'<rect x="{x + .6}" y="{y + .6}" width="{W - 1.2}" height="{H - 1.2}" rx="{R - .6}" fill="none" '
+            f'stroke="#fff" stroke-opacity=".35" stroke-width=".8"/>'
+            f'<rect x="{x + t}" y="{y + t}" width="{W - 2 * t}" height="{H - 2 * t}" rx="{R - t}" fill="#050506"/>'
             f'<clipPath id="{uid}sc"><rect width="{w}" height="{h}" rx="{r}"/></clipPath>'
-            f'<g transform="translate({x + bezel} {y + bezel})"><g clip-path="url(#{uid}sc)">{inner}</g></g>')
+            f'<g transform="translate({x + bezel} {y + bezel})"><g clip-path="url(#{uid}sc)">{inner}</g></g>'
+            f'<rect x="{x + t}" y="{y + t}" width="{W - 2 * t}" height="{(H - 2 * t) * .45:.1f}" rx="{R - t}" '
+            f'fill="url(#{uid}gl)"/>')
 
 
 def watch_now_playing(uid, w, h, title, artist, blobs=BLOBS, prog=((0, 0.32),)):
@@ -308,7 +316,7 @@ def watch_now_playing(uid, w, h, title, artist, blobs=BLOBS, prog=((0, 0.32),)):
 
 def watch(uid, x, y, w, h, light, inner, band=34):
     """An Apple Watch: band stubs, crown, the case around a w×h screen."""
-    bt, bb = ("#D6D6DB", "#B5B5BC") if light else ("#2A2A2D", "#19191B")
+    bt, bb = ("#D6D6DB", "#B5B5BC") if light else ("#5A5B60", "#3A3B3F")
     cw = w + 16
     band = (f'<linearGradient id="{uid}bn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{bt}"/>'
             f'<stop offset="1" stop-color="{bb}"/></linearGradient>'
@@ -401,7 +409,7 @@ WATCH_W, WATCH_H = 150, 179                                # 416 × 496 renders
 def iphone(uid, x, y, light, inner, w=PHONE_W, h=PHONE_H):
     k = w / PHONE_W
     b, r = PHONE_BEZEL * k, PHONE_R * k
-    side = "#BDBDC3" if light else "#2C2C2F"
+    side = "#BDBDC3" if light else "#8E8F95"
     buttons = (f'<rect x="{x - 3}" y="{y + 96 * k:.1f}" width="3.5" height="{24 * k:.1f}" rx="1.5" fill="{side}"/>'
                f'<rect x="{x - 3}" y="{y + 134 * k:.1f}" width="3.5" height="{44 * k:.1f}" rx="1.5" fill="{side}"/>'
                f'<rect x="{x + w + 2 * b - 0.5:.1f}" y="{y + 144 * k:.1f}" width="3.5" height="{66 * k:.1f}" rx="1.5" fill="{side}"/>')
@@ -412,7 +420,7 @@ def iphone(uid, x, y, light, inner, w=PHONE_W, h=PHONE_H):
 def mac(uid, x, y, w, h, light, inner):
     """A MacBook: the lid around a w×h screen, and the base under it."""
     b = 10
-    base_top, base_bot = ("#E4E4E8", "#B9B9BF") if light else ("#3A3A3D", "#1B1B1D")
+    base_top, base_bot = ("#E4E4E8", "#B9B9BF") if light else ("#B4B5BA", "#5E5F64")
     bw, bx, by = w + 2 * b + 64, x - 32, y + h + 2 * b
     base = (f'<linearGradient id="{uid}bs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{base_top}"/>'
             f'<stop offset="1" stop-color="{base_bot}"/></linearGradient>'
@@ -423,21 +431,28 @@ def mac(uid, x, y, w, h, light, inner):
 
 def hero(light):
     uid = "hl" if light else "hd"
-    W, H, T = 860, 520, 18.0
+    W, H, T = 1200, 580, 18.0
     src = lambda n: data_uri(SRC / n)
-    floor = 488                                      # every device stands on this line
-    # MacBook at the back, in the middle
+    # Apple TV at the very back, on the left; everything else stands in front of it, shifted by (ox, oy)
+    tw, th = 800, 450
+    tv_pics = [picture(src(f"tv-{k}.jpg"), tw, th) for k in ("castlebeat", "ambient")]
+    body = shell(uid + "t", 16, 14, tw, th, 4, 9, light, crossfade(tv_pics, T))
+    body += (f'<rect x="{16 + tw / 2 - 26}" y="{14 + th + 18}" width="52" height="40" fill="#3A3B3F"/>'
+             f'<rect x="{16 + tw / 2 - 130}" y="{14 + th + 54}" width="260" height="8" rx="4" fill="url(#{uid}trim)"/>')
+    ox, oy = 340, 60
+    floor = 488 + oy                                 # every device stands on this line
+    # MacBook in the middle
     mw, mh = 520, round(520 * 868 / 1389)
-    mx, my = (W - mw - 20) / 2, 34
-    body = mac(uid + "m", mx, my, mw, mh, light, picture(src("mac-home.jpg"), mw, mh))
+    mx, my = ox + (860 - mw - 20) / 2, 34 + oy
+    body += mac(uid + "m", mx, my, mw, mh, light, picture(src("mac-home.jpg"), mw, mh))
     # iPad, front left
     iw, ih = 196, round(196 * 2752 / 2064)
     ipad_pics = [picture(src(f"ipad-{k}.jpg"), iw, ih) for k in ("playlists", "now-playing", "lyrics")]
-    body += shell(uid + "i", 36, floor - ih - 20, iw, ih, 14, 10, light, crossfade(ipad_pics, T))
+    body += shell(uid + "i", ox + 36, floor - ih - 20, iw, ih, 14, 10, light, crossfade(ipad_pics, T))
     # iPhone Duo, open, front right of the Mac
     dw, dh = 236, round(236 * 619 / 880)
     duo_pics = [picture(src(f"duo-{k}.jpg"), dw, dh) for k in ("now-playing", "album")]
-    body += shell(uid + "d", 470, floor - dh - 16, dw, dh, 12, 8, light, crossfade(duo_pics, T))
+    body += shell(uid + "d", ox + 470, floor - dh - 16, dw, dh, 12, 8, light, crossfade(duo_pics, T))
     # iPhone, far right
     pw, ph = 128, round(128 * PHONE_H / PHONE_W)
     k = pw / PHONE_W
@@ -446,10 +461,10 @@ def hero(light):
                    crossfade(phone_pics, T), pw, ph)
     # Apple Watch, in front between the iPad and the Duo
     ww, wh = 92, round(92 * WATCH_H / WATCH_W)
-    body += watch(uid + "w", 300, floor - wh - 16 - 18, ww, wh, light,
+    body += watch(uid + "w", ox + 300, floor - wh - 16 - 18, ww, wh, light,
                   picture(src("watch-now-playing.jpg"), ww, wh), band=18)
-    return svg(W, H, body, "Aura on a Mac, an iPad, an open iPhone Duo, an iPhone and an Apple Watch: Home, Now "
-                           "Playing, synced lyrics and an album, captured from the app")
+    return svg(W, H, body, "Aura on an Apple TV, a Mac, an iPad, an open iPhone Duo, an iPhone and an Apple Watch: Now "
+                           "Playing, Home, synced lyrics and an album, captured from the app")
 
 
 # --- cards (portrait, like the app's screens) ----------------------------------------------------------------

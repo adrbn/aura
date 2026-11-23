@@ -18,7 +18,7 @@
 <br><br>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura 运行在 Mac、iPad、Apple Watch、展开的 iPhone Duo 和 iPhone 上的应用截图：主页、播放列表、正在播放、同步歌词和一张专辑" width="600">
+  <img src="docs/assets/aura-hero.svg" alt="Aura 运行在 Apple TV、Mac、iPad、Apple Watch、展开的 iPhone Duo 和 iPhone 上的应用截图：主页、播放列表、正在播放、同步歌词和一张专辑" width="600">
 </picture>
 <br><br>
 

@@ -18,7 +18,7 @@ streaming lossless, testi che si accendono parola per parola, mix creati da ciò
 <br><br>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura su un Mac, un iPad, un Apple Watch, un iPhone Duo aperto e un iPhone, in schermate dell'app: Home, playlist, In riproduzione, testi sincronizzati e un album" width="600">
+  <img src="docs/assets/aura-hero.svg" alt="Aura su una Apple TV, un Mac, un iPad, un Apple Watch, un iPhone Duo aperto e un iPhone, in schermate dell'app: Home, playlist, In riproduzione, testi sincronizzati e un album" width="600">
 </picture>
 <br><br>
 

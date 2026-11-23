@@ -18,7 +18,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 <br><br>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura sur un Mac, un iPad, une Apple Watch, un iPhone Duo ouvert et un iPhone, en captures de l'app : Accueil, playlists, En cours de lecture, paroles synchronisées et un album" width="600">
+  <img src="docs/assets/aura-hero.svg" alt="Aura sur une Apple TV, un Mac, un iPad, une Apple Watch, un iPhone Duo ouvert et un iPhone, en captures de l'app : Accueil, playlists, En cours de lecture, paroles synchronisées et un album" width="600">
 </picture>
 <br><br>
 

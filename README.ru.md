@@ -18,7 +18,7 @@
 <br><br>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura на Mac, iPad, Apple Watch, раскрытом iPhone Duo и iPhone, снимки экрана приложения: Главная, плейлисты, Исполняется, синхронизированный текст и альбом" width="600">
+  <img src="docs/assets/aura-hero.svg" alt="Aura на Apple TV, Mac, iPad, Apple Watch, раскрытом iPhone Duo и iPhone, снимки экрана приложения: Главная, плейлисты, Исполняется, синхронизированный текст и альбом" width="600">
 </picture>
 <br><br>
 

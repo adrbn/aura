@@ -18,7 +18,7 @@ verlustfreies Streaming, Songtexte, die Wort für Wort aufleuchten, Mixe aus dem
 <br><br>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura auf einem Mac, einem iPad, einer Apple Watch, einem aufgeklappten iPhone Duo und einem iPhone, als Bildschirmfotos aus der App: Start, Playlists, Wird gerade wiedergegeben, synchronisierte Songtexte und ein Album" width="600">
+  <img src="docs/assets/aura-hero.svg" alt="Aura auf einem Apple TV, einem Mac, einem iPad, einer Apple Watch, einem aufgeklappten iPhone Duo und einem iPhone, als Bildschirmfotos aus der App: Start, Playlists, Wird gerade wiedergegeben, synchronisierte Songtexte und ein Album" width="600">
 </picture>
 <br><br>
 

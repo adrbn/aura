@@ -18,7 +18,7 @@ streaming sem perdas, letras que se acendem palavra por palavra, mixes feitos co
 <br><br>
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/aura-hero-light.svg">
-  <img src="docs/assets/aura-hero.svg" alt="Aura em um Mac, um iPad, um Apple Watch, um iPhone Duo aberto e um iPhone, em capturas do app: Início, playlists, Tocando agora, letras sincronizadas e um álbum" width="600">
+  <img src="docs/assets/aura-hero.svg" alt="Aura em uma Apple TV, um Mac, um iPad, um Apple Watch, um iPhone Duo aberto e um iPhone, em capturas do app: Início, playlists, Tocando agora, letras sincronizadas e um álbum" width="600">
 </picture>
 <br><br>
 
