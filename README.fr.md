@@ -265,6 +265,12 @@ Aux personnes dont les retours et les idées ont façonné Aura :
 - [nClarke0101](https://github.com/nClarke0101) : les en-têtes HTTP personnalisés, les téléchargements sur l'Apple Watch
 - [DMcWetty](https://github.com/DMcWetty) : plusieurs dossiers de musique à la fois
 - [Dedeham](https://github.com/Dedeham) : les filtres de morceaux qui restent quand on revient
+- [iSchack](https://github.com/iSchack) : l'app Apple TV, AirPlay sur le Mac
+- [xkd88](https://github.com/xkd88) : AirPlay vers une Apple TV et une paire stéréo de HomePod
+
+Et aux personnes dont le code est dans Aura :
+
+- [Wai Han](https://github.com/waihankan) : le clavier de recherche qui se ferme au défilement, et le bouton rond pour fermer
 
 Et aux personnes dont les cafés sur [Ko-fi](https://ko-fi.com/adrbn) font vivre Aura : Greg et DummyHead.
 

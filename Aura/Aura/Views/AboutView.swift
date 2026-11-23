@@ -27,6 +27,7 @@ struct AboutView: View {
                 featureCard
                 linksCard
                 supportersCard
+                contributorsCard
                 footer
             }
             .padding(.horizontal, 20)
@@ -174,6 +175,28 @@ struct AboutView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Text(Self.supporters.joined(separator: " · "))
+                    .font(.subheadline.weight(.medium))
+                    .padding(.top, 4)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    // MARK: Contributors
+
+    /// People whose pull requests are in Aura, under their GitHub name.
+    private static let contributors = ["Wai Han (waihankan)"]
+
+    private var contributorsCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Contributors", systemImage: "chevron.left.forwardslash.chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(accent)
+                Text("Their code is part of Aura.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(Self.contributors.joined(separator: " · "))
                     .font(.subheadline.weight(.medium))
                     .padding(.top, 4)
             }

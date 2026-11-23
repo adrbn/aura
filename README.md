@@ -259,6 +259,12 @@ To the people whose reports and ideas shaped Aura:
 - [nClarke0101](https://github.com/nClarke0101): custom HTTP headers, downloads to the Apple Watch
 - [DMcWetty](https://github.com/DMcWetty): several music folders at once
 - [Dedeham](https://github.com/Dedeham): song filters that stay when you come back
+- [iSchack](https://github.com/iSchack): the Apple TV app, AirPlay on the Mac
+- [xkd88](https://github.com/xkd88): AirPlay to an Apple TV and a HomePod stereo pair
+
+And to the people whose code is in Aura:
+
+- [Wai Han](https://github.com/waihankan): the search keyboard that goes away on scroll, and the round close button
 
 And to the people whose coffees on [Ko-fi](https://ko-fi.com/adrbn) keep Aura going: Greg and DummyHead.
 
