@@ -11,7 +11,7 @@
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="Ko-fi에서 후원하기" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="IPA 다운로드" height="40"></a>&nbsp;
-<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523"><img src="docs/assets/btn-mac.svg" alt="Mac용 다운로드" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.8.0-build.620"><img src="docs/assets/btn-mac.svg" alt="Mac용 다운로드" height="40"></a>
 <br>
 <a href="#주요-기능"><img src="docs/assets/btn-features.svg" alt="기능" height="40"></a>&nbsp;
 <a href="#소스에서-빌드"><img src="docs/assets/btn-source.svg" alt="소스에서 빌드" height="40"></a>
@@ -151,7 +151,7 @@ Apple Watch, CarPlay, Mac에 들어와요. 원래 음질 그대로 스트리밍�
 | CarPlay | 지원 | 미지원: 재서명하면 Apple의 CarPlay 권한이 빠져요 | – |
 | Get It(내 [slskd](https://github.com/slskd/slskd)를 통한 Soulseek) | 미지원 | 선택 사용, 설정 → Developer Options | 선택 사용, 설정 → Developer |
 | NetEase 가사 타이밍 확인 | 미지원 | 지원 | 지원 |
-| 다운로드 | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [최신 IPA](https://github.com/adrbn/aura/releases/latest) | [Mac DMG](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) |
+| 다운로드 | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [최신 IPA](https://github.com/adrbn/aura/releases/latest) | [Mac DMG](https://github.com/adrbn/aura/releases/download/mac-v1.8.0-build.620/Aura-mac-1.8.0-build.620.dmg) |
 
 모든 빌드에는 [Navidrome](https://www.navidrome.org) 서버나 Subsonic API 1.16.1을 지원하는 서버가 필요해요
 (OpenSubsonic 확장을 제공하면 사용해요). 아직 서버가 없다면 Navidrome의 공개 데모를 써 보세요:
@@ -174,7 +174,7 @@ Apple Watch, CarPlay, Mac에 들어와요. 원래 음질 그대로 스트리밍�
 <details>
 <summary><b>Mac 앱 설치하기</b></summary>
 
-1. [Mac 릴리스](https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523)(SHA-256 체크섬 포함)에서 [`Aura-mac-1.7.1-build.523.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg)를 다운로드해 여세요.
+1. [Mac 릴리스](https://github.com/adrbn/aura/releases/tag/mac-v1.8.0-build.620)(SHA-256 체크섬 포함)에서 [`Aura-mac-1.8.0-build.620.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.8.0-build.620/Aura-mac-1.8.0-build.620.dmg)를 다운로드해 여세요.
 2. **Aura**를 **응용 프로그램**으로 드래그하세요.
 3. Aura를 여세요. 앱은 Developer ID로 서명되고 Apple의 공증을 받았기 때문에 다른 앱처럼 열려요.
 4. 서버 주소, 사용자 이름, 암호를 입력하세요.

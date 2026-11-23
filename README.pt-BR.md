@@ -11,7 +11,7 @@ streaming sem perdas, letras que se acendem palavra por palavra, mixes feitos co
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="Me apoie no Ko-fi" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Baixar o IPA" height="40"></a>&nbsp;
-<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523"><img src="docs/assets/btn-mac.svg" alt="Baixar para Mac" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.8.0-build.620"><img src="docs/assets/btn-mac.svg" alt="Baixar para Mac" height="40"></a>
 <br>
 <a href="#o-que-ele-faz"><img src="docs/assets/btn-features.svg" alt="Recursos" height="40"></a>&nbsp;
 <a href="#compilar-a-partir-do-código"><img src="docs/assets/btn-source.svg" alt="Compilar a partir do código" height="40"></a>
@@ -153,7 +153,7 @@ Tudo gratuito, sem conta e sem compras dentro do app.
 | CarPlay | Sim | Não: assinar de novo remove a permissão de CarPlay da Apple | – |
 | Get It (Soulseek pelo seu próprio [slskd](https://github.com/slskd/slskd)) | Não | Opcional, Ajustes → Developer Options | Opcional, Ajustes → Developer |
 | Verificação de tempo das letras pela NetEase | Não | Sim | Sim |
-| Download | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [IPA mais recente](https://github.com/adrbn/aura/releases/latest) | [DMG para Mac](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) |
+| Download | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [IPA mais recente](https://github.com/adrbn/aura/releases/latest) | [DMG para Mac](https://github.com/adrbn/aura/releases/download/mac-v1.8.0-build.620/Aura-mac-1.8.0-build.620.dmg) |
 
 Todas as versões precisam de um servidor [Navidrome](https://www.navidrome.org), ou de qualquer servidor que fale a API
 do Subsonic 1.16.1 (as extensões OpenSubsonic são usadas quando oferecidas). Ainda não tem servidor? Experimente a demo
@@ -177,7 +177,7 @@ do Aura.
 <details>
 <summary><b>Instalar o app para Mac</b></summary>
 
-1. Baixe [`Aura-mac-1.7.1-build.523.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) da [versão para Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523), que informa seu checksum SHA-256, e abra-o.
+1. Baixe [`Aura-mac-1.8.0-build.620.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.8.0-build.620/Aura-mac-1.8.0-build.620.dmg) da [versão para Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.8.0-build.620), que informa seu checksum SHA-256, e abra-o.
 2. Arraste o **Aura** para **Aplicativos**.
 3. Abra o Aura. O app é assinado com um Developer ID e notarizado pela Apple, então abre como qualquer outro app.
 4. Digite o endereço do seu servidor, seu usuário e sua senha.

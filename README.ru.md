@@ -11,7 +11,7 @@
 <a href="https://ko-fi.com/adrbn"><img src="docs/assets/kofi-support.png" alt="Поддержите меня на Ko-fi" height="48"></a>
 <br><br>
 <a href="https://github.com/adrbn/aura/releases/latest"><img src="docs/assets/btn-download.svg" alt="Скачать IPA" height="40"></a>&nbsp;
-<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523"><img src="docs/assets/btn-mac.svg" alt="Скачать для Mac" height="40"></a>
+<a href="https://github.com/adrbn/aura/releases/tag/mac-v1.8.0-build.620"><img src="docs/assets/btn-mac.svg" alt="Скачать для Mac" height="40"></a>
 <br>
 <a href="#возможности"><img src="docs/assets/btn-features.svg" alt="Возможности" height="40"></a>&nbsp;
 <a href="#сборка-из-исходников"><img src="docs/assets/btn-source.svg" alt="Сборка из исходников" height="40"></a>
@@ -154,7 +154,7 @@ A до Z, интернет-радиостанции вашего сервера,
 | CarPlay | Да | Нет: переподпись лишает приложение разрешения CarPlay от Apple | – |
 | Get It (Soulseek через ваш собственный [slskd](https://github.com/slskd/slskd)) | Нет | По желанию, Настройки → Developer Options | По желанию, Настройки → Developer |
 | Проверка тайминга текстов через NetEase | Нет | Да | Да |
-| Скачать | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Последний IPA](https://github.com/adrbn/aura/releases/latest) | [DMG для Mac](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) |
+| Скачать | [App Store](https://apps.apple.com/app/apple-store/id6818241470?pt=129146420&mt=8&ct=github) | [Последний IPA](https://github.com/adrbn/aura/releases/latest) | [DMG для Mac](https://github.com/adrbn/aura/releases/download/mac-v1.8.0-build.620/Aura-mac-1.8.0-build.620.dmg) |
 
 Любой версии нужен сервер [Navidrome](https://www.navidrome.org) или любой сервер с API Subsonic 1.16.1 (расширения
 OpenSubsonic используются, если сервер их предлагает). Сервера еще нет? Попробуйте публичную демо-версию Navidrome:
@@ -177,7 +177,7 @@ OpenSubsonic используются, если сервер их предлаг
 <details>
 <summary><b>Установка приложения для Mac</b></summary>
 
-1. Скачайте [`Aura-mac-1.7.1-build.523.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.7.1-build.523/Aura-mac-1.7.1-build.523.dmg) из [релиза для Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.7.1-build.523), где указана контрольная сумма SHA-256, и откройте его.
+1. Скачайте [`Aura-mac-1.8.0-build.620.dmg`](https://github.com/adrbn/aura/releases/download/mac-v1.8.0-build.620/Aura-mac-1.8.0-build.620.dmg) из [релиза для Mac](https://github.com/adrbn/aura/releases/tag/mac-v1.8.0-build.620), где указана контрольная сумма SHA-256, и откройте его.
 2. Перетащите **Aura** в **Программы**.
 3. Откройте Aura. Приложение подписано Developer ID и заверено Apple, поэтому открывается как любое другое.
 4. Введите адрес сервера, имя пользователя и пароль.
