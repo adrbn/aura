@@ -68,6 +68,17 @@ struct MacRootView: View {
     static let topRoom: CGFloat = 52
     /// The pages sit lower than the sidebar: the search pill takes the band above them.
     static let pageRoom: CGFloat = 66
+
+    /// Clear behind the window's buttons and the search field, opaque by the room's end, in
+    /// points so it holds at any window size, display or scale.
+    static var topFade: some View { VStack(spacing: 0) {
+        LinearGradient(stops: [.init(color: .clear, location: 0),
+                               .init(color: .clear, location: 0.72),
+                               .init(color: .black, location: 1)],
+                       startPoint: .top, endPoint: .bottom)
+            .frame(height: pageRoom - 4)
+        Color.black
+    } }
     @State private var swipe = MacSwipeBack.shared
 
     var body: some View {
@@ -193,7 +204,15 @@ struct MacRootView: View {
                     .macSourceNavigation(path: $path, section: $section)
                 }
                 .environment(\.macOpenRelease, MacReleaseOpener { path.append($0) })
+                // What scrolls up into the room above the titles fades out there, under the
+                // search field and the window's buttons, instead of being cut against the
+                // window's top edge or read through the field. Drawn here, once, for every
+                // page: the system's soft scroll edge only comes with a toolbar, and this
+                // window has none. Nothing rests in that room, so only scrolled content meets it.
+                .mask { Self.topFade.ignoresSafeArea() }
             }
+            // The way back, over the fade rather than in the page under it.
+            .overlay(alignment: .topLeading) { if !path.isEmpty { backButton } }
             // In the title bar's row, centred over the page, as a fixture of the window
             // rather than of the sidebar: it stays put while sections change beneath it.
             .overlay(alignment: .top) {
@@ -305,7 +324,6 @@ struct MacRootView: View {
             // sits in it, above the cover.
             .environment(\.macTopRoom, Self.pageRoom)
             .ignoresSafeArea(.container, edges: .top)
-            .overlay(alignment: .topLeading) { backButton }
             .macPageEntrance()
     }
 
@@ -429,7 +447,9 @@ struct MacSearchBar: View {
         .padding(.horizontal, 14)
         .frame(height: 34)
         .frame(maxWidth: 440)
-        .background(Capsule().fill(.primary.opacity(searching ? 0.14 : 0.08)))
+        // Glass, as on the phone: what scrolls under it is blurred out of the way of the
+        // words rather than read through an 8% tint.
+        .glassEffect(.regular.interactive(), in: Capsule())
         .overlay(
             Capsule().strokeBorder(searching ? Color.appAccent.opacity(0.85) : .primary.opacity(0.07),
                                    lineWidth: searching ? 1.5 : 1)

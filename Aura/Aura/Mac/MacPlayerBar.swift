@@ -21,7 +21,14 @@ struct MacPlayerBar: View {
     @Environment(\.colorScheme) private var scheme
 
     private var song: Song? { player.currentSong }
-    private let flank: CGFloat = 320
+    @State private var barWidth: CGFloat = 1400
+    @State private var showVolume = false
+    /// Equal flanks keep the transport centred, but fixed at 320 they overflowed a
+    /// minimum-size window and the bar spilled off both edges, so they give way down to
+    /// what the transport leaves (padding 40, spacing 40, transport about 280).
+    private var flank: CGFloat { min(320, max(200, (barWidth - 360) / 2)) }
+    /// Too narrow for the volume slider: it folds into its icon, which opens it.
+    private var compact: Bool { flank < 320 }
 
     var body: some View {
         HStack(spacing: 20) {
@@ -34,6 +41,7 @@ struct MacPlayerBar: View {
         // 1300pt, so on a wider window it floated in the middle with the library visible
         // beside it and running on underneath — it has to be the floor, not a panel.
         .frame(maxWidth: .infinity)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { barWidth = $0 }
         .frame(height: 92)
         // A wash rather than a bar. It has to separate itself from the artwork scrolling
         // behind it without becoming a second, opaque surface.
@@ -230,16 +238,26 @@ struct MacPlayerBar: View {
                 .help("Audio Output")
             devicePicker
 
-            HStack(spacing: 6) {
-                Image(systemName: volumeSymbol)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 20)
-                Slider(value: $player.volume, in: 0...1)
-                    .controlSize(.small)
-                    .frame(width: 96)
+            if compact {
+                iconButton(volumeSymbol, size: 14, active: showVolume, help: "Volume") { showVolume.toggle() }
+                    .popover(isPresented: $showVolume, arrowEdge: .top) {
+                        Slider(value: $player.volume, in: 0...1)
+                            .controlSize(.small)
+                            .frame(width: 140)
+                            .padding(14)
+                    }
+            } else {
+                HStack(spacing: 6) {
+                    Image(systemName: volumeSymbol)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 20)
+                    Slider(value: $player.volume, in: 0...1)
+                        .controlSize(.small)
+                        .frame(width: 96)
+                }
+                .help("Volume")
             }
-            .help("Volume")
         }
         .frame(width: flank, alignment: .trailing)
     }
