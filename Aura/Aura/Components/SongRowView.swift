@@ -97,12 +97,23 @@ struct SongRowView: View {
             let itemState = downloadManager.itemStates[song.id]
             let isInFlight = itemState == .downloading || itemState == .waiting
             Button {
-                Task { await downloadManager.downloadAlbum([song]) }
+                switch itemState {
+                case .paused:
+                    downloadManager.resumeDownload(song.id)
+                case .cancelled, .failed:
+                    downloadManager.retryDownload(song)
+                default:
+                    Task { await downloadManager.downloadSong(song) }
+                }
             } label: {
                 if isDownloaded {
                     Label("Downloaded", systemImage: "checkmark.circle.fill")
-                } else if isInFlight {
+                } else if itemState == .downloading {
                     Label("Downloading…", systemImage: "arrow.down.circle")
+                } else if itemState == .waiting {
+                    Label("Queued…", systemImage: "clock")
+                } else if itemState == .paused {
+                    Label("Resume", systemImage: "play.circle")
                 } else {
                     Label("Download", systemImage: "arrow.down.circle")
                 }

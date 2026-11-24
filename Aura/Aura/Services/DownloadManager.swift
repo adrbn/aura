@@ -881,6 +881,7 @@ final class DownloadManager: NSObject {
             isHalted = false
             for song in songs { cancelledIds.remove(song.id); pausedIds.remove(song.id) }
         }
+        guard ServerManager.shared.currentServer != nil else { return }
         guard hasSufficientDiskSpace() else {
             AppLogger.shared.log("❌ Album download blocked (low disk space): \(songs.count) songs")
             ToastManager.shared.show(String(localized: "Not enough free storage to download"), icon: "exclamationmark.triangle.fill")
