@@ -678,7 +678,7 @@ enum LyricsAutoSync {
 
     /// Where the lines start in the audio, and their words.
     static func placement(for song: Song, lines: [LyricsLine]) async throws -> Placement {
-        let words = lines.map { words(in: $0.text) }
+        let words = lines.map { Self.words(in: $0.text) }
         guard let locale = await locale(of: lines) else { throw Failure.language }
         guard let server = ServerManager.shared.currentServer,
               let url = await AudioCacheManager.shared.localCopy(

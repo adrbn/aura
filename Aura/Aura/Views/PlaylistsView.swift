@@ -494,11 +494,10 @@ struct PlaylistsView: View {
         }
     }
 
-    /// The playlists as a grid of covers or a list of rows, as chosen in the filter bar.
-    @ViewBuilder
     /// Favorite Songs leads the playlists, first of the pinned ones, where the whole list shows.
     private var showsFavorites: Bool { !offline && filter == .all && folder.isEmpty }
 
+    /// The playlists as a grid of covers or a list of rows, as chosen in the filter bar.
     @ViewBuilder private func playlistCollection(_ list: [Playlist], reorderable: Bool = false, leadsWithFavorites: Bool = false) -> some View {
         switch layout {
         case .grid:
