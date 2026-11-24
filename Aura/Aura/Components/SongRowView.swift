@@ -64,17 +64,14 @@ struct SongRowView: View {
                 }
             }
             Spacer()
-            if downloadManager.isDownloaded(song.id) {
-                Image(systemName: "arrow.down.circle.fill")
-                    .font(.caption2)
-                    .foregroundStyle(accentColor.opacity(0.6))
-            }
+            SongDownloadBadge(songId: song.id, accentColor: accentColor)
             Text(song.durationFormatted).font(.caption).foregroundStyle(.secondary)
         }
         .contentShape(Rectangle())
         .onTapGesture { onTap?() }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(song.title), \(song.artist ?? String(localized: "Unknown Artist")), \(song.durationFormatted)")
+        .accessibilityValue(downloadAccessibilityValue)
         .accessibilityHint("Double tap to play")
         .scrollEnter()
         // A plain List paints its rows `systemBackground`, pure black, below the page's
@@ -96,16 +93,21 @@ struct SongRowView: View {
             Button { showAddToPlaylist = true } label: {
                 Label("Add to Playlist", systemImage: "text.badge.plus")
             }
+            let isDownloaded = downloadManager.isDownloaded(song.id)
+            let itemState = downloadManager.itemStates[song.id]
+            let isInFlight = itemState == .downloading || itemState == .waiting
             Button {
-                Task { await downloadManager.downloadSong(song) }
+                Task { await downloadManager.downloadAlbum([song]) }
             } label: {
-                if downloadManager.isDownloaded(song.id) {
+                if isDownloaded {
                     Label("Downloaded", systemImage: "checkmark.circle.fill")
+                } else if isInFlight {
+                    Label("Downloading…", systemImage: "arrow.down.circle")
                 } else {
                     Label("Download", systemImage: "arrow.down.circle")
                 }
             }
-            .disabled(downloadManager.isDownloaded(song.id))
+            .disabled(isDownloaded || isInFlight)
             Divider()
             Button { showShareSheet = true } label: {
                 Label("Share", systemImage: "square.and.arrow.up")
@@ -200,6 +202,16 @@ struct SongRowView: View {
         }
     }
 
+    private var downloadAccessibilityValue: LocalizedStringKey {
+        if downloadManager.isDownloaded(song.id) { return "Downloaded" }
+        switch downloadManager.itemStates[song.id] {
+        case .downloading: return "Downloading"
+        case .waiting: return "Queued…"
+        case .paused: return "Paused"
+        default: return ""
+        }
+    }
+
     private func toggleStar() {
         guard let server = ServerManager.shared.currentServer else { return }
         Task {
@@ -253,5 +265,73 @@ private struct SongRowSwipeModifier: ViewModifier {
                 try? await SubsonicClient.shared.star(server: server, id: song.id)
             }
         }
+    }
+}
+
+/// Inline per-song download status next to the duration: downloaded arrow, active progress
+/// ring, queued dashed ring, or paused icon. Isolating progress reads inside `SongDownloadRing`
+/// keeps non-downloading rows from re-rendering on every transfer progress tick.
+private struct SongDownloadBadge: View {
+    let songId: String
+    let accentColor: Color
+    @ScaledMetric(relativeTo: .caption2) private var ringSize: CGFloat = 13
+
+    private enum VisualState: Equatable {
+        case downloaded, downloading, waiting, paused, none
+    }
+
+    private var state: VisualState {
+        let dm = DownloadManager.shared
+        if dm.isDownloaded(songId) { return .downloaded }
+        switch dm.itemStates[songId] {
+        case .downloading: return .downloading
+        case .waiting: return .waiting
+        case .paused: return .paused
+        default: return .none
+        }
+    }
+
+    var body: some View {
+        Group {
+            switch state {
+            case .downloaded:
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.caption2)
+                    .foregroundStyle(accentColor.opacity(0.6))
+            case .downloading:
+                SongDownloadRing(songId: songId, accentColor: accentColor, size: ringSize)
+            case .waiting:
+                Circle()
+                    .stroke(.secondary.opacity(0.6), style: StrokeStyle(lineWidth: 1.5, dash: [2, 2]))
+                    .frame(width: ringSize, height: ringSize)
+            case .paused:
+                Image(systemName: "pause.circle")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            case .none:
+                EmptyView()
+            }
+        }
+        .animation(.default, value: state)
+    }
+}
+
+private struct SongDownloadRing: View {
+    let songId: String
+    let accentColor: Color
+    let size: CGFloat
+
+    var body: some View {
+        let progress = max(DownloadManager.shared.downloadProgress[songId] ?? 0, 0.05)
+        ZStack {
+            Circle()
+                .stroke(Color.primary.opacity(0.18), lineWidth: 1.8)
+            Circle()
+                .trim(from: 0, to: CGFloat(progress))
+                .stroke(accentColor, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.linear(duration: 0.2), value: progress)
+        }
+        .frame(width: size, height: size)
     }
 }
