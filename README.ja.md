@@ -25,7 +25,7 @@
 [![iOS / iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-を入手)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20%E3%83%97%E3%83%AC%E3%83%93%E3%83%A5%E3%83%BC-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-を入手)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-を入手)
-[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
+[![tvOS 26+](https://img.shields.io/badge/tvOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-を入手)
 [![Navidrome / Subsonic](https://img.shields.io/badge/%E3%82%B5%E3%83%BC%E3%83%90-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#aura-を入手)
 [![navidrome.org に掲載](https://img.shields.io/badge/%E6%8E%B2%E8%BC%89-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![トラッキングなし](https://img.shields.io/badge/%E3%83%88%E3%83%A9%E3%83%83%E3%82%AD%E3%83%B3%E3%82%B0-%E3%81%AA%E3%81%97-EB534D?style=flat-square&labelColor=121212)](#プライバシー)
@@ -41,7 +41,7 @@
 ---
 
 Aura はあなた自身のサーバにある音楽を再生します。Navidrome、または Subsonic API に対応したサーバを指定すれば、
-ライブラリが iPhone、iPad、Apple Watch、CarPlay、Mac で使えます。元の音質のままストリーミングし、歌詞は曲に合わせて表示され、
+ライブラリが iPhone、iPad、Apple Watch、CarPlay、Mac、Apple TV で使えます。元の音質のままストリーミングし、歌詞は曲に合わせて表示され、
 実際に再生した曲からミックスを作り、Radar でお気に入りのアーティストの新作を知らせ、ダウンロードしたものは電波がなくても残ります。
 
 > **Aura はクライアントであり、音楽サービスではありません。** ご自身が所有する、またはアクセス権のある Navidrome
@@ -53,7 +53,7 @@ Aura はあなた自身のサーバにある音楽を再生します。Navidrome
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="プリセット間を動く 5 バンドイコライザのカーブ" width="100%"><br><b>ロスレス、本格的なイコライザ付き</b><br><sub>FLAC と ALAC はロスレスのまま、回線が遅いときは 128、192、320 kbps。60 Hz から 14 kHz までの 5 バンド、ドラッグで動かす 1 本のカーブ、15 のプリセット、ReplayGain。</sub></td>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="アプリで撮影した歌詞画面" width="100%"><br><b>曲に合わせた歌詞</b><br><sub>サーバに単語ごとのタイミングがあれば一語ずつ、なければ一行ずつ。まずサーバから、次に <a href="https://lrclib.net">LRCLIB</a> から取得します。行をタップするとそこへ移動します。</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="アプリの Made For You のカバーが流れる様子" width="100%"><br><b>Made For You</b><br><sub>時間帯、気分、ジャンルごとのミックスに、それぞれ専用のカバー。クイックミックスはどの曲やアーティストからでもラジオを始めます。Wrapped は iPhone 上であなたの 1 年を集計します。</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="アプリの Made For You のカバーが流れる様子" width="100%"><br><b>Made For You</b><br><sub>時間帯、気分、ジャンルごとのミックスに、それぞれ専用のカバー。好きな曲、近くの曲、まだ聴いていない曲を延々と流すミックス Nonstop もあります。クイックミックスはどの曲やアーティストからでもラジオを始めます。Wrapped はあなたの 1 年を集計します。</sub></td>
   </tr>
   <tr>
     <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="アーティストの新作を並べた Radar、アプリで撮影" width="100%"><br><b>Radar</b><br><sub>よく聴くアーティストの今月の新作。サーバにあるものはフルで、それ以外は 30 秒のプレビューで再生します。</sub></td>
@@ -62,12 +62,10 @@ Aura はあなた自身のサーバにある音楽を再生します。Navidrome
   </tr>
 </table>
 
-<sub><b>1.6</b> の印：1.6 の新機能で、App Store で配信中です。</sub>
-
 **聴く**
 
 - **先が見える再生待ち**をアートワークの代わりに表示：次に再生、最後に追加、ドラッグで並べ替え。アルバムやプレイリストが終わると、自動再生が似た曲を続けます。
-- **ギャップレス再生**または 3 秒から 12 秒のクロスフェード <sup>1.6</sup>、シャッフル、1 曲リピートと全曲リピート、指定時間後または曲の終わりで止まるスリープタイマー。
+- **ギャップレス再生**または 1 秒から 12 秒のクロスフェード、シャッフル、1 曲リピートと全曲リピート、指定時間後または曲の終わりで止まるスリープタイマー。
 - **サーバにあるあらゆる形式**：WMA、APE、WavPack、DSD などはサーバが MP3 に変換します。モバイル通信用の別の音質設定と、指定したサイズまでのストリームキャッシュ。
 - **Made For You を自分好みに**：ミックスごとのオン・オフ、ジャンルミックスで使うジャンル、ミックスあたり 25、50、100 曲。
 - **ピッチ**をターンテーブルのように半音ずつ。FaceTime での **SharePlay** では、全員が同じサーバからストリーミングします。
@@ -88,10 +86,10 @@ Aura はあなた自身のサーバにある音楽を再生します。Navidrome
 
 **iPhone のまわり**
 
-- **iPad** <sup>1.6</sup>：大きな画面向けのレイアウトで、横向きでは歌詞か再生待ちをアートワークの横に表示し、ウィジェットにも対応します。
+- **iPad**：大きな画面向けのレイアウトで、横向きでは歌詞か再生待ちをアートワークの横に表示し、ウィジェットにも対応します。
 - **ロック画面、コントロールセンター、Dynamic Island、AirPlay**、そしてホーム画面用の再生中ウィジェット。
 - **Siri とショートカット**：アーティスト、アルバム、曲、プレイリスト、ジャンルを名前で再生、再生待ちに追加、お気に入り、スキップ。ショートカット用の **`aura://` リンク**。
-- **iPhone と Mac** は同じ Wi-Fi 上で互いを操作できます。再生中から Mac で再生し、もう一方で再生中の内容を 2 つ目のミニプレーヤーで確認できます。
+- **iPhone、Mac、Apple TV** は同じ Wi-Fi 上で互いに再生できます。音楽をあるデバイスから別のデバイスに送り、どれからでも操作でき（再生操作、再生待ち、音量）、もう一方で再生中の内容を 2 つ目のミニプレーヤーで確認できます。AirPods は再生中のデバイスにつながったままです。
 - **共有リンク**で他のサービスの曲を開けます。
 - **好きなように配置**：ライトまたはダーク、好きなアクセントカラー、タブとホームのセクションを好きな順に、横向きの時計、iPhone Duo 用のレイアウト。
 - **25 の言語**：英語、フランス語、イタリア語、スペイン語、カタルーニャ語、ドイツ語、オランダ語、ポルトガル語（ポルトガルとブラジル）、スウェーデン語、ノルウェー語、デンマーク語、フィンランド語、ポーランド語、チェコ語、ルーマニア語、ウクライナ語、ロシア語、ギリシャ語、トルコ語、タイ語、日本語、韓国語、中国語（簡体字と繁体字）。
@@ -104,7 +102,7 @@ Aura はあなた自身のサーバにある音楽を再生します。Navidrome
   <img src="docs/assets/shots-ios.webp" width="100%" alt="iPhone アプリ：再生中、ミックスのあるホーム、ラジオ、同期歌詞、アーティストページ、ライブラリ、CarPlay と Apple Watch を含むダウンロード、プライバシー" />
 </p>
 
-**Apple Watch**：再生中、歌詞、次はこちら、ライブラリを手首で。音量は Digital Crown で。
+**Apple Watch**
 
 <p align="center">
   <img src="docs/assets/shots-watch.webp" width="64%" alt="Apple Watch アプリ：再生中、歌詞、次はこちら、ライブラリ" />
@@ -114,10 +112,9 @@ Aura はあなた自身のサーバにある音楽を再生します。Navidrome
 すべてのアーティスト、サーバのインターネットラジオ局、ダウンロード済みタブと接続なしで再生できるオフラインのプレイリスト、
 そして曲に続けて似た音楽を流すラジオボタン。
 
-**Mac**（プレビュー、macOS 26）：iPhone アプリと同じコードから作られています。サイドバー付きの 1 つのウインドウにライブラリ全体。
+**Mac**（macOS 26）：iPhone アプリと同じコードから作られています。サイドバー付きの 1 つのウインドウにライブラリ全体。
 次はこちらはドラッグで並べ替えられるサイドパネルで、右クリックで次に再生、ラジオを開始、評価、ダウンロード。歌詞のフルスクリーン表示、
-ダウンロード、イコライザ、メニューバーのプレーヤー。同じ Wi-Fi 上で Mac から iPhone で再生したり、その逆もできます。
-操作、再生待ち、音量が引き継がれ、AirPods は再生中のデバイスにつながったままです。
+Radar、Wrapped、ダウンロード、イコライザ、メニューバーのプレーヤー。
 
 <p align="center">
   <img src="docs/assets/mac-1-home.webp" width="49%" alt="Navidrome のデモサーバで動く Mac 版 Aura：最近のアルバムと Made For You のミックスがあるホーム、サイドバー、プレーヤーバー" />
@@ -125,7 +122,7 @@ Aura はあなた自身のサーバにある音楽を再生します。Navidrome
 </p>
 <p align="center"><sub>Mac の画面は Navidrome の公開デモサーバを使っています。</sub></p>
 
-**Apple TV**（[TestFlight](https://testflight.apple.com/join/pEUEBUbm) で公開ベータ、tvOS 26）：ミックスのあるホーム、並べ替えとフィルタのあるライブラリ、検索、そしてぼかしたジャケットの上に全画面で表示される再生中画面。歌詞は曲に合わせて進みます。リモコンに5秒触れないとコントロールが消え、ジャケット、曲名、歌詞だけが残ります。iPhone や Mac から再生して操作できます。
+**Apple TV**（tvOS 26、1.8 から App Store で、それまでは [TestFlight](https://testflight.apple.com/join/pEUEBUbm) で）：ミックスのあるホーム、並べ替えとフィルタのあるライブラリ、検索、アルバムとアーティストのページ、そしてぼかしたジャケットの上に全画面で表示される再生中画面。歌詞は曲に合わせて進みます。リモコンに5秒触れないとコントロールが消え、ジャケット、曲名、歌詞だけが残り、歌詞は TV、iPhone、Mac から大きくできます。
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Apple TV の Aura：同期歌詞つきの再生中画面、コントロールは非表示" />
@@ -146,8 +143,8 @@ Aura はあなた自身のサーバにある音楽を再生します。Navidrome
 
 | | App Store | IPA（サイドロード） | Mac（プレビュー） |
 |---|---|---|---|
-| 対応デバイス | iPhone、iPad、Apple Watch、CarPlay | iPhone、iPad、Apple Watch | Mac |
-| 必要なもの | iOS 26、iPadOS 26、watchOS 26 | iOS 26、iPadOS 26、watchOS 26、サイドロードツール | macOS 26、Apple シリコンまたは Intel |
+| 対応デバイス | iPhone、iPad、Apple Watch、CarPlay、Apple TV（1.8 から） | iPhone、iPad、Apple Watch | Mac |
+| 必要なもの | iOS 26、iPadOS 26、watchOS 26、tvOS 26 | iOS 26、iPadOS 26、watchOS 26、サイドロードツール | macOS 26、Apple シリコンまたは Intel |
 | CarPlay | あり | なし：再署名すると Apple の CarPlay エンタイトルメントが外れます | – |
 | Get It（ご自身の [slskd](https://github.com/slskd/slskd) 経由の Soulseek） | なし | オプトイン、設定 → Developer Options | オプトイン、設定 → Developer |
 | NetEase による歌詞タイミングの確認 | なし | あり | あり |
@@ -215,7 +212,8 @@ open Aura/Aura.xcodeproj
 - スキームと構成：
   - **Aura**（`Debug` と `Release`）：Get It と NetEase の確認を含むサイドロード版。
   - **Aura-AppStore**（`Release-AppStore`）：`APPSTORE_BUILD` フラグ付きでビルドされ、サイドロード専用の機能は除外されます。
-  - **Aura-mac**：Mac アプリのプレビュー版。毎日テストしているのは iPhone だけです。
+  - **Aura-mac**：Mac アプリ。
+  - **Aura-tv**：Apple TV アプリ。
 - CarPlay には、ご自身のチームで Apple の `carplay-audio` エンタイトルメントが必要です。
 - `scripts/watch-screenshots.sh` は、Watch やシミュレータなしで Mac 上に Watch アプリの画面を描きます。
 
@@ -229,7 +227,7 @@ open Aura/Aura.xcodeproj
 ## プライバシー
 
 Aura にはアカウントも解析もなく、開発者には何も送信しません。サーバのパスワードはキーチェーンに保存されます。
-通信先はあなたのサーバと、[プライバシーポリシー](https://adrbn.github.io/aura-site/privacy.html)に記載された公開サービスだけで、
+通信先はあなたのサーバと、[プライバシーポリシー](https://aura.adrbn.dev/privacy.html)に記載された公開サービスだけで、
 ポリシーにはそれぞれが何を受け取るかが正確に書かれています。
 
 ## AI の使い方

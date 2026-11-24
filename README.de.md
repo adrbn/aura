@@ -25,7 +25,7 @@ verlustfreies Streaming, Songtexte, die Wort für Wort aufleuchten, Mixe aus dem
 [![iOS und iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-herunterladen)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20Vorschau-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-herunterladen)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-herunterladen)
-[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
+[![tvOS 26+](https://img.shields.io/badge/tvOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#aura-herunterladen)
 [![Navidrome / Subsonic](https://img.shields.io/badge/Server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#aura-herunterladen)
 [![Gelistet auf navidrome.org](https://img.shields.io/badge/gelistet%20auf-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![Kein Tracking](https://img.shields.io/badge/Tracking-keins-EB534D?style=flat-square&labelColor=121212)](#datenschutz)
@@ -41,8 +41,8 @@ verlustfreies Streaming, Songtexte, die Wort für Wort aufleuchten, Mixe aus dem
 ---
 
 Aura spielt die Musik auf deinem eigenen Server. Verbinde es mit Navidrome oder einem anderen Server, der die
-Subsonic-API spricht, und deine Bibliothek ist auf deinem iPhone, deinem iPad, deiner Apple Watch, in CarPlay und auf
-deinem Mac: in Originalqualität gestreamt, mit zeitgenauen Songtexten, Mixen aus dem, was du wirklich spielst, einem
+Subsonic-API spricht, und deine Bibliothek ist auf deinem iPhone, deinem iPad, deiner Apple Watch, in CarPlay, auf
+deinem Mac und auf deinem Apple TV: in Originalqualität gestreamt, mit zeitgenauen Songtexten, Mixen aus dem, was du wirklich spielst, einem
 Radar mit neuen Veröffentlichungen deiner Interpreten, und alles, was du herunterlädst, bleibt auch ohne Empfang da.
 
 > **Aura ist ein Client, kein Musikdienst.** Verbinde es mit einem Navidrome- oder Subsonic-kompatiblen Server, der dir
@@ -54,7 +54,7 @@ Radar mit neuen Veröffentlichungen deiner Interpreten, und alles, was du herunt
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="Die Kurve eines Fünfband-Equalizers, die zwischen Voreinstellungen wechselt" width="100%"><br><b>Verlustfrei, mit einem echten Equalizer</b><br><sub>FLAC und ALAC bleiben verlustfrei, oder 128, 192 oder 320 kbit/s bei langsamer Verbindung. Fünf Bänder von 60 Hz bis 14 kHz, eine Kurve zum Ziehen, 15 Voreinstellungen, ReplayGain.</sub></td>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="Der Songtext-Bildschirm, aufgenommen in der App" width="100%"><br><b>Zeitgenaue Songtexte</b><br><sub>Wort für Wort, wenn dein Server Zeitangaben pro Wort hat, sonst Zeile für Zeile. Zuerst von deinem Server, dann von <a href="https://lrclib.net">LRCLIB</a>. Tippe auf eine Zeile, um dorthin zu springen.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Cover aus Für dich gemacht in der App, die vorbeiziehen" width="100%"><br><b>Für dich gemacht</b><br><sub>Mixe nach Tageszeit, Stimmung und Genre, jeder mit eigenem Cover. Instant-Mix startet ein Radio von jedem Titel oder Interpreten aus. Wrapped zieht auf dem iPhone die Bilanz deines Jahres.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Cover aus Für dich gemacht in der App, die vorbeiziehen" width="100%"><br><b>Für dich gemacht</b><br><sub>Mixe nach Tageszeit, Stimmung und Genre, jeder mit eigenem Cover, und Nonstop, ein endloser Mix aus Titeln, die dir gefallen, aus deiner Nähe und noch nicht gehörten. Instant-Mix startet ein Radio von jedem Titel oder Interpreten aus. Wrapped zieht die Bilanz deines Jahres.</sub></td>
   </tr>
   <tr>
     <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="Der Radar mit neuen Veröffentlichungen deiner Interpreten, aufgenommen in der App" width="100%"><br><b>Radar</b><br><sub>Die Veröffentlichungen dieses Monats von den Interpreten, die du am meisten hörst. Was dein Server hat, läuft ganz; der Rest als 30-Sekunden-Vorschau.</sub></td>
@@ -63,12 +63,10 @@ Radar mit neuen Veröffentlichungen deiner Interpreten, und alles, was du herunt
   </tr>
 </table>
 
-<sub>Mit <b>1.6</b> markiert: neu in 1.6, jetzt im App Store.</sub>
-
 **Hören**
 
 - **Eine Warteliste, in der du siehst, was kommt**, anstelle des Covers: als Nächstes abspielen, ans Ende anhängen, zum Umsortieren ziehen. Wenn ein Album oder eine Playlist endet, macht die automatische Wiedergabe mit ähnlichen Titeln weiter.
-- **Lückenlose Wiedergabe** oder Überblenden von 3 bis 12 Sekunden <sup>1.6</sup>, Zufall, einen oder alle wiederholen, und ein Einschlaftimer, der nach einer festen Zeit oder am Ende des Titels stoppt.
+- **Lückenlose Wiedergabe** oder Überblenden von 1 bis 12 Sekunden, Zufall, einen oder alle wiederholen, und ein Einschlaftimer, der nach einer festen Zeit oder am Ende des Titels stoppt.
 - **Jedes Format auf deinem Server**: WMA, APE, WavPack, DSD und andere wandelt dein Server in MP3 um. Eine eigene Qualität für Mobilfunk und ein Stream-Cache bis zur Größe, die du festlegst.
 - **Für dich gemacht, wie du willst**: jeder Mix ein oder aus, die Genres der Genre-Mixe, und 25, 50 oder 100 Titel pro Mix.
 - **Tonhöhe**, Halbton für Halbton, wie am Plattenspieler. **SharePlay** über FaceTime, alle streamen vom selben Server.
@@ -89,10 +87,10 @@ Radar mit neuen Veröffentlichungen deiner Interpreten, und alles, was du herunt
 
 **Rund ums iPhone**
 
-- **iPad** <sup>1.6</sup>: für den großen Bildschirm angelegt, im Querformat mit Songtext oder Warteliste neben dem Cover, und auch mit dem Widget.
+- **iPad**: für den großen Bildschirm angelegt, im Querformat mit Songtext oder Warteliste neben dem Cover, und auch mit dem Widget.
 - **Sperrbildschirm, Kontrollzentrum, Dynamic Island und AirPlay**, und ein Widget für den Home-Bildschirm, das zeigt, was gerade läuft.
 - **Siri und Kurzbefehle**: einen Interpreten, ein Album, einen Titel, eine Playlist oder ein Genre per Name abspielen, einreihen, liken, überspringen. **`aura://`-Links** für Kurzbefehle.
-- **Dein iPhone und dein Mac** steuern sich gegenseitig im selben WLAN: Spiele aus Wird gerade wiedergegeben auf dem Mac ab, und sieh in einem zweiten Mini-Player, was das andere Gerät spielt.
+- **iPhone, Mac und Apple TV spielen aufeinander ab**, im selben WLAN: schicke die Musik von einem zum anderen, steuere sie von jedem aus (Steuerung, Warteliste, Lautstärke) und sieh in einem zweiten Mini-Player, was das andere spielt. Deine AirPods bleiben beim Gerät, das spielt.
 - **Links zum Teilen**, die einen Titel in anderen Diensten öffnen.
 - **Nach deinem Geschmack**: hell oder dunkel, jede Akzentfarbe, Tabs und Bereiche von Start in deiner Reihenfolge, eine Uhr im Querformat und Layouts für das iPhone Duo.
 - **25 Sprachen**: Englisch, Französisch, Italienisch, Spanisch, Katalanisch, Deutsch, Niederländisch, Portugiesisch (Portugal und Brasilien), Schwedisch, Norwegisch, Dänisch, Finnisch, Polnisch, Tschechisch, Rumänisch, Ukrainisch, Russisch, Griechisch, Türkisch, Thailändisch, Japanisch, Koreanisch und Chinesisch (vereinfacht und traditionell).
@@ -105,7 +103,7 @@ Radar mit neuen Veröffentlichungen deiner Interpreten, und alles, was du herunt
   <img src="docs/assets/shots-ios.webp" width="100%" alt="Die iPhone-App: Wird gerade wiedergegeben, Start mit Mixen, ein Radio, synchronisierte Songtexte, eine Interpretenseite, die Bibliothek, Downloads mit CarPlay und Apple Watch, und Datenschutz" />
 </p>
 
-**Apple Watch**: Wird gerade wiedergegeben, Songtexte, Als Nächstes und die Bibliothek am Handgelenk, mit der Digital Crown für die Lautstärke.
+**Apple Watch**
 
 <p align="center">
   <img src="docs/assets/shots-watch.webp" width="64%" alt="Die Apple-Watch-App: Wird gerade wiedergegeben, Songtexte, Als Nächstes und die Bibliothek" />
@@ -115,11 +113,10 @@ Radar mit neuen Veröffentlichungen deiner Interpreten, und alles, was du herunt
 Interpreten von A bis Z, die Internetradiosender deines Servers, ein Tab Heruntergeladen und deine Offline-Playlists, die
 ohne Verbindung laufen, und eine Radio-Taste, die den Titel mit ähnlicher Musik fortsetzt.
 
-**Mac** (Vorschau, macOS 26): aus demselben Code wie die iPhone-App. Die ganze Bibliothek in einem Fenster mit
+**Mac** (macOS 26): aus demselben Code wie die iPhone-App. Die ganze Bibliothek in einem Fenster mit
 Seitenleiste; Als Nächstes als Seitenbereich, den du per Ziehen umsortierst, mit Rechtsklick für Als Nächstes abspielen,
-Radio starten, Bewertung und Download; Songtexte im Vollbild; Downloads, der Equalizer und ein Player in der
-Menüleiste. Spiele vom Mac aus auf deinem iPhone ab, oder umgekehrt, im selben WLAN: Steuerung, Warteliste und
-Lautstärke gehen mit, und deine AirPods bleiben beim Gerät, das spielt.
+Radio starten, Bewertung und Download; Songtexte im Vollbild; Radar, Wrapped, Downloads, der Equalizer und ein Player in der
+Menüleiste.
 
 <p align="center">
   <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura für Mac auf dem Demo-Server von Navidrome: Start mit neuen Alben und den Mixen aus Für dich gemacht, die Seitenleiste und die Player-Leiste" />
@@ -127,7 +124,7 @@ Lautstärke gehen mit, und deine AirPods bleiben beim Gerät, das spielt.
 </p>
 <p align="center"><sub>Die Mac-Aufnahmen nutzen den öffentlichen Demo-Server von Navidrome.</sub></p>
 
-**Apple TV** (öffentliche Beta über [TestFlight](https://testflight.apple.com/join/pEUEBUbm), tvOS 26): Start mit den Mixen, die Mediathek mit Sortierungen und Filtern, die Suche und Wird gerade wiedergegeben im Vollbild über dem unscharfen Cover, mit dem Songtext im Takt des Songs. Fünf Sekunden ohne Fernbedienung, und die Steuerung blendet aus: Es bleiben nur Cover, Song und Songtext. Dein iPhone oder Mac kann darauf abspielen und es steuern.
+**Apple TV** (tvOS 26, ab 1.8 im App Store und bis dahin über [TestFlight](https://testflight.apple.com/join/pEUEBUbm)): Start mit den Mixen, die Mediathek mit Sortierungen und Filtern, die Suche, Album- und Interpretenseiten und Wird gerade wiedergegeben im Vollbild über dem unscharfen Cover, mit dem Songtext im Takt des Songs. Fünf Sekunden ohne Fernbedienung, und die Steuerung blendet aus: Es bleiben nur Cover, Song und Songtext, der sich vom Fernseher, vom iPhone oder vom Mac aus größer stellen lässt.
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura auf Apple TV: Wird gerade wiedergegeben mit synchronem Songtext, Steuerung ausgeblendet" />
@@ -148,8 +145,8 @@ Alles kostenlos, ohne Konto und ohne In-App-Käufe.
 
 | | App Store | IPA (Sideload) | Mac (Vorschau) |
 |---|---|---|---|
-| Läuft auf | iPhone, iPad, Apple Watch, CarPlay | iPhone, iPad, Apple Watch | Mac |
-| Benötigt | iOS 26, iPadOS 26, watchOS 26 | iOS 26, iPadOS 26, watchOS 26, ein Sideloading-Tool | macOS 26, Apple Silicon oder Intel |
+| Läuft auf | iPhone, iPad, Apple Watch, CarPlay, Apple TV (ab 1.8) | iPhone, iPad, Apple Watch | Mac |
+| Benötigt | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, ein Sideloading-Tool | macOS 26, Apple Silicon oder Intel |
 | CarPlay | Ja | Nein: Das Neusignieren entfernt Apples CarPlay-Berechtigung | – |
 | Get It (Soulseek über dein eigenes [slskd](https://github.com/slskd/slskd)) | Nein | Optional, Einstellungen → Developer Options | Optional, Einstellungen → Developer |
 | NetEase-Prüfung der Songtext-Zeiten | Nein | Ja | Ja |
@@ -219,7 +216,8 @@ open Aura/Aura.xcodeproj
 - Schemata und Konfigurationen:
   - **Aura**, mit `Debug` und `Release`: die Sideload-Version, mit Get It und der NetEase-Prüfung.
   - **Aura-AppStore**, mit `Release-AppStore`: gebaut mit dem Flag `APPSTORE_BUILD`, das die Sideload-Funktionen herauskompiliert.
-  - **Aura-mac**: die Mac-App, eine Vorschau; nur das iPhone wird täglich getestet.
+  - **Aura-mac**: die Mac-App.
+  - **Aura-tv**: die Apple-TV-App.
 - CarPlay braucht Apples Berechtigung `carplay-audio` für dein eigenes Team.
 - `scripts/watch-screenshots.sh` zeichnet die Seiten der Watch-App auf einem Mac, ohne Watch und ohne Simulator.
 
@@ -236,7 +234,7 @@ in `docs/assets/readme-src/` liegen.
 
 Aura hat kein Konto und keine Analysen und sendet nichts an den Entwickler. Server-Passwörter liegen im Schlüsselbund.
 Die App spricht mit deinem Server und mit den öffentlichen Diensten, die in der
-[Datenschutzerklärung](https://adrbn.github.io/aura-site/privacy.html) aufgeführt sind; dort steht genau, was jeder
+[Datenschutzerklärung](https://aura.adrbn.dev/privacy.html) aufgeführt sind; dort steht genau, was jeder
 davon erhält.
 
 ## Wie KI eingesetzt wurde

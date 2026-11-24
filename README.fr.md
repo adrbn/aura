@@ -25,7 +25,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 [![iOS et iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20aper%C3%A7u-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
-[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
+[![tvOS 26+](https://img.shields.io/badge/tvOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#obtenir-aura)
 [![Navidrome / Subsonic](https://img.shields.io/badge/serveur-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#obtenir-aura)
 [![Référencé sur navidrome.org](https://img.shields.io/badge/r%C3%A9f%C3%A9renc%C3%A9%20sur-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![Aucun pistage](https://img.shields.io/badge/pistage-aucun-EB534D?style=flat-square&labelColor=121212)](#confidentialit%C3%A9)
@@ -41,7 +41,7 @@ streaming sans perte, paroles qui s'allument mot à mot, mix tirés de ce que vo
 ---
 
 Aura lit la musique de votre propre serveur. Branchez-le sur Navidrome, ou sur n'importe quel serveur qui parle l'API
-Subsonic, et votre bibliothèque est dans votre iPhone, votre iPad, sur votre Apple Watch, dans CarPlay et sur votre Mac : en
+Subsonic, et votre bibliothèque est dans votre iPhone, votre iPad, sur votre Apple Watch, dans CarPlay, sur votre Mac et sur votre Apple TV : en
 qualité d'origine, avec les paroles en rythme, des mix tirés de ce que vous écoutez vraiment, un Radar des sorties de
 vos artistes, et tout ce que vous avez téléchargé toujours là quand le réseau tombe.
 
@@ -55,7 +55,7 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="La courbe d'un égaliseur cinq bandes qui passe d'un préréglage à l'autre" width="100%"><br><b>Sans perte, avec un vrai égaliseur</b><br><sub>Le FLAC et l'ALAC restent sans perte, ou en 128, 192 ou 320 kbit/s sur une connexion lente. Cinq bandes de 60 Hz à 14 kHz, une seule courbe à tirer, 15 préréglages, ReplayGain.</sub></td>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="L'écran des paroles, capturé dans l'app" width="100%"><br><b>Les paroles en rythme</b><br><sub>Mot à mot quand votre serveur a le minutage de chaque mot, ligne par ligne sinon. D'abord votre serveur, puis <a href="https://lrclib.net">LRCLIB</a>. Touchez une ligne pour y sauter.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Des pochettes Pour vous de l'app qui défilent" width="100%"><br><b>Pour vous</b><br><sub>Des mix selon l'heure, l'humeur et le genre, chacun avec sa pochette. Le Mix instantané lance une radio depuis n'importe quel morceau ou artiste. Le Wrapped fait le bilan de votre année, calculé sur l'iPhone.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Des pochettes Pour vous de l'app qui défilent" width="100%"><br><b>Pour vous</b><br><sub>Des mix selon l'heure, l'humeur et le genre, chacun avec sa pochette, et Nonstop, un mix sans fin de titres aimés, proches et jamais entendus. Le Mix instantané lance une radio depuis n'importe quel morceau ou artiste. Le Wrapped fait le bilan de votre année.</sub></td>
   </tr>
   <tr>
     <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="Le Radar qui liste les nouveautés de vos artistes, capturé dans l'app" width="100%"><br><b>Radar</b><br><sub>Les sorties du mois des artistes que vous écoutez le plus. Ce que votre serveur a se lit en entier ; le reste, en extraits de 30 secondes.</sub></td>
@@ -64,12 +64,10 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
   </tr>
 </table>
 
-<sub>Marqué <b>1.6</b> : nouveau dans la 1.6, sur l'App Store maintenant.</sub>
-
 **L'écoute**
 
 - **Une file d'attente qui montre la suite**, à la place de la pochette : lire ensuite, ajouter à la fin, glisser pour réordonner. Quand un album ou une playlist se termine, la lecture automatique enchaîne des morceaux proches.
-- **Lecture sans blanc** ou un fondu enchaîné de 3 à 12 secondes <sup>1.6</sup>, aléatoire, répétition d'un morceau ou de tout, et un minuteur de veille qui coupe après un temps donné ou à la fin du morceau.
+- **Lecture sans blanc** ou un fondu enchaîné de 1 à 12 secondes, aléatoire, répétition d'un morceau ou de tout, et un minuteur de veille qui coupe après un temps donné ou à la fin du morceau.
 - **Tous les formats de votre serveur** : WMA, APE, WavPack, DSD et les autres sont convertis en MP3 par votre serveur. Une qualité à part pour le réseau cellulaire, et un cache de streaming jusqu'à la taille que vous fixez.
 - **Pour vous, à votre goût** : chaque mix activé ou non, les genres des mix par genre, et 25, 50 ou 100 morceaux par mix.
 - **La tonalité**, un demi-ton à la fois, comme sur une platine. **SharePlay** sur FaceTime, chacun écoutant depuis le même serveur.
@@ -90,10 +88,10 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
 
 **Autour de l'iPhone**
 
-- **iPad** <sup>1.6</sup> : une mise en page pour le grand écran, avec les paroles ou la file à côté de la pochette en paysage, et le widget aussi.
+- **iPad** : une mise en page pour le grand écran, avec les paroles ou la file à côté de la pochette en paysage, et le widget aussi.
 - **Écran verrouillé, Centre de contrôle, Dynamic Island et AirPlay**, et un widget En cours de lecture pour l'écran d'accueil.
 - **Siri et Raccourcis** : lancer un artiste, un album, un morceau, une playlist ou un genre par son nom, mettre en file, aimer, passer. Des **liens `aura://`** pour Raccourcis.
-- **Votre iPhone et votre Mac** se pilotent l'un l'autre sur le même Wi-Fi : lancez la lecture sur le Mac depuis En cours de lecture, et voyez ce que joue l'autre dans un second mini lecteur.
+- **iPhone, Mac et Apple TV jouent l'un sur l'autre** sur le même Wi-Fi : envoyez la musique de l'un à l'autre, pilotez-la depuis n'importe lequel (lecture, file d'attente, volume), et voyez ce que joue l'autre dans un second mini lecteur. Vos AirPods restent sur l'appareil qui joue.
 - **Des liens de partage** qui ouvrent un morceau sur d'autres services.
 - **À votre goût** : clair ou sombre, la couleur d'accent de votre choix, onglets et sections de l'accueil dans votre ordre, une horloge en paysage, et des mises en page pour l'iPhone Duo.
 - **25 langues** : français, anglais, italien, espagnol, catalan, allemand, néerlandais, portugais (Portugal et Brésil), suédois, norvégien, danois, finnois, polonais, tchèque, roumain, ukrainien, russe, grec, turc, thaï, japonais, coréen et chinois (simplifié et traditionnel).
@@ -106,7 +104,7 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
   <img src="docs/assets/shots-ios.webp" width="100%" alt="L'app iPhone : En cours de lecture, l'accueil avec les mix, une radio, les paroles en rythme, une page d'artiste, la bibliothèque, les téléchargements avec CarPlay et l'Apple Watch, et la confidentialité" />
 </p>
 
-**Apple Watch** : En cours de lecture, les paroles, la file d'attente et la bibliothèque au poignet, la Digital Crown sur le volume.
+**Apple Watch**
 
 <p align="center">
   <img src="docs/assets/shots-watch.webp" width="64%" alt="L'app Apple Watch : En cours de lecture, les paroles, la file d'attente et la bibliothèque" />
@@ -116,11 +114,10 @@ vos artistes, et tout ce que vous avez téléchargé toujours là quand le rése
 tous vos artistes de A à Z, les radios internet de votre serveur, un onglet Téléchargé et vos playlists hors ligne qui
 jouent sans connexion, et un bouton Radio qui enchaîne une musique proche du morceau.
 
-**Mac** (aperçu, macOS 26) : fait du même code que l'app iPhone. Toute la bibliothèque dans une fenêtre avec une barre
+**Mac** (macOS 26) : fait du même code que l'app iPhone. Toute la bibliothèque dans une fenêtre avec une barre
 latérale ; À suivre dans un panneau latéral à réordonner en glissant, avec un clic droit pour Lire ensuite, Lancer la
-radio, la note et le téléchargement ; les paroles en plein écran ; les téléchargements, l'égaliseur et un lecteur dans la
-barre des menus. Lisez sur l'iPhone depuis le Mac, ou l'inverse, sur le même Wi-Fi : lecture, file d'attente et volume
-passent d'un appareil à l'autre, et vos AirPods restent sur celui qui joue.
+radio, la note et le téléchargement ; les paroles en plein écran ; le Radar, le Wrapped, les téléchargements, l'égaliseur et un
+lecteur dans la barre des menus.
 
 <p align="center">
   <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura pour Mac sur le serveur de démo public de Navidrome : l'accueil avec les albums récents et les mix Pour vous, la barre latérale et la barre du lecteur" />
@@ -128,7 +125,7 @@ passent d'un appareil à l'autre, et vos AirPods restent sur celui qui joue.
 </p>
 <p align="center"><sub>Les captures Mac viennent du serveur de démo public de Navidrome.</sub></p>
 
-**Apple TV** (bêta publique sur [TestFlight](https://testflight.apple.com/join/pEUEBUbm), tvOS 26) : l'Accueil avec les mix, la Bibliothèque avec ses tris et filtres, la Recherche, et En cours de lecture en plein écran sur la pochette floutée, avec les paroles qui suivent la chanson. Sans toucher la télécommande pendant cinq secondes, les contrôles s'effacent et l'écran ne garde que la pochette, la chanson et les paroles. Votre iPhone ou votre Mac peut y lancer la musique et la piloter.
+**Apple TV** (tvOS 26, sur l'App Store à partir de la 1.8, et sur [TestFlight](https://testflight.apple.com/join/pEUEBUbm) d'ici là) : l'Accueil avec les mix, la Bibliothèque avec ses tris et filtres, la Recherche, les pages d'album et d'artiste, et En cours de lecture en plein écran sur la pochette floutée, avec les paroles qui suivent la chanson. Sans toucher la télécommande pendant cinq secondes, les contrôles s'effacent et l'écran ne garde que la pochette, la chanson et les paroles, qu'on peut agrandir depuis la TV, l'iPhone ou le Mac.
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura sur Apple TV : En cours de lecture avec les paroles synchronisées, contrôles effacés" />
@@ -149,8 +146,8 @@ Tout est gratuit, sans compte et sans achats intégrés.
 
 | | App Store | IPA (à installer soi-même) | Mac (aperçu) |
 |---|---|---|---|
-| Fonctionne sur | iPhone, iPad, Apple Watch, CarPlay | iPhone, iPad, Apple Watch | Mac |
-| Demande | iOS 26, iPadOS 26, watchOS 26 | iOS 26, iPadOS 26, watchOS 26, un outil de sideload | macOS 26, Apple silicon ou Intel |
+| Fonctionne sur | iPhone, iPad, Apple Watch, CarPlay, Apple TV (dès la 1.8) | iPhone, iPad, Apple Watch | Mac |
+| Demande | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, un outil de sideload | macOS 26, Apple silicon ou Intel |
 | CarPlay | Oui | Non : re-signer fait perdre l'autorisation CarPlay d'Apple | – |
 | Get It (Soulseek via votre propre [slskd](https://github.com/slskd/slskd)) | Non | À activer, Réglages → Developer Options | À activer, Réglages → Developer |
 | Vérification NetEase du minutage des paroles | Non | Oui | Oui |
@@ -220,7 +217,8 @@ open Aura/Aura.xcodeproj
 - Schémas et configurations :
   - **Aura**, avec `Debug` et `Release` : la version à installer soi-même, avec Get It et la vérification NetEase.
   - **Aura-AppStore**, avec `Release-AppStore` : compilée avec le drapeau `APPSTORE_BUILD`, qui retire les fonctions réservées au sideload.
-  - **Aura-mac** : l'app Mac, en aperçu ; seul l'iPhone est testé au quotidien.
+  - **Aura-mac** : l'app Mac.
+  - **Aura-tv** : l'app Apple TV.
 - CarPlay demande l'autorisation `carplay-audio` d'Apple sur votre propre équipe.
 - `scripts/watch-screenshots.sh` dessine les pages de l'app de la montre sur un Mac, sans montre ni simulateur.
 
@@ -237,7 +235,7 @@ captures gardées en petit dans `docs/assets/readme-src/`.
 
 Aura n'a pas de compte ni de statistiques d'usage, et n'envoie rien au développeur. Les mots de passe des serveurs sont
 gardés dans le trousseau. L'app parle à votre serveur et aux services publics listés dans la
-[politique de confidentialité](https://adrbn.github.io/aura-site/privacy.html), qui dit exactement ce que chacun reçoit.
+[politique de confidentialité](https://aura.adrbn.dev/privacy.html), qui dit exactement ce que chacun reçoit.
 
 ## Comment l'IA a servi
 

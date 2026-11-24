@@ -25,7 +25,7 @@ lossless streaming, lyrics that light up word by word, mixes built from your own
 [![iOS and iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20preview-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
-[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
+[![tvOS 26+](https://img.shields.io/badge/tvOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#get-aura)
 [![Navidrome / Subsonic](https://img.shields.io/badge/server-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#get-aura)
 [![Listed on navidrome.org](https://img.shields.io/badge/listed%20on-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![No tracking](https://img.shields.io/badge/tracking-none-EB534D?style=flat-square&labelColor=121212)](#privacy)
@@ -41,7 +41,7 @@ English · [Français](README.fr.md) · [Español](README.es.md) · [Deutsch](RE
 ---
 
 Aura plays the music on your own server. Point it at Navidrome, or any server that speaks the Subsonic API, and your
-library is on your iPhone, your iPad, your Apple Watch, in CarPlay and on your Mac: streamed in its original quality, with lyrics
+library is on your iPhone, your iPad, your Apple Watch, in CarPlay, on your Mac and on your Apple TV: streamed in its original quality, with lyrics
 in time, mixes built from what you actually play, a Radar of new releases from your artists, and everything you
 download still there with no signal.
 
@@ -54,7 +54,7 @@ download still there with no signal.
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="A five-band equalizer curve moving between presets" width="100%"><br><b>Lossless, with a real equalizer</b><br><sub>FLAC and ALAC stay lossless, or 128, 192 or 320 kbps on a slow line. Five bands from 60 Hz to 14 kHz, one curve you drag, 15 presets, ReplayGain.</sub></td>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="The lyrics screen, captured from the app" width="100%"><br><b>Lyrics in time</b><br><sub>Word by word when your server has per-word timing, line by line otherwise. From your server first, then <a href="https://lrclib.net">LRCLIB</a>. Tap a line to jump to it.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Made For You covers from the app sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover. Instant Mix starts a radio from any song or artist. Year Wrapped counts your year on the iPhone.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Made For You covers from the app sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover, and Nonstop, an endless mix of liked, nearby and unheard songs. Instant Mix starts a radio from any song or artist. Year Wrapped counts your year.</sub></td>
   </tr>
   <tr>
     <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="The Radar listing new releases from your artists, captured from the app" width="100%"><br><b>Radar</b><br><sub>This month's releases from the artists you play most. What your server has plays in full; the rest plays as 30-second previews.</sub></td>
@@ -63,12 +63,10 @@ download still there with no signal.
   </tr>
 </table>
 
-<sub>Marked <b>1.6</b>: new in 1.6, on the App Store now.</sub>
-
 **Listening**
 
 - **A queue you can see ahead in**, in place of the artwork: play next, add to the end, drag to reorder. When an album or playlist ends, autoplay carries on with similar songs.
-- **Gapless playback** or a crossfade of 3 to 12 seconds <sup>1.6</sup>, shuffle, repeat one or all, and a sleep timer that stops after a set time or at the end of the song.
+- **Gapless playback** or a crossfade of 1 to 12 seconds, shuffle, repeat one or all, and a sleep timer that stops after a set time or at the end of the song.
 - **Any format your server holds**: WMA, APE, WavPack, DSD and others are turned into MP3 by your server. A separate quality for cellular, and a stream cache up to the size you set.
 - **Made For You, your way**: each mix on or off, the genres its genre mixes use, and 25, 50 or 100 songs per mix.
 - **Pitch**, a semitone at a time, as on a turntable. **SharePlay** over FaceTime, everyone streaming from the same server.
@@ -89,10 +87,10 @@ download still there with no signal.
 
 **Around the iPhone**
 
-- **iPad** <sup>1.6</sup>: laid out for the bigger screen, with the lyrics or the queue beside the artwork in landscape, and the widget too.
+- **iPad**: laid out for the bigger screen, with the lyrics or the queue beside the artwork in landscape, and the widget too.
 - **Lock Screen, Control Center, Dynamic Island and AirPlay**, and a Now Playing widget for the Home Screen.
 - **Siri and Shortcuts**: play an artist, album, song, playlist or genre by name, queue, like, skip. **`aura://` links** for Shortcuts.
-- **Your iPhone and your Mac** control each other on the same Wi-Fi: play on the Mac from Now Playing, and see what the other plays in a second mini player.
+- **iPhone, Mac and Apple TV play on each other** over the same Wi-Fi: send the music from one to another, control it from any of them (transport, queue, volume), and see what the other plays in a second mini player. Your AirPods stay with the device that plays.
 - **Share links** that open a song on other services.
 - **Yours to arrange**: light or dark, any accent colour, tabs and Home sections in your order, a landscape clock, and iPhone Duo layouts.
 - **25 languages**: English, French, Italian, Spanish, Catalan, German, Dutch, Portuguese (Portugal and Brazil), Swedish, Norwegian, Danish, Finnish, Polish, Czech, Romanian, Ukrainian, Russian, Greek, Turkish, Thai, Japanese, Korean, and Chinese (Simplified and Traditional).
@@ -105,7 +103,7 @@ download still there with no signal.
   <img src="docs/assets/shots-ios.webp" width="100%" alt="The iPhone app: Now Playing, Home with mixes, a radio, synced lyrics, an artist page, the Library, downloads with CarPlay and Apple Watch, and privacy" />
 </p>
 
-**Apple Watch**: Now Playing, lyrics, Up Next and the library on your wrist, with the Digital Crown on the volume.
+**Apple Watch**
 
 <p align="center">
   <img src="docs/assets/shots-watch.webp" width="64%" alt="The Apple Watch app: Now Playing, lyrics, Up Next and the Library" />
@@ -115,10 +113,9 @@ download still there with no signal.
 from A to Z, your server's internet radio stations, a Downloaded tab and your offline playlists that play without a
 connection, and a Radio button that follows the song with similar music.
 
-**Mac** (preview, macOS 26): from the same code as the iPhone app. The whole library in one window with a sidebar;
+**Mac** (macOS 26): from the same code as the iPhone app. The whole library in one window with a sidebar;
 Up Next as a side pane you drag to reorder, with a right-click for Play Next, Start Radio, rating and download; lyrics
-full screen; downloads, the equaliser and a menu bar player. Play on your iPhone from the Mac, or the other way round,
-over the same Wi-Fi: transport, queue and volume go across, and your AirPods stay with the device that plays.
+full screen; Radar, Year Wrapped, downloads, the equaliser and a menu bar player.
 
 <p align="center">
   <img src="docs/assets/mac-1-home.webp" width="49%" alt="Aura for Mac on Navidrome's demo server: Home with recent albums and the Made For You mixes, the sidebar and the player bar" />
@@ -126,7 +123,7 @@ over the same Wi-Fi: transport, queue and volume go across, and your AirPods sta
 </p>
 <p align="center"><sub>The Mac captures use Navidrome's public demo server.</sub></p>
 
-**Apple TV** (public beta on [TestFlight](https://testflight.apple.com/join/pEUEBUbm), tvOS 26): Home with the mixes, the Library with its sorts and filters, Search, and Now Playing full screen over the blurred cover, with the lyrics following the song. Left alone for five seconds, the controls fade and the screen keeps only the cover, the song and the lyrics. Your iPhone or your Mac can play on it and control it.
+**Apple TV** (tvOS 26, on the App Store from 1.8, and on [TestFlight](https://testflight.apple.com/join/pEUEBUbm) until then): Home with the mixes, the Library with its sorts and filters, Search, album and artist pages, and Now Playing full screen over the blurred cover, with the lyrics following the song. Left alone for five seconds, the controls fade and the screen keeps only the cover, the song and the lyrics, which can be set larger from the TV, the iPhone or the Mac.
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura on Apple TV: Now Playing with synced lyrics, the controls faded" />
@@ -147,8 +144,8 @@ All free, with no account and no in-app purchases.
 
 | | App Store | IPA (sideload) | Mac (preview) |
 |---|---|---|---|
-| Runs on | iPhone, iPad, Apple Watch, CarPlay | iPhone, iPad, Apple Watch | Mac |
-| Needs | iOS 26, iPadOS 26, watchOS 26 | iOS 26, iPadOS 26, watchOS 26, a sideloading tool | macOS 26, Apple silicon or Intel |
+| Runs on | iPhone, iPad, Apple Watch, CarPlay, Apple TV (from 1.8) | iPhone, iPad, Apple Watch | Mac |
+| Needs | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, a sideloading tool | macOS 26, Apple silicon or Intel |
 | CarPlay | Yes | No: re-signing drops Apple's CarPlay entitlement | – |
 | Get It (Soulseek via your own [slskd](https://github.com/slskd/slskd)) | No | Opt-in, Settings → Developer Options | Opt-in, Settings → Developer |
 | NetEase lyrics-timing check | No | Yes | Yes |
@@ -216,7 +213,8 @@ open Aura/Aura.xcodeproj
 - Schemes and configurations:
   - **Aura**, with `Debug` and `Release`: the sideload build, with Get It and the NetEase check.
   - **Aura-AppStore**, with `Release-AppStore`: built with the `APPSTORE_BUILD` flag, which compiles the sideload-only features out.
-  - **Aura-mac**: the Mac app, a preview; only the iPhone is tested daily.
+  - **Aura-mac**: the Mac app.
+  - **Aura-tv**: the Apple TV app.
 - CarPlay needs Apple's `carplay-audio` entitlement on your own team.
 - `scripts/watch-screenshots.sh` draws the watch app's pages on a Mac without a watch or simulator.
 
@@ -232,7 +230,7 @@ only): `python3 docs/assets/make_svgs.py` regenerates every SVG from the real ca
 
 Aura has no account and no analytics, and sends nothing to the developer. Server passwords are kept in the Keychain.
 It talks to your server and to the public services listed in the
-[privacy policy](https://adrbn.github.io/aura-site/privacy.html), which says exactly what each one receives.
+[privacy policy](https://aura.adrbn.dev/privacy.html), which says exactly what each one receives.
 
 ## How AI was used
 

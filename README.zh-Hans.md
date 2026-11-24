@@ -25,7 +25,7 @@
 [![iOS / iPadOS 26+](https://img.shields.io/badge/iOS%20%2F%20iPadOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#获取-aura)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B%20%E9%A2%84%E8%A7%88%E7%89%88-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#获取-aura)
 [![watchOS 26+](https://img.shields.io/badge/watchOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#获取-aura)
-[![tvOS 26+ beta](https://img.shields.io/badge/tvOS-26%2B%20beta-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](https://testflight.apple.com/join/pEUEBUbm)
+[![tvOS 26+](https://img.shields.io/badge/tvOS-26%2B-EB534D?style=flat-square&labelColor=121212&logo=apple&logoColor=white)](#获取-aura)
 [![Navidrome / Subsonic](https://img.shields.io/badge/%E6%9C%8D%E5%8A%A1%E5%99%A8-Navidrome%20%2F%20Subsonic-EB534D?style=flat-square&labelColor=121212)](#获取-aura)
 [![已收录于 navidrome.org](https://img.shields.io/badge/%E6%94%B6%E5%BD%95%E4%BA%8E-navidrome.org-EB534D?style=flat-square&labelColor=121212)](https://www.navidrome.org/apps/)
 [![无追踪](https://img.shields.io/badge/%E8%BF%BD%E8%B8%AA-%E6%97%A0-EB534D?style=flat-square&labelColor=121212)](#隐私)
@@ -41,7 +41,7 @@
 ---
 
 Aura 播放你自己服务器上的音乐。把它连接到 Navidrome，或任何支持 Subsonic API 的服务器，你的资料库就会出现在
-iPhone、iPad、Apple Watch、CarPlay 和 Mac 上：以原始音质串流，歌词随歌曲同步，混音来自你真正播放的内容，
+iPhone、iPad、Apple Watch、CarPlay、Mac 和 Apple TV 上：以原始音质串流，歌词随歌曲同步，混音来自你真正播放的内容，
 Radar 列出你的艺人的新发行，下载过的一切在没有信号时依然可用。
 
 > **Aura 是客户端，不是音乐服务。** 请将它连接到你拥有或有权访问的 Navidrome 或兼容 Subsonic 的服务器。
@@ -53,7 +53,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="在预设之间变化的五段均衡器曲线" width="100%"><br><b>无损，配真正的均衡器</b><br><sub>FLAC 和 ALAC 保持无损，网速慢时可选 128、192 或 320 kbps。从 60 Hz 到 14 kHz 的五个频段，一条可拖动的曲线，15 个预设，ReplayGain。</sub></td>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="应用中截取的歌词界面" width="100%"><br><b>同步歌词</b><br><sub>服务器有逐字时间轴时逐字显示，否则逐行显示。先从你的服务器获取，再从 <a href="https://lrclib.net">LRCLIB</a> 获取。轻点一行即可跳转。</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="应用中滑过的为你推荐封面" width="100%"><br><b>为你推荐</b><br><sub>按时段、心情和风格生成的混音，各有自己的封面。即时混音可以从任何歌曲或艺人开始一个电台。音乐回顾在 iPhone 上统计你的一年。</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="应用中滑过的为你推荐封面" width="100%"><br><b>为你推荐</b><br><sub>按时段、心情和风格生成的混音，各有自己的封面，还有 Nonstop，一个把喜欢的、附近的和没听过的歌曲连绵不断混在一起的混音。即时混音可以从任何歌曲或艺人开始一个电台。音乐回顾统计你的一年。</sub></td>
   </tr>
   <tr>
     <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="应用中截取的 Radar，列出你的艺人的新发行" width="100%"><br><b>Radar</b><br><sub>你最常听的艺人本月的新发行。服务器上有的完整播放，其余以 30 秒试听播放。</sub></td>
@@ -62,12 +62,10 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
   </tr>
 </table>
 
-<sub>标有 <b>1.6</b>：1.6 新增，现已上架 App Store。</sub>
-
 **收听**
 
 - **一份能看到后续内容的待播清单**，代替封面显示：接着播放、添加到末尾、拖动排序。专辑或播放列表结束后，自动播放会接上相似的歌曲。
-- **无缝播放**或 3 到 12 秒的淡入淡出 <sup>1.6</sup>，随机播放，单曲或全部重复，以及在设定时间后或歌曲结束时停止的睡眠定时。
+- **无缝播放**或 1 到 12 秒的淡入淡出，随机播放，单曲或全部重复，以及在设定时间后或歌曲结束时停止的睡眠定时。
 - **服务器上的任何格式**：WMA、APE、WavPack、DSD 等由你的服务器转换为 MP3。蜂窝网络可单独设置音质，串流缓存大小由你决定。
 - **为你推荐，随你设置**：每个混音可单独开关，风格混音使用哪些风格，每个混音 25、50 或 100 首歌。
 - **音调**，像唱机一样一次调一个半音。通过 FaceTime 使用 **SharePlay**，所有人从同一台服务器串流。
@@ -88,10 +86,10 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 
 **iPhone 周边**
 
-- **iPad** <sup>1.6</sup>：为大屏幕设计，横屏时歌词或待播清单显示在封面旁边，也支持小组件。
+- **iPad**：为大屏幕设计，横屏时歌词或待播清单显示在封面旁边，也支持小组件。
 - **锁定屏幕、控制中心、灵动岛和 AirPlay**，以及主屏幕上的正在播放小组件。
 - **Siri 和快捷指令**：按名称播放艺人、专辑、歌曲、播放列表或风格，加入待播、喜爱、跳过。还有供快捷指令使用的 **`aura://` 链接**。
-- **你的 iPhone 和 Mac** 在同一 Wi-Fi 下可以互相控制：在正在播放中让 Mac 播放，并在第二个迷你播放器中看到另一台设备在播放什么。
+- **iPhone、Mac 和 Apple TV 可以互相播放**，只要在同一 Wi-Fi 下：把音乐从一台发送到另一台，在任何一台上控制（播放控制、待播清单、音量），并在第二个迷你播放器中看到另一台设备在播放什么。你的 AirPods 留在正在播放的设备上。
 - **分享链接**，可在其他服务中打开一首歌。
 - **随你布置**：浅色或深色，任意强调色，标签页和主页区域按你的顺序排列，横屏时钟，以及 iPhone Duo 布局。
 - **25 种语言**：英语、法语、意大利语、西班牙语、加泰罗尼亚语、德语、荷兰语、葡萄牙语（葡萄牙和巴西）、瑞典语、挪威语、丹麦语、芬兰语、波兰语、捷克语、罗马尼亚语、乌克兰语、俄语、希腊语、土耳其语、泰语、日语、韩语和中文（简体和繁体）。
@@ -104,7 +102,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
   <img src="docs/assets/shots-ios.webp" width="100%" alt="iPhone 应用：正在播放、带混音的主页、一个电台、同步歌词、艺人页面、资料库、包含 CarPlay 和 Apple Watch 的下载，以及隐私" />
 </p>
 
-**Apple Watch**：正在播放、歌词、待播和资料库都在手腕上，用 Digital Crown 调节音量。
+**Apple Watch**
 
 <p align="center">
   <img src="docs/assets/shots-watch.webp" width="64%" alt="Apple Watch 应用：正在播放、歌词、待播和资料库" />
@@ -113,9 +111,8 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 **CarPlay**（App Store 版本）：带混音和 Radar 的主页，以封面网格显示的专辑，你的播放列表，从 A 到 Z 的所有艺人，
 服务器上的网络电台，已下载标签页和无需连接即可播放的离线播放列表，以及一个按当前歌曲继续播放相似音乐的电台按钮。
 
-**Mac**（预览版，macOS 26）：与 iPhone 应用同一套代码。整个资料库在一个带边栏的窗口中；待播是一个可拖动排序的侧边面板，
-右键可接着播放、开始电台、评分和下载；全屏歌词；下载、均衡器和菜单栏播放器。在同一 Wi-Fi 下，可以从 Mac 让 iPhone 播放，
-反之亦然：播放控制、待播清单和音量随之转移，你的 AirPods 留在正在播放的设备上。
+**Mac**（macOS 26）：与 iPhone 应用同一套代码。整个资料库在一个带边栏的窗口中；待播是一个可拖动排序的侧边面板，
+右键可接着播放、开始电台、评分和下载；全屏歌词；雷达、音乐回顾、下载、均衡器和菜单栏播放器。
 
 <p align="center">
   <img src="docs/assets/mac-1-home.webp" width="49%" alt="在 Navidrome 演示服务器上运行的 Mac 版 Aura：带最近专辑和为你推荐混音的主页、边栏和播放器栏" />
@@ -123,7 +120,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 </p>
 <p align="center"><sub>Mac 截图使用的是 Navidrome 的公开演示服务器。</sub></p>
 
-**Apple TV**（[TestFlight](https://testflight.apple.com/join/pEUEBUbm) 公开测试版，tvOS 26）：带混音的首页、可排序和筛选的资料库、搜索，以及铺在模糊封面上的全屏正在播放，歌词随歌曲滚动。五秒不碰遥控器，控制按钮就会淡出，屏幕上只留下封面、歌曲和歌词。你的 iPhone 或 Mac 可以在它上面播放并控制它。
+**Apple TV**（tvOS 26，1.8 起登陆 App Store，在此之前通过 [TestFlight](https://testflight.apple.com/join/pEUEBUbm)）：带混音的首页、可排序和筛选的资料库、搜索、专辑和艺人页面，以及铺在模糊封面上的全屏正在播放，歌词随歌曲滚动。五秒不碰遥控器，控制按钮就会淡出，屏幕上只留下封面、歌曲和歌词，歌词可以在电视、iPhone 或 Mac 上调大。
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Apple TV 上的 Aura：带同步歌词的正在播放，控制按钮已隐藏" />
@@ -144,8 +141,8 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 
 | | App Store | IPA（侧载） | Mac（预览版） |
 |---|---|---|---|
-| 运行于 | iPhone、iPad、Apple Watch、CarPlay | iPhone、iPad、Apple Watch | Mac |
-| 需要 | iOS 26、iPadOS 26、watchOS 26 | iOS 26、iPadOS 26、watchOS 26，一个侧载工具 | macOS 26，Apple 芯片或 Intel |
+| 运行于 | iPhone、iPad、Apple Watch、CarPlay、Apple TV（1.8 起） | iPhone、iPad、Apple Watch | Mac |
+| 需要 | iOS 26、iPadOS 26、watchOS 26、tvOS 26 | iOS 26、iPadOS 26、watchOS 26，一个侧载工具 | macOS 26，Apple 芯片或 Intel |
 | CarPlay | 有 | 无：重新签名会丢失 Apple 的 CarPlay 授权 | – |
 | Get It（通过你自己的 [slskd](https://github.com/slskd/slskd) 使用 Soulseek） | 无 | 需手动开启，设置 → Developer Options | 需手动开启，设置 → Developer |
 | NetEase 歌词时间轴检查 | 无 | 有 | 有 |
@@ -211,7 +208,8 @@ open Aura/Aura.xcodeproj
 - Scheme 和配置：
   - **Aura**，含 `Debug` 和 `Release`：侧载版本，包含 Get It 和 NetEase 检查。
   - **Aura-AppStore**，含 `Release-AppStore`：使用 `APPSTORE_BUILD` 标志构建，编译时去掉仅限侧载的功能。
-  - **Aura-mac**：Mac 应用，预览版；只有 iPhone 每天测试。
+  - **Aura-mac**：Mac 应用。
+  - **Aura-tv**：Apple TV 应用。
 - CarPlay 需要在你自己的团队中获得 Apple 的 `carplay-audio` 授权。
 - `scripts/watch-screenshots.sh` 可在没有手表和模拟器的 Mac 上绘制手表应用的页面。
 
@@ -225,7 +223,7 @@ open Aura/Aura.xcodeproj
 ## 隐私
 
 Aura 没有账户，没有分析统计，也不向开发者发送任何内容。服务器密码保存在钥匙串中。
-它只与你的服务器以及[隐私政策](https://adrbn.github.io/aura-site/privacy.html)中列出的公共服务通信，
+它只与你的服务器以及[隐私政策](https://aura.adrbn.dev/privacy.html)中列出的公共服务通信，
 隐私政策准确说明了每项服务会收到什么。
 
 ## AI 的使用方式
