@@ -252,7 +252,8 @@ Aura は一人で作っているプロジェクトで、Anthropic のコーデ�
 報告とアイデアで Aura を形作ってくれた方々へ：
 
 - [willvebert](https://github.com/willvebert)：CarPlay のボタンと戻るナビゲーション、Siri 検索、ミックスからのジャンル除外
-- [dominak3](https://github.com/dominak3)：サーバの自動切り替え、カスタマイズできるプレーヤーボタン、お気に入りのダウンロード、チェコ語、多数のバグ報告
+- [dominak3](https://github.com/dominak3)：サーバの自動切り替え、カスタマイズできるプレーヤーボタン、お気に入りのダウンロード、スワイプに追従するミニプレーヤー、チェコ語、多数のバグ報告
+- [eibhei](https://github.com/eibhei)：ウィジェットとロック画面から再生中の曲をお気に入りに追加
 - [nClarke0101](https://github.com/nClarke0101)：カスタム HTTP ヘッダ、Apple Watch へのダウンロード
 - [DMcWetty](https://github.com/DMcWetty)：複数のミュージックフォルダの同時使用
 - [Dedeham](https://github.com/Dedeham)：戻ってきても残る曲のフィルタ

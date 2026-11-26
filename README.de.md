@@ -259,7 +259,8 @@ Ein Stern für das Repository hilft auch anderen, es zu finden.
 An die Menschen, deren Meldungen und Ideen Aura geprägt haben:
 
 - [willvebert](https://github.com/willvebert): die Tasten und die Zurück-Navigation in CarPlay, die Siri-Suche, ausgeschlossene Genres in Mixen
-- [dominak3](https://github.com/dominak3): automatischer Serverwechsel, anpassbare Player-Tasten, Downloads der Favoriten, Tschechisch und viele Fehlermeldungen
+- [dominak3](https://github.com/dominak3): automatischer Serverwechsel, anpassbare Player-Tasten, Downloads der Favoriten, der Mini-Player, der der Wischgeste folgt, Tschechisch und viele Fehlermeldungen
+- [eibhei](https://github.com/eibhei): den laufenden Song aus dem Widget und vom Sperrbildschirm favorisieren
 - [nClarke0101](https://github.com/nClarke0101): eigene HTTP-Header, Downloads auf die Apple Watch
 - [DMcWetty](https://github.com/DMcWetty): mehrere Musikordner gleichzeitig
 - [Dedeham](https://github.com/Dedeham): Titelfilter, die bleiben, wenn du zurückkommst

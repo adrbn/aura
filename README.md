@@ -253,12 +253,13 @@ A star on the repo helps other people find it too.
 To the people whose reports and ideas shaped Aura:
 
 - [willvebert](https://github.com/willvebert): CarPlay's buttons and back navigation, Siri search, genre exclusions in mixes
-- [dominak3](https://github.com/dominak3): automatic server switching, custom player buttons, Favorites downloads, Czech, and many bug reports
+- [dominak3](https://github.com/dominak3): automatic server switching, custom player buttons, Favorites downloads, the mini player that follows a swipe, Czech, and many bug reports
 - [nClarke0101](https://github.com/nClarke0101): custom HTTP headers, downloads to the Apple Watch
 - [DMcWetty](https://github.com/DMcWetty): several music folders at once
 - [Dedeham](https://github.com/Dedeham): song filters that stay when you come back
 - [iSchack](https://github.com/iSchack): the Apple TV app, AirPlay on the Mac
 - [xkd88](https://github.com/xkd88): AirPlay to an Apple TV and a HomePod stereo pair
+- [eibhei](https://github.com/eibhei): favoriting the playing song from the widget and the Lock Screen
 
 And to the people whose code is in Aura:
 

@@ -246,7 +246,8 @@ Aura 做什么、长什么样由我决定，我阅读每一处更改，并在自
 感谢那些用反馈和想法塑造了 Aura 的人：
 
 - [willvebert](https://github.com/willvebert)：CarPlay 的按钮和返回导航、Siri 搜索、混音中的风格排除
-- [dominak3](https://github.com/dominak3)：自动切换服务器、可自定义的播放器按钮、喜爱歌曲下载、捷克语，以及大量错误报告
+- [dominak3](https://github.com/dominak3)：自动切换服务器、可自定义的播放器按钮、喜爱歌曲下载、跟随手指滑动的迷你播放器、捷克语，以及大量错误报告
+- [eibhei](https://github.com/eibhei)：在小组件和锁定屏幕上收藏正在播放的歌曲
 - [nClarke0101](https://github.com/nClarke0101)：自定义 HTTP 请求头、下载到 Apple Watch
 - [DMcWetty](https://github.com/DMcWetty)：同时使用多个音乐文件夹
 - [Dedeham](https://github.com/Dedeham)：返回时仍然保留的歌曲筛选

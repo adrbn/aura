@@ -257,7 +257,8 @@ Una estrella en el repositorio también ayuda a que otras personas lo encuentren
 A las personas cuyos informes e ideas dieron forma a Aura:
 
 - [willvebert](https://github.com/willvebert): los botones y la navegación hacia atrás de CarPlay, la búsqueda con Siri, los géneros excluidos de los mixes
-- [dominak3](https://github.com/dominak3): el cambio automático de servidor, los botones personalizables del reproductor, las descargas de Favoritos, el checo y muchos informes de errores
+- [dominak3](https://github.com/dominak3): el cambio automático de servidor, los botones personalizables del reproductor, las descargas de Favoritos, el minirreproductor que sigue el gesto, el checo y muchos informes de errores
+- [eibhei](https://github.com/eibhei): marcar como favorita la canción en curso desde el widget y la pantalla bloqueada
 - [nClarke0101](https://github.com/nClarke0101): las cabeceras HTTP personalizadas, las descargas en el Apple Watch
 - [DMcWetty](https://github.com/DMcWetty): varias carpetas de música a la vez
 - [Dedeham](https://github.com/Dedeham): filtros de canciones que se mantienen al volver

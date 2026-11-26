@@ -251,7 +251,8 @@ Aura는 한 사람이 만드는 프로젝트로, Anthropic의 코딩 어시스�
 보고와 아이디어로 Aura를 만들어 준 분들께:
 
 - [willvebert](https://github.com/willvebert): CarPlay의 버튼과 뒤로 가기 탐색, Siri 검색, 믹스의 장르 제외
-- [dominak3](https://github.com/dominak3): 자동 서버 전환, 사용자 지정 플레이어 버튼, 즐겨찾기 다운로드, 체코어, 그리고 많은 버그 보고
+- [dominak3](https://github.com/dominak3): 자동 서버 전환, 사용자 지정 플레이어 버튼, 즐겨찾기 다운로드, 스와이프를 따라오는 미니 플레이어, 체코어, 그리고 많은 버그 보고
+- [eibhei](https://github.com/eibhei): 위젯과 잠금 화면에서 재생 중인 곡을 즐겨찾기
 - [nClarke0101](https://github.com/nClarke0101): 사용자 지정 HTTP 헤더, Apple Watch로 다운로드
 - [DMcWetty](https://github.com/DMcWetty): 여러 음악 폴더 동시 사용
 - [Dedeham](https://github.com/Dedeham): 돌아와도 유지되는 곡 필터

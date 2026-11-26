@@ -259,12 +259,13 @@ Une étoile sur le dépôt aide aussi d'autres personnes à le trouver.
 Aux personnes dont les retours et les idées ont façonné Aura :
 
 - [willvebert](https://github.com/willvebert) : les boutons et le retour dans CarPlay, la recherche Siri, les genres exclus des mix
-- [dominak3](https://github.com/dominak3) : le changement automatique de serveur, les boutons du lecteur personnalisables, le téléchargement des favoris, le tchèque, et de nombreux bugs signalés
+- [dominak3](https://github.com/dominak3) : le changement automatique de serveur, les boutons du lecteur personnalisables, le téléchargement des favoris, le mini-lecteur qui suit le geste, le tchèque, et de nombreux bugs signalés
 - [nClarke0101](https://github.com/nClarke0101) : les en-têtes HTTP personnalisés, les téléchargements sur l'Apple Watch
 - [DMcWetty](https://github.com/DMcWetty) : plusieurs dossiers de musique à la fois
 - [Dedeham](https://github.com/Dedeham) : les filtres de morceaux qui restent quand on revient
 - [iSchack](https://github.com/iSchack) : l'app Apple TV, AirPlay sur le Mac
 - [xkd88](https://github.com/xkd88) : AirPlay vers une Apple TV et une paire stéréo de HomePod
+- [eibhei](https://github.com/eibhei) : les favoris depuis le widget et l'écran verrouillé
 
 Et aux personnes dont le code est dans Aura :
 
