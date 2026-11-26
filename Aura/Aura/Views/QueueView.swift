@@ -106,6 +106,7 @@ struct QueueView: View {
                             }
                         }
                         .onMove { source, dest in
+                            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
                             player.userQueue.move(fromOffsets: source, toOffset: dest)
                         }
                     } header: {
@@ -160,6 +161,7 @@ struct QueueView: View {
                             }
                         }
                         .onMove { source, dest in
+                            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
                             let adjustedSource = IndexSet(source.map { $0 + player.queueIndex + 1 })
                             let adjustedDest = dest + player.queueIndex + 1
                             player.moveInQueue(from: adjustedSource, to: adjustedDest)
@@ -289,7 +291,7 @@ extension QueueView {
                 .onDelete { indices in
                     for i in indices.sorted().reversed() { player.userQueue.remove(at: i) }
                 }
-                .onMove { player.userQueue.move(fromOffsets: $0, toOffset: $1) }
+                .onMove { UIImpactFeedbackGenerator(style: .soft).impactOccurred(); player.userQueue.move(fromOffsets: $0, toOffset: $1) }
 
                 queueSection(fromSourceSongs, start: player.queueIndex + 1, source: player.playbackSource)
 
@@ -411,6 +413,7 @@ extension QueueView {
             for offset in indices.map({ $0 + start }).sorted().reversed() { player.removeFromQueue(at: offset) }
         }
         .onMove { from, to in
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
             player.moveInQueue(from: IndexSet(from.map { $0 + start }), to: to + start)
         }
     }

@@ -103,12 +103,11 @@ private struct FetchDeck: View {
                         @unknown default: break
                         }
                     }
-                    // Leaves by sliding down behind the mini player, fading once it's under
-                    // the glass, rather than sliding across it.
+                    // Leaves with a short drop that fades as it goes, gone before it would
+                    // reach the mini player.
                     .transition(.asymmetric(
                         insertion: .move(edge: .bottom).combined(with: .opacity),
-                        removal: .move(edge: .bottom).combined(
-                            with: .opacity.animation(.easeIn(duration: 0.2).delay(0.18)))))
+                        removal: .offset(y: 28).combined(with: .opacity)))
             }
         }
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = max($0, 1) }
@@ -152,8 +151,32 @@ private struct FetchCard: View {
     @Environment(\.appAccentColor) private var accentColor
     @Environment(\.openURL) private var openURL
     @State private var isOpening = false
+    @State private var dragY: CGFloat = 0
 
     private var fetcher: ReleaseFetcher { .shared }
+
+    /// Only the card goes: the fetch carries on.
+    private func hideCard() {
+        withAnimation(.easeOut(duration: 0.25)) {
+            fetch.isActive ? fetcher.hide(fetch.id) : fetcher.dismiss(fetch.id)
+        }
+    }
+
+    /// A swipe down puts the card away; it follows the finger and fades on the way.
+    private var swipeDown: some Gesture {
+        DragGesture(minimumDistance: 12)
+            .onChanged { value in
+                guard value.translation.height > abs(value.translation.width) else { return }
+                dragY = value.translation.height
+            }
+            .onEnded { value in
+                if dragY > 40 || value.predictedEndTranslation.height > 90 {
+                    hideCard()
+                } else {
+                    withAnimation(.spring(duration: 0.3, bounce: 0)) { dragY = 0 }
+                }
+            }
+    }
 
     var body: some View {
         HStack(spacing: 10) {
@@ -197,8 +220,7 @@ private struct FetchCard: View {
             if let link = fetch.release.link.flatMap(URL.init(string:)) {
                 Button { openURL(link) } label: { Label("Open in Deezer", systemImage: "arrow.up.right") }
             }
-            // Only the card goes: the fetch carries on.
-            Button { fetch.isActive ? fetcher.hide(fetch.id) : fetcher.dismiss(fetch.id) } label: {
+            Button { hideCard() } label: {
                 Label(fetch.isActive ? "Hide" : "Dismiss", systemImage: fetch.isActive ? "eye.slash" : "xmark")
             }
         }
@@ -206,6 +228,9 @@ private struct FetchCard: View {
         .glassEffect(.regular, in: Capsule())
         .clipShape(Capsule())
         .padding(.horizontal, 16)
+        .offset(y: max(dragY, 0))
+        .opacity(1 - min(max(dragY, 0) / 80, 0.7))
+        .simultaneousGesture(swipeDown)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(fetch.title), \(fetch.headline). \(fetch.detail)")
     }
@@ -249,7 +274,7 @@ private struct FetchCard: View {
                 // Past the server's usual pace, the wait may be for nothing — a release filed
                 // under another name, say: it can be let go without a long press.
                 if fetch.stage == .importing, let end = fetch.importEnd, end < .now {
-                    Button { fetcher.hide(fetch.id) } label: {
+                    Button { hideCard() } label: {
                         Image(systemName: "xmark")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(.secondary)

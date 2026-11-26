@@ -71,6 +71,7 @@ struct SearchView: View {
 
 extension Notification.Name {
     static let searchTabReselected = Notification.Name("searchTabReselected")
+    static let replayWelcome = Notification.Name("replayWelcome")
 }
 
 // MARK: - Shared navigation destinations
@@ -109,6 +110,8 @@ struct SearchResultsContainer: View {
     /// query we haven't finished searching yet (debounce window / first keystroke frame).
     @State private var searchedQuery = ""
     @State private var expandedSections: Set<String> = []
+    /// Played songs with a line holding the query, and that line.
+    @State private var lyricMatches: [(song: Song, line: String)] = []
     @State private var history = SearchHistory.shared
     /// What Deezer has for the query that the library doesn't.
     @State private var deezer = DeezerFinds()
@@ -214,6 +217,7 @@ struct SearchResultsContainer: View {
         // for the word "genre".
         guard !q.isEmpty, !LocalSearch.parse(q).isEmpty else {
             results = SearchResults()
+            lyricMatches = []
             isSearching = false; expandedSections = []
             searchedQuery = ""
             return
@@ -237,6 +241,9 @@ struct SearchResultsContainer: View {
         let found = await SearchIndex.shared.search(query: q)
         if Task.isCancelled { return }
         results = found
+        // Songs already among the results don't need listing again for their words.
+        let shown = Set(found.songs.map(\.id))
+        lyricMatches = LyricsIndex.shared.search(q).filter { !shown.contains($0.song.id) }
         searchedQuery = q
         isSearching = false
     }
@@ -434,13 +441,21 @@ struct SearchResultsContainer: View {
                 sectionContent(section)
             }
 
+            if !lyricMatches.isEmpty && searchedQuery == trimmedQuery {
+                let isExpanded = expandedSections.contains("lyrics")
+                sectionHeader("In Lyrics", section: "lyrics", total: lyricMatches.count)
+                ForEach(isExpanded ? lyricMatches : Array(lyricMatches.prefix(collapsedLimit)), id: \.song.id) { match in
+                    lyricRow(match.song, line: match.line)
+                }
+            }
+
             let deezerShown = deezer.query == trimmedQuery && !deezer.isEmpty
             if deezerShown {
                 DeezerSearchRows(finds: deezer, navPath: $navPath)
                     .id(deezer.query)
             }
 
-            if results.isEmpty && matchingMixes.isEmpty && !deezerShown && !isSearching && searchedQuery == trimmedQuery {
+            if results.isEmpty && matchingMixes.isEmpty && lyricMatches.isEmpty && !deezerShown && !isSearching && searchedQuery == trimmedQuery {
                 ContentUnavailableView.search(text: trimmedQuery)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -563,6 +578,28 @@ struct SearchResultsContainer: View {
         .listRowBackground(Color.clear)
         .listRowInsets(EdgeInsets(top: appSettings.listDensity.verticalPadding + 2,
                                   leading: 16, bottom: appSettings.listDensity.verticalPadding + 2, trailing: 16))
+    }
+
+    private func lyricRow(_ song: Song, line: String) -> some View {
+        Button {
+            player.playSong(song, source: .search(query: trimmedQuery))
+            history.record(.song(song))
+        } label: {
+            HStack(spacing: 12) {
+                CoverArtImage(coverArt: song.displayCoverArt, size: 48, cornerRadius: 6,
+                              placeholderName: song.title, placeholderKind: .album)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(song.title).font(.subheadline.weight(.medium)).lineLimit(1)
+                    Text(verbatim: "“\(line)”").font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                }
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: appSettings.listDensity.verticalPadding,
+                                  leading: 16, bottom: appSettings.listDensity.verticalPadding, trailing: 16))
     }
 
     private func songRow(_ song: Song) -> some View {

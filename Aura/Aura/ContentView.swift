@@ -4,9 +4,6 @@ struct ContentView: View {
     @Environment(ServerManager.self) private var serverManager
     @Environment(AudioPlayer.self) private var audioPlayer
     @State private var selectedTab = 0
-    @State private var showAddServer = false
-    @State private var isOpeningDemo = false
-    @State private var demoError: String?
     @Environment(\.scenePhase) private var scenePhase
     @State private var appSettings = AppSettings.shared
     @Environment(\.appAccentColor) private var accentColor
@@ -61,6 +58,9 @@ struct ContentView: View {
         Binding(get: { selectedTab }, set: { tab in
             if tab == selectedTab, appSettings.tabOrder.indices.contains(tab), appSettings.tabOrder[tab] == .search {
                 NotificationCenter.default.post(name: .searchTabReselected, object: nil)
+            }
+            if tab == selectedTab, appSettings.tabOrder.indices.contains(tab), appSettings.tabOrder[tab] == .home {
+                NotificationCenter.default.post(name: .homeTabReselected, object: nil)
             }
             selectedTab = tab
         })
@@ -408,47 +408,10 @@ struct ContentView: View {
         }
     }
 
+    /// No server set up: the onboarding's connection page, with the pages before it a swipe
+    /// away, instead of a second, plainer way in.
     private var welcomeView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            Image(systemName: "music.note")
-                .font(.system(size: 80)).foregroundStyle(accentColor)
-            Text("Aura").font(.largeTitle.bold())
-            Text("Connect to your Navidrome server\nto start listening")
-                .multilineTextAlignment(.center).foregroundStyle(.secondary)
-            Button { showAddServer = true } label: {
-                Label("Add Server", systemImage: "plus")
-                    .font(.headline).frame(maxWidth: .infinity).padding()
-                    .background(accentColor).foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-            }
-            .padding(.horizontal, 40)
-            Button { Task { await tryDemo() } } label: {
-                if isOpeningDemo { ProgressView() } else { Text("No server? Try the Navidrome demo") }
-            }
-            .font(.subheadline.weight(.semibold))
-            .disabled(isOpeningDemo)
-            if let demoError {
-                Text(demoError).font(.footnote).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center).padding(.horizontal, 40)
-            }
-            Spacer()
-        }
-        .sheet(isPresented: $showAddServer) { AddServerView() }
-    }
-
-    /// The public Navidrome demo, so someone without a server of their own sees what Aura does.
-    private func tryDemo() async {
-        isOpeningDemo = true
-        demoError = nil
-        let demo = ServerConfig(url: "https://demo.navidrome.org", username: "demo",
-                                password: "demo", friendlyName: "Navidrome Demo")
-        if (try? await SubsonicClient.shared.ping(server: demo)) == true {
-            serverManager.addServer(demo)
-        } else {
-            demoError = String(localized: "The demo server didn't answer. Try again in a moment.")
-        }
-        isOpeningDemo = false
+        OnboardingView(startAtConnect: true)
     }
 }
 

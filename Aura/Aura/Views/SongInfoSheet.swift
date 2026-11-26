@@ -17,6 +17,7 @@ struct SongInfoSheet: View {
                     if let year = song.year { infoRow("Year", "\(year)") }
                     if let genre = song.genre { infoRow("Genre", genre) }
                     infoRow("Duration", song.durationFormatted)
+                    if let bpm = song.bpm, bpm > 0 { infoRow("BPM", "\(bpm)") }
                     if let pc = song.playCount { infoRow("Play Count", "\(pc)") }
                 }
                 SongRatingSection(song: song)

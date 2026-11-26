@@ -888,6 +888,8 @@ struct Song: Identifiable, Codable, Hashable {
     var preview: String? = nil
     /// OpenSubsonic: the title to sort by, from the files' titlesort tag.
     var sortName: String? = nil
+    /// OpenSubsonic: beats per minute, from the files' BPM tag; 0 or absent when untagged.
+    var bpm: Int? = nil
 
     var isExplicit: Bool { explicit == true }
     /// What alphabetical lists sort on: the sort tag when the files carry one.

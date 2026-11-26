@@ -37,6 +37,8 @@ struct LyricsSyncView: View {
     @State private var heardWords: [Int: [TimeInterval?]] = [:]
     @State private var heardPasses: [Int: [TimeInterval]] = [:]
     @State private var earFailure: String?
+    /// The how-to card, shown the first time this screen opens.
+    @AppStorage("lyricsSyncTutorialSeen") private var tutorialSeen = false
 
     private static let step: TimeInterval = 0.05
 
@@ -64,6 +66,11 @@ struct LyricsSyncView: View {
             controls(focus: sung ?? armed ?? 0, times: times)
         }
         .background { background }
+        .overlay {
+            if !tutorialSeen && !listensOnOpen {
+                tutorial.transition(.opacity)
+            }
+        }
         .preferredColorScheme(.dark)
         .onAppear {
             armFirst()
@@ -106,6 +113,50 @@ struct LyricsSyncView: View {
     #else
     private let savedHereOnly: LocalizedStringKey = "Saved on this Mac only"
     #endif
+
+    // MARK: Tutorial
+
+    private var tutorial: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 18) {
+                Text("How syncing works")
+                    .font(.title3.weight(.bold))
+                tutorialStep("hand.tap.fill", "Tap Now as each marked line starts.")
+                tutorialStep("arrow.uturn.backward", "Tap a line to hear it again from just before it.")
+                tutorialStep("arrow.down.to.line", "Lyrics already timed? Tap only where they drift: the lines after it move too.")
+                tutorialStep("waveform", "Or let Sync Automatically listen for you.")
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) { tutorialSeen = true }
+                } label: {
+                    Text("Continue")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .background(accent, in: Capsule())
+                }
+                .buttonStyle(PressScale())
+                .padding(.top, 4)
+            }
+            .foregroundStyle(.white)
+            .padding(24)
+            .frame(maxWidth: 420)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 28))
+            .padding(.horizontal, 20)
+        }
+    }
+
+    private func tutorialStep(_ icon: String, _ text: LocalizedStringKey) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 14) {
+            Image(systemName: icon)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(accent)
+                .frame(width: 24)
+            Text(text)
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
 
     // MARK: Header
 

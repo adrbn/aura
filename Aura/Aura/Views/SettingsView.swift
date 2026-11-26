@@ -631,6 +631,16 @@ struct SettingsView: View {
             Toggle(isOn: $appSettings.wrappedShowOnHome) {
                 Label("Show on Home", systemImage: "house")
             }
+            if appSettings.wrappedShowOnHome {
+                // Off its window the card is simply absent, which read as broken: say when.
+                LabeledContent("Next on Home") {
+                    if !WrappedAvailability.offeredPeriods().isEmpty {
+                        Text("Now")
+                    } else if let next = Calendar.current.dateInterval(of: .month, for: .now)?.end {
+                        Text(next, format: .dateTime.day().month(.wide))
+                    }
+                }
+            }
         } header: {
             Text("Wrapped")
         } footer: {
@@ -934,6 +944,11 @@ struct SettingsView: View {
                     DevLogsView()
                 } label: {
                     Label("View Logs", systemImage: "doc.text.magnifyingglass")
+                }
+                // Shown from the app's root, like on first launch: hung on this row it was
+                // rebuilt with the list on coming back to the app, and started over.
+                Button { NotificationCenter.default.post(name: .replayWelcome, object: nil) } label: {
+                    Label("Replay Welcome", systemImage: "sparkles.rectangle.stack")
                 }
             }
         } header: {

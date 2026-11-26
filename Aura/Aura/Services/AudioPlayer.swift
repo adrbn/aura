@@ -911,6 +911,10 @@ final class AudioPlayer {
     /// Play a list of songs in shuffled order, preserving the *real* order in `originalQueue`
     /// so toggling shuffle off later restores the natural sequence.
     func playShuffled(_ songs: [Song], source: PlaybackSource = .unknown) {
+        // The same recording often sits on a single and its album under two ids; in a
+        // shuffle that reads as a repeat, so keep one per title and artist.
+        var seen = Set<String>()
+        let songs = songs.filter { seen.insert("\($0.title.lowercased())|\(($0.artist ?? "").lowercased())").inserted }
         guard !songs.isEmpty else { return }
         AppLogger.shared.log("🎲 playShuffled: \(songs.count) songs | source: \(source)")
         let pick = songs.randomElement() ?? songs[0]
@@ -1969,30 +1973,15 @@ final class AudioPlayer {
         #endif
     }
 
-    /// The rating prompt (App Store build, from the fifth song, once per version), else
-    /// the Ko-fi card when it is due, never both in one launch, never on the demo server, and
-    /// only while the app is on screen. Most listening happens in the background, so
-    /// ContentView also calls this when the app comes back to the front: a prompt that came
-    /// due on the lock screen is shown then instead of being lost.
+    /// The Ko-fi card when it is due, never on the demo server, and only while the app is on
+    /// screen. Most listening happens in the background, so ContentView also calls this
+    /// when the app comes back to the front. The rating prompt no longer comes from here:
+    /// see `askForRatingAtGoodMoment`.
     @MainActor func requestReviewIfDue() {
         #if os(iOS)
         guard ServerManager.shared.currentServer?.url.contains("demo.navidrome.org") == false,
-              let scene = UIApplication.shared.connectedScenes
-                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+              UIApplication.shared.connectedScenes.contains(where: { $0.activationState == .foregroundActive })
         else { return }
-        #if APPSTORE_BUILD
-        let defaults = UserDefaults.standard
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        if defaults.integer(forKey: "reviewPromptPlays") >= 5,
-           defaults.string(forKey: "reviewPromptVersion") != version {
-            defaults.set(version, forKey: "reviewPromptVersion")
-            SupportPrompt.shared.askedThisLaunch = true
-            AppStore.requestReview(in: scene)
-            return
-        }
-        #else
-        _ = scene
-        #endif
         // The card is a sheet of the main screen, which cannot show one over Now Playing.
         guard !isShowingNowPlaying else { return }
         SupportPrompt.shared.showIfDue()
@@ -2355,7 +2344,7 @@ final class AudioPlayer {
         syncRemoteModes()
         AppLogger.shared.log("🔀 shuffle: \(isShuffled)")
         if isShuffled {
-            shuffleQueue()
+            shuffleQueue(keepPlayed: true)
         } else {
             // Restore natural order. If the current song exists in the saved
             // original order, resume from its position; otherwise (e.g. a
@@ -2372,13 +2361,18 @@ final class AudioPlayer {
         }
     }
 
-    private func shuffleQueue() {
+    /// Shuffles what is still to come. Turned on mid-album (`keepPlayed`), the songs already
+    /// heard stay behind the current one: they used to go back into the draw and came round
+    /// again before songs not yet played.
+    private func shuffleQueue(keepPlayed: Bool = false) {
         guard let current = currentSong else { return }
-        var shuffled = queue.filter { $0.id != current.id }
-        shuffled.shuffle()
-        shuffled.insert(current, at: 0)
-        queue = shuffled
-        queueIndex = 0
+        let played = keepPlayed && queue.indices.contains(queueIndex) && queue[queueIndex].id == current.id
+            ? Array(queue.prefix(queueIndex)) : []
+        let heard = Set(played.map(\.id)).union([current.id])
+        var upcoming = queue.filter { !heard.contains($0.id) }
+        upcoming.shuffle()
+        queue = played + [current] + upcoming
+        queueIndex = played.count
         // Also shuffle the user queue (songs added via "Add to Queue")
         if !userQueue.isEmpty {
             userQueue.shuffle()
@@ -2499,6 +2493,30 @@ final class AudioPlayer {
         }
     }
 
+    // MARK: - Rating prompt
+
+    /// Asks for a rating right after something went well (a song favourited, a Wrapped
+    /// watched to the end), after 20 songs, at most every 120 days. It used to fire once per
+    /// version when the app came to the front: with a release every few days iOS's own cap
+    /// of three a year swallowed it, and a random moment rarely gets a rating anyway.
+    @MainActor static func askForRatingAtGoodMoment() {
+        #if os(iOS) && APPSTORE_BUILD
+        let defaults = UserDefaults.standard
+        let last = defaults.double(forKey: "reviewPromptDate")
+        guard defaults.integer(forKey: "reviewPromptPlays") >= 20,
+              Date().timeIntervalSince1970 - last > 120 * 86_400,
+              !SupportPrompt.shared.askedThisLaunch,
+              ServerManager.shared.currentServer?.url.contains("demo.navidrome.org") == false,
+              let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+        else { return }
+        defaults.set(Date().timeIntervalSince1970, forKey: "reviewPromptDate")
+        SupportPrompt.shared.askedThisLaunch = true
+        // A beat after the moment itself, so the heart or the last slide is seen first.
+        Task { try? await Task.sleep(for: .seconds(1.5)); AppStore.requestReview(in: scene) }
+        #endif
+    }
+
     // MARK: - Favorite Toggle
 
     func toggleFavorite() {
@@ -2520,7 +2538,10 @@ final class AudioPlayer {
                 await MainActor.run {
                     self.currentSong = song
                     // Only celebrate the off → on direction.
-                    if !wasStarred { self.favoriteCelebration += 1 }
+                    if !wasStarred {
+                        self.favoriteCelebration += 1
+                        AudioPlayer.askForRatingAtGoodMoment()
+                    }
                     if let idx = self.queue.firstIndex(where: { $0.id == song.id }) {
                         self.queue[idx] = song
                     }
@@ -3107,6 +3128,7 @@ final class AudioPlayer {
                              + (ahead == nil ? "" : " — found ahead: \(ahead?.lines?.count ?? 0) lines"))
         if let lines = ahead?.lines {
             lyrics = lines
+            Task { @MainActor in LyricsIndex.shared.add(song, lines: lines) }
             if let source = ahead?.source { lyricsSource = source }
             lyricsStatus = ""
             isLoadingLyrics = false
@@ -3141,6 +3163,7 @@ final class AudioPlayer {
         await MainActor.run {
             if generation == self.lyricsGeneration {
                 self.lyrics = lines
+                if let song = self.currentSong { LyricsIndex.shared.add(song, lines: lines) }
                 if let source { self.lyricsSource = source }
                 self.lyricsStatus = ""
             } else if generation == self.aheadLyrics?.generation {

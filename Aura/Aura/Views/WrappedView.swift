@@ -15,6 +15,9 @@ struct WrappedView: View {
     @State private var errorMessage: String?
     @State private var isSaving = false
     @State private var saveState: SaveState = .notSaved
+    @State private var addingToPlaylist: Song?
+    @State private var habits: ListeningHabits?
+    @State private var showStory = false
 
     /// Where this retrospective stands relative to the playlist on the server.
     ///
@@ -91,7 +94,17 @@ struct WrappedView: View {
                 }
             }
         }
-        .task(id: reloadKey) { await reload() }
+        .task(id: reloadKey) {
+            await reload()
+            // From this phone's own log whatever the source: Last.fm has no hours or days.
+            habits = ListeningHabits.compute(from: PlayHistory.shared.allPlays(), period: period)
+        }
+        #if os(iOS)
+        .sheet(item: $addingToPlaylist) { AddToPlaylistView(song: $0) }
+        .fullScreenCover(isPresented: $showStory) {
+            if let stats { WrappedStoryView(stats: stats, habits: habits) }
+        }
+        #endif
     }
 
     private var reloadKey: String { "\(period)-\(source == .lastfm ? "lf" : "dev")" }
@@ -107,8 +120,12 @@ struct WrappedView: View {
         } else if let errorMessage {
             errorCard(errorMessage)
         } else if let stats, stats.hasData {
+            #if os(iOS)
+            storyButton
+            #endif
             savePlaylistButton(stats)
             statTiles(stats)
+            if let habits { habitsCard(habits) }
             if !stats.topSongs.isEmpty { topSongsCard(stats) }
             if !stats.topArtists.isEmpty { topArtistsCard(stats) }
             if !stats.topAlbums.isEmpty { topAlbumsCard(stats) }
@@ -384,8 +401,14 @@ struct WrappedView: View {
 
     private var hero: some View {
         VStack(spacing: 14) {
-            GeneratedCoverView(nature: .retrospective(period.coverLabel), size: 200, cornerRadius: 24)
-                .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
+            Group {
+                if let artist = stats?.topArtists.first, artist.serverCoverArt != nil || artist.imageURL != nil {
+                    WrappedArtwork(coverArt: artist.serverCoverArt, imageURL: artist.imageURL, size: 200, circle: true)
+                } else {
+                    GeneratedCoverView(nature: .retrospective(period.coverLabel), size: 200, cornerRadius: 24)
+                }
+            }
+            .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
             VStack(spacing: 4) {
                 Text(period.title).font(.largeTitle.bold())
                 Text(heroSubtitle).font(.headline).foregroundStyle(accent)
@@ -398,6 +421,45 @@ struct WrappedView: View {
     private var heroSubtitle: String {
         if let stats, stats.hasData { return stats.personality }
         return String(localized: "Your year in music")
+    }
+
+    #if os(iOS)
+    private var storyButton: some View {
+        Button { showStory = true } label: {
+            Label("Play Your Story", systemImage: "play.fill")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(accent, in: RoundedRectangle(cornerRadius: 16))
+                .foregroundStyle(.white)
+        }
+        .buttonStyle(.plain)
+    }
+    #endif
+
+    private func habitsCard(_ habits: ListeningHabits) -> some View {
+        cardSection(title: "Your habits", icon: "clock") {
+            VStack(alignment: .leading, spacing: 10) {
+                if let day = habits.favoriteWeekday {
+                    habitLine("Favorite day", Calendar.current.standaloneWeekdaySymbols[day - 1].capitalized)
+                }
+                if let hour = habits.favoriteHour,
+                   let date = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: .now) {
+                    habitLine("Favorite time", date.formatted(.dateTime.hour()))
+                }
+                habitLine("Longest streak", String(localized: "\(habits.longestStreak) days in a row"))
+                if let discovery = habits.discovery { habitLine("Your discovery", discovery) }
+            }
+        }
+    }
+
+    private func habitLine(_ title: LocalizedStringKey, _ value: String) -> some View {
+        HStack {
+            Text(title).foregroundStyle(.secondary)
+            Spacer()
+            Text(verbatim: value).fontWeight(.semibold).lineLimit(1)
+        }
+        .font(.subheadline)
     }
 
     // MARK: - Save as playlist (prominent)
@@ -534,6 +596,7 @@ struct WrappedView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(song.serverId == nil)
+                    .contextMenu { if let sid = song.serverId { songMenu(sid, in: stats) } }
                 }
             }
         }
@@ -569,6 +632,76 @@ struct WrappedView: View {
         }
     }
 
+    // MARK: Long-press menus
+
+    private static func fetchSong(_ id: String) async -> Song? {
+        guard let server = ServerManager.shared.currentServer else { return nil }
+        return try? await SubsonicClient.shared.getSong(server: server, id: id)
+    }
+
+    private static func fetchAlbumSongs(_ id: String) async -> [Song] {
+        guard let server = ServerManager.shared.currentServer else { return [] }
+        return (try? await SubsonicClient.shared.getAlbum(server: server, id: id))?.song ?? []
+    }
+
+    @ViewBuilder
+    private func songMenu(_ sid: String, in stats: ListeningStats) -> some View {
+        let player = AudioPlayer.shared
+        Button { playServerSong(id: sid, in: stats) } label: { Label("Play", systemImage: "play") }
+        Button { Task { if let song = await Self.fetchSong(sid) { player.playNext(song) } } } label: {
+            Label("Play Next", systemImage: "text.insert")
+        }
+        Button { Task { if let song = await Self.fetchSong(sid) { player.addToQueue(song) } } } label: {
+            Label("Add to Queue", systemImage: "text.append")
+        }
+        #if os(iOS)
+        Button { Task { addingToPlaylist = await Self.fetchSong(sid) } } label: {
+            Label("Add to Playlist", systemImage: "text.badge.plus")
+        }
+        #endif
+        Divider()
+        Button { Task { if let id = await Self.fetchSong(sid)?.albumId { player.pendingAlbumId = id } } } label: {
+            Label("Go to Album", systemImage: "square.stack")
+        }
+        Button { Task { if let id = await Self.fetchSong(sid)?.artistId { player.pendingArtistId = id } } } label: {
+            Label("Go to Artist", systemImage: "person")
+        }
+    }
+
+    @ViewBuilder
+    private func albumMenu(_ sid: String, name: String) -> some View {
+        let player = AudioPlayer.shared
+        Button {
+            Task {
+                let songs = await Self.fetchAlbumSongs(sid)
+                if let first = songs.first { player.playSong(first, fromQueue: songs, source: .album(id: sid, name: name)) }
+            }
+        } label: { Label("Play", systemImage: "play") }
+        Button { Task { player.playShuffled(await Self.fetchAlbumSongs(sid), source: .album(id: sid, name: name)) } } label: {
+            Label("Shuffle", systemImage: "shuffle")
+        }
+        Button { Task { player.playNext(await Self.fetchAlbumSongs(sid), name: name) } } label: {
+            Label("Play Next", systemImage: "text.insert")
+        }
+        Button { Task { player.addToQueue(await Self.fetchAlbumSongs(sid)) } } label: {
+            Label("Add to Queue", systemImage: "text.append")
+        }
+    }
+
+    @ViewBuilder
+    private func artistMenu(_ sid: String, name: String) -> some View {
+        let player = AudioPlayer.shared
+        Button {
+            Task {
+                guard let server = ServerManager.shared.currentServer,
+                      let songs = try? await SubsonicClient.shared.getTopSongs(server: server, artistName: name),
+                      !songs.isEmpty else { return }
+                player.playShuffled(songs, source: .artist(id: sid, name: name))
+            }
+        } label: { Label("Shuffle", systemImage: "shuffle") }
+        Button { player.pendingArtistId = sid } label: { Label("Go to Artist", systemImage: "person") }
+    }
+
     private func topArtistsCard(_ stats: ListeningStats) -> some View {
         cardSection(title: "Top Artists", icon: "music.mic") {
             VStack(spacing: 12) {
@@ -589,15 +722,18 @@ struct WrappedView: View {
                     .contentShape(Rectangle())
 
                     if let sid = artist.serverId {
-                        #if os(iOS)
-                        NavigationLink {
-                            ArtistDetailView(artistId: sid, artistName: artist.name, coverArt: artist.serverCoverArt)
-                        } label: { row }
-                        .buttonStyle(.plain)
-                        #else
-                        Button { AudioPlayer.shared.pendingArtistId = sid } label: { row }
+                        Group {
+                            #if os(iOS)
+                            NavigationLink {
+                                ArtistDetailView(artistId: sid, artistName: artist.name, coverArt: artist.serverCoverArt)
+                            } label: { row }
                             .buttonStyle(.plain)
-                        #endif
+                            #else
+                            Button { AudioPlayer.shared.pendingArtistId = sid } label: { row }
+                                .buttonStyle(.plain)
+                            #endif
+                        }
+                        .contextMenu { artistMenu(sid, name: artist.name) }
                     } else {
                         row
                     }
@@ -623,13 +759,16 @@ struct WrappedView: View {
                     .contentShape(Rectangle())
 
                     if let sid = album.serverId {
-                        #if os(iOS)
-                        NavigationLink { AlbumDetailView(albumId: sid) } label: { row }
-                            .buttonStyle(.plain)
-                        #else
-                        Button { AudioPlayer.shared.pendingAlbumId = sid } label: { row }
-                            .buttonStyle(.plain)
-                        #endif
+                        Group {
+                            #if os(iOS)
+                            NavigationLink { AlbumDetailView(albumId: sid) } label: { row }
+                                .buttonStyle(.plain)
+                            #else
+                            Button { AudioPlayer.shared.pendingAlbumId = sid } label: { row }
+                                .buttonStyle(.plain)
+                            #endif
+                        }
+                        .contextMenu { albumMenu(sid, name: album.name) }
                     } else {
                         row
                     }

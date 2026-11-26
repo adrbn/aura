@@ -390,3 +390,44 @@ enum WrappedCovers {
 
     static func period(for playlistId: String) -> WrappedPeriod? { map[playlistId] }
 }
+
+// MARK: - Listening habits
+
+/// When and how someone listened in a period, from this device's own play log (Last.fm
+/// keeps no hour of day for its totals). nil fields when there is too little to say.
+struct ListeningHabits {
+    /// 1 = Sunday … 7 = Saturday, as `Calendar` counts.
+    var favoriteWeekday: Int?
+    var favoriteHour: Int?
+    /// The most days in a row with at least one song.
+    var longestStreak: Int
+    var activeDays: Int
+    /// The most played artist first heard in this period. Only when the log reaches back
+    /// before it, or every artist would be a "discovery".
+    var discovery: String?
+
+    static func compute(from plays: [PlayHistory.PlayRecord], period: WrappedPeriod,
+                        calendar: Calendar = .current) -> ListeningHabits? {
+        let scoped = plays.filter { period.contains($0.playedAt) }
+        guard scoped.count >= 10 else { return nil }
+        func mode(_ values: [Int]) -> Int? {
+            Dictionary(values.map { ($0, 1) }, uniquingKeysWith: +).max { $0.value < $1.value }?.key
+        }
+        let days = Set(scoped.map { calendar.startOfDay(for: $0.playedAt) }).sorted()
+        var longest = days.isEmpty ? 0 : 1, run = 1
+        for (a, b) in zip(days, days.dropFirst()) {
+            run = calendar.dateComponents([.day], from: a, to: b).day == 1 ? run + 1 : 1
+            longest = max(longest, run)
+        }
+        var discovery: String?
+        if let start = scoped.map(\.playedAt).min(), plays.contains(where: { $0.playedAt < start }) {
+            let known = Set(plays.filter { $0.playedAt < start }.map(\.artist))
+            let fresh = scoped.filter { !known.contains($0.artist) }.map(\.artist)
+            discovery = Dictionary(fresh.map { ($0, 1) }, uniquingKeysWith: +).max { $0.value < $1.value }?.key
+        }
+        return ListeningHabits(
+            favoriteWeekday: mode(scoped.map { calendar.component(.weekday, from: $0.playedAt) }),
+            favoriteHour: mode(scoped.map { calendar.component(.hour, from: $0.playedAt) }),
+            longestStreak: longest, activeDays: days.count, discovery: discovery)
+    }
+}

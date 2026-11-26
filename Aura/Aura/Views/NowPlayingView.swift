@@ -1095,9 +1095,9 @@ struct NowPlayingView: View {
                 case .horizontal:
                     let threshold: CGFloat = 60
                     if value.translation.width < -threshold || value.predictedEndTranslation.width < -threshold * 2 {
-                        player.next()
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.next()
                     } else if value.translation.width > threshold || value.predictedEndTranslation.width > threshold * 2 {
-                        player.previous(restartsFirst: false)
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.previous(restartsFirst: false)
                     }
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { coverDragOffset = 0 }
                 case .vertical:
@@ -1483,30 +1483,30 @@ struct NowPlayingView: View {
             }
 
             HStack(spacing: 36) {
-                Button { player.toggleShuffle() } label: {
+                Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.toggleShuffle() } label: {
                     Image(systemName: "shuffle").font(.title3)
                         .frame(minWidth: 32, minHeight: 32)
                         .foregroundStyle(player.isShuffled ? accentColor : .white.opacity(0.7))
                 }
                 .accessibilityLabel("Shuffle \(player.isShuffled ? "on" : "off")")
                 Button {
-                    player.previous()
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.previous()
                 } label: {
                     Image(systemName: "backward.fill").font(.title).foregroundStyle(.white)
                 }
                 .accessibilityLabel("Previous track")
-                Button { player.togglePlayPause() } label: {
+                Button { UIImpactFeedbackGenerator(style: .medium).impactOccurred(); player.togglePlayPause() } label: {
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 50)).foregroundStyle(.white)
                 }
                 .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
                 Button {
-                    player.next()
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.next()
                 } label: {
                     Image(systemName: "forward.fill").font(.title).foregroundStyle(.white)
                 }
                 .accessibilityLabel("Next track")
-                Button { player.cycleRepeat() } label: {
+                Button { UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.cycleRepeat() } label: {
                     Image(systemName: player.repeatMode.systemImage).font(.title3)
                         .frame(minWidth: 32, minHeight: 32)
                         .foregroundStyle(player.repeatMode == .off ? .white.opacity(0.7) : accentColor)

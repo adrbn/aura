@@ -185,6 +185,9 @@ struct HomeView: View {
             }
         }
         .task {
+            // A server added after launch (first connection) has no index yet: start it here
+            // rather than waiting for the first search. No-op when it is current.
+            LibraryIndex.shared.refreshIfNeeded()
             // Load THIS server's cache instantly (no animation — avoids zoom on launch)
             if let cache = HomeDataCache.load(serverId: serverManager.currentServer?.id.uuidString) {
                 applyCache(cache)
@@ -226,38 +229,43 @@ struct HomeView: View {
     /// server it's the plain title, unchanged.
     @ViewBuilder private var homeTitleLabel: some View {
         if serverManager.servers.count > 1 {
-            // The Menu is left-anchored by the trailing Spacer (NOT a full-width label
-            // frame — that would make the popover open centred). The content-sized label
-            // keeps the dropdown anchored under the title, and `animation(nil)` stops the
-            // title from jumping while its text changes on a switch.
+            // Left-anchored by the trailing Spacer (NOT a full-width frame — that would open
+            // the menu centred): the menu lies over the title only, so it opens under it.
             HStack(spacing: 0) {
-                Menu {
-                    ForEach(serverManager.servers) { server in
-                        Button {
-                            guard server.id != serverManager.currentServer?.id else { return }
-                            serverManager.selectServer(server)
-                            Task { await serverManager.testConnection() }
-                        } label: {
-                            if server.id == serverManager.currentServer?.id {
-                                Label(server.friendlyName, systemImage: "checkmark")
-                            } else {
-                                Text(server.friendlyName)
+                // The title is drawn outside the Menu, which only lies over it, clear. The
+                // menu's closing animation redraws its own label in the old frame for a second
+                // or two, so a new name used to slide in clipped ("rome" of "Navidrome Demo").
+                HStack(spacing: 8) {
+                    Text(homeTitle)
+                        .auraDisplay(Pad.titleSize)
+                        .dynamicTypeSize(Pad.titleType)
+                        .foregroundStyle(.primary)
+                    Image(systemName: "chevron.down")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .animation(nil, value: homeTitle)
+                .overlay {
+                    Menu {
+                        ForEach(serverManager.servers) { server in
+                            Button {
+                                guard server.id != serverManager.currentServer?.id else { return }
+                                serverManager.selectServer(server)
+                                Task { await serverManager.testConnection() }
+                            } label: {
+                                if server.id == serverManager.currentServer?.id {
+                                    Label(server.friendlyName, systemImage: "checkmark")
+                                } else {
+                                    Text(server.friendlyName)
+                                }
                             }
                         }
+                    } label: {
+                        Color.clear.contentShape(Rectangle())
                     }
-                } label: {
-                    HStack(spacing: 8) {
-                        Text(homeTitle)
-                            .auraDisplay(Pad.titleSize)
-                            .dynamicTypeSize(Pad.titleType)
-                            .foregroundStyle(.primary)
-                        Image(systemName: "chevron.down")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .animation(nil, value: homeTitle)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text(homeTitle))
                 }
-                .buttonStyle(.plain)
                 Spacer(minLength: 0)
             }
         } else {
@@ -340,6 +348,8 @@ struct HomeView: View {
             }
             .scrollEnter()
             .padding(.bottom, Self.statsGap - 24)
+
+            LibraryReadingCard()
 
             if isLoading && !hasHomeContent {
                 // First load / server switch with no cached content → show a skeleton,
@@ -431,7 +441,7 @@ struct HomeView: View {
             }
             .padding(.horizontal)
 
-            ScrollView(.horizontal, showsIndicators: false) {
+            HomeShelfScroll {
                 LazyHStack(spacing: 12) {
                     ForEach(shelf) { mix in
                         if mix.id == Self.nonstopId {
@@ -513,7 +523,7 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    HomeShelfScroll {
                         LazyHStack(spacing: 12) {
                             ForEach(Array(player.upNextSongs.prefix(15).enumerated()), id: \.element.id) { index, song in
                                 Button {
@@ -579,7 +589,7 @@ struct HomeView: View {
                     }
                     .buttonStyle(.plain)
 
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    HomeShelfScroll {
                         LazyHStack(spacing: 0) {
                             ForEach(Array(starredSongs.prefix(50).enumerated()), id: \.element.id) { index, song in
                                 songCard(song)
@@ -601,7 +611,7 @@ struct HomeView: View {
                         sectionHeader("Favorite Artists")
                     }
                     .buttonStyle(.plain)
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    HomeShelfScroll {
                         LazyHStack(spacing: 16) {
                             ForEach(Array(starredArtists.enumerated()), id: \.element.id) { index, artist in
                                 ArtistCardView(artist: artist, size: artistCircle)
@@ -630,7 +640,7 @@ struct HomeView: View {
                 sectionHeader(title)
             }
             .buttonStyle(.plain)
-            ScrollView(.horizontal, showsIndicators: false) {
+            HomeShelfScroll {
                 LazyHStack(spacing: 12) {
                     ForEach(Array(albums.enumerated()), id: \.element.id) { index, album in
                         AlbumCardView(album: album, size: coverSize)
@@ -715,7 +725,7 @@ struct HomeView: View {
             }
 
             if recentSongsShowGrid {
-                ScrollView(.horizontal, showsIndicators: false) {
+                HomeShelfScroll {
                     LazyHStack(spacing: 0) {
                         ForEach(Array(recentSongs.prefix(30).enumerated()), id: \.element.id) { index, song in
                             songCard(song, fromQueue: recentSongs, index: index, source: .recentlyPlayed)
@@ -775,7 +785,7 @@ struct HomeView: View {
             // Inside a horizontal ScrollView like the real "Made For You" row. As a bare
             // HStack its 3×176 + gaps = 560pt intrinsic width forced the whole VStack —
             // page title included — wider than the screen, shifting everything left.
-            ScrollView(.horizontal, showsIndicators: false) {
+            HomeShelfScroll {
                 HStack(spacing: 12) {
                     // As many as a wide screen shows; the scroll view clips the rest.
                     ForEach(0..<8, id: \.self) { _ in
@@ -981,3 +991,93 @@ struct HomeView: View {
 
 
 /// Applies `.searchable` only when the Home search bar is enabled in settings.
+
+
+extension Notification.Name {
+    static let homeTabReselected = Notification.Name("homeTabReselected")
+}
+
+/// A Home shelf: scrolls sideways, and goes back to its first item when the Home tab is
+/// tapped again, as the page itself goes back to the top.
+private struct HomeShelfScroll<Content: View>: View {
+    @ViewBuilder let content: Content
+    @State private var position = ScrollPosition(edge: .leading)
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) { content }
+            .scrollPosition($position)
+            .onReceive(NotificationCenter.default.publisher(for: .homeTabReselected)) { _ in
+                withAnimation(.smooth) { position.scrollTo(edge: .leading) }
+            }
+    }
+}
+
+/// Home's note while the library is read for the first time: how far along, and why it
+/// is worth the wait. Gone once the index is built.
+private struct LibraryReadingCard: View {
+    @State private var building = LibraryIndex.shared.building
+    /// Folded down to one line, and kept folded until unfolded.
+    @AppStorage("libraryCardFolded") private var folded = false
+
+    var body: some View {
+        Group {
+            if let building, folded {
+                // The reading goes on behind; a tap brings the card back.
+                Button { withAnimation(.smooth) { folded = false } } label: {
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text("Getting your library ready").font(.footnote.weight(.semibold))
+                        if building.total > 0 {
+                            Text(verbatim: "\(building.loaded * 100 / max(building.total, 1)) %")
+                                .font(.footnote.monospacedDigit()).foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(height: 32)
+                    .background(.white.opacity(0.06), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .transition(.opacity)
+            } else if let building {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Getting your library ready").font(.subheadline.weight(.semibold))
+                        Spacer()
+                        if building.total > 0 {
+                            Text(verbatim: "\(building.loaded.formatted()) / \(building.total.formatted())")
+                                .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        }
+                        Button { withAnimation(.smooth) { folded = true } } label: {
+                            Image(systemName: "chevron.up")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 32, height: 32)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text("Hide"))
+                        .padding(.vertical, -8)
+                        .padding(.trailing, -6)
+                    }
+                    if building.total > 0 {
+                        ProgressView(value: Double(min(building.loaded, building.total)), total: Double(building.total))
+                    } else {
+                        ProgressView().frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    Text("Once it's read, pages and search open instantly.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(14)
+                .background(.white.opacity(0.06), in: .rect(cornerRadius: 14))
+                .padding(.horizontal, 16)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.3), value: building == nil)
+        .onReceive(NotificationCenter.default.publisher(for: .libraryIndexBuilding)) { _ in
+            building = LibraryIndex.shared.building
+        }
+    }
+}

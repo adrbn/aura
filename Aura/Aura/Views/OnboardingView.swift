@@ -1,12 +1,18 @@
 import SwiftUI
+import Intents
 
+/// First launch: welcome, what Aura does, what iOS will ask, then the connection. Also the screen shown
+/// whenever no server is set up (`startAtConnect`), so there is one way in, not two.
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(ServerManager.self) private var serverManager
+    var startAtConnect = false
     var onComplete: () -> Void = {}
 
     @State private var currentPage = 0
-    @State private var appeared = false
+    /// Set once the server answered: the "library found" screen shows its covers before the
+    /// server is saved, so the app behind does not swap screens under it.
+    @State private var connected: ServerConfig?
 
     // Server form fields (for final step)
     @State private var serverURL = ""
@@ -14,9 +20,21 @@ struct OnboardingView: View {
     @State private var password = ""
     @State private var friendlyName = ""
     @State private var isTesting = false
+    @State private var isOpeningDemo = false
     @State private var serverError: String?
+    @State private var demoError: String?
+    @State private var showNoServer = false
+    @State private var showPassword = false
+    @State private var siriStatus = INPreferences.siriAuthorizationStatus()
+    /// iOS never says whether the local network was allowed, only that it was asked.
+    @AppStorage("localNetworkAsked") private var localNetworkAsked = false
+    // Springs back with the same curve as the page turn when the finger lifts.
+    @GestureState(resetTransaction: Transaction(animation: .spring(response: 0.5, dampingFraction: 1)))
+    private var dragX: CGFloat = 0
+    @FocusState private var focused: Field?
 
-    private let totalPages = 5
+    private let totalPages = 4
+    private var connectPage: Int { totalPages - 1 }
 
     private var formValid: Bool {
         !serverURL.isEmpty && !username.isEmpty && !password.isEmpty
@@ -24,451 +42,516 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            // Aurora background — shifts colours per page
-            auroraBackground
-                .ignoresSafeArea()
-
-            // Film grain overlay
-            GrainOverlay()
-                .opacity(0.06)
-                .blendMode(.overlay)
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                // Content area
-                TabView(selection: $currentPage) {
-                    welcomePage.tag(0)
-                    featurePage(
-                        icon: "waveform.path",
-                        title: "Stream Everything",
-                        subtitle: "Your entire library at your fingertips.\nLossless or transcoded, your choice.",
-                        detail: "FLAC · MP3 · AAC · OGG"
-                    ).tag(1)
-                    featurePage(
-                        icon: "text.quote",
-                        title: "Live Lyrics",
-                        subtitle: "Time-synced lyrics scroll in real time.\nTap any line to jump to that moment.",
-                        detail: "Powered by LRCLIB"
-                    ).tag(2)
-                    featurePage(
-                        icon: "arrow.down.circle",
-                        title: "Offline Mode",
-                        subtitle: "Download songs, albums, or your entire library.\nListen anywhere without a connection.",
-                        detail: "No limits"
-                    ).tag(3)
-                    serverSetupPage.tag(4)
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut(duration: 0.4), value: currentPage)
-
-                // Bottom controls
-                bottomControls
+            Color(white: 0.07).ignoresSafeArea()
+            if let connected {
+                LibraryFoundView(server: connected) { finish(with: connected) }
+                    .transition(.opacity)
+            } else {
+                pages.transition(.opacity)
             }
         }
-        .onAppear {
-            withAnimation(.easeOut(duration: 1.2)) { appeared = true }
-        }
-        // Hand-authored aurora background is always dark. Pinned locally because this view is
+        .animation(.easeInOut(duration: 0.5), value: connected?.id)
+        .onAppear { if startAtConnect { currentPage = connectPage } }
+        .sheet(isPresented: $showNoServer) { noServerSheet }
+        // Always dark, like the app's own ground. Pinned locally because this view is
         // presented as a fullScreenCover sibling of ContentView, so it does NOT inherit the
         // app-wide appearance setting — without this the keyboard/system chrome would go light.
         .preferredColorScheme(.dark)
     }
 
-    // MARK: - Aurora Background
+    private let pageAnimation = Animation.spring(response: 0.5, dampingFraction: 1)
 
-    private var auroraBackground: some View {
-        ZStack {
-            Color.black
+    private func go(to page: Int) {
+        focused = nil
+        withAnimation(pageAnimation) { currentPage = page }
+    }
 
-            TimelineView(.animation) { timeline in
-                let t = timeline.date.timeIntervalSinceReferenceDate
-                let colors = auroraColors(for: currentPage)
+    /// The buttons lead, and a horizontal swipe also turns the page.
+    private var pages: some View {
+        GeometryReader { geo in
+            let width = geo.size.width
+            let pageX = -CGFloat(currentPage) * width + dragX
+            ZStack(alignment: .topLeading) {
+                // The wall belongs to the first page and leaves with it, sliding out to the left.
+                CoverWall(active: currentPage == 0 && !showNoServer)
+                    .ignoresSafeArea()
+                    .offset(x: pageX)
+                LinearGradient(colors: [Color(red: 1, green: 0.25, blue: 0.31).opacity(0.22), .clear],
+                               startPoint: .top, endPoint: .center)
+                    .ignoresSafeArea()
+                    .opacity(currentPage == 0 ? 0 : 1)
 
-                ZStack {
-                    // Primary blob
-                    Ellipse()
-                        .fill(
-                            RadialGradient(
-                                colors: [colors.0.opacity(0.7), colors.0.opacity(0.2), .clear],
-                                center: .center, startRadius: 20, endRadius: 220
-                            )
-                        )
-                        .frame(width: 440, height: 440)
-                        .offset(
-                            x: -80 + CGFloat(sin(t * 0.4)) * 30,
-                            y: -200 + CGFloat(cos(t * 0.3)) * 25
-                        )
-                        .scaleEffect(appeared ? 1.15 + CGFloat(sin(t * 0.5)) * 0.05 : 0.6)
-
-                    // Secondary blob
-                    Ellipse()
-                        .fill(
-                            RadialGradient(
-                                colors: [colors.1.opacity(0.5), colors.1.opacity(0.15), .clear],
-                                center: .center, startRadius: 30, endRadius: 200
-                            )
-                        )
-                        .frame(width: 380, height: 380)
-                        .offset(
-                            x: 100 + CGFloat(cos(t * 0.35)) * 25,
-                            y: 50 + CGFloat(sin(t * 0.45)) * 30
-                        )
-                        .scaleEffect(appeared ? 1.1 + CGFloat(cos(t * 0.4)) * 0.05 : 0.6)
-
-                    // Tertiary blob
-                    Ellipse()
-                        .fill(
-                            RadialGradient(
-                                colors: [colors.2.opacity(0.4), colors.2.opacity(0.1), .clear],
-                                center: .center, startRadius: 10, endRadius: 180
-                            )
-                        )
-                        .frame(width: 360, height: 360)
-                        .offset(
-                            x: -40 + CGFloat(sin(t * 0.5)) * 20,
-                            y: 250 + CGFloat(cos(t * 0.35)) * 20
-                        )
-                        .scaleEffect(appeared ? 1.2 + CGFloat(sin(t * 0.3)) * 0.06 : 0.6)
-
-                    // Highlight
-                    Ellipse()
-                        .fill(
-                            RadialGradient(
-                                colors: [Color.white.opacity(0.15), .clear],
-                                center: .center, startRadius: 10, endRadius: 150
-                            )
-                        )
-                        .frame(width: 300, height: 300)
-                        .offset(
-                            x: CGFloat(cos(t * 0.6)) * 60,
-                            y: -50 + CGFloat(sin(t * 0.4)) * 50
-                        )
-                        .scaleEffect(appeared ? 1.0 : 0.4)
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        welcomePage.frame(width: width)
+                        benefitsPage.frame(width: width)
+                        permissionsPage.frame(width: width)
+                        serverSetupPage.frame(width: width)
+                    }
+                    .offset(x: pageX)
+                    .frame(width: width, alignment: .leading)
+                    bottomControls
                 }
-                .blur(radius: 65)
+
             }
-            .animation(.easeInOut(duration: 1.5), value: currentPage)
+            .animation(pageAnimation, value: currentPage)
+            .contentShape(Rectangle())
+            .gesture(swipe(width: width))
         }
     }
 
-    /// Returns three colours that shift based on the current page
-    private func auroraColors(for page: Int) -> (Color, Color, Color) {
-        switch page {
-        case 0: // Welcome — the app icon's pink-red (AppIcon.icon uses p3 1.0/0.248/0.307)
-            return (
-                Color(red: 1.0, green: 0.25, blue: 0.31),
-                Color(red: 0.82, green: 0.16, blue: 0.26),
-                Color(red: 1.0, green: 0.45, blue: 0.48)
-            )
-        case 1: // Streaming — deep purple/blue
-            return (
-                Color(red: 0.5, green: 0.3, blue: 0.9),
-                Color(red: 0.35, green: 0.2, blue: 0.75),
-                Color(red: 0.6, green: 0.4, blue: 0.95)
-            )
-        case 2: // Lyrics — cyan/teal
-            return (
-                Color(red: 0.1, green: 0.7, blue: 0.8),
-                Color(red: 0.15, green: 0.55, blue: 0.7),
-                Color(red: 0.2, green: 0.8, blue: 0.75)
-            )
-        case 3: // Offline — green/emerald
-            return (
-                Color(red: 0.2, green: 0.75, blue: 0.4),
-                Color(red: 0.15, green: 0.6, blue: 0.35),
-                Color(red: 0.3, green: 0.8, blue: 0.5)
-            )
-        case 4: // Server setup — back to the icon's pink-red, bookending the flow
-            return (
-                Color(red: 1.0, green: 0.25, blue: 0.31),
-                Color(red: 0.82, green: 0.16, blue: 0.26),
-                Color(red: 1.0, green: 0.45, blue: 0.48)
-            )
-        default:
-            return (.white, .white, .white)
-        }
+    private func swipe(width: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 20)
+            .updating($dragX) { value, state, _ in
+                let dx = value.translation.width
+                guard abs(dx) > abs(value.translation.height) else { return }
+                let atEdge = (dx > 0 && currentPage == 0) || (dx < 0 && currentPage == connectPage)
+                state = atEdge ? dx / 4 : dx
+            }
+            .onEnded { value in
+                let dx = value.predictedEndTranslation.width
+                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                if dx < -width / 3, currentPage < connectPage { go(to: currentPage + 1) }
+                else if dx > width / 3, currentPage > 0 { go(to: currentPage - 1) }
+            }
     }
 
-    // MARK: - Welcome Page
+    // MARK: - Pages
 
     private var welcomePage: some View {
-        VStack(spacing: 20) {
+        VStack(alignment: .leading, spacing: 8) {
             Spacer()
-            Spacer()
-
-            // App icon. AppIconLarge is a 1024px copy of the icon's Default appearance:
-            // the CFBundleIcons fallback only exposes AppIcon60x60 (120px), which upscales
-            // to mush in this 100pt frame.
-            if let icon = UIImage(named: "AppIconLarge") ?? UIImage(named: "AppIcon") ?? Bundle.main.icon {
-                Image(uiImage: icon)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 100, height: 100)
-                    .clipShape(RoundedRectangle(cornerRadius: 22))
-                    .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
-            }
-
-            Text("aura")
-                .font(AppTypography.display(48, relativeTo: .largeTitle))
-                .foregroundStyle(
-                    // Echoes the icon itself: its pink triangle resolving into white glass.
-                    LinearGradient(
-                        colors: [
-                            Color(red: 1.0, green: 0.38, blue: 0.44),
-                            Color(red: 1.0, green: 0.25, blue: 0.31),
-                            .white.opacity(0.92)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-
-            Text("Your music, everywhere.")
-                .font(.title3)
-                .foregroundStyle(.white.opacity(0.7))
-
-            Spacer()
-
-            VStack(spacing: 8) {
-                featurePill(icon: "antenna.radiowaves.left.and.right", text: "Navidrome & Subsonic")
-                featurePill(icon: "waveform.path", text: "Lossless Streaming")
-                featurePill(icon: "text.quote", text: "Live Synced Lyrics")
-                featurePill(icon: "arrow.down.circle", text: "Offline Downloads")
-                featurePill(icon: "dial.medium", text: "Smart Radio Mixes")
-            }
-            .padding(.horizontal, 40)
-
-            Spacer()
-        }
-    }
-
-    private func featurePill(icon: String, text: LocalizedStringKey) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.8))
-                .frame(width: 28)
-            Text(text)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.white.opacity(0.8))
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(.white.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    // MARK: - Feature Page
-
-    private func featurePage(icon: String, title: LocalizedStringKey, subtitle: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
-        VStack(spacing: 0) {
-            Spacer()
-
-            // Large icon with glow
-            ZStack {
-                Image(systemName: icon)
-                    .font(.system(size: 64, weight: .light))
-                    .foregroundStyle(.white.opacity(0.15))
-                    .blur(radius: 12)
-                    .scaleEffect(1.3)
-
-                Image(systemName: icon)
-                    .font(.system(size: 64, weight: .light))
+            HStack(spacing: 10) {
+                if let icon = UIImage(named: "AppIconLarge") ?? Bundle.main.icon {
+                    Image(uiImage: icon).resizable().frame(width: 40, height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        .shadow(color: .black.opacity(0.45), radius: 10, y: 4)
+                }
+                Text(verbatim: "Aura")
+                    .font(.system(size: 26, weight: .bold))
+                    .tracking(-0.4)
                     .foregroundStyle(.white)
             }
-            .padding(.bottom, 40)
-
-            Text(title)
-                .font(AppTypography.display(32, relativeTo: .title))
-                .foregroundStyle(.white)
-                .padding(.bottom, 12)
-
-            Text(subtitle)
+            .accessibilityElement(children: .combine)
+            .padding(.bottom, 12)
+            OnboardingTitle(key: "*Your* music, the streaming way")
+            Text("Welcome to Aura, the app for your own Navidrome server.")
                 .font(.body)
-                .foregroundStyle(.white.opacity(0.65))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-                .padding(.bottom, 16)
+                .foregroundStyle(.white.opacity(0.64))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 32)
+    }
 
-            Text(detail)
-                .font(.caption.weight(.semibold))
-                .tracking(2)
-                .foregroundStyle(.white.opacity(0.35))
-
-            Spacer()
+    private var benefitsPage: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let icon = UIImage(named: "AppIconLarge") ?? Bundle.main.icon {
+                Image(uiImage: icon).resizable().frame(width: 72, height: 72)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: .black.opacity(0.45), radius: 16, y: 8)
+                    .accessibilityHidden(true)
+            }
+            OnboardingTitle(key: "Everything a streaming app does")
+                .padding(.top, 24)
+            OnboardingTitle(key: "With the music *you* own.", size: 17, weight: .regular)
+                .foregroundStyle(.white.opacity(0.64))
+                .padding(.top, 8)
+            VStack(alignment: .leading, spacing: 24) {
+                benefit("music.note", "Music that finds you",
+                        "Daily mixes, radio from any song, new releases from your artists, your Wrapped.")
+                benefit("macbook.and.iphone", "Wherever you are",
+                        "Offline downloads, CarPlay, Apple Watch, Mac and Apple TV. Synced lyrics.")
+                benefit("lock.shield", "Yours, for good",
+                        "Free, no subscription, no account, no tracking. Your music stays on your server.")
+            }
+            .padding(.top, 40)
             Spacer()
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 24)
+        .padding(.top, 72)
+    }
+
+    private func benefit(_ symbol: String, _ title: LocalizedStringKey, _ text: LocalizedStringKey) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: symbol)
+                .font(.system(size: 22, weight: .regular))
+                .foregroundStyle(Color(red: 1, green: 0.25, blue: 0.31))
+                .frame(width: 32, alignment: .leading)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.headline).foregroundStyle(.white)
+                Text(text).font(.subheadline).foregroundStyle(.white.opacity(0.64))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Permissions
+
+    /// What iOS will ask about, explained before it asks, each asked only when its button is
+    /// tapped. Before the connection, because a server at home is what needs the local network.
+    private var permissionsPage: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            OnboardingTitle(key: "Two things to *allow*")
+                .padding(.top, 72)
+            Text("iOS asks you about each one. Aura uses them for nothing else.")
+                .font(.body)
+                .foregroundStyle(.white.opacity(0.64))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 8)
+            VStack(alignment: .leading, spacing: 16) {
+                permission("wifi", "Local Network",
+                           "To reach a server at home, and to play on your Mac or Apple TV.",
+                           state: localNetworkAsked ? .asked : .ask) {
+                    localNetworkAsked = true
+                    RemoteLink.shared.start()
+                }
+                permission("waveform", "Siri",
+                           "To ask for an artist, an album or a playlist out loud.",
+                           state: siriStatus == .authorized ? .allowed
+                                : siriStatus == .notDetermined ? .ask : .off) {
+                    INPreferences.requestSiriAuthorization { status in
+                        Task { @MainActor in withAnimation(.easeOut(duration: 0.25)) { siriStatus = status } }
+                    }
+                }
+            }
+            .padding(.top, 40)
+            Text("You can change both later in the Settings app.")
+                .font(.footnote)
+                .foregroundStyle(.white.opacity(0.48))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 24)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 24)
+    }
+
+    private enum PermissionState { case ask, asked, allowed, off }
+
+    private var allowLabel: some View {
+        Text("Allow")
+            .font(.subheadline.weight(.semibold))
+            .lineLimit(1).minimumScaleFactor(0.7)
+            .foregroundStyle(.black)
+            .padding(.horizontal, 16)
+            .frame(height: 34)
+            .background(Color.white, in: Capsule())
+    }
+
+    private func permission(_ symbol: String, _ title: LocalizedStringKey, _ text: LocalizedStringKey,
+                            state: PermissionState, request: @escaping () -> Void) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(Color(red: 1, green: 0.25, blue: 0.31))
+                .frame(width: 44, height: 44)
+                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.headline).foregroundStyle(.white)
+                Text(text).font(.subheadline).foregroundStyle(.white.opacity(0.64))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // The slot keeps the button's width whatever it shows, so the text beside it
+            // never re-wraps when the button turns into a tick.
+            ZStack {
+                allowLabel.hidden()
+                switch state {
+                case .ask:
+                    Button(action: request) { allowLabel }
+                        .buttonStyle(.plain)
+                case .asked, .allowed:
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(.white)
+                        .accessibilityLabel(state == .allowed ? Text("Allowed") : Text("Asked"))
+                case .off:
+                    Text("Off")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.48))
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.8)))
+        }
+        .padding(14)
+        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .animation(.easeOut(duration: 0.25), value: state)
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: - Server Setup Page
+
+    private enum Field: Hashable { case url, username, password, name }
 
     private var serverSetupPage: some View {
         // Scrolls, so the last field stays reachable once the keyboard and the Connect button
         // have taken the bottom half of the screen.
         ScrollView {
-        VStack(spacing: 0) {
-            Spacer().frame(height: 60)
+            VStack(alignment: .leading, spacing: 0) {
+                OnboardingTitle(key: "Connect *your* server")
+                    .padding(.top, 72)
+                Text("Add your Navidrome or Subsonic server.")
+                    .font(.body)
+                    .foregroundStyle(.white.opacity(0.64))
+                    .padding(.top, 8)
 
-            Text("Connect")
-                .font(AppTypography.display(32, relativeTo: .title))
-                .foregroundStyle(.white)
-                .padding(.bottom, 6)
-
-            Text("Add your Navidrome server to get started.")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.55))
-                .multilineTextAlignment(.center)
-                .padding(.bottom, 28)
-
-            VStack(spacing: 14) {
-                serverField(placeholder: "Server URL", text: $serverURL, icon: "link", keyboard: .URL)
-                serverField(placeholder: "Username", text: $username, icon: "person", keyboard: .default)
-                serverSecureField(placeholder: "Password", text: $password, icon: "lock")
-                serverField(placeholder: "Friendly Name (optional)", text: $friendlyName, icon: "tag", keyboard: .default)
-            }
-            .padding(.horizontal, 32)
-
-            if isTesting {
-                HStack(spacing: 10) {
-                    ProgressView().tint(.white)
-                    Text("Connecting...")
-                        .font(.callout)
-                        .foregroundStyle(.white.opacity(0.7))
-                }
-                .padding(.top, 20)
-            }
-
-            if let err = serverError {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                    Text(err)
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
-                }
-                .padding(.horizontal, 32)
-                .padding(.top, 16)
-            }
-        }
-        .padding(.bottom, 24)
-        }
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.interactively)
-    }
-
-    private func serverField(placeholder: LocalizedStringKey, text: Binding<String>, icon: String, keyboard: UIKeyboardType) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white.opacity(0.5))
-                .frame(width: 20)
-            TextField(placeholder, text: text)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .keyboardType(keyboard)
-                .foregroundStyle(.white)
-                .tint(.white)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(.white.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    private func serverSecureField(placeholder: LocalizedStringKey, text: Binding<String>, icon: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white.opacity(0.5))
-                .frame(width: 20)
-            SecureField(placeholder, text: text)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .foregroundStyle(.white)
-                .tint(.white)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(.white.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    // MARK: - Bottom Controls
-
-    private var bottomControls: some View {
-        VStack(spacing: 12) {
-            // Page indicators — hidden on the final (form) page so they can't
-            // collide with the fields when the keyboard pushes the controls up.
-            if currentPage < totalPages - 1 {
-                HStack(spacing: 8) {
-                    ForEach(0..<totalPages, id: \.self) { index in
-                        Capsule()
-                            .fill(index == currentPage ? Color.white : Color.white.opacity(0.3))
-                            .frame(width: index == currentPage ? 24 : 8, height: 8)
-                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
+                // One grouped card, like Settings: four rows, hairlines between them.
+                VStack(spacing: 0) {
+                    formRow(icon: "link", field: .url) {
+                        TextField("Server URL", text: $serverURL)
+                            .keyboardType(.URL)
+                            .textContentType(.URL)
+                    }
+                    divider
+                    formRow(icon: "person", field: .username) {
+                        TextField("Username", text: $username)
+                            .textContentType(.username)
+                    }
+                    divider
+                    formRow(icon: "lock", field: .password) {
+                        Group {
+                            if showPassword {
+                                TextField("Password", text: $password)
+                            } else {
+                                SecureField("Password", text: $password)
+                            }
+                        }
+                        .textContentType(.password)
+                        Button { showPassword.toggle() } label: {
+                            Image(systemName: showPassword ? "eye.slash" : "eye")
+                                .font(.system(size: 15))
+                                .foregroundStyle(.white.opacity(0.5))
+                                .frame(width: 44, height: 44)
+                        }
+                        .accessibilityLabel(Text(showPassword ? "Hide password" : "Show password"))
+                    }
+                    divider
+                    formRow(icon: "tag", field: .name) {
+                        TextField("Friendly Name (optional)", text: $friendlyName)
                     }
                 }
-                .padding(.bottom, 20)
-            }
+                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.top, 32)
 
-            // Main button
-            if currentPage == totalPages - 1 {
-                // Server setup page — connect button
-                Button {
-                    Task { await connectServer() }
-                } label: {
-                    Text("Connect")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(formValid && !isTesting ? Color.white : Color.white.opacity(0.2))
-                        .foregroundStyle(formValid && !isTesting ? .black : .white.opacity(0.4))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
-                .disabled(!formValid || isTesting)
-                .padding(.horizontal, 40)
-            } else {
-                Button {
-                    withAnimation { currentPage += 1 }
-                } label: {
-                    Text("Continue")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white.opacity(0.15))
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
-                .padding(.horizontal, 40)
-            }
+                Text("For example 192.168.1.20:4533, a Tailscale name or music.example.com")
+                    .font(.footnote)
+                    .foregroundStyle(.white.opacity(0.45))
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
 
-            // Skip
-            if currentPage < totalPages - 1 {
-                Button {
-                    withAnimation { currentPage = totalPages - 1 }
-                } label: {
-                    Text("Skip to setup")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.4))
+                if let err = serverError {
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.42))
+                        Text(err)
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.9))
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(16)
+                    .background(Color.red.opacity(0.16), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .padding(.top, 24)
+                    .transition(.opacity)
                 }
+            }
+            .animation(.easeInOut(duration: 0.25), value: serverError)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
+        }
+        .scrollIndicators(.hidden)
+        .scrollDisabled(true)
+    }
+
+    private var divider: some View {
+        Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5).padding(.leading, 52)
+    }
+
+    private func formRow<Content: View>(icon: String, field: Field,
+                                        @ViewBuilder content: () -> Content) -> some View {
+        HStack(spacing: 0) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.white.opacity(0.5))
+                .frame(width: 52)
+            content()
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .foregroundStyle(.white)
+                .tint(.white)
+                .focused($focused, equals: field)
+                .submitLabel(field == .name ? .go : .next)
+                .onSubmit { submit(from: field) }
+        }
+        .frame(minHeight: 52)
+        .padding(.trailing, 8)
+        .contentShape(Rectangle())
+        .onTapGesture { focused = field }
+    }
+
+    private func submit(from field: Field) {
+        switch field {
+        case .url: focused = .username
+        case .username: focused = .password
+        case .password: focused = .name
+        case .name:
+            focused = nil
+            if formValid && !isTesting { Task { await connectServer() } }
+        }
+    }
+
+    // MARK: - No server
+
+    private var noServerSheet: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            OnboardingTitle(key: "No server yet?", size: 28)
                 .padding(.bottom, 20)
-            } else if let existing = serverManager.currentServer {
-                // Replaying the onboarding with a server already set up: the form is empty,
-                // so "Connect" is disabled and there was no way forward. Offer to keep what
-                // is already configured instead of making the user retype it.
-                Button {
-                    onComplete()
-                } label: {
-                    Text("Keep \(existing.friendlyName)")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.6))
+            VStack(spacing: 8) {
+                Button { Task { await tryDemo() } } label: {
+                    optionRow(icon: "play.fill", title: "Try the Demo",
+                              detail: "Listen to a sample library right now. Nothing to install.",
+                              busy: isOpeningDemo)
                 }
-                .padding(.bottom, 20)
-            } else {
-                Color.clear.frame(height: 44)
+                .disabled(isOpeningDemo)
+                Link(destination: URL(string: "https://www.navidrome.org/docs/installation/")!) {
+                    optionRow(icon: "server.rack", title: "How to set up Navidrome",
+                              detail: "Free and open source. Runs on a NAS, a Raspberry Pi or your computer.",
+                              busy: false)
+                }
+            }
+            .buttonStyle(.plain)
+            if let err = demoError {
+                Text(err).font(.footnote).foregroundStyle(Color(red: 1, green: 0.42, blue: 0.42))
+                    .padding(.top, 12)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 32)
+        .presentationDetents([.height(340)])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Color(white: 0.1))
+        .presentationCornerRadius(32)
+    }
+
+    private func optionRow(icon: String, title: LocalizedStringKey, detail: LocalizedStringKey, busy: Bool) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Color(red: 1, green: 0.25, blue: 0.31))
+                .frame(width: 44, height: 44)
+                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.headline).foregroundStyle(.white)
+                Text(detail).font(.subheadline).foregroundStyle(.white.opacity(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            if busy { ProgressView().tint(.white) } else {
+                Image(systemName: "chevron.right").font(.footnote.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.35))
             }
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .contentShape(Rectangle())
+    }
+
+    private var bottomControls: some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 8) {
+                ForEach(0..<totalPages, id: \.self) { index in
+                    Capsule()
+                        .fill(index == currentPage ? Color.white : Color.white.opacity(0.3))
+                        .frame(width: index == currentPage ? 24 : 8, height: 8)
+                }
+            }
+            .accessibilityHidden(true)
+
+            let onConnect = currentPage == connectPage
+            let enabled = !onConnect || (formValid && !isTesting)
+            Button {
+                if onConnect { Task { await connectServer() } } else { go(to: currentPage + 1) }
+            } label: {
+                ZStack {
+                    if isTesting {
+                        ProgressView().tint(.black)
+                    } else {
+                        Text(currentPage == 0 ? "Get Started" : onConnect ? "Connect" : "Continue")
+                            .contentTransition(.opacity)
+                    }
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(enabled || isTesting ? Color.white : Color.white.opacity(0.2))
+                .foregroundStyle(enabled ? .black : .white.opacity(0.4))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .animation(.easeInOut(duration: 0.25), value: currentPage)
+            }
+            .disabled(!enabled)
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+
+            Group {
+                if onConnect, let existing = serverManager.currentServer {
+                    // Replaying the onboarding with a server already set up: keep it instead
+                    // of retyping it.
+                    Button {
+                        onComplete()
+                        dismiss()
+                    } label: {
+                        Text("Keep \(existing.friendlyName)")
+                    }
+                } else {
+                    Button { demoError = nil; showNoServer = true } label: {
+                        Text("I have no server")
+                    }
+                }
+            }
+            .font(.subheadline)
+            .foregroundStyle(.white.opacity(0.6))
+            .frame(height: 32)
+            .padding(.top, -8)
+        }
+        .padding(.bottom, 12)
+    }
+
+    /// Saves the server and opens the app on it, even when another one was already set up
+    /// (Replay Welcome, or the demo tried from there).
+    private func finish(with server: ServerConfig) {
+        if let same = serverManager.servers.first(where: { $0.url == server.url && $0.username == server.username }) {
+            serverManager.selectServer(same)
+        } else {
+            serverManager.addServer(server)
+            serverManager.selectServer(server)
+        }
+        onComplete()
+        dismiss()
+    }
+
+    /// The public Navidrome demo, so someone without a server of their own sees what Aura does.
+    private func tryDemo() async {
+        isOpeningDemo = true
+        demoError = nil
+        let demo = ServerConfig(url: "https://demo.navidrome.org", username: "demo",
+                                password: "demo", friendlyName: "Navidrome Demo")
+        if (try? await SubsonicClient.shared.ping(server: demo)) == true {
+            // Through the same reveal as a server of one's own.
+            showNoServer = false
+            connected = demo
+        } else {
+            demoError = String(localized: "The demo server didn't answer. Try again in a moment.")
+        }
+        isOpeningDemo = false
     }
 
     // MARK: - Server Connection
@@ -501,9 +584,9 @@ struct OnboardingView: View {
             }
             if ok {
                 await MainActor.run {
-                    serverManager.addServer(server)
-                    onComplete()
-                    dismiss()
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    connected = server
+                    isTesting = false
                 }
             } else {
                 await MainActor.run {

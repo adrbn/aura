@@ -84,6 +84,7 @@
 		5DACC2F94E2FBAC2FA1E5506 /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* ToastManager.swift */; };
 		5EBDFB2C27EFFEF20CA718EE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 599B6E59E456CCD14BAC1A6B /* Cocoa.framework */; };
 		6033E243E63C15EFECF1F3FC /* SubsonicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000010 /* SubsonicClient.swift */; };
+		6052CCDBC7442F44A49645AE /* WrappedStoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F891E184828827D836EA91D /* WrappedStoryView.swift */; };
 		606EA6CB9CEA6481F2D26E66 /* AccentColourPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D53C72F337D1037C1F5737FC /* AccentColourPicker.swift */; };
 		60C8B2F4D550FADE0808953B /* LibraryIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64502E8462EF13D29F14FCBC /* LibraryIndex.swift */; };
 		62252FBEFF02B86C223B47F3 /* GeminiLyricsTranslator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191211819C3806D6918F41C4 /* GeminiLyricsTranslator.swift */; };
@@ -131,6 +132,7 @@
 		8BB5962C91AED0B33C182D53 /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
 		8C4E3E5E24DD37272F4E615D /* MacQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BE00E8954AF9B98264A367E /* MacQueueView.swift */; };
 		8C822FA98F2F275D8C714B74 /* SoulSyncWatchlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6920AE6BB3294A386042C0CE /* SoulSyncWatchlist.swift */; };
+		8D1E0512975F6844190DC9EF /* WrappedStoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F891E184828827D836EA91D /* WrappedStoryView.swift */; };
 		8D706C18449CC22207E37AA6 /* DisplayFontTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E318A59381EE24D9E5853599 /* DisplayFontTests.swift */; };
 		8ECFDA3BCBD4E40789C9E6EF /* EditorialCovers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000FD /* EditorialCovers.swift */; };
 		8F67E00B438C5558C819615D /* MacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A114C4B8E0319934E5F90216 /* MacRootView.swift */; };
@@ -187,6 +189,7 @@
 		B7A1C0DE0000000000000003 /* MacPlaylistSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7A1C0DE0000000000000002 /* MacPlaylistSheets.swift */; };
 		B9558E981AE98E721D07D4C4 /* TVLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E958A9F86CCDA99B7763BF /* TVLibraryView.swift */; };
 		BA24485DC9BEE6C8E7B32D7B /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000070 /* Localizable.xcstrings */; };
+		BA4C8DF36067BD9E1CC649DF /* OnboardingScenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E33A3134EA043B61147C9A7 /* OnboardingScenes.swift */; };
 		BC53C870BB1A0B5438F7E37E /* LyricsOnServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B473B77C7F39B4A0C89FD065 /* LyricsOnServer.swift */; };
 		BD810962312AF0BE4C7E7884 /* WatchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DC88F51AFE7480355DB58E /* WatchModel.swift */; };
 		BE7717DC0E34A6E6EE93DDFF /* PinSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = E789F4384A074A1B5C0CC509 /* PinSync.swift */; };
@@ -349,6 +352,7 @@
 		EEB81E7387698FE3B237C4D2 /* LastfmService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1000002000000000000009C /* LastfmService.swift */; };
 		EEC4D774C90B5E63999134FC /* PlaylistMembershipCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB4842AA570A859BDF677639 /* PlaylistMembershipCache.swift */; };
 		EFC1F463EFEDA6BEB4DD0790 /* SearchRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 196AB9045E589FCE18380A8A /* SearchRanking.swift */; };
+		F13149B57C27B3510BFF966B /* OnboardingShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 470202D5A9E542F4ED54FC6C /* OnboardingShaders.metal */; };
 		F26F166466BF8DD82ED63955 /* WatchOffline.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF3F4F29D9124042D5D4BBF /* WatchOffline.swift */; };
 		F4367F560164A20E2291171A /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000089 /* KeychainHelper.swift */; };
 		F4DFCA6D8B67546CD1643706 /* AuraTVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCA42F3CE0CB1D913AB4225 /* AuraTVApp.swift */; };
@@ -439,6 +443,7 @@
 		2AD61544CEEC4323BECB61A8 /* MacArtistsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacArtistsView.swift; sourceTree = "<group>"; };
 		2B3B5FB4CB9ED329D9240207 /* OfflineLibrary.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OfflineLibrary.swift; sourceTree = "<group>"; };
 		2DE0E8DD48DEACB25983419C /* MacCommands.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacCommands.swift; sourceTree = "<group>"; };
+		2E33A3134EA043B61147C9A7 /* OnboardingScenes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingScenes.swift; sourceTree = "<group>"; };
 		32819F6F8633F7FC7865BC8F /* WatchProtocol.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchProtocol.swift; sourceTree = "<group>"; };
 		332E4899162985D5A2BE70F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		35045E0AAD1E88D70B5D26E9 /* WatchChrome.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchChrome.swift; sourceTree = "<group>"; };
@@ -450,6 +455,7 @@
 		41DF74C93207494A7E1F1347 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		437B7190B573C0B80DC47A2B /* AuraWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuraWatchApp.swift; sourceTree = "<group>"; };
 		46EB97B0FBEAA4C3113B875E /* AuraWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AuraWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		470202D5A9E542F4ED54FC6C /* OnboardingShaders.metal */ = {isa = PBXFileReference; includeInIndex = 1; path = OnboardingShaders.metal; sourceTree = "<group>"; };
 		48463C5BC4D5C5785245C8BE /* LibraryCatalog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibraryCatalog.swift; sourceTree = "<group>"; };
 		485F5B2542F8B36B7981A86C /* MacServerSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacServerSetupView.swift; sourceTree = "<group>"; };
 		48B209994C8E36E0E73D9C5D /* MacEqualizerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacEqualizerView.swift; sourceTree = "<group>"; };
@@ -479,6 +485,7 @@
 		7B2C3D4E5F6A7B8C9D0E1F21 /* MacRadioView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacRadioView.swift; sourceTree = "<group>"; };
 		7B7AA32B23D8B48D503402F9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7C2346CD4BDCC7412882D966 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7F891E184828827D836EA91D /* WrappedStoryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WrappedStoryView.swift; sourceTree = "<group>"; };
 		833EA8A9845DA4856999EFD6 /* NowPlayingPage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NowPlayingPage.swift; sourceTree = "<group>"; };
 		84C2DD223260297B0A1DE6EA /* Backdrop.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Backdrop.swift; sourceTree = "<group>"; };
 		88855F68FD1F326A2B289FF3 /* MacGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacGrid.swift; sourceTree = "<group>"; };
@@ -1003,6 +1010,9 @@
 				FFB810DD93B73BC5A1020C86 /* LyricsSyncView.swift */,
 				3B9C92CA58D03F28FB04AFA4 /* MissingSongsSection.swift */,
 				126D52F5E3B9BA144C1DCFB0 /* MadeForYouSettingsView.swift */,
+				7F891E184828827D836EA91D /* WrappedStoryView.swift */,
+				2E33A3134EA043B61147C9A7 /* OnboardingScenes.swift */,
+				470202D5A9E542F4ED54FC6C /* OnboardingShaders.metal */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -1620,6 +1630,7 @@
 				FAA2AC0B54E14A7885B4F735 /* MacMenuBarPlayer.swift in Sources */,
 				54E73F6C0BB373ABDA9A758B /* RemoteLink.swift in Sources */,
 				0CDFB2972FCE4C7EADD888B3 /* AuraURL.swift in Sources */,
+				6052CCDBC7442F44A49645AE /* WrappedStoryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1774,6 +1785,9 @@
 				C3A3AB013B4A3A070D6614D2 /* LibraryIndex.swift in Sources */,
 				8AB6BDD0EF6E5539493C9466 /* RemoteLink.swift in Sources */,
 				7D2C565605C9D3B02FA1F409 /* AuraURL.swift in Sources */,
+				8D1E0512975F6844190DC9EF /* WrappedStoryView.swift in Sources */,
+				BA4C8DF36067BD9E1CC649DF /* OnboardingScenes.swift in Sources */,
+				F13149B57C27B3510BFF966B /* OnboardingShaders.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

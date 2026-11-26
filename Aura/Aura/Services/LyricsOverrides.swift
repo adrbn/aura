@@ -174,3 +174,47 @@ struct LyricsRetiming {
         return start + (end - start) * Double(index - a) / Double(b - a) + offset
     }
 }
+
+/// The words of every song whose lyrics have shown here, so Search can find a song by a
+/// line of it. It only knows songs played on this device: the server can't be searched by
+/// lyrics, and fetching every song's words up front would be thousands of requests.
+@MainActor
+final class LyricsIndex {
+    static let shared = LyricsIndex()
+
+    private struct Entry: Codable { let song: Song; let lines: [String] }
+    private lazy var entries: [String: Entry] = load()
+
+    private var file: URL? {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("lyrics-index.json")
+    }
+
+    private func load() -> [String: Entry] {
+        guard let file, let data = try? Data(contentsOf: file) else { return [:] }
+        return (try? JSONDecoder().decode([String: Entry].self, from: data)) ?? [:]
+    }
+
+    func add(_ song: Song, lines: [LyricsLine]) {
+        guard !song.isPreview else { return }
+        let texts = lines.map(\.text).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        guard !texts.isEmpty, entries[song.id]?.lines != texts else { return }
+        entries[song.id] = Entry(song: song, lines: texts)
+        // ponytail: rewrites the whole file per new song; split it if it ever grows past a few MB.
+        if let file, let data = try? JSONEncoder().encode(entries) { try? data.write(to: file, options: .atomic) }
+    }
+
+    /// Songs with a line holding the query, accents and case aside, and that line.
+    func search(_ query: String, limit: Int = 20) -> [(song: Song, line: String)] {
+        let q = SongQuery.fold(query)
+        guard q.count >= 3 else { return [] }
+        var out: [(song: Song, line: String)] = []
+        for entry in entries.values {
+            if let line = entry.lines.first(where: { SongQuery.fold($0).contains(q) }) {
+                out.append((entry.song, line))
+                if out.count == limit { break }
+            }
+        }
+        return out.sorted { $0.song.title < $1.song.title }
+    }
+}

@@ -19,6 +19,7 @@ enum SongSortOrder: String, CaseIterable {
     case year = "Year"
     case duration = "Duration"
     case recentlyAdded = "Recently Added"
+    case bpm = "BPM"
 }
 
 /// Per-fetch-type cache that survives navigation pushes.
@@ -182,6 +183,10 @@ struct SongsListView: View {
             sorted = songs.sorted { ($0.year ?? 0) < ($1.year ?? 0) }
         case .duration:
             sorted = songs.sorted { ($0.duration ?? 0) < ($1.duration ?? 0) }
+        case .bpm:
+            // Untagged songs (no BPM, or 0) go to the end either way round.
+            let tagged = songs.filter { ($0.bpm ?? 0) > 0 }.sorted { $0.bpm! < $1.bpm! }
+            return (sortAscending ? tagged : tagged.reversed()) + songs.filter { ($0.bpm ?? 0) == 0 }
         }
         return sortAscending ? sorted : sorted.reversed()
     }
@@ -241,7 +246,7 @@ struct SongsListView: View {
         guard !isStreaming, sortedSongs.count > 50 else { return false }
         switch sortOrder {
         case .title, .artist, .album: return true
-        case .none, .year, .duration, .recentlyAdded: return false
+        case .none, .year, .duration, .recentlyAdded, .bpm: return false
         }
     }
 
@@ -457,7 +462,9 @@ struct SongsListView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Picker("Sort By", selection: $sortOrder) {
-                        ForEach(SongSortOrder.allCases, id: \.self) { order in
+                        // BPM only where the files carry it.
+                        ForEach(SongSortOrder.allCases.filter { $0 != .bpm || sortedSongs.contains { ($0.bpm ?? 0) > 0 } },
+                                id: \.self) { order in
                             Text(label(for: order)).tag(order)
                         }
                     }

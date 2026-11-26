@@ -5,6 +5,9 @@ struct MiniPlayerView: View {
     @Environment(\.appAccentColor) private var accentColor
     /// On an iPad it is the only bar at the foot of the screen, at the scale of the rest.
     private let pad = BottomChrome.isPad
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// How far the cover and title follow a sideways swipe before the song changes.
+    @State private var dragX: CGFloat = 0
 
     var body: some View {
         if let song = player.currentSong {
@@ -12,6 +15,7 @@ struct MiniPlayerView: View {
                 player.isShowingNowPlaying = true
             } label: {
                 HStack(spacing: 12) {
+                    HStack(spacing: 12) {
                     // The list thumbnails' corner: ten cut into square frames near the
                     // artwork's edges, the hero's proportion (1.5) read as a sharp square.
                     CoverArtImage(coverArt: song.coverArt ?? song.albumId, size: pad ? 60 : 44, cornerRadius: pad ? 8 : 6,
@@ -40,12 +44,15 @@ struct MiniPlayerView: View {
                                 .lineLimit(1)
                         }
                     }
+                    }
+                    .offset(x: dragX)
+                    .opacity(1 - min(abs(dragX) / 160, 0.8))
 
                     Spacer()
 
                     if pad {
                         Button {
-                            player.previous()
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.previous()
                         } label: {
                             Image(systemName: "backward.fill")
                                 .font(.title2)
@@ -56,7 +63,7 @@ struct MiniPlayerView: View {
                     }
 
                     Button {
-                        player.togglePlayPause()
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.togglePlayPause()
                     } label: {
                         Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                             .font(pad ? .title : .title2)
@@ -66,7 +73,7 @@ struct MiniPlayerView: View {
                     .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
 
                     Button {
-                        player.next()
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred(); player.next()
                     } label: {
                         Image(systemName: "forward.fill")
                             .font(pad ? .title2 : .title3)
@@ -85,12 +92,32 @@ struct MiniPlayerView: View {
             .clipShape(RoundedRectangle(cornerRadius: pad ? 28 : 22))
             .padding(.horizontal, pad ? 24 : 16)
             .highPriorityGesture(
-                DragGesture(minimumDistance: 30)
+                DragGesture(minimumDistance: 20)
+                    .onChanged { value in
+                        // The cover and title follow the finger, sideways only.
+                        guard !reduceMotion, abs(value.translation.width) > abs(value.translation.height) else { return }
+                        // A tick where letting go starts to skip.
+                        if (abs(dragX) < 50) != (abs(value.translation.width) < 50) {
+                            UISelectionFeedbackGenerator().selectionChanged()
+                        }
+                        dragX = value.translation.width
+                    }
                     .onEnded { value in
-                        if value.translation.width < -50 || value.predictedEndTranslation.width < -100 {
-                            player.next()
-                        } else if value.translation.width > 50 || value.predictedEndTranslation.width > 100 {
-                            player.previous(restartsFirst: false)
+                        let forward = value.translation.width < -50 || value.predictedEndTranslation.width < -100
+                        let back = value.translation.width > 50 || value.predictedEndTranslation.width > 100
+                        guard forward || back else {
+                            withAnimation(.spring(duration: 0.3, bounce: 0)) { dragX = 0 }
+                            return
+                        }
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        let skip = { forward ? player.next() : player.previous(restartsFirst: false) }
+                        guard !reduceMotion else { skip(); return }
+                        // Out the side it was pushed, then the new song comes in from the other.
+                        let out: CGFloat = forward ? -220 : 220
+                        withAnimation(.easeIn(duration: 0.15)) { dragX = out } completion: {
+                            skip()
+                            dragX = -out
+                            withAnimation(.spring(duration: 0.35, bounce: 0)) { dragX = 0 }
                         }
                     }
             )

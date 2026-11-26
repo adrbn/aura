@@ -384,11 +384,8 @@ actor SubsonicClient {
         return try decodeSubsonic(data: data, key: "scanStatus", as: ScanStatus.self)
     }
 
-    /// Cached album count to avoid paginating all albums on every Home load.
-    /// Persisted to UserDefaults so it survives app relaunches.
-    private var _cachedAlbumCount: Int?
-    private var _albumCountDate: Date?
-
+    /// Album count saved per server in UserDefaults, so Home doesn't page through every
+    /// album on each load.
     private func loadPersistedAlbumCount(server: ServerConfig) -> (Int, Date)? {
         let ids = AppSettings.shared.selectedMusicFolderIds
         let folderId = ids.isEmpty ? "-1" : ids.sorted().map(String.init).joined(separator: ",")
@@ -408,16 +405,10 @@ actor SubsonicClient {
     }
 
     func getAlbumCount(server: ServerConfig) async throws -> Int {
-        // Return in-memory cache if recent
-        if let cached = _cachedAlbumCount, let d = _albumCountDate,
-           Date().timeIntervalSince(d) < 3600 {
-            return cached
-        }
-        // Fall back to persisted cache (survives app restart, 6hr TTL)
+        // The saved count, per server (an in-memory one wasn't, and showed the last
+        // server's count after a switch).
         if let (count, date) = loadPersistedAlbumCount(server: server),
            Date().timeIntervalSince(date) < 21600 {
-            _cachedAlbumCount = count
-            _albumCountDate = date
             return count
         }
         // Binary search: find the highest offset that still returns data.
@@ -429,8 +420,6 @@ actor SubsonicClient {
         if probe.isEmpty {
             // Fewer than 100 albums — just count directly
             let all = try await getAlbumList2(server: server, type: "alphabeticalByName", size: 500, offset: 0)
-            _cachedAlbumCount = all.count
-            _albumCountDate = Date()
             persistAlbumCount(all.count, server: server)
             return all.count
         }
@@ -447,8 +436,6 @@ actor SubsonicClient {
         }
         // low is the last offset that returned data → count = low + 1
         let total = low + 1
-        _cachedAlbumCount = total
-        _albumCountDate = Date()
         persistAlbumCount(total, server: server)
         return total
     }

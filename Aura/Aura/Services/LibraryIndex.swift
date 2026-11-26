@@ -55,6 +55,12 @@ final class LibraryIndex {
     }
 
     private var corpus: Corpus?
+
+    /// The library's first read, while it runs: songs read so far out of the server's count.
+    struct Building: Equatable { var loaded: Int; var total: Int }
+    private(set) var building: Building? {
+        didSet { NotificationCenter.default.post(name: .libraryIndexBuilding, object: nil) }
+    }
     private var refreshTask: Task<Void, Never>?
     private static let pageSize = 500
     /// The whole library is tens of megabytes: fetched again at most this often, however
@@ -176,7 +182,14 @@ final class LibraryIndex {
             guard saved?.stamp != stamp else { return }
             if saved != nil, let built = try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate,
                Date().timeIntervalSince(built) < Self.rebuildEvery { return }
-            guard let built = await Self.download(server: server) else { return }
+            // The first read of a library is shown on Home, so the slow first minutes read
+            // as the price of the instant pages that follow rather than as a slow app.
+            let first = saved == nil
+            if first { building = Building(loaded: 0, total: status.count ?? 0) }
+            defer { if first { building = nil } }
+            guard let built = await Self.download(server: server, progress: { loaded in
+                if first { self.building?.loaded = loaded }
+            }) else { return }
             let stored = Stored(stamp: stamp, songs: built.songs, albums: built.albums, artists: built.artists)
             corpus = await Task.detached(priority: .utility) {
                 if let data = try? JSONEncoder().encode(stored) { try? data.write(to: file, options: .atomic) }
@@ -188,11 +201,11 @@ final class LibraryIndex {
 
     /// Every song, album and artist, several pages at a time. nil when the server won't list
     /// them (an empty search lists every song on Navidrome; not every server does).
-    private static func download(server: ServerConfig) async -> (songs: [Song], albums: [Album], artists: [Artist])? {
+    private static func download(server: ServerConfig, progress: @escaping @MainActor (Int) -> Void) async -> (songs: [Song], albums: [Album], artists: [Artist])? {
         let client = SubsonicClient.shared
         do {
             async let artists = client.getArtists(server: server)
-            let songs = try await pages { offset in
+            let songs = try await pages(progress: progress) { offset in
                 try await client.search3(server: server, query: "", artistCount: 0, albumCount: 0,
                                          songCount: pageSize, songOffset: offset).song ?? []
             }
@@ -208,7 +221,8 @@ final class LibraryIndex {
     }
 
     /// Fetches pages four at a time until one comes back short.
-    private static func pages<T: Sendable>(_ fetch: @escaping @Sendable (Int) async throws -> [T]) async throws -> [T] {
+    private static func pages<T: Sendable>(progress: (@MainActor (Int) -> Void)? = nil,
+                                           _ fetch: @escaping @Sendable (Int) async throws -> [T]) async throws -> [T] {
         var all: [T] = []
         var offset = 0
         while true {
@@ -221,8 +235,10 @@ final class LibraryIndex {
             }
             for page in results {
                 all += page
-                if page.count < pageSize { return all }
+                // A library under a batch ends here; counted all the same, or Home sat at 0.
+                if page.count < pageSize { if let progress { let n = all.count; await progress(n) }; return all }
             }
+            if let progress { let n = all.count; await progress(n) }
             offset += batch * pageSize
         }
     }
@@ -303,4 +319,8 @@ final class LibraryIndex {
             || query.alternatives.joined().contains { $0.field != nil || $0.negated }
         return found.songs.isEmpty && found.albums.isEmpty && found.artists.isEmpty && !usesOperators ? nil : found
     }
+}
+
+extension Notification.Name {
+    static let libraryIndexBuilding = Notification.Name("libraryIndexBuilding")
 }

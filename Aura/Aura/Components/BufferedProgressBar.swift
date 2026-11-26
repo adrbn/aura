@@ -76,6 +76,9 @@ struct BufferedProgressBar: View {
             )
         }
         .frame(height: thumbSizeDragging)
+        // A light tap on grabbing the bar, then a tick at every tenth of the song.
+        .sensoryFeedback(.impact(weight: .light), trigger: isDragging) { _, new in new }
+        .sensoryFeedback(.selection, trigger: Int(dragValue * 10)) { _, _ in isDragging }
     }
 
     /// Width of the progress fill, never narrower than the bar is tall.

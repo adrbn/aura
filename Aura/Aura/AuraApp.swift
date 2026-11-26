@@ -140,16 +140,24 @@ struct AuraApp: App {
                 get: { SharePlay.shared.notice != nil },
                 set: { if !$0 { SharePlay.shared.notice = nil } })) {}
             .task {
+                // The welcome wall's covers load during the splash, so they are there when
+                // the first screen appears.
+                if isFirstLaunchFlow || serverManager.currentServer == nil {
+                    Task { await CoverWallStore.shared.load() }
+                }
                 // Pinned playlists follow you between devices; start listening for the
                 // Mac's changes before anything can touch them here.
                 PinSync.shared.start()
-                RemoteLink.shared.start()
+                // Looking for other Auras is what makes iOS ask for the local network: on a
+                // first launch it waits for the onboarding, which explains it first.
+                let onboarding = isFirstLaunchFlow || serverManager.currentServer == nil
+                if !onboarding { RemoteLink.shared.start() }
                 // Spoken shortcut phrases match a parameter only against values handed to
                 // the system in advance, so the vocabulary has to be refreshed whenever the
                 // library might have changed — a playlist made on the web will not be
                 // sayable until this runs.
                 AuraAppShortcuts.updateAppShortcutParameters()
-                SpokenRequestHandler.prepare()
+                SpokenRequestHandler.prepare(ask: !onboarding)
                 // Wordmark finishes its entrance at ~1.5s (0.3s delay + 1.2s ease); hold a
                 // beat past that, then fade. 2.5s felt draggy.
                 try? await Task.sleep(for: .seconds(1.8))
@@ -163,10 +171,13 @@ struct AuraApp: App {
                     showSplash = false
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .replayWelcome)) { _ in showOnboarding = true }
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView {
                     UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
                     isFirstLaunchFlow = false
+                    RemoteLink.shared.start()
+                    SpokenRequestHandler.prepare(ask: false)
                 }
                 .environment(serverManager)
                 .environment(audioPlayer)
@@ -393,8 +404,10 @@ final class SpokenRequestHandler: NSObject, INPlayMediaIntentHandling, INUpdateM
 
     /// Asks once for Siri, then tells it what it cannot guess: the names in this library,
     /// which it would otherwise mishear, and what gets played here, which it then offers.
-    static func prepare() {
+    /// Without `ask`, a Siri never asked about stays unasked: the onboarding asks for it.
+    static func prepare(ask: Bool = true) {
         AudioPlayer.shared.sourceStarted = donate
+        guard ask || INPreferences.siriAuthorizationStatus() != .notDetermined else { return }
         INPreferences.requestSiriAuthorization { status in
             guard status == .authorized else { return }
             Task {
