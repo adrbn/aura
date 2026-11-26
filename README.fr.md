@@ -268,7 +268,7 @@ Aux personnes dont les retours et les idées ont façonné Aura :
 
 Et aux personnes dont le code est dans Aura :
 
-- [Wai Han](https://github.com/waihankan) : le clavier de recherche qui se ferme au défilement, et le bouton rond pour fermer
+- [Wai Han](https://github.com/waihankan) : le clavier de recherche qui se ferme au défilement, le bouton rond pour fermer, et la correction de deux erreurs de compilation sous Xcode 26.6
 
 Et aux personnes dont les cafés sur [Ko-fi](https://ko-fi.com/adrbn) font vivre Aura : Greg et DummyHead.
 

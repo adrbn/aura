@@ -262,7 +262,7 @@ To the people whose reports and ideas shaped Aura:
 
 And to the people whose code is in Aura:
 
-- [Wai Han](https://github.com/waihankan): the search keyboard that goes away on scroll, and the round close button
+- [Wai Han](https://github.com/waihankan): the search keyboard that goes away on scroll, the round close button, and the fix for two compile errors under Xcode 26.6
 
 And to the people whose coffees on [Ko-fi](https://ko-fi.com/adrbn) keep Aura going: Greg and DummyHead.
 
