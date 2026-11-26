@@ -112,6 +112,9 @@ struct SearchResultsContainer: View {
     @State private var expandedSections: Set<String> = []
     /// Played songs with a line holding the query, and that line.
     @State private var lyricMatches: [(song: Song, line: String)] = []
+    /// The query `lyricMatches` answers: they are found on the phone, so they show before
+    /// the server's answer instead of waiting for it.
+    @State private var lyricsQuery = ""
     @State private var history = SearchHistory.shared
     /// What Deezer has for the query that the library doesn't.
     @State private var deezer = DeezerFinds()
@@ -237,13 +240,15 @@ struct SearchResultsContainer: View {
         // Answered on the phone, a search needs only to wait out a burst of typing.
         try? await Task.sleep(for: .milliseconds(LibraryIndex.shared.isReady ? 120 : 350))
         if Task.isCancelled { return }
+        lyricMatches = LyricsIndex.shared.search(q)
+        lyricsQuery = q
 
         let found = await SearchIndex.shared.search(query: q)
         if Task.isCancelled { return }
         results = found
         // Songs already among the results don't need listing again for their words.
         let shown = Set(found.songs.map(\.id))
-        lyricMatches = LyricsIndex.shared.search(q).filter { !shown.contains($0.song.id) }
+        lyricMatches = lyricMatches.filter { !shown.contains($0.song.id) }
         searchedQuery = q
         isSearching = false
     }
@@ -441,7 +446,7 @@ struct SearchResultsContainer: View {
                 sectionContent(section)
             }
 
-            if !lyricMatches.isEmpty && searchedQuery == trimmedQuery {
+            if !lyricMatches.isEmpty && lyricsQuery == trimmedQuery {
                 let isExpanded = expandedSections.contains("lyrics")
                 sectionHeader("In Lyrics", section: "lyrics", total: lyricMatches.count)
                 ForEach(isExpanded ? lyricMatches : Array(lyricMatches.prefix(collapsedLimit)), id: \.song.id) { match in
