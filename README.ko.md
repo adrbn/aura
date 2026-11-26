@@ -122,7 +122,7 @@ Apple Watch, CarPlay, Mac, Apple TV에 들어와요. 원래 음질 그대로 스
 </p>
 <p align="center"><sub>Mac 캡처는 Navidrome의 공개 데모 서버를 사용했어요.</sub></p>
 
-**Apple TV**(tvOS 26, 1.8부터 App Store에서, 그 전까지는 [TestFlight](https://testflight.apple.com/join/pEUEBUbm)에서): 믹스가 있는 홈, 정렬과 필터가 있는 보관함, 검색, 앨범과 아티스트 페이지, 그리고 흐린 앨범 커버 위에 전체 화면으로 뜨는 지금 재생 중. 가사는 노래에 맞춰 흘러가요. 리모컨을 5초 동안 만지지 않으면 컨트롤이 사라지고 커버, 노래, 가사만 남고, 가사는 TV, iPhone, Mac에서 더 크게 설정할 수 있어요.
+**Apple TV**(tvOS 26, App Store에서): 믹스가 있는 홈, 정렬과 필터가 있는 보관함, 검색, 앨범과 아티스트 페이지, 그리고 흐린 앨범 커버 위에 전체 화면으로 뜨는 지금 재생 중. 가사는 노래에 맞춰 흘러가요. 리모컨을 5초 동안 만지지 않으면 컨트롤이 사라지고 커버, 노래, 가사만 남고, 가사는 TV, iPhone, Mac에서 더 크게 설정할 수 있어요.
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Apple TV의 Aura: 동기화된 가사와 지금 재생 중, 컨트롤 숨김" />
@@ -143,7 +143,7 @@ Apple Watch, CarPlay, Mac, Apple TV에 들어와요. 원래 음질 그대로 스
 
 | | App Store | IPA(사이드로드) | Mac(미리 보기) |
 |---|---|---|---|
-| 지원 기기 | iPhone, iPad, Apple Watch, CarPlay, Apple TV(1.8부터) | iPhone, iPad, Apple Watch | Mac |
+| 지원 기기 | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
 | 요구 사항 | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, 사이드로드 도구 | macOS 26, Apple 실리콘 또는 Intel |
 | CarPlay | 지원 | 미지원: 재서명하면 Apple의 CarPlay 권한이 빠져요 | – |
 | Get It(내 [slskd](https://github.com/slskd/slskd)를 통한 Soulseek) | 미지원 | 선택 사용, 설정 → Developer Options | 선택 사용, 설정 → Developer |

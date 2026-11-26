@@ -122,7 +122,7 @@ Radar、Wrapped、ダウンロード、イコライザ、メニューバーの�
 </p>
 <p align="center"><sub>Mac の画面は Navidrome の公開デモサーバを使っています。</sub></p>
 
-**Apple TV**（tvOS 26、1.8 から App Store で、それまでは [TestFlight](https://testflight.apple.com/join/pEUEBUbm) で）：ミックスのあるホーム、並べ替えとフィルタのあるライブラリ、検索、アルバムとアーティストのページ、そしてぼかしたジャケットの上に全画面で表示される再生中画面。歌詞は曲に合わせて進みます。リモコンに5秒触れないとコントロールが消え、ジャケット、曲名、歌詞だけが残り、歌詞は TV、iPhone、Mac から大きくできます。
+**Apple TV**（tvOS 26、App Store で）：ミックスのあるホーム、並べ替えとフィルタのあるライブラリ、検索、アルバムとアーティストのページ、そしてぼかしたジャケットの上に全画面で表示される再生中画面。歌詞は曲に合わせて進みます。リモコンに5秒触れないとコントロールが消え、ジャケット、曲名、歌詞だけが残り、歌詞は TV、iPhone、Mac から大きくできます。
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Apple TV の Aura：同期歌詞つきの再生中画面、コントロールは非表示" />
@@ -143,7 +143,7 @@ Radar、Wrapped、ダウンロード、イコライザ、メニューバーの�
 
 | | App Store | IPA（サイドロード） | Mac（プレビュー） |
 |---|---|---|---|
-| 対応デバイス | iPhone、iPad、Apple Watch、CarPlay、Apple TV（1.8 から） | iPhone、iPad、Apple Watch | Mac |
+| 対応デバイス | iPhone、iPad、Apple Watch、CarPlay、Apple TV | iPhone、iPad、Apple Watch | Mac |
 | 必要なもの | iOS 26、iPadOS 26、watchOS 26、tvOS 26 | iOS 26、iPadOS 26、watchOS 26、サイドロードツール | macOS 26、Apple シリコンまたは Intel |
 | CarPlay | あり | なし：再署名すると Apple の CarPlay エンタイトルメントが外れます | – |
 | Get It（ご自身の [slskd](https://github.com/slskd/slskd) 経由の Soulseek） | なし | オプトイン、設定 → Developer Options | オプトイン、設定 → Developer |

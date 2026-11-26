@@ -123,7 +123,7 @@ full screen; Radar, Year Wrapped, downloads, the equaliser and a menu bar player
 </p>
 <p align="center"><sub>The Mac captures use Navidrome's public demo server.</sub></p>
 
-**Apple TV** (tvOS 26, on the App Store from 1.8, and on [TestFlight](https://testflight.apple.com/join/pEUEBUbm) until then): Home with the mixes, the Library with its sorts and filters, Search, album and artist pages, and Now Playing full screen over the blurred cover, with the lyrics following the song. Left alone for five seconds, the controls fade and the screen keeps only the cover, the song and the lyrics, which can be set larger from the TV, the iPhone or the Mac.
+**Apple TV** (tvOS 26, on the App Store): Home with the mixes, the Library with its sorts and filters, Search, album and artist pages, and Now Playing full screen over the blurred cover, with the lyrics following the song. Left alone for five seconds, the controls fade and the screen keeps only the cover, the song and the lyrics, which can be set larger from the TV, the iPhone or the Mac.
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura on Apple TV: Now Playing with synced lyrics, the controls faded" />
@@ -144,7 +144,7 @@ All free, with no account and no in-app purchases.
 
 | | App Store | IPA (sideload) | Mac (preview) |
 |---|---|---|---|
-| Runs on | iPhone, iPad, Apple Watch, CarPlay, Apple TV (from 1.8) | iPhone, iPad, Apple Watch | Mac |
+| Runs on | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
 | Needs | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, a sideloading tool | macOS 26, Apple silicon or Intel |
 | CarPlay | Yes | No: re-signing drops Apple's CarPlay entitlement | – |
 | Get It (Soulseek via your own [slskd](https://github.com/slskd/slskd)) | No | Opt-in, Settings → Developer Options | Opt-in, Settings → Developer |

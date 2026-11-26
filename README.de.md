@@ -124,7 +124,7 @@ Menüleiste.
 </p>
 <p align="center"><sub>Die Mac-Aufnahmen nutzen den öffentlichen Demo-Server von Navidrome.</sub></p>
 
-**Apple TV** (tvOS 26, ab 1.8 im App Store und bis dahin über [TestFlight](https://testflight.apple.com/join/pEUEBUbm)): Start mit den Mixen, die Mediathek mit Sortierungen und Filtern, die Suche, Album- und Interpretenseiten und Wird gerade wiedergegeben im Vollbild über dem unscharfen Cover, mit dem Songtext im Takt des Songs. Fünf Sekunden ohne Fernbedienung, und die Steuerung blendet aus: Es bleiben nur Cover, Song und Songtext, der sich vom Fernseher, vom iPhone oder vom Mac aus größer stellen lässt.
+**Apple TV** (tvOS 26, im App Store): Start mit den Mixen, die Mediathek mit Sortierungen und Filtern, die Suche, Album- und Interpretenseiten und Wird gerade wiedergegeben im Vollbild über dem unscharfen Cover, mit dem Songtext im Takt des Songs. Fünf Sekunden ohne Fernbedienung, und die Steuerung blendet aus: Es bleiben nur Cover, Song und Songtext, der sich vom Fernseher, vom iPhone oder vom Mac aus größer stellen lässt.
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura auf Apple TV: Wird gerade wiedergegeben mit synchronem Songtext, Steuerung ausgeblendet" />
@@ -145,7 +145,7 @@ Alles kostenlos, ohne Konto und ohne In-App-Käufe.
 
 | | App Store | IPA (Sideload) | Mac (Vorschau) |
 |---|---|---|---|
-| Läuft auf | iPhone, iPad, Apple Watch, CarPlay, Apple TV (ab 1.8) | iPhone, iPad, Apple Watch | Mac |
+| Läuft auf | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
 | Benötigt | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, ein Sideloading-Tool | macOS 26, Apple Silicon oder Intel |
 | CarPlay | Ja | Nein: Das Neusignieren entfernt Apples CarPlay-Berechtigung | – |
 | Get It (Soulseek über dein eigenes [slskd](https://github.com/slskd/slskd)) | Nein | Optional, Einstellungen → Developer Options | Optional, Einstellungen → Developer |

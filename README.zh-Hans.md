@@ -120,7 +120,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 </p>
 <p align="center"><sub>Mac 截图使用的是 Navidrome 的公开演示服务器。</sub></p>
 
-**Apple TV**（tvOS 26，1.8 起登陆 App Store，在此之前通过 [TestFlight](https://testflight.apple.com/join/pEUEBUbm)）：带混音的首页、可排序和筛选的资料库、搜索、专辑和艺人页面，以及铺在模糊封面上的全屏正在播放，歌词随歌曲滚动。五秒不碰遥控器，控制按钮就会淡出，屏幕上只留下封面、歌曲和歌词，歌词可以在电视、iPhone 或 Mac 上调大。
+**Apple TV**（tvOS 26，已登陆 App Store）：带混音的首页、可排序和筛选的资料库、搜索、专辑和艺人页面，以及铺在模糊封面上的全屏正在播放，歌词随歌曲滚动。五秒不碰遥控器，控制按钮就会淡出，屏幕上只留下封面、歌曲和歌词，歌词可以在电视、iPhone 或 Mac 上调大。
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Apple TV 上的 Aura：带同步歌词的正在播放，控制按钮已隐藏" />
@@ -141,7 +141,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 
 | | App Store | IPA（侧载） | Mac（预览版） |
 |---|---|---|---|
-| 运行于 | iPhone、iPad、Apple Watch、CarPlay、Apple TV（1.8 起） | iPhone、iPad、Apple Watch | Mac |
+| 运行于 | iPhone、iPad、Apple Watch、CarPlay、Apple TV | iPhone、iPad、Apple Watch | Mac |
 | 需要 | iOS 26、iPadOS 26、watchOS 26、tvOS 26 | iOS 26、iPadOS 26、watchOS 26，一个侧载工具 | macOS 26，Apple 芯片或 Intel |
 | CarPlay | 有 | 无：重新签名会丢失 Apple 的 CarPlay 授权 | – |
 | Get It（通过你自己的 [slskd](https://github.com/slskd/slskd) 使用 Soulseek） | 无 | 需手动开启，设置 → Developer Options | 需手动开启，设置 → Developer |

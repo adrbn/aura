@@ -125,7 +125,7 @@ lecteur dans la barre des menus.
 </p>
 <p align="center"><sub>Les captures Mac viennent du serveur de démo public de Navidrome.</sub></p>
 
-**Apple TV** (tvOS 26, sur l'App Store à partir de la 1.8, et sur [TestFlight](https://testflight.apple.com/join/pEUEBUbm) d'ici là) : l'Accueil avec les mix, la Bibliothèque avec ses tris et filtres, la Recherche, les pages d'album et d'artiste, et En cours de lecture en plein écran sur la pochette floutée, avec les paroles qui suivent la chanson. Sans toucher la télécommande pendant cinq secondes, les contrôles s'effacent et l'écran ne garde que la pochette, la chanson et les paroles, qu'on peut agrandir depuis la TV, l'iPhone ou le Mac.
+**Apple TV** (tvOS 26, sur l'App Store) : l'Accueil avec les mix, la Bibliothèque avec ses tris et filtres, la Recherche, les pages d'album et d'artiste, et En cours de lecture en plein écran sur la pochette floutée, avec les paroles qui suivent la chanson. Sans toucher la télécommande pendant cinq secondes, les contrôles s'effacent et l'écran ne garde que la pochette, la chanson et les paroles, qu'on peut agrandir depuis la TV, l'iPhone ou le Mac.
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura sur Apple TV : En cours de lecture avec les paroles synchronisées, contrôles effacés" />
@@ -146,7 +146,7 @@ Tout est gratuit, sans compte et sans achats intégrés.
 
 | | App Store | IPA (à installer soi-même) | Mac (aperçu) |
 |---|---|---|---|
-| Fonctionne sur | iPhone, iPad, Apple Watch, CarPlay, Apple TV (dès la 1.8) | iPhone, iPad, Apple Watch | Mac |
+| Fonctionne sur | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
 | Demande | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, un outil de sideload | macOS 26, Apple silicon ou Intel |
 | CarPlay | Oui | Non : re-signer fait perdre l'autorisation CarPlay d'Apple | – |
 | Get It (Soulseek via votre propre [slskd](https://github.com/slskd/slskd)) | Non | À activer, Réglages → Developer Options | À activer, Réglages → Developer |

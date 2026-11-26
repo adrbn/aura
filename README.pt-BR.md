@@ -123,7 +123,7 @@ rádio, avaliar e baixar; letras em tela cheia; Radar, Wrapped, downloads, o equ
 </p>
 <p align="center"><sub>As capturas do Mac usam o servidor de demonstração público do Navidrome.</sub></p>
 
-**Apple TV** (tvOS 26, na App Store a partir da 1.8, e no [TestFlight](https://testflight.apple.com/join/pEUEBUbm) até lá): Início com os mixes, a Biblioteca com ordenações e filtros, a Busca, as páginas de álbum e de artista, e o Tocando agora em tela cheia sobre a capa desfocada, com a letra acompanhando a música. Depois de cinco segundos sem tocar no controle, os botões somem e a tela fica só com a capa, a música e a letra, que podem ser ampliadas pela TV, pelo iPhone ou pelo Mac.
+**Apple TV** (tvOS 26, na App Store): Início com os mixes, a Biblioteca com ordenações e filtros, a Busca, as páginas de álbum e de artista, e o Tocando agora em tela cheia sobre a capa desfocada, com a letra acompanhando a música. Depois de cinco segundos sem tocar no controle, os botões somem e a tela fica só com a capa, a música e a letra, que podem ser ampliadas pela TV, pelo iPhone ou pelo Mac.
 
 <p align="center">
   <img src="docs/assets/tv-1-lyrics.webp" width="49%" alt="Aura na Apple TV: Tocando agora com a letra sincronizada, sem controles" />
@@ -144,7 +144,7 @@ Tudo gratuito, sem conta e sem compras dentro do app.
 
 | | App Store | IPA (sideload) | Mac (prévia) |
 |---|---|---|---|
-| Funciona em | iPhone, iPad, Apple Watch, CarPlay, Apple TV (a partir da 1.8) | iPhone, iPad, Apple Watch | Mac |
+| Funciona em | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
 | Requer | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, uma ferramenta de sideload | macOS 26, Apple silicon ou Intel |
 | CarPlay | Sim | Não: assinar de novo remove a permissão de CarPlay da Apple | – |
 | Get It (Soulseek pelo seu próprio [slskd](https://github.com/slskd/slskd)) | Não | Opcional, Ajustes → Developer Options | Opcional, Ajustes → Developer |
