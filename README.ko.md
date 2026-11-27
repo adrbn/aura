@@ -53,7 +53,7 @@ Apple Watch, CarPlay, Mac, Apple TV에 들어와요. 원래 음질 그대로 스
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="프리셋 사이를 오가는 5밴드 이퀄라이저 곡선" width="100%"><br><b>무손실, 제대로 된 이퀄라이저까지</b><br><sub>FLAC과 ALAC은 무손실 그대로, 느린 회선에서는 128, 192, 320kbps. 60Hz부터 14kHz까지 5개 밴드, 드래그하는 곡선 하나, 프리셋 15개, ReplayGain.</sub></td>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="앱에서 캡처한 가사 화면" width="100%"><br><b>곡에 맞춘 가사</b><br><sub>서버에 단어별 타이밍이 있으면 단어 단위로, 없으면 줄 단위로. 먼저 내 서버에서, 그다음 <a href="https://lrclib.net">LRCLIB</a>에서 가져와요. 줄을 탭하면 그 부분으로 이동해요.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="앱의 Made For You 커버가 지나가는 모습" width="100%"><br><b>Made For You</b><br><sub>시간대, 분위기, 장르별 믹스마다 고유한 커버가 있고, 좋아요한 곡, 가까이에서 들은 곡, 아직 안 들은 곡을 끝없이 이어 주는 믹스 Nonstop도 있어요. 인스턴트 믹스는 어떤 곡이나 아티스트에서든 라디오를 시작해요. Wrapped는 나의 한 해를 집계해요.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="앱의 Made For You 커버가 지나가는 모습" width="100%"><br><b>Made For You</b><br><sub>시간대, 분위기, 장르별 믹스마다 고유한 커버가 있고, 좋아요한 곡, 가까이에서 들은 곡, 아직 안 들은 곡을 끝없이 이어 주는 믹스 Nonstop도 있어요. 인스턴트 믹스는 어떤 곡이나 아티스트에서든 라디오를 시작해요. Wrapped는 나의 한 해를 스토리로 보여 주고, 공유할 요약도 만들어요.</sub></td>
   </tr>
   <tr>
     <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="내 아티스트의 신보를 보여 주는 Radar, 앱에서 캡처" width="100%"><br><b>Radar</b><br><sub>가장 많이 듣는 아티스트의 이번 달 신보. 서버에 있는 곡은 전체를, 나머지는 30초 미리 듣기로 재생해요.</sub></td>
@@ -78,7 +78,7 @@ Apple Watch, CarPlay, Mac, Apple TV에 들어와요. 원래 음질 그대로 스
 
 **보관함**
 
-- **하나의 검색**으로 곡, 앨범, 아티스트, 재생목록을 오타까지 감안해 찾아요. 검색은 iPhone에서 보관함 전체를 대상으로 실행되고, `artist:`, `album:`, `genre:`, `year:`를 한 번의 탭으로 쓸 수 있어요. 다른 서비스의 곡 링크를 붙여 넣으면 여기서 찾아 주고, 곡 목록을 음악의 언어로 필터링할 수 있어요.
+- **하나의 검색**으로 곡, 앨범, 아티스트, 재생목록을 오타까지 감안해 찾아요. 검색은 iPhone에서 보관함 전체를 대상으로 실행되고, `artist:`, `album:`, `genre:`, `year:`를 한 번의 탭으로 쓸 수 있어요. 다른 서비스의 곡 링크를 붙여 넣으면 여기서 찾아 주고, 곡 목록을 음악의 언어로 필터링할 수 있어요. 가사 한 줄로도 곡을 찾아요.
 - **내 방식대로 재생목록**: 그리드 또는 목록, 필터, 내 사진으로 만든 커버, `폴더/이름` 형식의 폴더, 추천 섹션과 곡 추가, 실행 취소, 그리고 곡마다 첫 번째 사본만 남기는 중복 항목 제거. 어떤 라디오든 재생목록으로 저장할 수 있고, 변경 사항은 서버로 가요.
 - **평점, 스크로블, 재생목록 편집**은 서버로 전송되고, 오프라인일 때는 iPhone에서 기다려요. 즐겨찾기도 마찬가지예요. 재생목록을 다운로드된 상태로 두면 새로 추가된 곡도 알아서 다운로드돼요.
 - **여러 서버**를 각각 선택적인 홈 네트워크 주소와 사용자 지정 헤더로 쓸 수 있고, 여러 음악 폴더를 동시에 사용할 수 있어요.

@@ -54,7 +54,7 @@ download still there with no signal.
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="A five-band equalizer curve moving between presets" width="100%"><br><b>Lossless, with a real equalizer</b><br><sub>FLAC and ALAC stay lossless, or 128, 192 or 320 kbps on a slow line. Five bands from 60 Hz to 14 kHz, one curve you drag, 15 presets, ReplayGain.</sub></td>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="The lyrics screen, captured from the app" width="100%"><br><b>Lyrics in time</b><br><sub>Word by word when your server has per-word timing, line by line otherwise. From your server first, then <a href="https://lrclib.net">LRCLIB</a>. Tap a line to jump to it.</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Made For You covers from the app sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover, and Nonstop, an endless mix of liked, nearby and unheard songs. Instant Mix starts a radio from any song or artist. Year Wrapped counts your year.</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="Made For You covers from the app sliding past" width="100%"><br><b>Made For You</b><br><sub>Mixes by time of day, mood and genre, each with its own cover, and Nonstop, an endless mix of liked, nearby and unheard songs. Instant Mix starts a radio from any song or artist. Year Wrapped tells your year as a story, with a summary to share.</sub></td>
   </tr>
   <tr>
     <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="The Radar listing new releases from your artists, captured from the app" width="100%"><br><b>Radar</b><br><sub>This month's releases from the artists you play most. What your server has plays in full; the rest plays as 30-second previews.</sub></td>
@@ -79,7 +79,7 @@ download still there with no signal.
 
 **Your library**
 
-- **One search** across songs, albums, artists and playlists that forgives typos, run on the iPhone over your whole library, with `artist:`, `album:`, `genre:` and `year:` one tap away. Paste a song link from another service to find it there, and filter the song lists by the language of the music.
+- **One search** across songs, albums, artists and playlists that forgives typos, run on the iPhone over your whole library, with `artist:`, `album:`, `genre:` and `year:` one tap away. Paste a song link from another service to find it there, and filter the song lists by the language of the music. A line of lyrics finds its song too.
 - **Playlists your way**: a grid or a list, filters, covers from your photos, folders named `Folder/Name`, a Suggestions section and Add Songs, Undo, and Remove Duplicates, which keeps the first copy of each song. Save any radio as a playlist; changes go to your server.
 - **Ratings, scrobbling and playlist edits** go to your server, and wait on the iPhone while you're offline, favourites too. Keep a playlist downloaded: its new songs download on their own.
 - **Several servers**, each with an optional home-network address and custom headers, and several music folders at once.

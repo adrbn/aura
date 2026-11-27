@@ -53,7 +53,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
   <tr>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-eq.svg" alt="在预设之间变化的五段均衡器曲线" width="100%"><br><b>无损，配真正的均衡器</b><br><sub>FLAC 和 ALAC 保持无损，网速慢时可选 128、192 或 320 kbps。从 60 Hz 到 14 kHz 的五个频段，一条可拖动的曲线，15 个预设，ReplayGain。</sub></td>
     <td align="center" valign="top" width="33%"><img src="docs/assets/card-lyrics.svg" alt="应用中截取的歌词界面" width="100%"><br><b>同步歌词</b><br><sub>服务器有逐字时间轴时逐字显示，否则逐行显示。先从你的服务器获取，再从 <a href="https://lrclib.net">LRCLIB</a> 获取。轻点一行即可跳转。</sub></td>
-    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="应用中滑过的为你推荐封面" width="100%"><br><b>为你推荐</b><br><sub>按时段、心情和风格生成的混音，各有自己的封面，还有 Nonstop，一个把喜欢的、附近的和没听过的歌曲连绵不断混在一起的混音。即时混音可以从任何歌曲或艺人开始一个电台。音乐回顾统计你的一年。</sub></td>
+    <td align="center" valign="top" width="33%"><img src="docs/assets/card-mixes.svg" alt="应用中滑过的为你推荐封面" width="100%"><br><b>为你推荐</b><br><sub>按时段、心情和风格生成的混音，各有自己的封面，还有 Nonstop，一个把喜欢的、附近的和没听过的歌曲连绵不断混在一起的混音。即时混音可以从任何歌曲或艺人开始一个电台。音乐回顾以故事的形式讲述你的一年，并附上可分享的总结。</sub></td>
   </tr>
   <tr>
     <td align="center" valign="top"><img src="docs/assets/card-radar.svg" alt="应用中截取的 Radar，列出你的艺人的新发行" width="100%"><br><b>Radar</b><br><sub>你最常听的艺人本月的新发行。服务器上有的完整播放，其余以 30 秒试听播放。</sub></td>
@@ -78,7 +78,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 
 **你的资料库**
 
-- **一个搜索**覆盖歌曲、专辑、艺人和播放列表，容忍拼写错误，在 iPhone 上对整个资料库执行，`artist:`、`album:`、`genre:` 和 `year:` 一点即用。粘贴其他服务的歌曲链接即可在这里找到它，还可以按音乐的语言筛选歌曲列表。
+- **一个搜索**覆盖歌曲、专辑、艺人和播放列表，容忍拼写错误，在 iPhone 上对整个资料库执行，`artist:`、`album:`、`genre:` 和 `year:` 一点即用。粘贴其他服务的歌曲链接即可在这里找到它，还可以按音乐的语言筛选歌曲列表。输入一句歌词也能找到对应的歌曲。
 - **随你安排的播放列表**：网格或列表、筛选、用你的照片做封面、以 `文件夹/名称` 命名的文件夹、推荐区域，以及添加歌曲、撤销和移除重复项（保留每首歌的第一份）。任何电台都能存为播放列表；更改会同步到你的服务器。
 - **评分、Scrobble 和播放列表编辑**会发送到你的服务器，离线时先保存在 iPhone 上，喜爱也一样。保持一个播放列表处于已下载状态：其中的新歌会自动下载。
 - **多台服务器**，每台都可选设置家庭网络地址和自定义请求头，还能同时使用多个音乐文件夹。
