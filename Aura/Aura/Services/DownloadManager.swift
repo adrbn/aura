@@ -64,14 +64,16 @@ final class DownloadManager: NSObject {
         didSet {
             // Persist only on membership/state changes — progress ticks mutate the
             // array many times per second and don't need to hit disk.
-            let states = Dictionary(queueItems.map { ($0.id, $0.state.rawValue) }, uniquingKeysWith: { $1 })
-            if states != lastSavedQueueStates {
-                lastSavedQueueStates = states
+            let states = Dictionary(queueItems.map { ($0.id, $0.state) }, uniquingKeysWith: { $1 })
+            if states != itemStates {
+                itemStates = states
                 saveQueue()
             }
         }
     }
-    private var lastSavedQueueStates: [String: String] = [:]
+    /// Per-song queue state for row badges; only updates on state transitions,
+    /// not on progress ticks, so idle rows don't re-render while another song downloads.
+    private(set) var itemStates: [String: DownloadItemState] = [:]
     // Group download tracking: maps a groupId (album/playlist id) to songIds
     var activeGroupDownloads: [String: Set<String>] = [:]
     var groupDownloadCompleted: [String: Int] = [:]
@@ -727,6 +729,13 @@ final class DownloadManager: NSObject {
         activeTasks[songId]?.cancel()
         activeTasks.removeValue(forKey: songId)
         deleteResumeData(for: songId)
+        // A waiting or paused item has no in-flight task whose catch block would
+        // mark it cancelled, so update its state here.
+        if !activeDownloads.contains(songId),
+           let idx = queueItems.firstIndex(where: { $0.id == songId }),
+           queueItems[idx].state == .waiting || queueItems[idx].state == .paused {
+            queueItems[idx].state = .cancelled
+        }
     }
 
     @MainActor
@@ -872,6 +881,7 @@ final class DownloadManager: NSObject {
             isHalted = false
             for song in songs { cancelledIds.remove(song.id); pausedIds.remove(song.id) }
         }
+        guard ServerManager.shared.currentServer != nil else { return }
         guard hasSufficientDiskSpace() else {
             AppLogger.shared.log("❌ Album download blocked (low disk space): \(songs.count) songs")
             ToastManager.shared.show(String(localized: "Not enough free storage to download"), icon: "exclamationmark.triangle.fill")
@@ -885,13 +895,26 @@ final class DownloadManager: NSObject {
         groupDownloadTotal[gid] = songs.count
         groupDownloadCompleted[gid] = 0
         totalQueueCount += songs.count
-        // Enqueue the whole batch up-front so Pause All / Stop All (and the queue UI)
-        // see every pending song, not just the one currently downloading.
-        for song in songs where !isDownloaded(song.id) {
-            if !queueItems.contains(where: { $0.id == song.id }) {
-                queueItems.append(DownloadQueueItem(id: song.id, song: song, state: .waiting, progress: 0))
+        // Enqueue (or reset) the whole batch up-front in one assignment so Pause All /
+        // Stop All, the queue UI and row badges see every pending song without rewriting
+        // the queue JSON per track.
+        var updatedQueue = queueItems
+        var queueChanged = false
+        for song in songs where !isDownloaded(song.id) && !activeDownloads.contains(song.id)
+                                && !cancelledIds.contains(song.id) && !pausedIds.contains(song.id) {
+            if let idx = updatedQueue.firstIndex(where: { $0.id == song.id }) {
+                if updatedQueue[idx].state != .waiting {
+                    updatedQueue[idx].state = .waiting
+                    updatedQueue[idx].progress = 0
+                    updatedQueue[idx].error = nil
+                    queueChanged = true
+                }
+            } else {
+                updatedQueue.append(DownloadQueueItem(id: song.id, song: song, state: .waiting, progress: 0))
+                queueChanged = true
             }
         }
+        if queueChanged { queueItems = updatedQueue }
         for song in songs {
             // Halting stops the whole driver, not just the active item.
             if isHalted || activeGroupDownloads[gid] == nil { break }
