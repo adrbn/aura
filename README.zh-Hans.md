@@ -142,7 +142,7 @@ Radar 列出你的艺人的新发行，下载过的一切在没有信号时依�
 | | App Store | IPA（侧载） | Mac（预览版） |
 |---|---|---|---|
 | 运行于 | iPhone、iPad、Apple Watch、CarPlay、Apple TV | iPhone、iPad、Apple Watch | Mac |
-| 需要 | iOS 26、iPadOS 26、watchOS 26、tvOS 26 | iOS 26、iPadOS 26、watchOS 26，一个侧载工具 | macOS 26，Apple 芯片或 Intel |
+| 需要 | iOS 18、iPadOS 18、watchOS 26、tvOS 26 | iOS 18、iPadOS 18、watchOS 26，一个侧载工具 | macOS 26，Apple 芯片或 Intel |
 | CarPlay | 有 | 无：重新签名会丢失 Apple 的 CarPlay 授权 | – |
 | Get It（通过你自己的 [slskd](https://github.com/slskd/slskd) 使用 Soulseek） | 无 | 需手动开启，设置 → Developer Options | 需手动开启，设置 → Developer |
 | NetEase 歌词时间轴检查 | 无 | 有 | 有 |

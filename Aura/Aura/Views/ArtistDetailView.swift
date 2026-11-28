@@ -447,7 +447,7 @@ extension View {
             }
             // Our own fade where the songs meet the bar, not the system's edge effect: that one
             // switched itself off part-way down the page, when the bar took the artist's name.
-            .scrollEdgeEffectHidden(true, for: .top)
+            .auraScrollEdgeEffectHidden(true)
             .background(Color.themeBg)
             // Once the portrait has scrolled away, the bar says whose page this is.
             .navigationTitle(scroll.wrappedValue.showsTitle ? title : "")

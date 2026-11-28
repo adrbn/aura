@@ -144,7 +144,7 @@ Radar、Wrapped、ダウンロード、イコライザ、メニューバーの�
 | | App Store | IPA（サイドロード） | Mac（プレビュー） |
 |---|---|---|---|
 | 対応デバイス | iPhone、iPad、Apple Watch、CarPlay、Apple TV | iPhone、iPad、Apple Watch | Mac |
-| 必要なもの | iOS 26、iPadOS 26、watchOS 26、tvOS 26 | iOS 26、iPadOS 26、watchOS 26、サイドロードツール | macOS 26、Apple シリコンまたは Intel |
+| 必要なもの | iOS 18、iPadOS 18、watchOS 26、tvOS 26 | iOS 18、iPadOS 18、watchOS 26、サイドロードツール | macOS 26、Apple シリコンまたは Intel |
 | CarPlay | あり | なし：再署名すると Apple の CarPlay エンタイトルメントが外れます | – |
 | Get It（ご自身の [slskd](https://github.com/slskd/slskd) 経由の Soulseek） | なし | オプトイン、設定 → Developer Options | オプトイン、設定 → Developer |
 | NetEase による歌詞タイミングの確認 | なし | あり | あり |

@@ -116,7 +116,7 @@ struct LyricsSyncView: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.8))
                     .frame(width: 36, height: 36)
-                    .glassEffect(.regular, in: Circle())
+                    .auraGlass(in: Circle())
             }
             .buttonStyle(.plain)
             #if os(macOS)
@@ -141,7 +141,7 @@ struct LyricsSyncView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
                         .frame(width: 36, height: 36)
-                        .glassEffect(.regular, in: Circle())
+                        .auraGlass(in: Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Restore Original Timing")
@@ -159,7 +159,7 @@ struct LyricsSyncView: View {
                 .padding(.horizontal, 18)
                 .frame(height: 36)
                 // Lit in the accent once there's something to keep, so the way out is plain.
-                .glassEffect(retiming.hasChanges ? .regular.tint(accent) : .regular, in: Capsule())
+                .auraGlass(in: Capsule(), tint: retiming.hasChanges ? accent : nil)
                 .animation(.easeOut(duration: 0.25), value: retiming.hasChanges)
             }
             .buttonStyle(.plain)
@@ -246,7 +246,7 @@ struct LyricsSyncView: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 64, height: 64)
-                        .glassEffect(.regular, in: Circle())
+                        .auraGlass(in: Circle())
                 }
                 .buttonStyle(PressScale())
                 .disabled(tapped.isEmpty)
@@ -330,7 +330,7 @@ struct LyricsSyncView: View {
             stepButton("chevron.right", by: Self.step, label: "Later")
         }
         .frame(height: 48)
-        .glassEffect(.regular, in: Capsule())
+        .auraGlass(in: Capsule())
     }
 
     private func stepButton(_ symbol: String, by step: TimeInterval, label: LocalizedStringKey) -> some View {
@@ -370,7 +370,7 @@ struct LyricsSyncView: View {
                         .symbolEffect(.variableColor.iterative, options: .repeating)
                 }
                 .frame(maxWidth: .infinity, minHeight: 56)
-                .glassEffect(.regular.tint(accent.opacity(0.5)), in: Capsule())
+                .auraGlass(in: Capsule(), tint: accent.opacity(0.5))
             } else if let earResult {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Image(systemName: "checkmark.seal.fill").foregroundStyle(accent)
@@ -378,7 +378,7 @@ struct LyricsSyncView: View {
                 }
                 .multilineTextAlignment(.leading)
                 .padding(14)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+                .auraGlass(in: RoundedRectangle(cornerRadius: 20))
             } else {
                 // The feature that does the work for you, so the first thing on offer.
                 Button(action: syncByEar) {
@@ -386,7 +386,7 @@ struct LyricsSyncView: View {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, minHeight: 56)
-                        .glassEffect(.regular.tint(accent.opacity(0.7)).interactive(), in: Capsule())
+                        .auraGlass(in: Capsule(), tint: accent.opacity(0.7), interactive: true)
                 }
                 .buttonStyle(PressScale())
                 #if os(iOS)
@@ -646,10 +646,11 @@ private struct PressScale: ButtonStyle {
 /// with the one above it, so a version that drifts is followed, not just shifted.
 enum LyricsAutoSync {
     enum Failure: LocalizedError {
-        case language, noAudio, tooFew
+        case language, noAudio, tooFew, unavailable
 
         var errorDescription: String? {
             switch self {
+            case .unavailable: String(localized: "Listening to a song needs iOS 26 or later.")
             case .language: String(localized: "Aura can’t listen to songs in this language yet.")
             case .noAudio: AppSettings.shared.offlineMode || !ServerManager.shared.hasNetwork
                 ? String(localized: "Offline, only a downloaded song can be listened to. Download it, or sync once you’re back online.")
@@ -678,6 +679,7 @@ enum LyricsAutoSync {
 
     /// Where the lines start in the audio, and their words.
     static func placement(for song: Song, lines: [LyricsLine]) async throws -> Placement {
+        guard #available(iOS 26.0, *) else { throw Failure.unavailable }
         let words = lines.map { Self.words(in: $0.text) }
         guard let locale = await locale(of: lines) else { throw Failure.language }
         guard let server = ServerManager.shared.currentServer,
@@ -785,6 +787,7 @@ enum LyricsAutoSync {
 
     /// The newer transcriber first; for a language whose model it lacks or can't fetch
     /// (Russian, among others), the dictation one, which knows many more.
+    @available(iOS 26.0, *)
     private static func transcribe(_ url: URL, locale language: Locale, hints: [String]) async throws -> [Heard] {
         if let locale = await SpeechTranscriber.supportedLocale(equivalentTo: language) {
             let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [],
@@ -807,6 +810,7 @@ enum LyricsAutoSync {
         }
     }
 
+    @available(iOS 26.0, *)
     private static func analyze(_ url: URL, with module: any SpeechModule, hints: [String],
                                 collecting: @escaping @Sendable () async throws -> [Heard]) async throws -> [Heard] {
         // The language's model, the first time: a download iOS keeps for every app.
@@ -828,6 +832,7 @@ enum LyricsAutoSync {
         return try await collected
     }
 
+    @available(iOS 26.0, *)
     private static func collect(_ texts: some AsyncSequence<AttributedString, any Error>) async throws -> [Heard] {
         var heard: [Heard] = []
         for try await text in texts {

@@ -757,7 +757,7 @@ struct NowPlayingView: View {
     private var optionsHandle: some View {
         Capsule(style: .continuous)
             .fill(.clear)
-            .glassEffect(.regular, in: Capsule(style: .continuous))
+            .auraGlass(in: Capsule(style: .continuous))
             .frame(width: 80, height: 26)
             .overlay(
                 Capsule(style: .continuous)

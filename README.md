@@ -145,7 +145,7 @@ All free, with no account and no in-app purchases.
 | | App Store | IPA (sideload) | Mac (preview) |
 |---|---|---|---|
 | Runs on | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
-| Needs | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, a sideloading tool | macOS 26, Apple silicon or Intel |
+| Needs | iOS 18, iPadOS 18, watchOS 26, tvOS 26 | iOS 18, iPadOS 18, watchOS 26, a sideloading tool | macOS 26, Apple silicon or Intel |
 | CarPlay | Yes | No: re-signing drops Apple's CarPlay entitlement | – |
 | Get It (Soulseek via your own [slskd](https://github.com/slskd/slskd)) | No | Opt-in, Settings → Developer Options | Opt-in, Settings → Developer |
 | NetEase lyrics-timing check | No | Yes | Yes |

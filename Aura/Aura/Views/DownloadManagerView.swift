@@ -190,7 +190,7 @@ struct DownloadManagerView: View {
                     .font(.system(size: 34, weight: .semibold))
                     .foregroundStyle(accentColor)
                     .frame(width: 80, height: 80)
-                    .glassEffect(.regular.tint(accentColor.opacity(0.18)), in: Circle())
+                    .auraGlass(in: Circle(), tint: accentColor.opacity(0.18))
             }
             VStack(spacing: 6) {
                 Text("No Downloads").font(.title3.weight(.semibold))

@@ -19,7 +19,12 @@ enum CarPlayArtwork {
     static func mixCover(_ mix: Mix, photo: Bool, scale: CGFloat) async -> UIImage {
         let spec = MixCoverSpec(mix)
         let art = photo ? await MixCoverArt.load(spec) : MixCoverArt.cached(spec)
-        let box = CPListImageRowItemRowElement.maximumImageSize
+        let box: CGSize
+        if #available(iOS 26.0, *) {
+            box = CPListImageRowItemRowElement.maximumImageSize
+        } else {
+            box = CPListImageRowItem.maximumImageSize
+        }
         let side = min(box.width, box.height)
         let renderer = ImageRenderer(content: EditorialMixCover.template(spec, art, size: side)
             .frame(width: side, height: side)
