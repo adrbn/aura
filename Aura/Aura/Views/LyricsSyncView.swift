@@ -646,10 +646,11 @@ private struct PressScale: ButtonStyle {
 /// with the one above it, so a version that drifts is followed, not just shifted.
 enum LyricsAutoSync {
     enum Failure: LocalizedError {
-        case language, noAudio, tooFew
+        case language, noAudio, tooFew, unavailable
 
         var errorDescription: String? {
             switch self {
+            case .unavailable: String(localized: "Listening to a song needs iOS 26 or later.")
             case .language: String(localized: "Aura can’t listen to songs in this language yet.")
             case .noAudio: AppSettings.shared.offlineMode || !ServerManager.shared.hasNetwork
                 ? String(localized: "Offline, only a downloaded song can be listened to. Download it, or sync once you’re back online.")
@@ -678,6 +679,7 @@ enum LyricsAutoSync {
 
     /// Where the lines start in the audio, and their words.
     static func placement(for song: Song, lines: [LyricsLine]) async throws -> Placement {
+        guard #available(iOS 26.0, *) else { throw Failure.unavailable }
         let words = lines.map { Self.words(in: $0.text) }
         guard let locale = await locale(of: lines) else { throw Failure.language }
         guard let server = ServerManager.shared.currentServer,
@@ -785,6 +787,7 @@ enum LyricsAutoSync {
 
     /// The newer transcriber first; for a language whose model it lacks or can't fetch
     /// (Russian, among others), the dictation one, which knows many more.
+    @available(iOS 26.0, *)
     private static func transcribe(_ url: URL, locale language: Locale, hints: [String]) async throws -> [Heard] {
         if let locale = await SpeechTranscriber.supportedLocale(equivalentTo: language) {
             let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [], reportingOptions: [],
@@ -807,6 +810,7 @@ enum LyricsAutoSync {
         }
     }
 
+    @available(iOS 26.0, *)
     private static func analyze(_ url: URL, with module: any SpeechModule, hints: [String],
                                 collecting: @escaping @Sendable () async throws -> [Heard]) async throws -> [Heard] {
         // The language's model, the first time: a download iOS keeps for every app.
@@ -828,6 +832,7 @@ enum LyricsAutoSync {
         return try await collected
     }
 
+    @available(iOS 26.0, *)
     private static func collect(_ texts: some AsyncSequence<AttributedString, any Error>) async throws -> [Heard] {
         var heard: [Heard] = []
         for try await text in texts {

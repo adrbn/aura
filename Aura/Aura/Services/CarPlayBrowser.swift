@@ -324,10 +324,10 @@ final class CarPlayBrowser {
         for mix in mixes {
             covers.append(await CarPlayArtwork.mixCover(mix, photo: false, scale: scale))
         }
-        let row = CPListImageRowItem(text: nil, elements: Self.elements(covers), allowsMultipleLines: true)
-        row.listImageRowHandler = { [weak self] row, index, completion in
+        let row = Self.imageRow(images: covers)
+        row.listImageRowHandler = { [weak self] _, index, completion in
             guard let self, mixes.indices.contains(index) else { return completion() }
-            let cover = row.elements.indices.contains(index) ? row.elements[index].image : nil
+            let cover = covers.indices.contains(index) ? covers[index] : nil
             Task {
                 await self.open(LibraryCatalog.item(mixes[index]), cover: cover)
                 completion()
@@ -338,13 +338,32 @@ final class CarPlayBrowser {
             for mix in mixes {
                 photos.append(await CarPlayArtwork.mixCover(mix, photo: true, scale: scale))
             }
-            row?.elements = Self.elements(photos)
+            Self.update(row, with: photos)
         }
         return row
     }
 
+    /// Covers without captions: iOS 26's elements, the older image grid before that.
+    private static func imageRow(images: [UIImage]) -> CPListImageRowItem {
+        if #available(iOS 26.0, *) {
+            CPListImageRowItem(text: nil, elements: elements(images), allowsMultipleLines: true)
+        } else {
+            CPListImageRowItem(text: "", images: images)
+        }
+    }
+
+    @available(iOS 26.0, *)
     private static func elements(_ covers: [UIImage]) -> [CPListImageRowItemRowElement] {
         covers.map { CPListImageRowItemRowElement(image: $0, title: nil, subtitle: nil) }
+    }
+
+    private static func update(_ row: CPListImageRowItem?, with images: [UIImage]) {
+        guard let row else { return }
+        if #available(iOS 26.0, *) {
+            row.elements = elements(images)
+        } else {
+            row.update(images)
+        }
     }
 
     /// Albums as rows of covers, the name and artist under each, as the phone's grids show
@@ -353,30 +372,57 @@ final class CarPlayBrowser {
     private func albumGrid(_ albums: [Album]) -> [CPListImageRowItem] {
         let perRow = Int(CPMaximumNumberOfGridImages)
         let placeholder = CarPlayArtwork.glyph("square.stack")
-        let element = { (album: Album, image: UIImage) in
-            CPListImageRowItemRowElement(image: image, title: album.name, subtitle: album.artist)
-        }
         return stride(from: 0, to: albums.count, by: perRow).map { start in
             let chunk = Array(albums[start..<min(start + perRow, albums.count)])
-            let row = CPListImageRowItem(text: nil, elements: chunk.map { element($0, placeholder) },
-                                         allowsMultipleLines: true)
-            row.listImageRowHandler = { [weak self] row, index, completion in
+            let images = chunk.map { _ in placeholder }
+            let titles = chunk.map(\.name)
+            let subtitles = chunk.map(\.artist)
+            let row = Self.imageRow(images: images, titles: titles, subtitles: subtitles)
+            row.listImageRowHandler = { [weak self] _, index, completion in
                 guard let self, chunk.indices.contains(index) else { return completion() }
-                let shown = row.elements.indices.contains(index) ? row.elements[index].image : nil
-                let cover = shown === placeholder ? nil : shown
+                let cover = images[index] === placeholder ? nil : images[index]
                 Task {
                     await self.open(LibraryCatalog.item(chunk[index]), cover: cover)
                     completion()
                 }
             }
             Task { [weak row] in
-                var covers: [CPListImageRowItemRowElement] = []
+                var photos: [UIImage] = []
                 for album in chunk {
-                    covers.append(element(album, await CarPlayArtwork.cover(album.coverArt) ?? placeholder))
+                    photos.append(await CarPlayArtwork.cover(album.coverArt) ?? placeholder)
                 }
-                row?.elements = covers
+                Self.update(row, with: photos, titles: titles, subtitles: subtitles)
             }
             return row
+        }
+    }
+
+    /// Albums as a grid of covers, with their names underneath. iOS 18 has one line of
+    /// caption per image, so the artist rides along in the name there.
+    private static func imageRow(images: [UIImage], titles: [String], subtitles: [String]) -> CPListImageRowItem {
+        if #available(iOS 26.0, *) {
+            CPListImageRowItem(text: nil, elements: elements(images: images, titles: titles, subtitles: subtitles),
+                               allowsMultipleLines: true)
+        } else {
+            CPListImageRowItem(text: "", images: images,
+                               imageTitles: zip(titles, subtitles).map { "\($0.0) — \($0.1)" })
+        }
+    }
+
+    @available(iOS 26.0, *)
+    private static func elements(images: [UIImage], titles: [String], subtitles: [String]) -> [CPListImageRowItemRowElement] {
+        images.indices.map { index in
+            CPListImageRowItemRowElement(image: images[index], title: titles[index], subtitle: subtitles[index])
+        }
+    }
+
+    private static func update(_ row: CPListImageRowItem?, with images: [UIImage],
+                               titles: [String], subtitles: [String]) {
+        guard let row else { return }
+        if #available(iOS 26.0, *) {
+            row.elements = elements(images: images, titles: titles, subtitles: subtitles)
+        } else {
+            row.update(images)
         }
     }
 
