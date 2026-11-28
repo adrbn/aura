@@ -47,10 +47,15 @@ struct ContentView: View {
         return frame.height > 120
     }
 
-    /// Room left above the tab bar for what floats over the tabs. On an iPhone Duo the tab
-    /// bar sits in the side column, by the status bar, so there is none to clear there: the
-    /// mini player dips into the bottom inset to end level with the side tab bar's foot.
-    private var tabBarGap: CGFloat { BottomChrome.isPad ? 0 : tabBarBeside ? -10 : 57 }
+    /// Room left above the tab bar for what floats over the tabs. Measured from the tab's
+    /// own safe area plus an eight-point breath: a hard-coded 57 sat on the bar's top edge
+    /// on short phones, taking the top of the toolbar away from taps. The download card
+    /// and the fetch cards use the same gap, so they ride up with the mini player.
+    /// On an iPhone Duo the tab bar sits in the side column, by the status bar, so there is
+    /// none to clear there: the mini player dips into the bottom inset to end level with it.
+    private var tabBarGap: CGFloat {
+        BottomChrome.isPad ? 0 : tabBarBeside ? -10 : BottomChrome.shared.tabBarHeight + 8
+    }
     /// Read from the layout, not the window: at launch the window has no insets yet, and a
     /// value read once then kept the phone's gap until something else redrew the bars.
     @State private var tabBarBeside = false
@@ -71,7 +76,7 @@ struct ContentView: View {
             TabView(selection: tabSelection) {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
                     Tab(tab.title, systemImage: tab.icon, value: index, role: tab.role) {
-                        tabContent(for: tab)
+                        tabContent(for: tab).readsTabBottomInset()
                     }
                 }
             }
@@ -121,6 +126,7 @@ struct ContentView: View {
 
             ToastOverlay()
         }
+        .readsWindowBottomInset()
         // Floats, and tab roots reserve its height via TabChrome.contentTop — they ignore
         // the top safe area, so an inset here would do nothing.
         .overlay(alignment: .top) {
@@ -207,7 +213,7 @@ struct ContentView: View {
             TabView(selection: tabSelection) {
                 ForEach(Array(appSettings.tabOrder.enumerated()), id: \.element.id) { index, tab in
                     Tab(tab.title, systemImage: tab.icon, value: index, role: tab.role) {
-                        offlineTabContent(for: tab)
+                        offlineTabContent(for: tab).readsTabBottomInset()
                     }
                 }
             }
@@ -226,6 +232,7 @@ struct ContentView: View {
 
             ToastOverlay()
         }
+        .readsWindowBottomInset()
         .fullScreenCover(isPresented: Binding(
             get: { audioPlayer.isShowingNowPlaying },
             set: { audioPlayer.isShowingNowPlaying = $0 }

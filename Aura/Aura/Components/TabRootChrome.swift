@@ -59,6 +59,17 @@ enum TabChrome {
 final class BottomChrome {
     static let shared = BottomChrome()
     var cardInset: CGFloat = 0
+    /// The bottom safe area a tab's own content sees, and the window's own bottom inset.
+    /// The old fixed 57-point gap guessed at the bar's height and put the mini player on
+    /// top of it on short phones, where the bar takes more. Both are read from geometry:
+    /// a window has no insets yet at launch, so UIKit's key window is not a safe source.
+    var tabBottomInset: CGFloat?
+    var windowBottomInset: CGFloat?
+    var tabBarHeight: CGFloat {
+        guard let tab = tabBottomInset, let window = windowBottomInset else { return 49 }
+        let bar = tab - window
+        return bar > 0 ? bar : 49
+    }
     /// An iPad keeps its tabs at the top: the bottom holds only the mini player, drawn larger.
     static let isPad = UIDevice.current.userInterfaceIdiom == .pad
 }
@@ -191,6 +202,37 @@ extension View {
     /// `List(data)`, a grouped settings list, a scroll view of cards.
     func endsAboveBottomChrome(_ height: CGFloat = 80) -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) { ListEndSpacer(height: height) }
+    }
+
+    /// Reports the bottom inset of a tab root, which includes the tab bar as well as the
+    /// home indicator. Anything floating over the tabs can then clear the real bar instead
+    /// of a guessed height. Put on the root of a tab's content, before its own safe-area
+    /// modifiers; a reader outside the TabView would only see the window's inset.
+    func readsTabBottomInset() -> some View {
+        modifier(TabBottomInsetReader())
+    }
+
+    /// Reads the window's own bottom inset, to take away from the tab's reading.
+    func readsWindowBottomInset() -> some View {
+        modifier(WindowBottomInsetReader())
+    }
+}
+
+private struct TabBottomInsetReader: ViewModifier {
+    func body(content: Content) -> some View {
+        content.onGeometryChange(for: CGFloat.self) { $0.safeAreaInsets.bottom } action: { inset in
+            guard BottomChrome.shared.tabBottomInset.map({ abs($0 - inset) > 0.5 }) ?? true else { return }
+            BottomChrome.shared.tabBottomInset = inset
+        }
+    }
+}
+
+private struct WindowBottomInsetReader: ViewModifier {
+    func body(content: Content) -> some View {
+        content.onGeometryChange(for: CGFloat.self) { $0.safeAreaInsets.bottom } action: { inset in
+            guard BottomChrome.shared.windowBottomInset.map({ abs($0 - inset) > 0.5 }) ?? true else { return }
+            BottomChrome.shared.windowBottomInset = inset
+        }
     }
 }
 
