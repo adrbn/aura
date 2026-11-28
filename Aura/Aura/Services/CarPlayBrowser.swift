@@ -399,25 +399,27 @@ final class CarPlayBrowser {
 
     /// Albums as a grid of covers, with their names underneath. iOS 18 has one line of
     /// caption per image, so the artist rides along in the name there.
-    private static func imageRow(images: [UIImage], titles: [String], subtitles: [String]) -> CPListImageRowItem {
+    private static func imageRow(images: [UIImage], titles: [String], subtitles: [String?]) -> CPListImageRowItem {
         if #available(iOS 26.0, *) {
             CPListImageRowItem(text: nil, elements: elements(images: images, titles: titles, subtitles: subtitles),
                                allowsMultipleLines: true)
         } else {
             CPListImageRowItem(text: "", images: images,
-                               imageTitles: zip(titles, subtitles).map { "\($0.0) — \($0.1)" })
+                               imageTitles: zip(titles, subtitles).map { pair in
+                                   pair.1.map { "\(pair.0) — \($0)" } ?? pair.0
+                               })
         }
     }
 
     @available(iOS 26.0, *)
-    private static func elements(images: [UIImage], titles: [String], subtitles: [String]) -> [CPListImageRowItemRowElement] {
+    private static func elements(images: [UIImage], titles: [String], subtitles: [String?]) -> [CPListImageRowItemRowElement] {
         images.indices.map { index in
             CPListImageRowItemRowElement(image: images[index], title: titles[index], subtitle: subtitles[index])
         }
     }
 
     private static func update(_ row: CPListImageRowItem?, with images: [UIImage],
-                               titles: [String], subtitles: [String]) {
+                               titles: [String], subtitles: [String?]) {
         guard let row else { return }
         if #available(iOS 26.0, *) {
             row.elements = elements(images: images, titles: titles, subtitles: subtitles)
