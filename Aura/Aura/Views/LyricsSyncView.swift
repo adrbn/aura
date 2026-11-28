@@ -116,7 +116,7 @@ struct LyricsSyncView: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.8))
                     .frame(width: 36, height: 36)
-                    .glassEffect(.regular, in: Circle())
+                    .auraGlass(in: Circle())
             }
             .buttonStyle(.plain)
             #if os(macOS)
@@ -141,7 +141,7 @@ struct LyricsSyncView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
                         .frame(width: 36, height: 36)
-                        .glassEffect(.regular, in: Circle())
+                        .auraGlass(in: Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Restore Original Timing")
@@ -159,7 +159,7 @@ struct LyricsSyncView: View {
                 .padding(.horizontal, 18)
                 .frame(height: 36)
                 // Lit in the accent once there's something to keep, so the way out is plain.
-                .glassEffect(retiming.hasChanges ? .regular.tint(accent) : .regular, in: Capsule())
+                .auraGlass(in: Capsule(), tint: retiming.hasChanges ? accent : nil)
                 .animation(.easeOut(duration: 0.25), value: retiming.hasChanges)
             }
             .buttonStyle(.plain)
@@ -246,7 +246,7 @@ struct LyricsSyncView: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(width: 64, height: 64)
-                        .glassEffect(.regular, in: Circle())
+                        .auraGlass(in: Circle())
                 }
                 .buttonStyle(PressScale())
                 .disabled(tapped.isEmpty)
@@ -330,7 +330,7 @@ struct LyricsSyncView: View {
             stepButton("chevron.right", by: Self.step, label: "Later")
         }
         .frame(height: 48)
-        .glassEffect(.regular, in: Capsule())
+        .auraGlass(in: Capsule())
     }
 
     private func stepButton(_ symbol: String, by step: TimeInterval, label: LocalizedStringKey) -> some View {
@@ -370,7 +370,7 @@ struct LyricsSyncView: View {
                         .symbolEffect(.variableColor.iterative, options: .repeating)
                 }
                 .frame(maxWidth: .infinity, minHeight: 56)
-                .glassEffect(.regular.tint(accent.opacity(0.5)), in: Capsule())
+                .auraGlass(in: Capsule(), tint: accent.opacity(0.5))
             } else if let earResult {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Image(systemName: "checkmark.seal.fill").foregroundStyle(accent)
@@ -378,7 +378,7 @@ struct LyricsSyncView: View {
                 }
                 .multilineTextAlignment(.leading)
                 .padding(14)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+                .auraGlass(in: RoundedRectangle(cornerRadius: 20))
             } else {
                 // The feature that does the work for you, so the first thing on offer.
                 Button(action: syncByEar) {
@@ -386,7 +386,7 @@ struct LyricsSyncView: View {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, minHeight: 56)
-                        .glassEffect(.regular.tint(accent.opacity(0.7)).interactive(), in: Capsule())
+                        .auraGlass(in: Capsule(), tint: accent.opacity(0.7), interactive: true)
                 }
                 .buttonStyle(PressScale())
                 #if os(iOS)

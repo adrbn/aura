@@ -145,7 +145,7 @@ Tudo gratuito, sem conta e sem compras dentro do app.
 | | App Store | IPA (sideload) | Mac (prévia) |
 |---|---|---|---|
 | Funciona em | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
-| Requer | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, uma ferramenta de sideload | macOS 26, Apple silicon ou Intel |
+| Requer | iOS 18, iPadOS 18, watchOS 26, tvOS 26 | iOS 18, iPadOS 18, watchOS 26, uma ferramenta de sideload | macOS 26, Apple silicon ou Intel |
 | CarPlay | Sim | Não: assinar de novo remove a permissão de CarPlay da Apple | – |
 | Get It (Soulseek pelo seu próprio [slskd](https://github.com/slskd/slskd)) | Não | Opcional, Ajustes → Developer Options | Opcional, Ajustes → Developer |
 | Verificação de tempo das letras pela NetEase | Não | Sim | Sim |

@@ -279,6 +279,9 @@
 		E100000100000000000000D1 /* AudioOutputButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D1 /* AudioOutputButton.swift */; };
 		E100000100000000000000D2 /* BufferedProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D2 /* BufferedProgressBar.swift */; };
 		E100000100000000000000D3 /* TabRootChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D3 /* TabRootChrome.swift */; };
+		E10000010000000000000110 /* LegacyGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000110 /* LegacyGlass.swift */; };
+		E10000010000000000000111 /* LegacyGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000110 /* LegacyGlass.swift */; };
+		E10000010000000000000112 /* LegacyGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000020000000000000110 /* LegacyGlass.swift */; };
 		E100000100000000000000D4 /* FolderPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D4 /* FolderPicker.swift */; };
 		E100000100000000000000D5 /* SongInfoSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D5 /* SongInfoSheet.swift */; };
 		E100000100000000000000D6 /* SongCreditsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E100000200000000000000D6 /* SongCreditsSheet.swift */; };
@@ -576,6 +579,7 @@
 		E100000200000000000000D1 /* AudioOutputButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioOutputButton.swift; sourceTree = "<group>"; };
 		E100000200000000000000D2 /* BufferedProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BufferedProgressBar.swift; sourceTree = "<group>"; };
 		E100000200000000000000D3 /* TabRootChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabRootChrome.swift; sourceTree = "<group>"; };
+		E10000020000000000000110 /* LegacyGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyGlass.swift; sourceTree = "<group>"; };
 		E100000200000000000000D4 /* FolderPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderPicker.swift; sourceTree = "<group>"; };
 		E100000200000000000000D5 /* SongInfoSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongInfoSheet.swift; sourceTree = "<group>"; };
 		E100000200000000000000D6 /* SongCreditsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongCreditsSheet.swift; sourceTree = "<group>"; };
@@ -1026,6 +1030,7 @@
 				E100000200000000000000D1 /* AudioOutputButton.swift */,
 				E100000200000000000000D2 /* BufferedProgressBar.swift */,
 				E100000200000000000000D3 /* TabRootChrome.swift */,
+				E10000020000000000000110 /* LegacyGlass.swift */,
 				E100000200000000000000F6 /* MarqueeText.swift */,
 				E100000200000000000000F7 /* BouncingDotsLoader.swift */,
 				E100000200000000000000F4 /* AlphabetIndexBar.swift */,
@@ -1491,6 +1496,7 @@
 				CAC7C41023E240442EB1DED4 /* PageTint.swift in Sources */,
 				D48CE70A6D38988CAF7AD632 /* FaceFraming.swift in Sources */,
 				C573B249FFAC81277B4ECB13 /* RemoteLink.swift in Sources */,
+				E10000010000000000000111 /* LegacyGlass.swift in Sources */,
 				37288D1A997E73BE6647E98D /* AuraURL.swift in Sources */,
 				F4DFCA6D8B67546CD1643706 /* AuraTVApp.swift in Sources */,
 				9DE232355A6E8D71B5E26918 /* TVShims.swift in Sources */,
@@ -1589,6 +1595,7 @@
 				BC53C870BB1A0B5438F7E37E /* LyricsOnServer.swift in Sources */,
 				A0C5E1D20000000000000001 /* LyricsSyncView.swift in Sources */,
 				A0C5E1D20000000000000002 /* BufferedProgressBar.swift in Sources */,
+				E10000010000000000000112 /* LegacyGlass.swift in Sources */,
 				A0C5E1D20000000000000003 /* SongInfoSheet.swift in Sources */,
 				C1C5793381313E62BF02811A /* PlaylistCovers.swift in Sources */,
 				E6D21EF991F5EA4A588D4CFF /* LocalSearch.swift in Sources */,
@@ -1725,6 +1732,7 @@
 				E100000100000000000000D1 /* AudioOutputButton.swift in Sources */,
 				E100000100000000000000D2 /* BufferedProgressBar.swift in Sources */,
 				E100000100000000000000D3 /* TabRootChrome.swift in Sources */,
+				E10000010000000000000110 /* LegacyGlass.swift in Sources */,
 				E100000100000000000000F6 /* MarqueeText.swift in Sources */,
 				E100000100000000000000F7 /* BouncingDotsLoader.swift in Sources */,
 				E100000100000000000000F4 /* AlphabetIndexBar.swift in Sources */,
@@ -2058,7 +2066,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(AURA_BUNDLE_BASE).AuraTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -2135,7 +2143,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(AURA_BUNDLE_BASE).AuraTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -2200,7 +2208,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -2258,7 +2266,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -2431,7 +2439,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -2538,7 +2546,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "$(AURA_BUNDLE_BASE).AuraTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

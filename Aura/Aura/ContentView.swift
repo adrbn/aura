@@ -516,7 +516,7 @@ struct DownloadIndicatorView: View {
             .padding(.vertical, 12)
             .contentShape(Rectangle())
             .foregroundStyle(.primary)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22))
+            .auraGlass(in: RoundedRectangle(cornerRadius: 22))
             .clipShape(RoundedRectangle(cornerRadius: 22))
             .padding(.horizontal, 16)
             .transition(.move(edge: .bottom).combined(with: .opacity))

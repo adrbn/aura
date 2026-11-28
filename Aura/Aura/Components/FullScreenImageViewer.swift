@@ -87,8 +87,8 @@ struct FullScreenImageViewer: View {
                         .font(.system(size: 15, weight: .semibold))
                         .frame(width: 44, height: 44)
                 }
-                .buttonStyle(.glass)
                 .buttonBorderShape(.circle)
+                .auraGlassButton(in: Circle())
                 .accessibilityLabel("Close")
             }
             Spacer()
@@ -107,7 +107,10 @@ struct FullScreenImageViewer: View {
                 }
             }
             .font(.subheadline.weight(.semibold))
-            .buttonStyle(.glass)
+            .auraGlassButton(
+                in: Capsule(),
+                padding: EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
+            )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)

@@ -76,7 +76,7 @@ struct EqualizerView: View {
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
-            .glassEffect(.regular.tint(accentColor).interactive(), in: Circle())
+            .auraGlass(in: Circle(), tint: accentColor, interactive: true)
             .accessibilityLabel(Text("Done"))
         }
         .padding(.horizontal, 20)

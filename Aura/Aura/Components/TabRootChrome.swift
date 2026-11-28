@@ -399,7 +399,7 @@ struct SearchFieldBar: View {
             }
             .padding(.horizontal, 12)
             .frame(height: height)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+            .auraGlass(in: RoundedRectangle(cornerRadius: 12))
             // Only the text itself used to take a tap: the magnifier, the padding and every
             // gap between them were dead, so aiming at the box could leave the keyboard shut.
             // The whole box is one target, focused or not, and it clears 44pt tall.
@@ -416,7 +416,7 @@ struct SearchFieldBar: View {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(.primary)
                         .frame(width: height, height: height)
-                        .glassEffect(.regular.interactive(), in: Circle())
+                        .auraGlass(in: Circle(), interactive: true)
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)

@@ -81,7 +81,7 @@ struct MiniPlayerView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.primary)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: pad ? 28 : 22))
+            .auraGlass(in: RoundedRectangle(cornerRadius: pad ? 28 : 22))
             .clipShape(RoundedRectangle(cornerRadius: pad ? 28 : 22))
             .padding(.horizontal, pad ? 24 : 16)
             .highPriorityGesture(

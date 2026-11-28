@@ -203,7 +203,7 @@ private struct FetchCard: View {
             }
         }
         .foregroundStyle(.primary)
-        .glassEffect(.regular, in: Capsule())
+        .auraGlass(in: Capsule())
         .clipShape(Capsule())
         .padding(.horizontal, 16)
         .accessibilityElement(children: .combine)

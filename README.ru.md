@@ -147,7 +147,7 @@ A до Z, интернет-радиостанции вашего сервера,
 | | App Store | IPA (сайдлоад) | Mac (предварительная версия) |
 |---|---|---|---|
 | Работает на | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
-| Требуется | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, инструмент для сайдлоада | macOS 26, Apple silicon или Intel |
+| Требуется | iOS 18, iPadOS 18, watchOS 26, tvOS 26 | iOS 18, iPadOS 18, watchOS 26, инструмент для сайдлоада | macOS 26, Apple silicon или Intel |
 | CarPlay | Да | Нет: переподпись лишает приложение разрешения CarPlay от Apple | – |
 | Get It (Soulseek через ваш собственный [slskd](https://github.com/slskd/slskd)) | Нет | По желанию, Настройки → Developer Options | По желанию, Настройки → Developer |
 | Проверка тайминга текстов через NetEase | Нет | Да | Да |

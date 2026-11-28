@@ -632,7 +632,7 @@ struct PlayingElsewhereRow: View {
             .padding(.vertical, pad ? 14 : 12)
             .contentShape(Rectangle())
             .onTapGesture { link.connect(to: device, bringing: false) }
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: pad ? 28 : 22))
+            .auraGlass(in: RoundedRectangle(cornerRadius: pad ? 28 : 22))
             #if os(iOS)
             .padding(.horizontal, pad ? 24 : 16)
             .padding(.bottom, 8)

@@ -144,7 +144,7 @@ Apple Watch, CarPlay, Mac, Apple TV에 들어와요. 원래 음질 그대로 스
 | | App Store | IPA(사이드로드) | Mac(미리 보기) |
 |---|---|---|---|
 | 지원 기기 | iPhone, iPad, Apple Watch, CarPlay, Apple TV | iPhone, iPad, Apple Watch | Mac |
-| 요구 사항 | iOS 26, iPadOS 26, watchOS 26, tvOS 26 | iOS 26, iPadOS 26, watchOS 26, 사이드로드 도구 | macOS 26, Apple 실리콘 또는 Intel |
+| 요구 사항 | iOS 18, iPadOS 18, watchOS 26, tvOS 26 | iOS 18, iPadOS 18, watchOS 26, 사이드로드 도구 | macOS 26, Apple 실리콘 또는 Intel |
 | CarPlay | 지원 | 미지원: 재서명하면 Apple의 CarPlay 권한이 빠져요 | – |
 | Get It(내 [slskd](https://github.com/slskd/slskd)를 통한 Soulseek) | 미지원 | 선택 사용, 설정 → Developer Options | 선택 사용, 설정 → Developer |
 | NetEase 가사 타이밍 확인 | 미지원 | 지원 | 지원 |

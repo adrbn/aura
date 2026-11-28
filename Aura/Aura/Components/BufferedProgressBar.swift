@@ -50,7 +50,7 @@ struct BufferedProgressBar: View {
                 Circle()
                     .fill(.clear)
                     .frame(width: currentThumb, height: currentThumb)
-                    .glassEffect(.regular, in: .circle)
+                    .auraGlass(in: Circle())
                     .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
                     .overlay(
                         Circle().fill(accentColor.opacity(0.6))
